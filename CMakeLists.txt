@@ -146,6 +146,10 @@ ENDIF()
 
 ADD_OPTION(WITH_UNIT_TESTS "build test suite" ON)
 
+### Setting installation paths - should go before C/C subproject sets its own. We need to have control over those 
+INCLUDE("${CMAKE_SOURCE_DIR}/cmake/install.cmake")
+
+### Including C/C subproject
 IF(EXISTS ${CMAKE_SOURCE_DIR}/libmariadb)
   IF(GIT_BUILD_SRCPKG)
     # We don't want conn/c (wrong) src pkg to be built.
@@ -213,8 +217,6 @@ IF(WIN32)
                           ma_legacy_helpers.h
                           ma_typeconv.h
                           ma_bulk.h)
-                        #  SET(DSN_DIALOG_FILES ${DSN_DIALOG_FILES}
-                        #  ma_platform_win32.c)
 
 			SET(PLATFORM_DEPENDENCIES ws2_32 Shlwapi Pathcch)
   IF (MSVC)
@@ -228,7 +230,9 @@ IF(WIN32)
 ELSE()
   SEARCH_LIBRARY(LIB_MATH floor m)
   SET(PLATFORM_DEPENDENCIES ${LIB_MATH})
-  SET (MARIADB_ODBC_SOURCES ${MARIADB_ODBC_SOURCES} ma_platform_posix.c)
+  SET (MARIADB_ODBC_SOURCES ${MARIADB_ODBC_SOURCES}
+                        ma_platform_posix.c
+                        ma_conv_charset.c)
 ENDIF()
 
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR})
@@ -354,8 +358,6 @@ ELSEIF(APPLE)
   )
 ENDIF()
 
-INCLUDE("${CMAKE_SOURCE_DIR}/cmake/install.cmake")
-
 SET(CPACK_PACKAGE_NAME "mariadb-connector-odbc")
 IF(WIN32)
   ADD_SUBDIRECTORY(wininstall)
@@ -371,16 +373,6 @@ ELSE()
           LIBRARY DESTINATION ${INSTALL_LIBDIR}
           COMPONENT ODBCLibs)
 
-  #IF(NOT DEFINED INSTALL_DOC_DIR)
-  #  SET(INSTALL_DOC_DIR "${CMAKE_INSTALL_PREFIX}/share/doc/${CPACK_PACKAGE_NAME}/" CACHE STRING "Directory, where to install documentation(README)")
-  #ENDIF()
-
-  #IF(NOT DEFINED INSTALL_LICENSE_DIR)
-  #  SET(INSTALL_LICENSE_DIR "${CMAKE_INSTALL_PREFIX}/share/doc/${CPACK_PACKAGE_NAME}/" CACHE STRING "Directory, where to install license file")   
-  #ENDIF()
-  MESSAGE(STATUS "Documentation and License file are installed to ${INSTALL_DOCDIR}")
-  #  MESSAGE(STATUS "License file installed to ${INSTALL_LICENSE_DIR}")
-
   INSTALL(FILES
           ${CMAKE_SOURCE_DIR}/README
           DESTINATION
@@ -389,7 +381,7 @@ ELSE()
   INSTALL(FILES
           ${CMAKE_SOURCE_DIR}/COPYING
           DESTINATION
-          "${INSTALL_DOCDIR}"
+          "${INSTALL_LICENSEDIR}"
           COMPONENT Documentation)
 ENDIF()
 

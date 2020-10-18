@@ -16,6 +16,7 @@
    or write to the Free Software Foundation, Inc., 
    51 Franklin St., Fifth Floor, Boston, MA 02110, USA
 *************************************************************************************/
+#define _GNU_SOURCE
 #include <ma_odbc.h>
 
 
@@ -74,6 +75,8 @@ MADB_DsnKey DsnKeys[]=
   {"FORCETLS",       offsetof(MADB_Dsn, ForceTls),          DSN_TYPE_BOOL,   0, 0},
   {"SERVERKEY",      offsetof(MADB_Dsn, ServerKey),         DSN_TYPE_STRING, 0, 0},
   {"TLSKEYPWD",      offsetof(MADB_Dsn, TlsKeyPwd),         DSN_TYPE_STRING, 0, 0},
+  {"INTERACTIVE",    offsetof(MADB_Dsn, InteractiveClient), DSN_TYPE_BOOL,   0, 0},
+  {"FORWARDONLY",    offsetof(MADB_Dsn, ForceForwardOnly),  DSN_TYPE_OPTION, MADB_OPT_FLAG_FORWARD_CURSOR, 0},
   /* Aliases. Here offset is index of aliased key */
   {"SERVERNAME",     DSNKEY_SERVER_INDEX,                   DSN_TYPE_STRING, 0, 1},
   {"USER",           DSNKEY_UID_INDEX,                      DSN_TYPE_STRING, 0, 1},
