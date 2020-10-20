@@ -111,6 +111,7 @@ libmariadb/RelWithDebInfo
 
 # ODBC connector .gitignore
 cmake-build-debug/
+cmake-build-relwithdebinfo/
 CMakeFiles
 CMakeCache.txt
 cmake_install.cmake

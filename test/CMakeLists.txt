@@ -21,7 +21,7 @@ SET (ODBC_TESTS
      "basic" "types" "blob" "desc" "info" "tran" "catalog1" "catalog2"
      "use_result" "scroll" "bulk" "prepare" "datetime" "keys"
      "curext" "relative" "unicode" "cursor" "dyn_cursor"
-     "error" "escape_sequences" "param" "result1" "result2" "multistatement")
+     "error" "escape_sequences" "param" "result1" "result2" "multistatement" "sqlcolumns")
 SET(COMMON_TEST_SOURCES tap.h)
 
 # Interactive makes sense on WIN32 only atm

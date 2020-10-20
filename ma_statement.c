@@ -911,7 +911,7 @@ SQLRETURN MADB_GetOutParams(MADB_Stmt *Stmt, int CurrentOffset)
   }
 
   Bind= (MYSQL_BIND *)MADB_CALLOC(sizeof(MYSQL_BIND) * mysql_stmt_field_count(Stmt->stmt));
-  
+
   for (i=0; i < (unsigned int)Stmt->ParamCount && ParameterNr < mysql_stmt_field_count(Stmt->stmt); i++)
   {
     MADB_DescRecord *IpdRecord, *ApdRecord;
@@ -3568,13 +3568,25 @@ SQLRETURN MADB_StmtStatistics(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLINT Na
 }
 /* }}} */
 
-
-static MADB_ShortTypeInfo SqlColumnsColType[18]=
-/*1*/    {{SQL_VARCHAR, 0, SQL_NO_NULLS, 0}, {SQL_VARCHAR, 0, SQL_NO_NULLS, 0}, {SQL_VARCHAR, 0, SQL_NULLABLE, 0}, {SQL_VARCHAR, 0, SQL_NULLABLE, 0},
-/*5*/     {SQL_SMALLINT, 0, SQL_NO_NULLS, 0}, {SQL_VARCHAR, 0, SQL_NO_NULLS, 0}, {SQL_INTEGER, 0, SQL_NULLABLE, 0}, {SQL_INTEGER, 0, SQL_NULLABLE, 0},
-/*9*/     {SQL_SMALLINT, 0, SQL_NULLABLE, 0}, {SQL_SMALLINT, 0, SQL_NULLABLE, 0}, {SQL_SMALLINT, 0, SQL_NO_NULLS, 0}, {SQL_VARCHAR, 0, SQL_NULLABLE, 0},
-/*13*/    {SQL_VARCHAR, 0, SQL_NULLABLE, 0}, {SQL_SMALLINT, 0, SQL_NO_NULLS, 0}, {SQL_SMALLINT, 0, SQL_NULLABLE, 0},
-/*16*/    {SQL_INTEGER, 0, SQL_NULLABLE, 0}, {SQL_INTEGER, 0, SQL_NO_NULLS, 0}, {SQL_VARCHAR, 0, SQL_NULLABLE, 0}};
+static MADB_ShortTypeInfo SqlColumnsColType[18] =
+         {{SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // TABLE_CAT
+          {SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // TABLE_SCHEM
+          {SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // TABLE_NAME
+          {SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // COLUMN_NAME
+          {SQL_SMALLINT, 0, SQL_NO_NULLS, 0},  // DATA_TYPE
+          {SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // TYPE_NAME
+          {SQL_INTEGER,  0, SQL_NULLABLE, 0},  // COLUMN_SIZE
+          {SQL_INTEGER,  0, SQL_NULLABLE, 0},  // BUFFER_LENGTH
+          {SQL_SMALLINT, 0, SQL_NULLABLE, 0},  // DECIMAL_DIGITS
+          {SQL_SMALLINT, 0, SQL_NULLABLE, 0},  // NUM_PREC_RADIX
+          {SQL_SMALLINT, 0, SQL_NO_NULLS, 0},  // NULLABLE
+          {SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // REMARKS
+          {SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // COLUMN_DEF
+          {SQL_SMALLINT, 0, SQL_NO_NULLS, 0},  // SQL_DATA_TYPE
+          {SQL_SMALLINT, 0, SQL_NULLABLE, 0},  // SQL_DATETIME_SUB
+          {SQL_INTEGER,  0, SQL_NULLABLE, 0},  // CHAR_OCTET_LENGTH
+          {SQL_INTEGER,  0, SQL_NO_NULLS, 0},  // ORDINAL_POSITION
+          {SQL_VARCHAR,  0, SQL_NULLABLE, 0}}; // IS_NULLABLE
 
 /* {{{ MADB_StmtColumns */
 SQLRETURN MADB_StmtColumns(MADB_Stmt *Stmt,
@@ -3585,32 +3597,13 @@ SQLRETURN MADB_StmtColumns(MADB_Stmt *Stmt,
 {
   MADB_DynString StmtStr;
   SQLRETURN ret;
-  size_t Length= strlen(MADB_CATALOG_COLUMNSp3);
-  char *ColumnsPart= MADB_CALLOC(Length);
-  unsigned int OctetsPerChar= Stmt->Connection->Charset.cs_info->char_maxlen > 0 && Stmt->Connection->Charset.cs_info->char_maxlen < 10 ? Stmt->Connection->Charset.cs_info->char_maxlen : 1;
 
   MDBUG_C_ENTER(Stmt->Connection, "StmtColumns");
-
-  if (ColumnsPart == NULL)
-  {
-    return MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
-  }
-
-  _snprintf(ColumnsPart, Length, MADB_CATALOG_COLUMNSp3, OctetsPerChar);
 
   MADB_InitDynamicString(&StmtStr, "", 8192, 1024);
  
   MADB_CLEAR_ERROR(&Stmt->Error);
-  if (MADB_DynstrAppend(&StmtStr, MADB_CATALOG_COLUMNSp1))
-    goto dynerror;
-  if (MADB_DynstrAppend(&StmtStr, MADB_SQL_DATATYPE(Stmt)))
-    goto dynerror;
-  if (MADB_DynstrAppend(&StmtStr, ColumnsPart))
-    goto dynerror;
-  if (MADB_DynstrAppend(&StmtStr, MADB_DEFAULT_COLUMN(Stmt->Connection)))
-    goto dynerror;
-
-  if (MADB_DynstrAppend(&StmtStr, MADB_CATALOG_COLUMNSp4))
+  if (MADB_DynstrAppend(&StmtStr, MADB_COLUMNS(Stmt)))
     goto dynerror;
 
   ADJUST_LENGTH(CatalogName, NameLength1);
@@ -3618,7 +3611,7 @@ SQLRETURN MADB_StmtColumns(MADB_Stmt *Stmt,
   ADJUST_LENGTH(TableName, NameLength3);
   ADJUST_LENGTH(ColumnName, NameLength4);
 
-  if(MADB_DynstrAppend(&StmtStr, "TABLE_SCHEMA = "))
+  if(MADB_DynstrAppend(&StmtStr, " WHERE TABLE_SCHEMA = "))
     goto dynerror;
 
   if (CatalogName)
@@ -3629,7 +3622,7 @@ SQLRETURN MADB_StmtColumns(MADB_Stmt *Stmt,
       goto dynerror;
   }
   else
-    if (MADB_DynstrAppend(&StmtStr, "DATABASE()"))
+    if (MADB_DynstrAppend(&StmtStr, "DATABASE() "))
       goto dynerror;
 
   if (TableName && NameLength3)
@@ -3656,14 +3649,12 @@ SQLRETURN MADB_StmtColumns(MADB_Stmt *Stmt,
     MADB_FixColumnDataTypes(Stmt, SqlColumnsColType);
   }
 
-  MADB_FREE(ColumnsPart);
   MADB_DynstrFree(&StmtStr);
   MDBUG_C_DUMP(Stmt->Connection, ret, d);
 
   return ret;
 
 dynerror:
-  MADB_FREE(ColumnsPart);
   MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
   return Stmt->Error.ReturnValue;
 }
