@@ -71,12 +71,7 @@ jobs:
             mkdir tmp
             .travis/gen-ssl.sh singlestore.example.com tmp
             export SSLCERT=$PROJ_PATH/tmp
-            cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL
-            cmake --build . --config RelWithDebInfo
-            cd test
-            export ODBCINI="$PWD/odbc.ini"
-            export ODBCSYSINI=$PWD
-            ctest -V
+            ./.circleci/script.sh
 
 workflows:
   test:
