@@ -2,21 +2,14 @@ version: 2.1
 commands:
   setup_environment:
     description: "Setup the machine environment"
-    parameters:
-      sbt_version:
-        type: string
-        default: 1.3.5
     steps:
       - run:
           name: Setup Machine
           command: |
             sudo apt update
             sudo apt install -y curl
-            curl -L -o /tmp/sbt-<< parameters.sbt_version >>.deb https://dl.bintray.com/sbt/debian/sbt-<< parameters.sbt_version >>.deb
-            sudo dpkg -i /tmp/sbt-<< parameters.sbt_version >>.deb
-            sudo rm /tmp/sbt-<< parameters.sbt_version >>.deb
             sudo apt-get update
-            sudo apt-get install -y sbt python-pip git mysql-client-core-5.5
+            sudo apt-get install -y git mysql-client-core-5.5
             sudo apt-get clean
             sudo apt-get autoclean
 
@@ -38,15 +31,16 @@ jobs:
       TEST_SCHEMA: test
       TEST_UID: root
       TEST_PASSWORD:
-      #      JAVA_HOME: /usr/lib/jvm/jdk1.8.0
       CONTINUOUS_INTEGRATION: true
-#      SBT_OPTS: "-Xmx256M"
     steps:
       - setup_environment
       - checkout
       - run:
           name: Setup test cluster
-          command: ./scripts/ensure-test-memsql-cluster.sh
+          command: |
+            echo $PWD
+            ls
+            ./scripts/ensure-test-memsql-cluster.sh
       - run:
           name: Run tests
           command: |
