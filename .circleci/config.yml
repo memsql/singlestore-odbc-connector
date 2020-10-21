@@ -39,7 +39,7 @@ jobs:
           name: Setup test cluster
           command: |
             echo $PWD
-            ls
+            ls -la
             ./scripts/ensure-test-memsql-cluster.sh
       - run:
           name: Run tests
