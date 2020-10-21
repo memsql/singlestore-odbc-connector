@@ -40,7 +40,7 @@ jobs:
           command: |
             echo $PWD
             ls -la
-            ./scripts/ensure-test-memsql-cluster.sh
+            .scripts/ensure-test-memsql-cluster.sh
       - run:
           name: Run tests
           command: |
