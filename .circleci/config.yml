@@ -9,7 +9,7 @@ commands:
             sudo apt update
             sudo apt install -y curl
             sudo apt-get update
-            sudo apt-get install -y git mysql-client-core-5.5
+            sudo apt-get install -y git python-pip mysql-client-core-5.5
             sudo apt-get clean
             sudo apt-get autoclean
 
