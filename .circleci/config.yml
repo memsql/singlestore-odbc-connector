@@ -57,6 +57,8 @@ jobs:
             sudo install lib/mariadb/plugin/dialog.so /usr/lib/mariadb/plugin/
             sudo install lib/mariadb/plugin/mysql_clear_password.so /usr/lib/mariadb/plugin/
             sudo install lib/mariadb/plugin/sha256_password.so /usr/lib/mariadb/plugin/
+            sudo apt-get update
+            sudo apt-get install unixodbc odbcinst
             cd ..
       - run:
           name: Run tests
