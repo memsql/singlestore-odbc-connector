@@ -57,7 +57,7 @@ else
   ls -lrt ${SSLCERT}
 
 
-  export MYSQL_TEST_HOST=mariadb.example.com
+  export MYSQL_TEST_HOST=singlestore.example.com
   export MYSQL_TEST_DB=ctest
   export MYSQL_TEST_USER=bob
   export MYSQL_TEST_PORT=3305

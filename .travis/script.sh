@@ -59,9 +59,9 @@ DEBIAN_FRONTEND=noninteractive sudo apt-get update
 DEBIAN_FRONTEND=noninteractive sudo apt-get install --allow-unauthenticated -y --force-yes -m unixodbc-dev odbcinst1debian2 libodbc1 
 
 #build odbc connector
-export TEST_DRIVER=maodbc_test
-export TEST_DSN=maodbc_test
-export TEST_SERVER=mariadb.example.com
+export TEST_DRIVER=singlestore_test
+export TEST_DSN=singlestore_test
+export TEST_SERVER=singlestore.example.com
 export TEST_SOCKET=
 export TEST_SCHEMA=odbc_test
 export TEST_UID=bob

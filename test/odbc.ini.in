@@ -1,9 +1,9 @@
 [ODBC Data Sources]
-@TEST_DSN@ = MariaDB ODBC Connector Test
+@TEST_DSN@ = SingleStore ODBC Connector Test
 
 [@TEST_DSN@]
 Driver      = @TEST_DRIVER@
-DESCRIPTION = MariaDB ODBC Connector Test
+DESCRIPTION = SingleStore ODBC Connector Test
 SERVER      = @TEST_SERVER@
 PORT        = @TEST_PORT@
 DATABASE    = @TEST_SCHEMA@

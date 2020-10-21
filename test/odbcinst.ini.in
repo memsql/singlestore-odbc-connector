@@ -5,5 +5,5 @@ TraceFile = /tmp/maodbc_trace.log
 
 [@TEST_DRIVER@]
 Driver      = @DRIVER_LIB_LOCATION@
-DESCRIPTION = MariaDB ODBC Connector
+DESCRIPTION = SingleStore ODBC Connector
 Threading   = 0

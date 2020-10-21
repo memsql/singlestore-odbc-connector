@@ -3,7 +3,7 @@ resources:
 
     - container: ubuntu-1804
       image: ubuntu:18.04
-      options: "--name ubuntu-1804 --add-host=mariadb.example.com:127.0.0.1 -v /usr/bin/docker:/tmp/docker:ro"
+      options: "--name ubuntu-1804 --add-host=singlestore.example.com:127.0.0.1 -v /usr/bin/docker:/tmp/docker:ro"
 
 jobs:
 
@@ -17,7 +17,7 @@ jobs:
           java --version
           mkdir tmp
           chmod 777 .travis/gen-ssl.sh
-          .travis/gen-ssl.sh mariadb.example.com tmp
+          .travis/gen-ssl.sh singlestore.example.com tmp
           cp -R tmp $BUILD_ARTIFACTSTAGINGDIRECTORY
         displayName: 'create SSL certificates'
 
@@ -59,7 +59,7 @@ jobs:
         displayName: 'install server'
 
       - script: |
-          echo 127.0.0.1 mariadb.example.com >> %WINDIR%\System32\Drivers\Etc\Hosts
+          echo 127.0.0.1 singlestore.example.com >> %WINDIR%\System32\Drivers\Etc\Hosts
         displayName: 'set hostname'
 
       - script: |
@@ -99,7 +99,7 @@ jobs:
             New-ItemProperty -Path $regPath -Name "OPTIONS" -Value "0"
             New-ItemProperty -Path $regPath -Name "PORT" -Value "3306"
             New-ItemProperty -Path $regPath -Name "PWD" -Value "Passw@rd2"
-            New-ItemProperty -Path $regPath -Name "SERVER" -Value "mariadb.example.com"
+            New-ItemProperty -Path $regPath -Name "SERVER" -Value "singlestore.example.com"
             New-ItemProperty -Path $regPath -Name "SSLVERIFY" -Value "0"
             New-ItemProperty -Path $regPath -Name "TCPIP" -Value "1"
             New-ItemProperty -Path $regPath -Name "UID" -Value "someUser"
@@ -237,9 +237,9 @@ jobs:
 
           #cd ..
           export TEST_SCHEMA=testo
-          export TEST_DRIVER=maodbc_test
-          export TEST_DSN=maodbc_test
-          export TEST_SERVER=mariadb.example.com
+          export TEST_DRIVER=singlestore_test
+          export TEST_DSN=singlestore_test
+          export TEST_SERVER=singlestore.example.com
           export TEST_UID=someUser
           export TEST_PASSWORD=Passw@rd2
 
@@ -286,9 +286,9 @@ jobs:
           cd $(System.DefaultWorkingDirectory)/mariadb-enterprise*/
           sudo ./bin/mysqladmin shutdown
         env:
-          TEST_DRIVER: maodbc_test
-          TEST_DSN: maodbc_test
-          TEST_SERVER: mariadb.example.com
+          TEST_DRIVER: singlestore_test
+          TEST_DSN: singlestore_test
+          TEST_SERVER: singlestore.example.com
           TEST_SOCKET:
           TEST_SCHEMA: testo
           TEST_UID: someUser
