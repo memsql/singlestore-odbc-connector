@@ -23,8 +23,6 @@ commands:
 jobs:
   test:
     parameters:
-      spark_version:
-        type: string
       memsql_image:
         type: string
     machine: true
