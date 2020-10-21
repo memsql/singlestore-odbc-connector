@@ -45,6 +45,12 @@ jobs:
           name: Run tests
           command: |
             export MEMSQL_HOST=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' memsql-integration)
+            chmod 777 .travis/build/
+            export PROJ_PATH=`pwd`
+            export ENTRYPOINT=$PROJ_PATH/.travis/sql
+            mkdir tmp
+            .travis/gen-ssl.sh singlestore.example.com tmp
+            export SSLCERT=$PROJ_PATH/tmp
             cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL
             cmake --build . --config RelWithDebInfo
             cd test
