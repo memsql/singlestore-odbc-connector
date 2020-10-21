@@ -59,6 +59,7 @@ jobs:
             sudo install lib/mariadb/plugin/sha256_password.so /usr/lib/mariadb/plugin/
             sudo apt-get update
             sudo apt-get install unixodbc odbcinst
+            sudo apt-get install unixodbc-dev
             cd ..
       - run:
           name: Run tests
