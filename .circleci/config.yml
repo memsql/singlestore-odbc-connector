@@ -21,6 +21,7 @@ commands:
             brew update
             brew install curl
             brew install mysql-client
+            brew install docker
             brew cleanup
 
 orbs:
