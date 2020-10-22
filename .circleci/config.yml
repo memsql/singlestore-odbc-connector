@@ -27,7 +27,6 @@ jobs:
       TEST_DRIVER: singlestore_test
       TEST_DSN: singlestore_test
       TEST_SERVER: singlestore.example.com
-      TEST_SOCKET:
       TEST_SCHEMA: test
       TEST_UID: root
       TEST_PASSWORD:
