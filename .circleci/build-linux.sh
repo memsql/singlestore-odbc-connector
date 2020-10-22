@@ -6,7 +6,13 @@ set -e
 ###################################################################################################################
 # test different type of configuration
 ###################################################################################################################
-mysql=( mysql --protocol=tcp -uroot -h127.0.0.1 --port=5506 )
+
+echo 127.0.0.1 singlestore.example.com | sudo tee -a /etc/hosts
+export MEMSQL_HOST=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' memsql-integration)
+export PROJ_PATH=`pwd`
+mkdir tmp
+.circleci/gen-ssl.sh singlestore.example.com tmp
+export SSLCERT=$PROJ_PATH/tmp
 
 #list ssl certificates
 ls -lrt ${SSLCERT}
