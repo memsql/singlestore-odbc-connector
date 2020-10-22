@@ -18,10 +18,10 @@ commands:
       - run:
           name: Setup Machine
           command: |
-            sudo brew update
-            sudo brew install -y curl
-            sudo brew install -y git mysql-client
-            sudo brew cleanup
+            brew update
+            brew install -y curl
+            brew install -y git mysql-client
+            brew cleanup
 
 orbs:
   win: circleci/windows@2.2.0
