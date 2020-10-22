@@ -14,6 +14,34 @@ commands:
             sudo apt-get autoclean
 
 jobs:
+  build-windows:
+    executor:
+      name: win/vs2019
+      shell: bash.exe
+    steps:
+      - checkout
+      - run: echo 'Do something'
+  build-macos:
+    parameters:
+      memsql_image:
+        type: string
+    macos:
+      xcode: 11.0.0
+    environment:
+      MEMSQL_IMAGE: << parameters.memsql_image >>
+      MEMSQL_PORT: 5506
+      MEMSQL_USER: root
+      MEMSQL_DB: test
+      TEST_DRIVER: singlestore_test
+      TEST_DSN: singlestore_test
+      TEST_SERVER: singlestore.example.com
+      TEST_SCHEMA: test
+      TEST_UID: root
+      TEST_PORT: 5506
+      CONTINUOUS_INTEGRATION: true
+    steps:
+      - checkout
+      - run: echo 'Do something'
   test:
     parameters:
       memsql_image:
@@ -65,6 +93,14 @@ jobs:
 workflows:
   test:
     jobs:
+      - build-windows:
+      - build-macos:
+          matrix:
+            parameters:
+              memsql_image:
+                - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
+                - memsql/cluster-in-a-box:centos-6.8.15-029542cbf3-1.9.3-1.4.1
+                - memsql/cluster-in-a-box:6.7.18-db1caffe94-1.6.1-1.1.1
       - test:
 #          filters:
 #            tags:
