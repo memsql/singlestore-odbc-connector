@@ -21,7 +21,7 @@ commands:
             brew update
             brew install curl
             brew install mysql-client
-            brew install docker
+            brew cask install docker
             brew cleanup
 
 orbs:
@@ -64,7 +64,6 @@ jobs:
       - run:
           name: Setup test cluster
           command: |
-            sudo systemctl start docker
             ./scripts/ensure-test-memsql-cluster.sh
       - run:
           name: Create test database
