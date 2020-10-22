@@ -29,6 +29,7 @@ jobs:
       TEST_SERVER: singlestore.example.com
       TEST_SCHEMA: test
       TEST_UID: root
+      TEST_PORT: 5506
       CONTINUOUS_INTEGRATION: true
     steps:
       - setup_environment
