@@ -45,14 +45,22 @@ jobs:
           name: Setup ODBC Driver Manager
           command: |
             sudo apt-get update
-            sudo apt-get install -y git cmake make gcc libssl-dev unixodbc-dev
-            sudo apt-get install --allow-unauthenticated -y --force-yes -m unixodbc-dev odbcinst1debian2 libodbc1
-#            git clone https://github.com/MariaDB/mariadb-connector-odbc.git
-#            mkdir build && cd build
-#            cmake ../mariadb-connector-odbc/ -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_SSL=OPENSSL -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
-#            cmake --build . --config RelWithDebInfo
-#            sudo make install
-#            cd ..
+            sudo apt-get install unixodbc odbcinst
+            sudo apt-get install unixodbc-dev
+            mkdir odbc_package
+            cd odbc_package
+            wget https://downloads.mariadb.com/Connectors/odbc/connector-odbc-3.1.7/mariadb-connector-odbc-3.1.7-ga-debian-x86_64.tar.gz
+            tar -xvzf mariadb-connector-odbc-3.1.7-ga-debian-x86_64.tar.gz
+            sudo install lib/libmaodbc.so /usr/lib/
+            sudo install -d /usr/lib/mariadb/
+            sudo install -d /usr/lib/mariadb/plugin/
+            sudo install lib/mariadb/plugin/auth_gssapi_client.so /usr/lib/mariadb/plugin/
+            sudo install lib/mariadb/plugin/caching_sha2_password.so /usr/lib/mariadb/plugin/
+            sudo install lib/mariadb/plugin/client_ed25519.so /usr/lib/mariadb/plugin/
+            sudo install lib/mariadb/plugin/dialog.so /usr/lib/mariadb/plugin/
+            sudo install lib/mariadb/plugin/mysql_clear_password.so /usr/lib/mariadb/plugin/
+            sudo install lib/mariadb/plugin/sha256_password.so /usr/lib/mariadb/plugin/
+            cd ..
       - run:
           name: Test
           command: |
