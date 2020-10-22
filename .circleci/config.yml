@@ -13,10 +13,13 @@ commands:
             sudo apt-get clean
             sudo apt-get autoclean
 
+orbs:
+  win: circleci/windows@2.2.0
+
 jobs:
   build-windows:
     executor:
-      name: win/vs2019
+      name: win/default
       shell: bash.exe
     steps:
       - checkout
@@ -93,7 +96,7 @@ jobs:
 workflows:
   test:
     jobs:
-      - build-windows:
+      - build-windows
       - build-macos:
           matrix:
             parameters:
@@ -102,9 +105,9 @@ workflows:
                 - memsql/cluster-in-a-box:centos-6.8.15-029542cbf3-1.9.3-1.4.1
                 - memsql/cluster-in-a-box:6.7.18-db1caffe94-1.6.1-1.1.1
       - test:
-#          filters:
-#            tags:
-#              only: /^v.*/
+          #          filters:
+          #            tags:
+          #              only: /^v.*/
           matrix:
             parameters:
               memsql_image:
