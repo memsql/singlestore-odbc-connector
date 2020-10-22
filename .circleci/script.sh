@@ -6,7 +6,7 @@ set -e
 ###################################################################################################################
 # test different type of configuration
 ###################################################################################################################
-mysql=( mysql --protocol=tcp -uroot -h127.0.0.1 --port=3306 )
+mysql=( mysql --protocol=tcp -uroot -h127.0.0.1 --port=5506 )
 
 #list ssl certificates
 ls -lrt ${SSLCERT}
