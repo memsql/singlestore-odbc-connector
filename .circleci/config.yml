@@ -29,7 +29,6 @@ jobs:
       TEST_SERVER: singlestore.example.com
       TEST_SCHEMA: test
       TEST_UID: root
-      TEST_PASSWORD:
       CONTINUOUS_INTEGRATION: true
     steps:
       - setup_environment
@@ -46,20 +45,7 @@ jobs:
             sudo apt-get update
             sudo apt-get install unixodbc odbcinst
             sudo apt-get install unixodbc-dev
-            mkdir odbc_package
-            cd odbc_package
-            wget https://downloads.mariadb.com/Connectors/odbc/connector-odbc-3.1.7/mariadb-connector-odbc-3.1.7-ga-debian-x86_64.tar.gz
-            tar -xvzf mariadb-connector-odbc-3.1.7-ga-debian-x86_64.tar.gz
-            sudo install lib/libmaodbc.so /usr/lib/
-            sudo install -d /usr/lib/mariadb/
-            sudo install -d /usr/lib/mariadb/plugin/
-            sudo install lib/mariadb/plugin/auth_gssapi_client.so /usr/lib/mariadb/plugin/
-            sudo install lib/mariadb/plugin/caching_sha2_password.so /usr/lib/mariadb/plugin/
-            sudo install lib/mariadb/plugin/client_ed25519.so /usr/lib/mariadb/plugin/
-            sudo install lib/mariadb/plugin/dialog.so /usr/lib/mariadb/plugin/
-            sudo install lib/mariadb/plugin/mysql_clear_password.so /usr/lib/mariadb/plugin/
-            sudo install lib/mariadb/plugin/sha256_password.so /usr/lib/mariadb/plugin/
-            cd ..
+            sudo apt-get install --allow-unauthenticated -y --force-yes -m unixodbc-dev odbcinst1debian2 libodbc1
       - run:
           name: Test
           command: |
