@@ -18,6 +18,9 @@ orbs:
 
 jobs:
   build-windows:
+    parameters:
+      memsql_image:
+        type: string
     executor:
       name: win/default
       shell: powershell.exe
