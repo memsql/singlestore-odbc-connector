@@ -39,6 +39,10 @@ jobs:
           command: |
             ./scripts/ensure-test-memsql-cluster.sh
       - run:
+          name: Create test database
+          command: |
+            mysql -u root -P 5506 -e "create database test;"
+      - run:
           name: Setup ODBC Driver Manager
           command: |
             sudo apt-get update
