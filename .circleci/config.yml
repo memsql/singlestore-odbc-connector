@@ -33,12 +33,12 @@ jobs:
     steps:
       - setup_environment
       - checkout
-      - run:
-          name: Setup test cluster
-          command: |
-            echo $PWD
-            ls -la
-            ./scripts/ensure-test-memsql-cluster.sh
+#      - run:
+#          name: Setup test cluster
+#          command: |
+#            echo $PWD
+#            ls -la
+#            ./scripts/ensure-test-memsql-cluster.sh
       - run:
           name: Setup ODBC Driver Manager
           command: |
@@ -49,8 +49,9 @@ jobs:
       - run:
           name: Test
           command: |
+            ls /etc/ | grep "odbc*"
             cat /etc/odbcinst.ini
-            ldd /usr/lib/libmaodbc.so
+#            ldd /usr/lib/libmaodbc.so
       - run:
           name: Run tests
           command: |
