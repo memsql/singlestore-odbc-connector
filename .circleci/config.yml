@@ -33,12 +33,10 @@ jobs:
     steps:
       - setup_environment
       - checkout
-#      - run:
-#          name: Setup test cluster
-#          command: |
-#            echo $PWD
-#            ls -la
-#            ./scripts/ensure-test-memsql-cluster.sh
+      - run:
+          name: Setup test cluster
+          command: |
+            ./scripts/ensure-test-memsql-cluster.sh
       - run:
           name: Setup ODBC Driver Manager
           command: |
