@@ -28,11 +28,9 @@ jobs:
       - checkout
       - run: systeminfo
       - run:
-          name: "Check docker"
-          shell: powershell.exe
+          name: Setup test cluster
           command: |
-            docker info
-            docker run hello-world:nanoserver-1809
+            ./scripts/ensure-test-memsql-cluster.sh
 
   build-macos:
     parameters:
