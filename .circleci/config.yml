@@ -48,7 +48,7 @@ jobs:
             sudo apt-get install -y git cmake make gcc libssl-dev unixodbc-dev
             git clone https://github.com/MariaDB/mariadb-connector-odbc.git
             mkdir build && cd build
-            cmake ../singlestore-odbc-connector/ -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_SSL=OPENSSL -DCMAKE_VERBOSE_MAKEFILE:BOOL=O
+            cmake ../singlestore-odbc-connector/ -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_SSL=OPENSSL -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
             cmake --build . --config RelWithDebInfo
             sudo make install
             cd ..
