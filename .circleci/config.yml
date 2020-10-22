@@ -1,6 +1,6 @@
 version: 2.1
 commands:
-  setup_environment:
+  setup-environment-linux:
     description: "Setup the machine environment"
     steps:
       - run:
@@ -12,6 +12,16 @@ commands:
             sudo apt-get install -y git python-pip mysql-client-core-5.5
             sudo apt-get clean
             sudo apt-get autoclean
+  setup-environment-macos:
+    description: "Setup the machine environment"
+    steps:
+      - run:
+          name: Setup Machine
+          command: |
+            sudo brew update
+            sudo brew install -y curl
+            sudo brew install -y git mysql-client
+            sudo brew cleanup
 
 orbs:
   win: circleci/windows@2.2.0
@@ -48,8 +58,16 @@ jobs:
       TEST_PORT: 5506
       CONTINUOUS_INTEGRATION: true
     steps:
+      - setup-environment-macos
       - checkout
-      - run: echo 'Do something'
+      - run:
+          name: Setup test cluster
+          command: |
+            ./scripts/ensure-test-memsql-cluster.sh
+      - run:
+          name: Create test database
+          command: |
+            mysql -h 127.0.0.1 -u root -P 5506 -e "create database test;"
   build-linux:
     parameters:
       memsql_image:
@@ -65,7 +83,7 @@ jobs:
       TEST_PORT: 5506
       CONTINUOUS_INTEGRATION: true
     steps:
-      - setup_environment
+      - setup-environment-linux
       - checkout
       - run:
           name: Setup test cluster
