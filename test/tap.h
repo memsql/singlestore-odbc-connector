@@ -120,12 +120,12 @@ int strcpy_s(char *dest, size_t buffer_size, const char *src)
 
 
 BOOL   UseDsnOnly= FALSE;
-static SQLCHAR *my_dsn=        (SQLCHAR *)"test";
+static SQLCHAR *my_dsn=        (SQLCHAR *)"maodbc_test";
 static SQLCHAR *my_uid=        (SQLCHAR *)"root";
 static SQLCHAR *my_pwd=        (SQLCHAR *)"";
 static SQLCHAR *my_schema=     (SQLCHAR *)"odbc_test";
-static SQLCHAR *my_drivername= (SQLCHAR *)"MariaDB ODBC 3.1 Driver";
-static SQLCHAR *my_servername= (SQLCHAR *)"localhost";
+static SQLCHAR *my_drivername= (SQLCHAR *)"maodbc_test";
+static SQLCHAR *my_servername= (SQLCHAR *)"127.0.0.1";
 static SQLCHAR *add_connstr=   (SQLCHAR*)"";
 
 static SQLWCHAR *wdsn;
@@ -142,7 +142,7 @@ static unsigned long my_options= 67108866;
 static SQLHANDLE     Env, Connection, Stmt, wConnection, wStmt;
 static SQLINTEGER    OdbcVer=        SQL_OV_ODBC3;
 
-static unsigned int  my_port=        3306;
+static unsigned int  my_port=        5506;
 char          ma_strport[12]= "PORT=3306";
 
 static int Travis= 0, TravisOnOsx= 0;

@@ -111,6 +111,7 @@ libmariadb/RelWithDebInfo
 
 # ODBC connector .gitignore
 CMakeFiles
+CMakeCache.txt
 cmake_install.cmake
 
 Testing
@@ -148,12 +149,16 @@ test/odbc_basic
 test/odbc_blob
 test/odbc_bulk
 test/odbc_catalog
-testodbc_/curext
+test/odbc_catalog1
+test/odbc_catalog2
+test/odbc_connstring
+test/odbc_curext
 test/odbc_cursor
 test/odbc_datetime
 test/odbc_desc
 test/odbc_dyn_cursor
 test/odbc_error
+test/odbc_escape_sequences
 test/odbc_info
 test/odbc_keys
 test/odbc_multistatement

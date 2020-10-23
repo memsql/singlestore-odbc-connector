@@ -40,7 +40,7 @@ char* SkipSpacesAndComments(char **CurPtr, size_t *Length, BOOL OverWrite)
 }
 
 
-char* SkipQuotedString(char **CurPtr, char *End, char Quote)
+char* SkipQuotedString(char **CurPtr, const char *End, char Quote)
 {
   while (*CurPtr < End && **CurPtr != Quote)
   {
@@ -61,7 +61,7 @@ char* SkipQuotedString(char **CurPtr, char *End, char Quote)
 }
 
 
-char* SkipQuotedString_Noescapes(char **CurPtr, char *End, char Quote)
+char* SkipQuotedString_Noescapes(char **CurPtr, const char *End, char Quote)
 {
   while (*CurPtr < End && **CurPtr != Quote)
   {
@@ -71,6 +71,161 @@ char* SkipQuotedString_Noescapes(char **CurPtr, char *End, char Quote)
   return *CurPtr;
 }
 
+// The order of strings in this array is important
+// Indices are used to determine if the syntax is procedure call
+// If you want to add new elements to this array, please add them to the end
+const char *supportedEscapes[] = {
+  // https://docs.microsoft.com/en-us/sql/odbc/reference/develop-app/date-time-and-timestamp-literals?view=sql-server-ver15
+  "d",
+  "ts", // we must check this, before checking "t"
+  "t",
+
+  // https://docs.microsoft.com/en-us/sql/odbc/reference/appendixes/outer-join-escape-sequence?view=sql-server-ver15
+  "oj",
+
+  // https://docs.microsoft.com/en-us/sql/odbc/reference/appendixes/scalar-function-escape-sequence?view=sql-server-ver15
+  "fn",
+
+  // https://docs.microsoft.com/en-us/sql/odbc/reference/appendixes/procedure-call-escape-sequence?view=sql-server-ver15
+  "call",
+  "?=call"
+
+  // https://docs.microsoft.com/en-us/sql/odbc/reference/appendixes/guid-escape-sequences?view=sql-server-ver15
+  // "guid" - is not supported by MemSQL
+
+  // https://docs.microsoft.com/en-us/sql/odbc/reference/appendixes/interval-escape-sequences?view=sql-server-ver15
+  // "INTERVAL" - interval type is not supported by MemSQL
+  // It can be used inside of some date/time functions
+  // For example https://docs.memsql.com/v7.1/reference/sql-reference/date-and-time-functions/date_add/
+
+  // https://docs.microsoft.com/en-us/sql/odbc/reference/appendixes/like-escape-sequence?view=sql-server-ver15
+  // "'{ch}'" - LIKE operator in MemSQL supports only '\' as escape character
+  // Can be implemented using REPLACE (a LIKE REPLACE(b, '\\', 'ch'))
+};
+
+const size_t supportedEscapesLength[] = {1, 2, 1, 2, 2, 4, 6};
+
+const int supportedEscapesSize = sizeof supportedEscapes / sizeof supportedEscapes[0];
+
+// copyWithoutEscape copies string from  src to dst and replaces escaped parts with correct MemSQL syntax
+// Examples:
+// "SELECT {d '11-04-2001'}" -> "SELECT '11-04-2001'"
+// "SELECT {t '01:10:10'}" -> "SELECT '01:10:10'"
+// "SELECT {ts '2001-10-1 01:10:10'}" -> "SELECT '2001-10-1 01:10:10'"
+// "SELECT {fn CONCAT({fn UCASE(col)}, RTRIM(LTRIM('  !  '))) } FROM scalar_function ORDER BY col" ->
+// "SELECT CONCAT(UCASE(col)}, RTRIM(LTRIM('  !  ')))  FROM scalar_function ORDER BY col"
+// "SELECT * FROM {oj l LEFT OUTER JOIN r ON l.a=r.b}" -> "SELECT * FROM l LEFT OUTER JOIN r ON l.a=r.b"
+// "{call ins(1)}" -> "CALL ins(1)"
+// "{?=call ins(2)}" -> "CALL ins(2)"
+// "{?=call ins100}" -> "CALL ins100()"
+int copyWithoutEscape(MADB_Stmt *Stmt, char **dest, char **src, const char *srcEnd, int openCurlyBrackets) {
+  char *destBeforeAppending = *dest;
+  while (*src < srcEnd) {
+    char *quotedString;
+    my_bool isCall;
+    my_bool supported = FALSE;
+    long stringLength;
+    char *destBeforeAppendingEscapedPart;
+
+    switch (**src) {
+      case '{':
+        // recursively unescape escaped part of the query
+        (*src)++; // skip opening bracket
+        (*src) = ltrim(*src); // skip whitespace characters
+        for (int i = 0; i < supportedEscapesSize; i++) {
+          if (*src + supportedEscapesLength[i] <= srcEnd &&
+          strncasecmp(*src, supportedEscapes[i], supportedEscapesLength[i]) == 0) {
+            (*src) += supportedEscapesLength[i];
+            // Indices 5 and 6 correspond to 'call' and '?=call' tokens respectively.
+            isCall = (i == 5 || i == 6);
+            if (isCall) {
+              strcpy(*dest, "CALL");
+              (*dest)+=4;
+            }
+            destBeforeAppendingEscapedPart = *dest;
+            if (copyWithoutEscape(Stmt, dest, src, srcEnd, openCurlyBrackets+1) != 0) {
+              return Stmt->Error.ReturnValue;
+            }
+
+            if (isCall) {
+              // nothing was added after the "CALL"
+              if (*dest == destBeforeAppendingEscapedPart) {
+                return MADB_SetError(&Stmt->Error, MADB_ERR_42000, "No procedure is called inside of the procedure call escape sequence", 0);
+              }
+
+              // add round brackets if procedure doesn't take any parameters
+              // "{call p  }" -> "CALL p()"
+              if (*(*dest - 1) != ')') {
+                strcpy(*dest, "()");
+                (*dest)+=2;
+              }
+            }
+            supported = TRUE;
+            break;
+          }
+        }
+
+        if (!supported) {
+          return MADB_SetError(&Stmt->Error, MADB_ERR_42000,
+                        "Escape syntax, used in the query, is not supported by the driver.\n"
+                        "Driver supports the following escape sequences:\n"
+                        "* Date, Time, and Timestamp Literals (d, t, ts)\n"
+                        "* Scalar Function Calls (fn)\n"
+                        "* Outer Joins (oj)\n"
+                        "* Procedure Calls (call, ?=call)\n", 0);
+        }
+        break;
+      case '}':
+        if (openCurlyBrackets == 0) {
+          return MADB_SetError(&Stmt->Error, MADB_ERR_42000, "Failed to find a pair for a closing curly bracket", 0);
+        }
+
+        (*src)++; // skip closing bracket
+
+        // trim whitespace characters from the end
+        (*dest)--;
+        while (iswspace(**dest) && *dest >= destBeforeAppending) {
+          (*dest)--;
+        }
+        (*dest)++;
+
+        return 0;
+      case '"':
+      case '\'':
+      case '`':
+        // append the whole string
+        quotedString = (*src) + 1;
+        char Quote = **src;
+
+        if (Stmt->Query.NoBackslashEscape || Quote == '`' || /* Backtick works with ANSI_QUOTES */
+        (Stmt->Query.AnsiQuotes && Quote == '"')) { /* In indetifier quotation backslash does not escape anything - CLI has error with that */
+          SkipQuotedString_Noescapes(&quotedString, srcEnd, Quote);
+        } else {
+          SkipQuotedString(&quotedString, srcEnd, Quote);
+        }
+
+        stringLength = quotedString - (*src);
+        if (*quotedString == Quote) {
+          stringLength++;
+        }
+          
+        strncpy(*dest, *src, stringLength);
+        (*dest) += stringLength;
+        (*src) += stringLength;
+        break;
+      default:
+        (**dest) = (**src);
+        (*dest)++;
+        (*src)++;
+        break;
+    }
+  }
+
+  if (openCurlyBrackets != 0) {
+    return MADB_SetError(&Stmt->Error, MADB_ERR_42000, "Failed to find a pair for an opening curly bracket", 0);
+  }
+  return 0;
+}
 
 int MADB_ResetParser(MADB_Stmt *Stmt, char *OriginalQuery, SQLINTEGER OriginalLength)
 {
@@ -78,21 +233,30 @@ int MADB_ResetParser(MADB_Stmt *Stmt, char *OriginalQuery, SQLINTEGER OriginalLe
 
   if (OriginalQuery != NULL)
   {
-    /* We can have here not NULL-terminated string as a source, thus we need to allocate, copy meaningful characters and
-    add NULL. strndup does that for us. StmtSopy may change, p points to the allocated memory */
-    Stmt->Query.allocated= Stmt->Query.RefinedText= strndup(OriginalQuery, OriginalLength);
-
-    if (Stmt->Query.allocated == NULL)
-    {
-      return 1;
-    }
-
-    Stmt->Query.RefinedLength=     OriginalLength;
     Stmt->Query.BatchAllowed=      DSN_OPTION(Stmt->Connection, MADB_OPT_FLAG_MULTI_STATEMENTS) ? '\1' : '\0';
     Stmt->Query.AnsiQuotes=        MADB_SqlMode(Stmt->Connection, MADB_ANSI_QUOTES);
     Stmt->Query.NoBackslashEscape= MADB_SqlMode(Stmt->Connection, MADB_NO_BACKSLASH_ESCAPES);
+
+    // After unescaping with current conversions query size can't become bigger
+    char *processedQuery = (char*) MADB_ALLOC(OriginalLength+1);
+    if (processedQuery == NULL) {
+      return MADB_SetError(&Stmt->Error,  MADB_ERR_HY001, "Failed to allocate memory for the query string", 0);
+    }
+
+    char *processedQueryIterator = processedQuery;
+    char *originalQueryIterator = OriginalQuery;
+    if (copyWithoutEscape(Stmt, &processedQueryIterator, &originalQueryIterator, OriginalQuery + OriginalLength, 0) != 0) {
+      return Stmt->Error.ReturnValue;
+    }
+
+    // processedQueryIterator will point to the end of the processed query, so we append it with a '\0' symbol.
+    // processedQuery will contain the query without the escape syntax.
+    (*processedQueryIterator)='\0';
+
+    Stmt->Query.allocated= Stmt->Query.RefinedText= processedQuery;
+    Stmt->Query.RefinedLength=     processedQueryIterator - processedQuery;
   }
- 
+
   return 0;
 }
 
@@ -153,7 +317,7 @@ char *MADB_Token(MADB_QUERY *Query, unsigned int Idx)
 {
   char *p;
   unsigned int Offset= 0;
-  
+
   p= Query->RefinedText;
   if (!Query->Tokens.elements || !p)
     return NULL;
@@ -168,7 +332,7 @@ char *MADB_Token(MADB_QUERY *Query, unsigned int Idx)
 my_bool MADB_CompareToken(MADB_QUERY *Query, unsigned int Idx, char *Compare, size_t Length, unsigned int *Offset)
 {
   char *TokenString;
-  
+
   if (!(TokenString= MADB_Token(Query, Idx)))
     return FALSE;
   if (_strnicmp(TokenString, Compare, Length) == 0)
@@ -177,7 +341,7 @@ my_bool MADB_CompareToken(MADB_QUERY *Query, unsigned int Idx, char *Compare, si
       *Offset= (unsigned int)(TokenString - Query->RefinedText);
     return TRUE;
   }
- 
+
   return FALSE;
 }
 
@@ -400,7 +564,7 @@ int ParseQuery(MADB_QUERY *Query)
       SkipSpacesAndComments(&p, &Length, TRUE);
 
       SAVE_TOKEN(p);
-      
+
       ++StmtTokensCount;
       ReadingToken= TRUE;
 
