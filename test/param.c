@@ -1601,7 +1601,7 @@ ODBC_TEST(odbc212)
   SQLHDESC Ipd;
 #pragma warning(disable: 4996)
 #pragma warning(push)
-  CHECK_STMT_RC(Stmt, SQLBindParam(Stmt, 1, SQL_C_SHORT, SQL_SMALLINT, 0, 0, &a, NULL));
+  CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_SHORT, SQL_SMALLINT, 0, 0, &a, SQL_SETPARAM_VALUE_MAX, NULL));
 #pragma warning(pop)
   CHECK_STMT_RC(Stmt, SQLGetStmtAttr(Stmt, SQL_ATTR_IMP_PARAM_DESC, &Ipd, SQL_IS_POINTER, NULL));
   CHECK_DESC_RC(Ipd, SQLGetDescField(Ipd, 1, SQL_DESC_PARAMETER_TYPE, &a, SQL_IS_SMALLINT, NULL));
