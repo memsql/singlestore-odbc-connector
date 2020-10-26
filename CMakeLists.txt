@@ -51,7 +51,10 @@ SET (MARIADB_ODBC_SOURCES odbc_3_api.c
                           ma_server.c
                           ma_legacy_helpers.c
                           ma_typeconv.c
-                          ma_bulk.c)
+                          ma_bulk.c
+                          escape_sequences/ast.c
+                          escape_sequences/parser.c
+                          escape_sequences/lexical_analyzer.c)
 
 SET(DSN_DIALOG_FILES ${CMAKE_SOURCE_DIR}/dsn/odbc_dsn.c
                      ${CMAKE_SOURCE_DIR}/dsn/odbc_dsn.rc
@@ -59,6 +62,31 @@ SET(DSN_DIALOG_FILES ${CMAKE_SOURCE_DIR}/dsn/odbc_dsn.c
                      ma_dsn.c
 #                     ma_error.c
                      ma_common.c)
+
+IF(${LOCAL_BUILDING} STREQUAL TRUE)
+  find_program(LEX_EXE flex)
+  if(LEX_EXE STREQUAL "LEX_EXE-NOTFOUND")
+    message(FATAL_ERROR "You don't have flex installed. Please, run 'sudo apt-get install flex'")
+  endif(LEX_EXE STREQUAL "LEX_EXE-NOTFOUND")
+
+  find_program(YACC_EXE bison)
+  if(YACC_EXE STREQUAL "YACC_EXE-NOTFOUND")
+    message(FATAL_ERROR "You don't have bison installed. Please, run 'sudo apt-get install bison'")
+  endif(YACC_EXE STREQUAL "YACC_EXE-NOTFOUND")
+
+  ADD_CUSTOM_COMMAND(
+          OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/escape_sequences/parser.c ${CMAKE_CURRENT_SOURCE_DIR}/escape_sequences/parser.h
+          COMMAND ${YACC_EXE} -d -l --output=${CMAKE_CURRENT_SOURCE_DIR}/escape_sequences/parser.c ${CMAKE_CURRENT_SOURCE_DIR}/escape_sequences/parser.y
+          DEPENDS escape_sequences/parser.y
+  )
+
+  ADD_CUSTOM_COMMAND(
+          OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/escape_sequences/lexical_analyzer.c ${CMAKE_CURRENT_SOURCE_DIR}/escape_sequences/lexical_analyzer.h
+          COMMAND ${LEX_EXE} -L -o${CMAKE_CURRENT_SOURCE_DIR}/escape_sequences/lexical_analyzer.c
+          --header-file=${CMAKE_CURRENT_SOURCE_DIR}/escape_sequences/lexical_analyzer.h ${CMAKE_CURRENT_SOURCE_DIR}/escape_sequences/lexical_analyzer.l
+          DEPENDS escape_sequences/lexical_analyzer.l
+  )
+ENDIF()
 
 MACRO(ADD_OPTION _name _text _default)
   IF(NOT DEFINED ${_name})
