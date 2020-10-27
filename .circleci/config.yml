@@ -24,6 +24,7 @@ commands:
             brew install openssl
             brew install libiodbc
             brew install mysql-client
+            brew install docker
             brew cleanup
 
 orbs:
@@ -51,7 +52,6 @@ jobs:
         type: string
     macos:
       xcode: 11.0.0
-    machine: true
     environment:
       MEMSQL_IMAGE: << parameters.memsql_image >>
       TEST_DRIVER: singlestore_test
@@ -64,6 +64,7 @@ jobs:
     steps:
       - setup-environment-macos
       - checkout
+      - run: if [ -e /var/run/docker.sock ]; then sudo chown circleci:circleci /var/run/docker.sock; fi
       - run:
           name: Setup test cluster
           command: |
