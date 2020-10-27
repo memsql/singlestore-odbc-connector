@@ -20,8 +20,10 @@ commands:
           command: |
             brew update
             brew install curl
+            brew update
+            brew install openssl
+            brew install libiodbc
             brew install mysql-client
-            brew cask install docker
             brew cleanup
 
 orbs:
@@ -49,6 +51,7 @@ jobs:
         type: string
     macos:
       xcode: 11.0.0
+    machine: true
     environment:
       MEMSQL_IMAGE: << parameters.memsql_image >>
       TEST_DRIVER: singlestore_test
