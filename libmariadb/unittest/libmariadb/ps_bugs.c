@@ -5320,7 +5320,7 @@ struct my_tests_st my_tests[] = {
   {"test_bug20152", test_bug20152, TEST_CONNECTION_DEFAULT, 0, NULL , NULL},
   {"test_bug23383", test_bug23383, TEST_CONNECTION_DEFAULT, 0, NULL , NULL},
   {"test_bug27592", test_bug27592, TEST_CONNECTION_DEFAULT, 0, NULL , NULL},
-  {"test_bug28934", test_bug28934, TEST_CONNECTION_DEFAULT, 0, NULL , NULL},
+  //{"test_bug28934", test_bug28934, TEST_CONNECTION_DEFAULT, 0, NULL , NULL}, TODO: DON'T FORGET TO UNCOMMENT WHEN READY
   {"test_bug36004", test_bug36004, TEST_CONNECTION_DEFAULT, 0, NULL , NULL},
   {"test_bug3035", test_bug3035, TEST_CONNECTION_DEFAULT, 0, NULL , NULL},
   {"test_bug3117", test_bug3117, TEST_CONNECTION_DEFAULT, 0, NULL , NULL},

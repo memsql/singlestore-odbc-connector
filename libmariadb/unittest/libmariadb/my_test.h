@@ -169,12 +169,12 @@ MYSQL *my_test_connect(MYSQL *mysql,
                        const char *unix_socket,
                        unsigned long clientflag);
 
-static const char *schema = 0;
-static char *hostname = 0;
-static char *password = 0;
-static unsigned int port = 0;
+static const char *schema = "c_test";
+static char *hostname = "127.0.0.1";
+static char *password = "";
+static unsigned int port = 5506;
 static char *socketname = 0;
-static char *username = 0;
+static char *username = "root";
 static int force_tls= 0;
 static uchar is_mariadb= 0;
 static char *this_host= 0;
@@ -645,8 +645,8 @@ void run_tests(struct my_tests_st *test) {
       }
       /* clear connection: reset default connection or close extra connection */
       else if (mysql_default && (test[i].connection & TEST_CONNECTION_DEFAULT))  {
-          if (reset_connection(mysql))
-            return; /* default doesn't work anymore */
+          mysql_close(mysql_default);
+          mysql_default= test_connect(&test[i]);
       }
       else if (mysql && !(test[i].connection & TEST_CONNECTION_DONT_CLOSE))
       {
