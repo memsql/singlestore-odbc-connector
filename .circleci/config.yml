@@ -24,7 +24,9 @@ commands:
             brew install libiodbc
             brew install mysql-client
             brew install docker
+            brew install docker-machine
             brew cleanup
+            docker-machine create --driver virtualbox default
 
 orbs:
   win: circleci/windows@2.2.0
@@ -63,8 +65,6 @@ jobs:
     steps:
       - setup-environment-macos
       - checkout
-      - run: if [ -e /var/run/docker.sock ]; then sudo chown circleci:circleci /var/run/docker.sock; fi
-      - run: sudo dockerd
       - run:
           name: Setup test cluster
           command: |
