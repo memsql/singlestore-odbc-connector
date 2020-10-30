@@ -25,6 +25,7 @@ commands:
             brew install mysql-client
             brew install docker
             brew install docker-machine
+            brew cask install virtualbox
             brew cleanup
             docker-machine create --driver virtualbox default
 
