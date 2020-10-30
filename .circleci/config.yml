@@ -46,7 +46,7 @@ jobs:
       - run:
           name: Setup test cluster
           command: |
-            ./scripts/ensure-test-memsql-cluster.sh
+            bash scripts/ensure-test-memsql-cluster.sh
 
   build-macos:
     parameters:
