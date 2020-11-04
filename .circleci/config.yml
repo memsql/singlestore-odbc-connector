@@ -48,8 +48,8 @@ jobs:
     parameters:
       memsql_image:
         type: string
-    docker:
-      - image: sickcodes/docker-osx:latest
+    macos:
+      xcode: 11.0.0
     environment:
       MEMSQL_IMAGE: << parameters.memsql_image >>
       TEST_DRIVER: singlestore_test
@@ -60,12 +60,8 @@ jobs:
       TEST_PORT: 5506
       CONTINUOUS_INTEGRATION: true
     steps:
-#      - setup-environment-macos
+      - setup-environment-macos
       - checkout
-      - run:
-          name: test
-          command: |
-            docker images
 #      - setup_remote_docker:
 #          version: 19.03.13
 #          docker_layer_caching: true
@@ -80,7 +76,7 @@ jobs:
       - run:
           name: Run tests
           command: |
-            ./.circleci/build-linux.sh
+            ./.circleci/build-osx.sh
   build-linux:
     parameters:
       memsql_image:
