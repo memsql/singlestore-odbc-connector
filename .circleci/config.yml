@@ -23,9 +23,6 @@ commands:
             brew install openssl
             brew install libiodbc
             brew install mysql-client
-            brew install docker
-            brew install docker-machine
-            brew cask install virtualbox
             brew cleanup
             docker-machine create --driver virtualbox default
 
@@ -66,6 +63,9 @@ jobs:
     steps:
       - setup-environment-macos
       - checkout
+      - setup_remote_docker:
+          version: 19.03.13
+          docker_layer_caching: true
       - run:
           name: Setup test cluster
           command: |
