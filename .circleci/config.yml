@@ -65,14 +65,18 @@ jobs:
 #      - setup_remote_docker:
 #          version: 19.03.13
 #          docker_layer_caching: true
+#      - run:
+#          name: Setup test cluster
+#          command: |
+#            ./scripts/ensure-test-memsql-cluster-macos.sh
+#      - run:
+#          name: Create test database
+#          command: |
+#            mysql -h 127.0.0.1 -u root -P 5506 -e "create database test;"
       - run:
-          name: Setup test cluster
+          name: Run tests
           command: |
-            ./scripts/ensure-test-memsql-cluster-macos.sh
-      - run:
-          name: Create test database
-          command: |
-            mysql -h 127.0.0.1 -u root -P 5506 -e "create database test;"
+            ./.circleci/build-linux.sh
   build-linux:
     parameters:
       memsql_image:
