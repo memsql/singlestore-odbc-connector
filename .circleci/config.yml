@@ -60,7 +60,7 @@ jobs:
       TEST_PORT: 5506
       CONTINUOUS_INTEGRATION: true
     steps:
-      - setup-environment-macos
+#      - setup-environment-macos
       - checkout
       - run:
           name: test
