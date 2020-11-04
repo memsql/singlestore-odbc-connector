@@ -48,8 +48,8 @@ jobs:
     parameters:
       memsql_image:
         type: string
-    macos:
-      xcode: 11.0.0
+    docker:
+      - image: sickcodes/docker-osx:latest
     environment:
       MEMSQL_IMAGE: << parameters.memsql_image >>
       TEST_DRIVER: singlestore_test
@@ -62,6 +62,10 @@ jobs:
     steps:
       - setup-environment-macos
       - checkout
+      - run:
+          name: test
+          command: |
+            docker images
 #      - setup_remote_docker:
 #          version: 19.03.13
 #          docker_layer_caching: true
