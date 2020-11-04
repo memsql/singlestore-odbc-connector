@@ -24,7 +24,6 @@ commands:
             brew install libiodbc
             brew install mysql-client
             brew cleanup
-            docker-machine create --driver virtualbox default
 
 orbs:
   win: circleci/windows@2.2.0
