@@ -40,7 +40,7 @@ jobs:
       - checkout
       - run: systeminfo
       - run: choco install cmake -y
-      - run: $env:Path+=";$Env:ProgramFiles\CMake\bin"; ./makeall.bat
+#      - run: $env:Path+=";$Env:ProgramFiles\CMake\bin"; ./makeall.bat
 #      - run:
 #          name: Setup test cluster
 #          command: |
