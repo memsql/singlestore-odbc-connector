@@ -26,27 +26,24 @@ commands:
             brew cleanup
 
 orbs:
-  win: circleci/windows@2.2.0
+  win: circleci/windows@2.4.0
 
 jobs:
   build-windows:
     parameters:
       memsql_image:
         type: string
-    executor:
-      name: win/default
-      shell: powershell.exe
+    executor: win/default
     steps:
       - checkout
-      - run: systeminfo
       - run: choco install cmake -y
       - run:
-        name: Download CMake
-        command: |
-          $ProgressPreference = "SilentlyContinue"
-          Invoke-WebRequest -URI https://github.com/Kitware/CMake/releases/download/v3.16.4/cmake-3.16.4-win64-x64.zip -OutFile $Env:HOMEPATH\cmake-3.16.4-win64-x64.zip
-          Expand-Archive $Env:HOMEPATH\cmake-3.16.4-win64-x64.zip -DestinationPath "$Env:ProgramFiles"
-          Rename-Item "$Env:ProgramFiles\cmake-3.16.4-win64-x64" -NewName CMake
+          name: Download CMake
+          command: |
+            $ProgressPreference = "SilentlyContinue"
+            Invoke-WebRequest -URI https://github.com/Kitware/CMake/releases/download/v3.16.4/cmake-3.16.4-win64-x64.zip -OutFile $Env:HOMEPATH\cmake-3.16.4-win64-x64.zip
+            Expand-Archive $Env:HOMEPATH\cmake-3.16.4-win64-x64.zip -DestinationPath "$Env:ProgramFiles"
+            Rename-Item "$Env:ProgramFiles\cmake-3.16.4-win64-x64" -NewName CMake
 #      - run: $env:Path+=";$Env:ProgramFiles\CMake\bin"; ./makeall.bat
 #      - run:
 #          name: Setup test cluster
