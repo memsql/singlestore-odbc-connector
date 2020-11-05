@@ -9,4 +9,4 @@ cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL
 cmake --build . --config RelWithDebInfo
 cd wininstall
 dir
-#msiexec.exe /i wininstall\mariadb-connector-odbc-3.0.6-win32.msi
+msiexec.exe /i wininstall\mariadb-connector-odbc-3.1.10-win64.msi
