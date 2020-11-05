@@ -40,10 +40,11 @@ jobs:
       - checkout
       - run: systeminfo
       - run: choco install cmake -y
-      - run: |
+      - command: |
         $ProgressPreference = "SilentlyContinue"
         Invoke-WebRequest -URI https://github.com/Kitware/CMake/releases/download/v3.16.4/cmake-3.16.4-win64-x64.zip -OutFile $Env:HOMEPATH\cmake-3.16.4-win64-x64.zip
         Expand-Archive $Env:HOMEPATH\cmake-3.16.4-win64-x64.zip -DestinationPath $Env:HOMEPATH
+        Rename-Item "$Env:ProgramFiles\cmake-3.16.4-win64-x64" -NewName CMake
 #      - run: $env:Path+=";$Env:ProgramFiles\CMake\bin"; ./makeall.bat
 #      - run:
 #          name: Setup test cluster
