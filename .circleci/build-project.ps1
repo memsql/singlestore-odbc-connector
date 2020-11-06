@@ -7,4 +7,6 @@ cmake --build . --config RelWithDebInfo
 dir
 cd wininstall
 dir
+cmake --build . --config RelWithDebInfo
+dir
 msiexec.exe /i wininstall\mariadb-connector-odbc-3.1.10-win64.msi
