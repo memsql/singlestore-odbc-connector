@@ -9,7 +9,7 @@ cd ..
 
 cd libmariadb
 cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo
-#cmake --build . --config RelWithDebInfo --parallel 2
+cmake --build . --config RelWithDebInfo --parallel 2
 cd ..
 cmake --build . --config RelWithDebInfo --parallel 2
 
