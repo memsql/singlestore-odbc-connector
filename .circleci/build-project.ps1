@@ -11,9 +11,9 @@ cd libmariadb
 cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo
 cmake --build . --config RelWithDebInfo --parallel 2
 cd ..
+cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCONC_WITH_MSI=OFF -DWITH_SSL=SCHANNEL .
 cmake --build . --config RelWithDebInfo --parallel 2
 
-#cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCONC_WITH_MSI=OFF -DWITH_SSL=SCHANNEL .
 #cmake --build . --config RelWithDebInfo
 #dir
 #cd wininstall
