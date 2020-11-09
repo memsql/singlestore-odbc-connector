@@ -5,6 +5,7 @@ if (-not (Get-Command cmake -ErrorAction SilentlyContinue)) {
 mkdir win64
 cd win64
 cmake .. -G "%CMAKE_PARAM_G%" -DCONC_WITH_MSI=OFF -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_SIGNCODE=0 -DWITH_SSL=SCHANNEL -DWITH_OPENSSL=ON
+cd ..
 
 cd libmariadb
 cmake --build . --config RelWithDebInfo --parallel 2
