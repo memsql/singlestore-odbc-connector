@@ -36,11 +36,11 @@ cat ${ODBCINI}
 export ODBCINSTINI="$PWD/test/odbcinst.ini"
 cat ${ODBCINSTINI}
 
-# check users of MariaDB and create test database
-mysql --version
-mysql -u root -e "SELECT user, host FROM mysql.user"
-mysql -u root -e "CREATE DATABASE odbc_test"
-mysql -u root -e "SHOW DATABASES"
+## check users of MariaDB and create test database
+#mysql --version
+#mysql -u root -e "SELECT user, host FROM mysql.user"
+#mysql -u root -e "CREATE DATABASE odbc_test"
+#mysql -u root -e "SHOW DATABASES"
 
 echo "Running tests"
 cd test
