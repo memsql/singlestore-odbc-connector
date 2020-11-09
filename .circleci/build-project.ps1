@@ -8,7 +8,8 @@ cmake .. -DCONC_WITH_MSI=OFF -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_SIGNCODE=0
 cd ..
 
 cd libmariadb
-cmake --build . --config RelWithDebInfo --parallel 2
+cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo
+#cmake --build . --config RelWithDebInfo --parallel 2
 cd ..
 cmake --build . --config RelWithDebInfo --parallel 2
 
