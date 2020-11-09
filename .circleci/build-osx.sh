@@ -22,26 +22,26 @@ export TEST_PASSWORD=
 # install and start MariaDB Server
 # brew install mariadb
 
-# ls -la /usr/local/Cellar/openssl/
-cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL -DWITH_IODBC=ON -DOPENSSL_ROOT_DIR=/usr/local/Cellar/openssl/1.0.2o_2 -DOPENSSL_LIBRARIES=/usr/local/Cellar/openssl/1.0.2o_2/lib
-cmake --build . --config RelWithDebInfo
-
-###################################################################################################################
-# run test suite
-###################################################################################################################
-
-# set variables for odbc.ini and odbcinst.ini
-export ODBCINI="$PWD/test/odbc.ini"
-cat ${ODBCINI}
-export ODBCINSTINI="$PWD/test/odbcinst.ini"
-cat ${ODBCINSTINI}
-
-# check users of MariaDB and create test database
-mysql --version
-mysql -u root -e "SELECT user, host FROM mysql.user"
-mysql -u root -e "CREATE DATABASE odbc_test"
-mysql -u root -e "SHOW DATABASES"
-
-echo "Running tests"
-cd test
-ctest -V
+ls -la /usr/local/Cellar/openssl/
+#cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL -DWITH_IODBC=ON -DOPENSSL_ROOT_DIR=/usr/local/Cellar/openssl/1.0.2o_2 -DOPENSSL_LIBRARIES=/usr/local/Cellar/openssl/1.0.2o_2/lib
+#cmake --build . --config RelWithDebInfo
+#
+####################################################################################################################
+## run test suite
+####################################################################################################################
+#
+## set variables for odbc.ini and odbcinst.ini
+#export ODBCINI="$PWD/test/odbc.ini"
+#cat ${ODBCINI}
+#export ODBCINSTINI="$PWD/test/odbcinst.ini"
+#cat ${ODBCINSTINI}
+#
+## check users of MariaDB and create test database
+#mysql --version
+#mysql -u root -e "SELECT user, host FROM mysql.user"
+#mysql -u root -e "CREATE DATABASE odbc_test"
+#mysql -u root -e "SHOW DATABASES"
+#
+#echo "Running tests"
+#cd test
+#ctest -V
