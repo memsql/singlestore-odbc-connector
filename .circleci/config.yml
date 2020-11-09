@@ -73,17 +73,17 @@ jobs:
     steps:
       - setup-environment-macos
       - checkout
-      - setup_remote_docker:
-          version: 19.03.13
-          docker_layer_caching: true
-      - run:
-          name: Setup test cluster
-          command: |
-            ./scripts/ensure-test-memsql-cluster-macos.sh
-      - run:
-          name: Create test database
-          command: |
-            mysql -h 127.0.0.1 -u root -P 5506 -e "create database test;"
+#      - setup_remote_docker:
+#          version: 19.03.13
+#          docker_layer_caching: true
+#      - run:
+#          name: Setup test cluster
+#          command: |
+#            ./scripts/ensure-test-memsql-cluster-macos.sh
+#      - run:
+#          name: Create test database
+#          command: |
+#            mysql -h 127.0.0.1 -u root -P 5506 -e "create database test;"
       - run:
           name: Run tests
           command: |
@@ -128,20 +128,20 @@ jobs:
 workflows:
   test:
     jobs:
-      - build-windows:
-          matrix:
-            parameters:
-              memsql_image:
-                - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
-                - memsql/cluster-in-a-box:centos-6.8.15-029542cbf3-1.9.3-1.4.1
-                - memsql/cluster-in-a-box:6.7.18-db1caffe94-1.6.1-1.1.1
-#      - build-macos:
+#      - build-windows:
 #          matrix:
 #            parameters:
 #              memsql_image:
 #                - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
 #                - memsql/cluster-in-a-box:centos-6.8.15-029542cbf3-1.9.3-1.4.1
 #                - memsql/cluster-in-a-box:6.7.18-db1caffe94-1.6.1-1.1.1
+      - build-macos:
+          matrix:
+            parameters:
+              memsql_image:
+                - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
+                - memsql/cluster-in-a-box:centos-6.8.15-029542cbf3-1.9.3-1.4.1
+                - memsql/cluster-in-a-box:6.7.18-db1caffe94-1.6.1-1.1.1
 #      - build-linux:
 #          #          filters:
 #          #            tags:
