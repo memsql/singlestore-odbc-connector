@@ -4,7 +4,7 @@ if (-not (Get-Command cmake -ErrorAction SilentlyContinue)) {
 
 mkdir win64
 cd win64
-cmake .. -DCONC_WITH_MSI=OFF -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_SIGNCODE=0 -DWITH_SSL=SCHANNEL -DWITH_OPENSSL=ON
+cmake .. -G "Visual Studio 16 2019 Win64" -DCONC_WITH_MSI=OFF -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_SIGNCODE=0 -DWITH_SSL=SCHANNEL -DWITH_OPENSSL=ON
 cd ..
 
 cd libmariadb
