@@ -38,6 +38,6 @@ cat ${ODBCINSTINI}
 #mysql -u root -e "SHOW DATABASES"
 
 echo "Running tests"
-env
-#cd test
-#ctest -V
+#env
+cd test
+ctest -V
