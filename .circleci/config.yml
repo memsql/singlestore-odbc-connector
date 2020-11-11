@@ -65,13 +65,21 @@ jobs:
       MEMSQL_IMAGE: << parameters.memsql_image >>
       TEST_DRIVER: singlestore_test
       TEST_DSN: singlestore_test
-      TEST_SERVER: $MEMSQL_HOST
+#      TEST_SERVER: $MEMSQL_HOST
       TEST_SCHEMA: test
-      TEST_UID: $MEMSQL_USER
-      TEST_PORT: $MEMSQL_PORT
-      TEST_PASSWORD: $MEMSQL_PASSWORD
+#      TEST_UID: $MEMSQL_USER
+#      TEST_PORT: $MEMSQL_PORT
+#      TEST_PASSWORD: $MEMSQL_PASSWORD
       CONTINUOUS_INTEGRATION: true
     steps:
+      - run:
+          name: Update PATH and Define Environment Variable at Runtime
+          command: |
+            echo 'export TEST_SERVER=$MEMSQL_HOST' >> $BASH_ENV
+            echo 'export TEST_UID=$MEMSQL_USER' >> $BASH_ENV
+            echo 'export TEST_PORT=$MEMSQL_PORT' >> $BASH_ENV
+            echo 'export TEST_PASSWORD=$MEMSQL_PASSWORD' >> $BASH_ENV
+            source $BASH_ENV
       - setup-environment-macos
       - checkout
 #      - setup_remote_docker:
