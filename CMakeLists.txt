@@ -401,7 +401,7 @@ IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
       # Configuring ini files for testing with UnixODBC
       SET_VALUE(TEST_DRIVER "singlestore_test")
       SET_VALUE(TEST_DSN "singlestore_test")
-      SET_VALUE(TEST_PORT "5506")
+      SET_VALUE(TEST_PORT "3306")
       SET_VALUE(TEST_SERVER "localhost")
       SET_VALUE(TEST_SOCKET "")
       SET_VALUE(TEST_SCHEMA "test")
