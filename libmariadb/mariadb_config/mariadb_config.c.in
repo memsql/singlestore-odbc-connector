@@ -36,7 +36,11 @@ static char *mariadb_progname;
 #define PLUGIN_DIR "%s/@INSTALL_PLUGINDIR@"
 #define SOCKET  "@MARIADB_UNIX_ADDR@"
 #define PORT "@MARIADB_PORT@"
+#ifdef HAVE_TLS
 #define TLS_LIBRARY_VERSION "@TLS_LIBRARY_VERSION@"
+#else
+#define TLS_LIBRARY_VERSION ""
+#endif
 #define PKG_INCLUDEDIR "%s/@INSTALL_INCLUDEDIR@"
 #define PKG_PLUGINDIR "%s/@INSTALL_PLUGINDIR@"
 #define PKG_LIBDIR "%s/@INSTALL_LIBDIR@"
@@ -159,8 +163,12 @@ static void mariadb_get_install_location()
     unsigned int len= PATH_MAX;
     if (_NSGetExecutablePath(p, &len) != 0)
       *p= 0;
-    else if (realpath(p, p) != 0)
-      *p= 0;
+    else
+    {
+      p[len]= 0;
+      if (realpath(p, p) != 0)
+        *p= 0;
+    }
 #elif defined(__sun) || defined(SOLARIS)
     if (realpath(getexecname(), p) == NULL)
       *p= 0;
@@ -168,15 +176,21 @@ static void mariadb_get_install_location()
     ssize_t len= readlink("/proc/curproc/exe", p, PATH_MAX);
     if (len == -1 || len == PATH_MAX)
       *p= 0;
+    else
+      p[len]= 0;
 #elif defined(__FreeBSD__)
     int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
     size_t cb = PATH_MAX;
     if (sysctl(mib, 4, p, &cb, NULL, 0) == -1)
       *p= 0;
+    else
+      p[cb]= 0;
 #elif defined(__linux__)
     ssize_t len= readlink("/proc/self/exe", p, PATH_MAX);
     if (len == -1 || len == PATH_MAX)
       *p= 0;
+    else
+      p[len]= 0;
 #else
     *p= 0;
 #endif
@@ -250,7 +264,7 @@ int main(int argc, char **argv)
       printf(PLUGIN_DIR, installation_dir);
       break;
     case 'k': /* TLS version */
-      printf(TLS_LIBRARY_VERSION);
+      printf("%s", TLS_LIBRARY_VERSION);
       break;
     case 'l': /* System libraries */
       printf(LIBS_SYS);

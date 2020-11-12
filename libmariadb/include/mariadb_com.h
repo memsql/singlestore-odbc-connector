@@ -158,6 +158,7 @@ enum enum_server_command
 #define CLIENT_PS_MULTI_RESULTS  (1UL << 18)
 #define CLIENT_PLUGIN_AUTH       (1UL << 19)
 #define CLIENT_CONNECT_ATTRS     (1UL << 20)
+#define CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA (1UL << 21)
 #define CLIENT_CAN_HANDLE_EXPIRED_PASSWORDS (1UL << 22)
 #define CLIENT_SESSION_TRACKING  (1UL << 23)
 #define CLIENT_PROGRESS          (1UL << 29) /* client supports progress indicator */
@@ -172,16 +173,13 @@ enum enum_server_command
 #define MARIADB_CLIENT_STMT_BULK_OPERATIONS (1ULL << 34)
 /* support of extended data type/format information, since 10.5.0 */
 #define MARIADB_CLIENT_EXTENDED_METADATA (1ULL << 35)
-/* Do not resend metadata for prepared statements, since 10.6*/
-#define MARIADB_CLIENT_CACHE_METADATA (1ULL << 36)
 
 #define IS_MARIADB_EXTENDED_SERVER(mysql)\
         (!(mysql->server_capabilities & CLIENT_MYSQL))
 
 #define MARIADB_CLIENT_SUPPORTED_FLAGS (MARIADB_CLIENT_PROGRESS |\
                                        MARIADB_CLIENT_STMT_BULK_OPERATIONS|\
-                                       MARIADB_CLIENT_EXTENDED_METADATA|\
-                                       MARIADB_CLIENT_CACHE_METADATA)
+                                       MARIADB_CLIENT_EXTENDED_METADATA)
 
 #define CLIENT_SUPPORTED_FLAGS  (CLIENT_MYSQL |\
                                  CLIENT_FOUND_ROWS |\
@@ -207,8 +205,7 @@ enum enum_server_command
                                  CLIENT_PLUGIN_AUTH |\
                                  CLIENT_SESSION_TRACKING |\
                                  CLIENT_CONNECT_ATTRS)
-
-#define CLIENT_CAPABILITIES	(CLIENT_MYSQL | \
+#define CLIENT_CAPABILITIES	    (CLIENT_MYSQL | \
                                  CLIENT_LONG_FLAG |\
                                  CLIENT_TRANSACTIONS |\
                                  CLIENT_SECURE_CONNECTION |\
@@ -216,6 +213,7 @@ enum enum_server_command
                                  CLIENT_PS_MULTI_RESULTS |\
                                  CLIENT_PROTOCOL_41 |\
                                  CLIENT_PLUGIN_AUTH |\
+                                 CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA | \
                                  CLIENT_SESSION_TRACKING |\
                                  CLIENT_CONNECT_ATTRS)
 
