@@ -4,8 +4,8 @@ set -x
 set -e
 
 # set variables for Connector/ODBC
-export TEST_DRIVER="$PWD/libmaodbc.dylib"
-export TEST_DSN=madb_connstring_test
+#export TEST_DRIVER="$PWD/libmaodbc.dylib"
+#export TEST_DSN=madb_connstring_test
 
 # for some reason brew upgrades postgresql, so let's remove it
 # brew remove postgis
