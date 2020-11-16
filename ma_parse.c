@@ -18,9 +18,6 @@
 *************************************************************************************/
 
 #include <ma_odbc.h>
-#include "escape_sequences/parser.h"
-#include "escape_sequences/lexical_analyzer.h"
-
 
 /* Minimal query length when we tried to avoid full parsing */
 #define QUERY_LEN_FOR_POOR_MAN_PARSING 32768
@@ -74,116 +71,6 @@ char* SkipQuotedString_Noescapes(char **CurPtr, char *End, char Quote)
   return *CurPtr;
 }
 
-SQLRETURN unescapeQuery(MADB_Stmt *Stmt, MADB_DynString *res, char **src, char **srcEnd, int openCurlyBrackets)
-{
-  if (MADB_InitDynamicString(res, "", *srcEnd - *src, 256))
-  {
-    return MADB_SetError(&Stmt->Error,  MADB_ERR_HY001, "Failed to allocate memory for the query string", 0);
-  }
-
-  while (*src < *srcEnd)
-  {
-    MADB_DynString subquery;
-
-    char *quotedString;
-    yyscan_t scanner;
-    size_t stringLength;
-    switch(**src)
-    {
-      case '{':
-        (*src)++;
-        if (unescapeQuery(Stmt, &subquery, src, srcEnd, openCurlyBrackets + 1))
-        {
-          MADB_DynstrFree(res);
-          return Stmt->Error.ReturnValue;
-        }
-        if (MADB_DynstrAppend(res, subquery.str))
-        {
-          MADB_DynstrFree(res);
-          MADB_DynstrFree(&subquery);
-          return MADB_SetError(&Stmt->Error,  MADB_ERR_HY001, "Failed to allocate memory for the query string", 0);
-        }
-        MADB_DynstrFree(&subquery);
-        break;
-      case '}':
-        if (openCurlyBrackets == 0)
-        {
-          MADB_DynstrFree(res);
-          return MADB_SetError(&Stmt->Error, MADB_ERR_42000, "Failed to find a pair for a closing curly bracket", 0);
-        }
-
-        (*src)++;
-        if (yylex_init(&scanner) != 0)
-        {
-          MADB_DynstrFree(res);
-          return MADB_SetError(&Stmt->Error,  MADB_ERR_HY001, "Failed to allocate memory for the query string", 0);
-        }
-        YY_BUFFER_STATE buf = yy_scan_string(res->str, scanner);
-        MADB_DynstrFree(res);
-        if (buf == NULL)
-        {
-          yylex_destroy(scanner);
-          return MADB_SetError(&Stmt->Error,  MADB_ERR_HY001, "Failed to allocate memory for the query string", 0);
-        }
-
-        if (yyparse(scanner, Stmt, res) != 0)
-        {
-          yy_delete_buffer(buf, scanner);
-          yylex_destroy(scanner);
-          return Stmt->Error.ReturnValue;
-        } else
-        {
-          yy_delete_buffer(buf, scanner);
-          yylex_destroy(scanner);
-          return 0;
-        }
-      case '"':
-      case '\'':
-      case '`':
-        // append the whole string
-        quotedString = *src + 1;
-        char Quote = **src;
-
-        if (Quote == '`' || (Quote == '"' && Stmt->Query.AnsiQuotes))
-        {
-          SkipQuotedString_Noescapes(&quotedString, *srcEnd, Quote);
-        } else
-        {
-          SkipQuotedString(&quotedString, *srcEnd, Quote);
-        }
-
-        stringLength = quotedString - *src;
-        if (quotedString != *srcEnd)
-        {
-          stringLength++;
-        }
-
-        if (MADB_DynstrAppendMem(res, *src, stringLength))
-        {
-          MADB_DynstrFree(res);
-          return MADB_SetError(&Stmt->Error,  MADB_ERR_HY001, "Failed to allocate memory for the query string", 0);
-        }
-        (*src) += stringLength;
-        break;
-      default:
-        if (MADB_DynstrAppendMem(res, *src, 1))
-        {
-          MADB_DynstrFree(res);
-          return MADB_SetError(&Stmt->Error,  MADB_ERR_HY001, "Failed to allocate memory for the query string", 0);
-        }
-        (*src)++;
-        break;
-    }
-  }
-
-  if (openCurlyBrackets != 0)
-  {
-    MADB_DynstrFree(res);
-    return MADB_SetError(&Stmt->Error, MADB_ERR_42000, "Failed to find a pair for an opening curly bracket", 0);
-  }
-
-  return 0;
-}
 
 int MADB_ResetParser(MADB_Stmt *Stmt, char *OriginalQuery, SQLINTEGER OriginalLength)
 {
@@ -191,19 +78,19 @@ int MADB_ResetParser(MADB_Stmt *Stmt, char *OriginalQuery, SQLINTEGER OriginalLe
 
   if (OriginalQuery != NULL)
   {
+    /* We can have here not NULL-terminated string as a source, thus we need to allocate, copy meaningful characters and
+    add NULL. strndup does that for us. StmtSopy may change, p points to the allocated memory */
+    Stmt->Query.allocated= Stmt->Query.RefinedText= strndup(OriginalQuery, OriginalLength);
+
+    if (Stmt->Query.allocated == NULL)
+    {
+      return 1;
+    }
+
+    Stmt->Query.RefinedLength=     OriginalLength;
     Stmt->Query.BatchAllowed=      DSN_OPTION(Stmt->Connection, MADB_OPT_FLAG_MULTI_STATEMENTS) ? '\1' : '\0';
     Stmt->Query.AnsiQuotes=        MADB_SqlMode(Stmt->Connection, MADB_ANSI_QUOTES);
     Stmt->Query.NoBackslashEscape= MADB_SqlMode(Stmt->Connection, MADB_NO_BACKSLASH_ESCAPES);
-
-    char **OriginalQueryIterator = &OriginalQuery;
-    char *OriginalQueryEnd = OriginalQuery + OriginalLength;
-    MADB_DynString res;
-    if (unescapeQuery(Stmt, &res, OriginalQueryIterator, &OriginalQueryEnd, 0)) {
-      return Stmt->Error.ReturnValue;
-    }
-
-    Stmt->Query.RefinedLength = res.length;
-    Stmt->Query.allocated = Stmt->Query.RefinedText = res.str;
   }
  
   return 0;
