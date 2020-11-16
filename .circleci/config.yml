@@ -103,10 +103,11 @@ jobs:
       MEMSQL_IMAGE: << parameters.memsql_image >>
       TEST_DRIVER: singlestore_test
       TEST_DSN: singlestore_test
-      TEST_SERVER: singlestore.example.com
+      TEST_SERVER: ec2-3-233-226-187.compute-1.amazonaws.com
       TEST_SCHEMA: test
       TEST_UID: root
-      TEST_PORT: 5506
+      TEST_PORT: 3306
+      TEST_PASSWORD: AghkjdIOU23AEYOIUsvbskfhfhjGHSJhskHkhsjdhHR342
       CONTINUOUS_INTEGRATION: true
     steps:
       - setup-environment-linux
@@ -141,20 +142,20 @@ workflows:
 #                - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
 #                - memsql/cluster-in-a-box:centos-6.8.15-029542cbf3-1.9.3-1.4.1
 #                - memsql/cluster-in-a-box:6.7.18-db1caffe94-1.6.1-1.1.1
-      - build-macos:
-          matrix:
-            parameters:
-              memsql_image:
-                - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
-                - memsql/cluster-in-a-box:centos-6.8.15-029542cbf3-1.9.3-1.4.1
-                - memsql/cluster-in-a-box:6.7.18-db1caffe94-1.6.1-1.1.1
-#      - build-linux:
-#          #          filters:
-#          #            tags:
-#          #              only: /^v.*/
+#      - build-macos:
 #          matrix:
 #            parameters:
 #              memsql_image:
 #                - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
 #                - memsql/cluster-in-a-box:centos-6.8.15-029542cbf3-1.9.3-1.4.1
 #                - memsql/cluster-in-a-box:6.7.18-db1caffe94-1.6.1-1.1.1
+      - build-linux:
+          #          filters:
+          #            tags:
+          #              only: /^v.*/
+          matrix:
+            parameters:
+              memsql_image:
+                - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
+                - memsql/cluster-in-a-box:centos-6.8.15-029542cbf3-1.9.3-1.4.1
+                - memsql/cluster-in-a-box:6.7.18-db1caffe94-1.6.1-1.1.1
