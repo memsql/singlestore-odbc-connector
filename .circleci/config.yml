@@ -63,7 +63,7 @@ jobs:
       xcode: 11.0.0
     environment:
       MEMSQL_IMAGE: << parameters.memsql_image >>
-      TEST_DRIVER: singlestore_test
+#      TEST_DRIVER: singlestore_test
       TEST_DSN: singlestore_test
       TEST_SCHEMA: test
       TEST_SERVER: ec2-3-233-226-187.compute-1.amazonaws.com
@@ -72,14 +72,11 @@ jobs:
       TEST_PASSWORD: AghkjdIOU23AEYOIUsvbskfhfhjGHSJhskHkhsjdhHR342
       CONTINUOUS_INTEGRATION: true
     steps:
-#      - run:
-#          name: Update PATH and Define Environment Variable at Runtime
-#          command: |
-#            echo 'export TEST_SERVER=$MEMSQL_HOST' >> $BASH_ENV
-#            echo 'export TEST_UID=$MEMSQL_USER' >> $BASH_ENV
-#            echo 'export TEST_PORT=$MEMSQL_PORT' >> $BASH_ENV
-#            echo 'export TEST_PASSWORD=$MEMSQL_PASSWORD' >> $BASH_ENV
-#            source $BASH_ENV
+      - run:
+          name: Update PATH and Define Environment Variable at Runtime
+          command: |
+            echo 'export TEST_DRIVER=$PWD/libmaodbc.dylib' >> $BASH_ENV
+            source $BASH_ENV
       - setup-environment-macos
       - checkout
 #      - setup_remote_docker:
