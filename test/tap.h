@@ -816,7 +816,7 @@ SQLHANDLE DoConnect(SQLHANDLE Connection, BOOL DoWConnect,
       schema ? schema : (const char*)my_schema, options ? *options : my_options, server ? server : (const char*)my_servername,
       add_parameters ? add_parameters : "");
     diag("DSN=%s;UID=%s;PWD={%s};PORT=%u;DATABASE=%s;OPTION=%lu;SERVER=%s;%s", dsn ? dsn : (const char*)my_dsn,
-           uid ? uid : (const char*)my_uid, (const char*)my_pwd, port ? port : my_port,
+           uid ? uid : (const char*)my_uid, "********", port ? port : my_port,
            schema ? schema : (const char*)my_schema, options ? *options : my_options, server ? server : (const char*)my_servername,
            add_parameters ? add_parameters : "");
   }
