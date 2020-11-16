@@ -20,7 +20,6 @@ commands:
           command: |
             brew update
             brew install curl
-            brew install openssl
             brew install libiodbc
             brew install mysql-client
             brew install cmake
