@@ -1,0 +1,161 @@
+version: 2.1
+commands:
+  setup-environment-linux:
+    description: "Setup the machine environment"
+    steps:
+      - run:
+          name: Setup Machine
+          command: |
+            sudo apt update
+            sudo apt install -y curl
+            sudo apt-get update
+            sudo apt-get install -y git python-pip mysql-client-core-5.5
+            sudo apt-get clean
+            sudo apt-get autoclean
+  setup-environment-macos:
+    description: "Setup the machine environment"
+    steps:
+      - run:
+          name: Setup Machine
+          command: |
+            brew update
+            brew install curl
+            brew install libiodbc
+            brew install mysql-client
+            brew install cmake
+            brew cleanup
+
+orbs:
+  win: circleci/windows@2.4.0
+
+jobs:
+  build-windows:
+    parameters:
+      memsql_image:
+        type: string
+    executor: win/default
+    steps:
+      - checkout
+#      - run: choco install cmake -y
+      - run:
+          name: Download CMake
+          command: |
+            $ProgressPreference = "SilentlyContinue"
+            Invoke-WebRequest -URI https://github.com/Kitware/CMake/releases/download/v3.16.4/cmake-3.16.4-win64-x64.zip -OutFile $Env:HOMEPATH\cmake-3.16.4-win64-x64.zip
+            Expand-Archive $Env:HOMEPATH\cmake-3.16.4-win64-x64.zip -DestinationPath "$Env:ProgramFiles"
+            Rename-Item "$Env:ProgramFiles\cmake-3.16.4-win64-x64" -NewName CMake
+#      - run: $env:Path+=";$Env:ProgramFiles\CMake\bin"; ./makeall.bat
+#      - run:
+#          name: Setup test cluster
+#          command: |
+#            bash scripts/ensure-test-memsql-cluster.sh
+      - run: .circleci\build-project.ps1
+#      - run:
+#          name: Run tests
+#          command: |
+#            bash .circleci/build-windows.sh
+
+  build-macos:
+    parameters:
+      memsql_image:
+        type: string
+    macos:
+      xcode: 11.0.0
+    environment:
+      MEMSQL_IMAGE: << parameters.memsql_image >>
+#      TEST_DRIVER: singlestore_test
+      TEST_DSN: singlestore_test
+      TEST_SCHEMA: test
+      TEST_SERVER: ec2-3-233-226-187.compute-1.amazonaws.com
+      TEST_UID: root
+      TEST_PORT: 3306
+      TEST_PASSWORD: AghkjdIOU23AEYOIUsvbskfhfhjGHSJhskHkhsjdhHR342
+      CONTINUOUS_INTEGRATION: true
+    steps:
+      - run:
+          name: Update PATH and Define Environment Variable at Runtime
+          command: |
+            echo 'export TEST_DRIVER=$PWD/libmaodbc.dylib' >> $BASH_ENV
+            source $BASH_ENV
+      - setup-environment-macos
+      - checkout
+#      - setup_remote_docker:
+#          version: 19.03.13
+#          docker_layer_caching: true
+#      - run:
+#          name: Setup test cluster
+#          command: |
+#            ./scripts/ensure-test-memsql-cluster-macos.sh
+#      - run:
+#          name: Create test database
+#          command: |
+#            mysql -h 127.0.0.1 -u root -P 5506 -e "create database test;"
+      - run:
+          name: Run tests
+          command: |
+            ./.circleci/build-osx.sh
+  build-linux:
+    parameters:
+      memsql_image:
+        type: string
+    machine: true
+    environment:
+      MEMSQL_IMAGE: << parameters.memsql_image >>
+      TEST_DRIVER: singlestore_test
+      TEST_DSN: singlestore_test
+      TEST_SERVER: ec2-3-233-226-187.compute-1.amazonaws.com
+      TEST_SCHEMA: test
+      TEST_UID: root
+      TEST_PORT: 3306
+      TEST_PASSWORD: AghkjdIOU23AEYOIUsvbskfhfhjGHSJhskHkhsjdhHR342
+      CONTINUOUS_INTEGRATION: true
+    steps:
+      - setup-environment-linux
+      - checkout
+      - run:
+          name: Setup test cluster
+          command: |
+            ./scripts/ensure-test-memsql-cluster.sh
+      - run:
+          name: Create test database
+          command: |
+            mysql -h 127.0.0.1 -u root -P 5506 -e "create database test;"
+      - run:
+          name: Setup ODBC Driver Manager
+          command: |
+            sudo apt-get update
+            sudo apt-get install unixodbc odbcinst
+            sudo apt-get install unixodbc-dev
+            sudo apt-get install --allow-unauthenticated -y --force-yes -m unixodbc-dev odbcinst1debian2 libodbc1
+      - run:
+          name: Run tests
+          command: |
+            ./.circleci/build-linux.sh
+
+workflows:
+  test:
+    jobs:
+#      - build-windows:
+#          matrix:
+#            parameters:
+#              memsql_image:
+#                - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
+#                - memsql/cluster-in-a-box:centos-6.8.15-029542cbf3-1.9.3-1.4.1
+#                - memsql/cluster-in-a-box:6.7.18-db1caffe94-1.6.1-1.1.1
+      - build-macos:
+          matrix:
+            parameters:
+              memsql_image:
+                - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
+                - memsql/cluster-in-a-box:centos-6.8.15-029542cbf3-1.9.3-1.4.1
+                - memsql/cluster-in-a-box:6.7.18-db1caffe94-1.6.1-1.1.1
+#      - build-linux:
+#          #          filters:
+#          #            tags:
+#          #              only: /^v.*/
+#          matrix:
+#            parameters:
+#              memsql_image:
+#                - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
+#                - memsql/cluster-in-a-box:centos-6.8.15-029542cbf3-1.9.3-1.4.1
+#                - memsql/cluster-in-a-box:6.7.18-db1caffe94-1.6.1-1.1.1
