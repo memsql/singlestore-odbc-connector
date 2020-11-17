@@ -617,11 +617,19 @@ end:
    Or in other words - it is combination of ReadDsn and ParseConnString */
 BOOL MADB_ReadConnString(MADB_Dsn *Dsn, const char *String, size_t Length, char Delimiter)
 {
+  FILE *fp;
+  fp = fopen("/tmp/odbc_driver_log.txt", "a+");
+  fprintf(fp, "MADB_ReadConnString.ParsingConnString{%s}\n", String);
+  fflush(fp);
+
   /* Basically at this point we need DSN name only */
   if (!MADB_ParseConnString(Dsn, String, Length, Delimiter))
   {
     return FALSE;
   }
+
+  fprintf(fp, "MADB_ReadConnString.Parsed successfully.DsnName{%s}\n", Dsn->DSNName);
+  fflush(fp);
 
   /* "If the connection string contains the DRIVER keyword, the driver cannot retrieve information about the data source
      from the system information." https://msdn.microsoft.com/en-us/library/ms715433%28v=vs.85%29.aspx */
@@ -632,6 +640,10 @@ BOOL MADB_ReadConnString(MADB_Dsn *Dsn, const char *String, size_t Length, char 
        connection string has AUTO_RECONNECT=0. Connection string should have precedence */
     MADB_ParseConnString(Dsn, String, Length, Delimiter);
   }
+
+  fprintf(fp, "Return TRUE?\n");
+  fclose(fp);
+
   return TRUE;
 }
 /* }}} */
