@@ -36,7 +36,6 @@ jobs:
     executor: win/default
     steps:
       - checkout
-#      - run: choco install cmake -y
       - run:
           name: Download CMake
           command: |
@@ -66,30 +65,23 @@ jobs:
 #      TEST_DRIVER: singlestore_test
       TEST_DSN: singlestore_test
       TEST_SCHEMA: test
-      TEST_SERVER: ${MEMSQL_HOST}
-      TEST_UID: ${MEMSQL_USER}
-      TEST_PORT: ${MEMSQL_PORT}
-      TEST_PASSWORD: ${MEMSQL_PASSWORD}
+#      TEST_SERVER: ${MEMSQL_HOST}
+#      TEST_UID: ${MEMSQL_USER}
+#      TEST_PORT: ${MEMSQL_PORT}
+#      TEST_PASSWORD: ${MEMSQL_PASSWORD}
       CONTINUOUS_INTEGRATION: true
     steps:
       - run:
-          name: Update PATH and Define Environment Variable at Runtime
+          name: Define Environment Variables
           command: |
             echo 'export TEST_DRIVER=$PWD/libmaodbc.dylib' >> $BASH_ENV
+            echo 'export TEST_SERVER=$MEMSQL_HOST' >> $BASH_ENV
+            echo 'export TEST_UID=$MEMSQL_USER' >> $BASH_ENV
+            echo 'export TEST_PORT=$MEMSQL_PORT' >> $BASH_ENV
+            echo 'export TEST_PASSWORD=$MEMSQL_PASSWORD' >> $BASH_ENV
             source $BASH_ENV
       - setup-environment-macos
       - checkout
-#      - setup_remote_docker:
-#          version: 19.03.13
-#          docker_layer_caching: true
-#      - run:
-#          name: Setup test cluster
-#          command: |
-#            ./scripts/ensure-test-memsql-cluster-macos.sh
-#      - run:
-#          name: Create test database
-#          command: |
-#            mysql -h 127.0.0.1 -u root -P 5506 -e "create database test;"
       - run:
           name: Run tests
           command: |
