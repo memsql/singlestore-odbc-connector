@@ -791,12 +791,22 @@ int mydrvconnect(SQLHENV *henv, SQLHDBC *hdbc, SQLHSTMT *hstmt, SQLCHAR *connIn)
 
 int AllocEnvConn(SQLHANDLE *Env, SQLHANDLE *Connection)
 {
+  FILE *fp;
+  fp = fopen("/tmp/odbc_driver_log.txt", "a+");
+
   if (*Env == NULL)
   {
+    fprintf(fp, "AllocEnvConn.Allocating Env\n");
+    fflush(fp);
+
     FAIL_IF(!SQL_SUCCEEDED(SQLAllocHandle(SQL_HANDLE_ENV, NULL, Env)), "Couldn't allocate environment handle");
 
     FAIL_IF(!SQL_SUCCEEDED(SQLSetEnvAttr(*Env, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)(SQLLEN)OdbcVer, 0)), "Couldn't set ODBC version");
   }
+
+  fprintf(fp, "AllocEnvConn.Allocating Connection Handle\n");
+  fclose(fp);
+
   FAIL_IF(!SQL_SUCCEEDED(SQLAllocHandle(SQL_HANDLE_DBC, *Env, Connection)), "Couldn't allocate connection handle");
 
   return OK;
@@ -836,6 +846,11 @@ SQLHANDLE DoConnect(SQLHANDLE Connection, BOOL DoWConnect,
 
   if (DoWConnect == FALSE)
   {
+    FILE *fp;
+    fp = fopen("/tmp/odbc_driver_log.txt", "a+");
+    fprintf(fp, "Test.DoConnect.DSNString{%s}\n", DSNString);
+    fclose(fp);
+
     if (!SQL_SUCCEEDED(SQLDriverConnect(Connection, NULL, (SQLCHAR *)DSNString, SQL_NTS, (SQLCHAR *)DSNOut, sizeof(DSNOut), &Length, SQL_DRIVER_NOPROMPT)))
     {
       odbc_print_error(SQL_HANDLE_DBC, Connection);

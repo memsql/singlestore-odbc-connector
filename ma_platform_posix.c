@@ -176,6 +176,11 @@ SQLWCHAR *MADB_ConvertToWchar(const char *Ptr, SQLLEN PtrLength, Client_Charset*
 char *MADB_ConvertFromWChar(const SQLWCHAR *Ptr, SQLINTEGER PtrLength, SQLULEN *Length, Client_Charset *cc,
                             BOOL *Error)
 {
+  FILE *fp;
+  fp = fopen("/tmp/odbc_driver_log.txt", "a+");
+  fprintf(fp, "MADB_ConvertFromWChar.ConvertFromWChar{%s}{%ld}\n", (char*)cc->cs_info->csname, sizeof(SQLWCHAR));
+  fclose(fp);
+
   char *AscStr;
   size_t AscLen= PtrLength, PtrOctetLen;
   BOOL dummyError= 0;

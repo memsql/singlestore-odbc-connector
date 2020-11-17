@@ -1810,6 +1810,11 @@ SQLRETURN MADB_DriverConnect(MADB_Dbc *Dbc, SQLHWND WindowHandle, SQLCHAR *InCon
 
   MADB_CLEAR_ERROR(&Dbc->Error);
 
+  FILE *fp;
+  fp = fopen("/tmp/odbc_driver_log.txt", "a+");
+  fprintf(fp, "MADB_DriverConnect.ConnString{%s}\n", (char*)InConnectionString);
+  fclose(fp);
+
   Dsn= MADB_DSN_Init();
 
   if (!MADB_ReadConnString(Dsn, (char *)InConnectionString, StringLength1, ';'))
@@ -1817,6 +1822,10 @@ SQLRETURN MADB_DriverConnect(MADB_Dbc *Dbc, SQLHWND WindowHandle, SQLCHAR *InCon
     MADB_SetError(&Dbc->Error, MADB_ERR_HY000, "Error while parsing DSN", 0);
     goto error;
   }
+
+  fp = fopen("/tmp/odbc_driver_log.txt", "a+");
+  fprintf(fp, "MADB_DriverConnect.DSNName{%s},ServerName{%s},UserName{%s},Port{%d}\n", Dsn->DSNName, Dsn->ServerName, Dsn->UserName, Dsn->Port);
+  fclose(fp);
 
   /* if DSN prompt is off, adjusting DriverCompletion */
   if (Dsn->ConnectPrompt)
