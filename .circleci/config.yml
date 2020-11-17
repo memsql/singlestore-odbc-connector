@@ -66,10 +66,10 @@ jobs:
 #      TEST_DRIVER: singlestore_test
       TEST_DSN: singlestore_test
       TEST_SCHEMA: test
-      TEST_SERVER: $MEMSQL_HOST
-      TEST_UID: $MEMSQL_USER
-      TEST_PORT: $MEMSQL_PORT
-      TEST_PASSWORD: $MEMSQL_PASSWORD
+      TEST_SERVER: ${MEMSQL_HOST}
+      TEST_UID: ${MEMSQL_USER}
+      TEST_PORT: ${MEMSQL_PORT}
+      TEST_PASSWORD: ${MEMSQL_PASSWORD}
       CONTINUOUS_INTEGRATION: true
     steps:
       - run:
