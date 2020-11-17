@@ -474,8 +474,7 @@ CTestTestfile.cmake
 Makefile$
 /autom4te.cache/
 /.travis/
-.travis.yml
-/libmariadb/
+        /libmariadb/
 /_CPack_Packages/
 )
 
