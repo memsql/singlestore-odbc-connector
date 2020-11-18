@@ -55,20 +55,11 @@ jobs:
 #            bash .circleci/build-windows.sh
 
   build-macos:
-    parameters:
-      memsql_image:
-        type: string
     macos:
       xcode: 11.0.0
     environment:
-      MEMSQL_IMAGE: << parameters.memsql_image >>
-#      TEST_DRIVER: singlestore_test
       TEST_DSN: singlestore_test
       TEST_SCHEMA: test
-#      TEST_SERVER: ${MEMSQL_HOST}
-#      TEST_UID: ${MEMSQL_USER}
-#      TEST_PORT: ${MEMSQL_PORT}
-#      TEST_PASSWORD: ${MEMSQL_PASSWORD}
       CONTINUOUS_INTEGRATION: true
     steps:
       - run:
@@ -135,16 +126,10 @@ workflows:
 #                - memsql/cluster-in-a-box:centos-6.8.15-029542cbf3-1.9.3-1.4.1
 #                - memsql/cluster-in-a-box:6.7.18-db1caffe94-1.6.1-1.1.1
       - build-macos:
-          matrix:
-            parameters:
-              memsql_image:
-                - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
-                - memsql/cluster-in-a-box:centos-6.8.15-029542cbf3-1.9.3-1.4.1
-                - memsql/cluster-in-a-box:6.7.18-db1caffe94-1.6.1-1.1.1
+          filters:
+            tags:
+              only: /^v.*/
       - build-linux:
-          #          filters:
-          #            tags:
-          #              only: /^v.*/
           matrix:
             parameters:
               memsql_image:
