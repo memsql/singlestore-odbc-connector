@@ -501,8 +501,7 @@ CTestTestfile.cmake
 .*sdf$
 Makefile$
 /autom4te.cache/
-/.travis/
-        /libmariadb/
+/libmariadb/
 /_CPack_Packages/
 )
 

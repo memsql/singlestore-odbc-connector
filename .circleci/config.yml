@@ -90,7 +90,6 @@ jobs:
       TEST_SCHEMA: test
       TEST_UID: root
       TEST_PORT: 5506
-      TEST_PASSWORD:
       CONTINUOUS_INTEGRATION: true
     steps:
       - setup-environment-linux
