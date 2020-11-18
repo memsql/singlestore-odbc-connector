@@ -198,7 +198,8 @@ ODBC_TEST(wrong_brackets_sequence) {
 
   size_t n = 8;
   char **end = queries + n;
-  for (char **query = queries; query < end; query++) {
+  char **query;
+  for (query = queries; query < end; query++) {
     EXPECT_STMT(Stmt, SQLExecDirect(Stmt, (SQLCHAR*)(*query), SQL_NTS), SQL_ERROR);
     CHECK_SQLSTATE(Stmt, "42000");
   }
@@ -220,7 +221,8 @@ ODBC_TEST(strings_with_escape_sequences) {
 
   size_t n = 8;
   char **end = escapeSequences + n;
-  for (char **escapeSequence = escapeSequences; escapeSequence < end; escapeSequence++) {
+  char **escapeSequence;
+  for (escapeSequence = escapeSequences; escapeSequence < end; escapeSequence++) {
     // build "SELECT "..."" query
     char query[128];
     char *queryIterator = query;
@@ -228,7 +230,8 @@ ODBC_TEST(strings_with_escape_sequences) {
     queryIterator += 8;
 
     // escape escapeSequence
-    for (char *c = *escapeSequence; *c != '\0'; c++) {
+    char *c;
+    for (c = *escapeSequence; *c != '\0'; c++) {
       if (*c == '\\' || *c == '"' || *c == '\'' ) {
         *queryIterator++ = '\\';
       }
@@ -258,7 +261,8 @@ ODBC_TEST(unsupported_escape_sequence) {
 
   size_t n = 3;
   char **end = queries + n;
-  for (char **query = queries; query < end; query++) {
+  char **query;
+  for (query = queries; query < end; query++) {
     EXPECT_STMT(Stmt, SQLExecDirect(Stmt, (SQLCHAR*)(*query), SQL_NTS), SQL_ERROR);
     CHECK_SQLSTATE(Stmt, "42000");
   }
@@ -277,7 +281,8 @@ ODBC_TEST(uppercase) {
 
   size_t n = 5;
   char **end = queries + n;
-  for (char **query = queries; query < end; query++) {
+  char **query;
+  for (query = queries; query < end; query++) {
     OK_SIMPLE_STMT(Stmt, *query);
   }
 
@@ -327,7 +332,8 @@ ODBC_TEST(convert_failures) {
 
   size_t n = 10;
   char **end = queries + n;
-  for (char **query = queries; query < end; query++) {
+  char **query;
+  for (query = queries; query < end; query++) {
     EXPECT_STMT(Stmt, SQLExecDirect(Stmt, (SQLCHAR*)(*query), SQL_NTS), SQL_ERROR);
     CHECK_SQLSTATE(Stmt, "42000");
   }
