@@ -534,7 +534,8 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
     return MADB_SetError(&Stmt->Error, MADB_ERR_42000, NULL, 0);
   }
 
-  if (MADB_ResetParser(Stmt, StatementText, TextLength) != 0) {
+  if (MADB_ResetParser(Stmt, StatementText, TextLength) != 0)
+  {
     return Stmt->Error.ReturnValue;
   }
 
