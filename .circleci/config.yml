@@ -49,10 +49,6 @@ jobs:
 #          command: |
 #            bash scripts/ensure-test-memsql-cluster.sh
       - run: .circleci\build-project.ps1
-#      - run:
-#          name: Run tests
-#          command: |
-#            bash .circleci/build-windows.sh
 
   build-macos:
     macos:

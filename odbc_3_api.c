@@ -673,11 +673,6 @@ SQLRETURN SQLConnectCommon(SQLHDBC ConnectionHandle,
 
   MADB_CLEAR_ERROR(&Connection->Error);
 
-  FILE *fp;
-  fp = fopen("/tmp/odbc_driver_log.txt", "a+");
-  fprintf(fp, "SQLConnectCommon.This wasn't supposed to be called.ServerName{%s}\n", (char*)ServerName);
-  fclose(fp);
-
   MDBUG_C_ENTER(Connection, "SQLConnect");
   MDBUG_C_DUMP(Connection, Connection, 0x);
   MDBUG_C_DUMP(Connection, ServerName, s);
@@ -969,11 +964,6 @@ SQLRETURN SQL_API SQLDriverConnect(SQLHDBC ConnectionHandle,
 
   MADB_CLEAR_ERROR(&Dbc->Error);
 
-  FILE *fp;
-  fp = fopen("/tmp/odbc_driver_log.txt", "a+");
-  fprintf(fp, "SQLDriverConnect.ConnString{%s}\n", (char*)InConnectionString);
-  fclose(fp);
-
   MDBUG_C_ENTER(Dbc, "SQLDriverConnect");
   MDBUG_C_DUMP(Dbc, Dbc, 0x);
   MDBUG_C_DUMP(Dbc, InConnectionString, s);
@@ -1015,11 +1005,6 @@ SQLRETURN SQL_API SQLDriverConnectW(SQLHDBC      ConnectionHandle,
 
   MADB_CLEAR_ERROR(&Dbc->Error);
 
-  FILE *fp;
-  fp = fopen("/tmp/odbc_driver_log.txt", "a+");
-  fprintf(fp, "SQLConnectDriverW.IncomingConnString{%s}\n", (char*)InConnectionString);
-  fflush(fp);
-
   InConnStrA= MADB_ConvertFromWChar(InConnectionString, StringLength1, &InStrAOctLen, Dbc->IsAnsi ? Dbc->ConnOrSrcCharset : &utf8, NULL);
   MDBUG_C_DUMP(Dbc, Dbc, 0x);
   MDBUG_C_DUMP(Dbc, InConnStrA, s);
@@ -1041,10 +1026,6 @@ SQLRETURN SQL_API SQLDriverConnectW(SQLHDBC      ConnectionHandle,
       goto end;
     }
   }
-
-  fprintf(fp, "SQLDriverConnectW.ParsedConnString{%s}\n", (char*)InConnStrA);
-  fprintf(fp, "SQLDriverConnectW.OctetLen{%ld}\n", InStrAOctLen);
-  fclose(fp);
 
   ret= Dbc->Methods->DriverConnect(Dbc, WindowHandle, (SQLCHAR *)InConnStrA, InStrAOctLen, (SQLCHAR *)OutConnStrA,
                                      Length, StringLength2Ptr, DriverCompletion); 
