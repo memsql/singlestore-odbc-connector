@@ -30,9 +30,6 @@ orbs:
 
 jobs:
   build-windows:
-    parameters:
-      memsql_image:
-        type: string
     executor: win/default
     steps:
       - checkout
