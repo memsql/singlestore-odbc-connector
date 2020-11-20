@@ -1,8 +1,8 @@
 #include "tap.h"
 
+#define SQL_COLUMNS_BUFFER_LEN 256
 
 int run_sql_columns(SQLHANDLE Stmt, const SQLSMALLINT *ExpDataType, const SQLSMALLINT *ExpSqlDataType) {
-    const int BUFFER_LEN = 256;
     const int ExpNumOfRowsFetched = 33;
     SQLCHAR *ExpTableCat = my_schema;
     SQLCHAR *ExpTableName = "t_types";
@@ -32,45 +32,45 @@ int run_sql_columns(SQLHANDLE Stmt, const SQLSMALLINT *ExpDataType, const SQLSMA
     CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLColumns(Stmt, ExpTableCat, SQL_NTS, NULL, 0,
                                                       (SQLCHAR *) "t_types", SQL_NTS, NULL, 0));
 
-    SQLCHAR tableCat[BUFFER_LEN], tableSchema[BUFFER_LEN], tableName[BUFFER_LEN], colName[BUFFER_LEN], typeName[BUFFER_LEN];
-    SQLCHAR remarks[BUFFER_LEN], colDefault[BUFFER_LEN], isNullable[BUFFER_LEN];
+    SQLCHAR tableCat[SQL_COLUMNS_BUFFER_LEN], tableSchema[SQL_COLUMNS_BUFFER_LEN], tableName[SQL_COLUMNS_BUFFER_LEN], colName[SQL_COLUMNS_BUFFER_LEN], typeName[SQL_COLUMNS_BUFFER_LEN];
+    SQLCHAR remarks[SQL_COLUMNS_BUFFER_LEN], colDefault[SQL_COLUMNS_BUFFER_LEN], isNullable[SQL_COLUMNS_BUFFER_LEN];
     SQLLEN tsSize, csSize, blSize, ddSize, nprSize, rSize, cdSize, dscSize, colSize;
     SQLSMALLINT dataType, decimalDigits, numPrecRadix, nullable, sqlDataType, datetimeSubtypeCode;
     SQLINTEGER columnSize, charOctetLength, bufferLength, ordinalPosition;
 
     // Bind columns in result set to buffers
-    CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 1, SQL_C_CHAR, tableCat, BUFFER_LEN, NULL));
-    CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 2, SQL_C_CHAR, tableSchema, BUFFER_LEN, &tsSize));
-    CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 3, SQL_C_CHAR, tableName, BUFFER_LEN, NULL));
-    CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 4, SQL_C_CHAR, colName, BUFFER_LEN, NULL));
+    CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 1, SQL_C_CHAR, tableCat, SQL_COLUMNS_BUFFER_LEN, NULL));
+    CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 2, SQL_C_CHAR, tableSchema, SQL_COLUMNS_BUFFER_LEN, &tsSize));
+    CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 3, SQL_C_CHAR, tableName, SQL_COLUMNS_BUFFER_LEN, NULL));
+    CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 4, SQL_C_CHAR, colName, SQL_COLUMNS_BUFFER_LEN, NULL));
     CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 5, SQL_C_SHORT, &dataType, 0, NULL));
-    CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 6, SQL_C_CHAR, typeName, BUFFER_LEN, NULL));
+    CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 6, SQL_C_CHAR, typeName, SQL_COLUMNS_BUFFER_LEN, NULL));
     CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 7, SQL_C_LONG, &columnSize, 0, &csSize));
     CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 8, SQL_C_LONG, &bufferLength, 0, &blSize));
     CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 9, SQL_C_SHORT, &decimalDigits, 0, &ddSize));
     CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 10, SQL_C_SHORT, &numPrecRadix, 0, &nprSize));
     CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 11, SQL_C_SHORT, &nullable, 0, NULL));
-    CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 12, SQL_C_CHAR, remarks, BUFFER_LEN, &rSize));
-    CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 13, SQL_C_CHAR, colDefault, BUFFER_LEN, &cdSize));
+    CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 12, SQL_C_CHAR, remarks, SQL_COLUMNS_BUFFER_LEN, &rSize));
+    CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 13, SQL_C_CHAR, colDefault, SQL_COLUMNS_BUFFER_LEN, &cdSize));
     CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 14, SQL_C_SHORT, &sqlDataType, 0, NULL));
     CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 15, SQL_C_SHORT, &datetimeSubtypeCode, 0, &dscSize));
     CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 16, SQL_C_LONG, &charOctetLength, 0, &colSize));
     CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 17, SQL_C_LONG, &ordinalPosition, 0, NULL));
-    CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 18, SQL_C_CHAR, isNullable, BUFFER_LEN, NULL));
+    CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 18, SQL_C_CHAR, isNullable, SQL_COLUMNS_BUFFER_LEN, NULL));
 
     int rc;
     int numOfRowsFetched = 0;
     while ((rc = SQLFetch(Stmt)) == SQL_SUCCESS) {
-        FAIL_IF(strcmp(tableCat, ExpTableCat) != 0, "Wrong TABLE_CAT returned!");
+        FAIL_IF(_stricmp(tableCat, ExpTableCat) != 0, "Wrong TABLE_CAT returned!");
         FAIL_IF(tsSize != SQL_NULL_DATA, "TABLE_SCHEMA must be null!");
-        FAIL_IF(strcmp(tableName, ExpTableName) != 0, "Wrong TABLE_NAME returned!")
+        FAIL_IF(_stricmp(tableName, ExpTableName) != 0, "Wrong TABLE_NAME returned!")
 
         SQLCHAR ExpColName[3] = {0};
         ExpColName[0] = numOfRowsFetched >= 26 ? (numOfRowsFetched - 26) / 26 + 'a' : (numOfRowsFetched % 26) + 'a';
         ExpColName[1] = numOfRowsFetched >= 26 ? (numOfRowsFetched % 26) + 'a' : '\0';
-        FAIL_IF(strcmp(colName, ExpColName) != 0, "Wrong COLUMN_NAME returned!");
+        FAIL_IF(_stricmp(colName, ExpColName) != 0, "Wrong COLUMN_NAME returned!");
         FAIL_IF(dataType != ExpDataType[numOfRowsFetched], "Wrong DATA_TYPE returned!");
-        FAIL_IF(strcasecmp(typeName, (SQLCHAR *) ExpTypeName[numOfRowsFetched]) != 0, "Wrong TYPE_NAME returned!");
+        FAIL_IF(_stricmp(typeName, (SQLCHAR *) ExpTypeName[numOfRowsFetched]) != 0, "Wrong TYPE_NAME returned!");
 
         if (ExpColSize[numOfRowsFetched] != SQL_NULL_DATA) {
             FAIL_IF(columnSize != ExpColSize[numOfRowsFetched], "Wrong COLUMN_SIZE returned!");

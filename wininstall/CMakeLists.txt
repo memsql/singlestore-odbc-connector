@@ -92,12 +92,12 @@ SET_TARGET_PROPERTIES(${MSI_PACKAGE} PROPERTIES EXCLUDE_FROM_ALL OFF)
 
 ADD_CUSTOM_TARGET(
         ODBC_WIX
-        DEPENDS mariadb_odbc.xm binaries_dir.xm
+        DEPENDS mariadb_odbc.xml binaries_dir.xml
         COMMAND ${WIX_DIR}candle.exe -ext WixUIExtension -ext WixUtilExtension mariadb_odbc.xml -o mariadb_odbc.wixobj)
 
 ADD_DEPENDENCIES(${MSI_PACKAGE} ODBC_WIX)
 ADD_DEPENDENCIES(ODBC_WIX maodbc maodbcs change_dsns_driver)
 IF(NOT USE_SYSTEM_INSTALLED_LIB)
-  ADD_DEPENDENCIES(ODBC_WIX maodbc maodbcs dialog caching_sha2_password auth_gssapi_client sha256_password mysql_clear_password)
+  ADD_DEPENDENCIES(ODBC_WIX maodbc maodbcs dialog caching_sha2_password auth_gssapi_client sha256_password mysql_clear_password client_ed25519)
 ENDIF()
 

@@ -195,10 +195,11 @@ ODBC_TEST(wrong_brackets_sequence) {
     "SELECT }",
     "SELECT {{d} {d}} }",
   };
+  char **query;
 
   size_t n = 8;
   char **end = queries + n;
-  for (char **query = queries; query < end; query++) {
+  for (query = queries; query < end; query++) {
     EXPECT_STMT(Stmt, SQLExecDirect(Stmt, (SQLCHAR*)(*query), SQL_NTS), SQL_ERROR);
     CHECK_SQLSTATE(Stmt, "42000");
   }
@@ -217,10 +218,12 @@ ODBC_TEST(strings_with_escape_sequences) {
     "{{\\}}",
     "{\"{}\"}",
   };
+  char **escapeSequence;
+  char *c;
 
   size_t n = 8;
   char **end = escapeSequences + n;
-  for (char **escapeSequence = escapeSequences; escapeSequence < end; escapeSequence++) {
+  for (escapeSequence = escapeSequences; escapeSequence < end; escapeSequence++) {
     // build "SELECT "..."" query
     char query[128];
     char *queryIterator = query;
@@ -228,7 +231,7 @@ ODBC_TEST(strings_with_escape_sequences) {
     queryIterator += 8;
 
     // escape escapeSequence
-    for (char *c = *escapeSequence; *c != '\0'; c++) {
+    for (c = *escapeSequence; *c != '\0'; c++) {
       if (*c == '\\' || *c == '"' || *c == '\'' ) {
         *queryIterator++ = '\\';
       }
@@ -255,10 +258,11 @@ ODBC_TEST(unsupported_escape_sequence) {
     "SELECT {guid 'nnnnnnnn-nnnn-nnnn-nnnn-nnnnnnnnnnnn'}",
     "SELECT {INTERVAL 1 day}",
   };
+  char ** query;
 
   size_t n = 3;
   char **end = queries + n;
-  for (char **query = queries; query < end; query++) {
+  for (query = queries; query < end; query++) {
     EXPECT_STMT(Stmt, SQLExecDirect(Stmt, (SQLCHAR*)(*query), SQL_NTS), SQL_ERROR);
     CHECK_SQLSTATE(Stmt, "42000");
   }
@@ -274,10 +278,11 @@ ODBC_TEST(uppercase) {
     "SELECT {tS '2001-10-1 01:10:10'  }",
     "SELECT {Ts '2001-10-1 01:10:10'  }"
   };
+  char **query;
 
   size_t n = 5;
   char **end = queries + n;
-  for (char **query = queries; query < end; query++) {
+  for (query = queries; query < end; query++) {
     OK_SIMPLE_STMT(Stmt, *query);
   }
 
@@ -324,10 +329,11 @@ ODBC_TEST(convert_failures) {
     "SELECT {fn CONVERT(  ,   ) }",
     "SELECT {fn CONVERT(  ,  SQL_BIGINT ) }",
   };
+  char **query;
 
   size_t n = 10;
   char **end = queries + n;
-  for (char **query = queries; query < end; query++) {
+  for (query = queries; query < end; query++) {
     EXPECT_STMT(Stmt, SQLExecDirect(Stmt, (SQLCHAR*)(*query), SQL_NTS), SQL_ERROR);
     CHECK_SQLSTATE(Stmt, "42000");
   }
