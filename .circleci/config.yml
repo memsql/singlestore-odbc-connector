@@ -110,7 +110,7 @@ jobs:
 workflows:
   test:
     jobs:
-      - build-windows:
+      - build-windows
       - build-macos:
           filters:
             tags:
