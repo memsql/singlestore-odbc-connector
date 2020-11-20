@@ -51,6 +51,9 @@ ODBC_TEST(sqlgetinfo)
   is_num(pcbInfo, 5);
   IS_STR(rgbValue, "03.51", 5);
 
+  CHECK_DBC_RC(Connection, SQLGetInfo(Connection, SQL_DBMS_VER, rgbValue, sizeof(rgbValue), &pcbInfo));
+  FAIL_IF(_stricmp(rgbValue,"05.06.0000") < 0, "DBMS version must be at least 05.06.0000");
+
   return OK;
 }
 
@@ -376,9 +379,9 @@ ODBC_TEST(t_bug46910)
   SQLSMALLINT col_count;
 
 	SQLCHAR * initStmt[]= {"DROP PROCEDURE IF EXISTS `spbug46910_1`",
-		"CREATE PROCEDURE `spbug46910_1`()\
+		"CREATE PROCEDURE `spbug46910_1`() AS\
 		BEGIN\
-		SELECT 1 AS ret;\
+		ECHO SELECT 1 AS RET;\
 		END"};
 
 	SQLCHAR * cleanupStmt= "DROP PROCEDURE IF EXISTS `spbug46910_1`;";
@@ -673,7 +676,7 @@ ODBC_TEST(odbc123odbc277)
   CHECK_DBC_RC(Connection, SQLGetInfo(Connection, SQL_CATALOG_LOCATION, &Info, 0, NULL));
   is_num(Info, SQL_CL_START);
   CHECK_DBC_RC(Connection, SQLGetInfo(Connection, SQL_GROUP_BY, &Info, 0, NULL));
-  is_num(Info, SQL_GB_NO_RELATION);
+  is_num(Info, SQL_GB_GROUP_BY_CONTAINS_SELECT);
   CHECK_DBC_RC(Connection, SQLGetInfo(Connection, SQL_IDENTIFIER_CASE, &Info, 0, NULL));
   is_num(Info, SQL_IC_MIXED);
 
@@ -751,6 +754,39 @@ ODBC_TEST(odbc143)
   return OK;
 }
 
+ODBC_TEST(t_scalarfunctions)
+{
+    SQLUINTEGER ExpConvertFunctions = SQL_FN_CVT_CONVERT;
+    SQLUINTEGER ExpNumericFunctions = 16777199; // Currently ATAN2 is missing.
+    SQLUINTEGER ExpStringFunctions = 16613375; // Currently DIFFERENCE and SOUNDEX are missing.
+    SQLUINTEGER ExpTimedateAddIntervals = 511;
+    SQLUINTEGER ExpTimedateDiffIntervals = 511;
+    SQLUINTEGER ExpTimedateFunctions = 2097151;
+
+    SQLUINTEGER ConvertFunctions;
+    SQLUINTEGER NumericFunctions;
+    SQLUINTEGER StringFunctions;
+    SQLUINTEGER TimedateAddIntervals;
+    SQLUINTEGER TimedateDiffIntervals;
+    SQLUINTEGER TimedateFunctions;
+
+    CHECK_DBC_RC(Connection, SQLGetInfo(Connection, SQL_CONVERT_FUNCTIONS, &ConvertFunctions, sizeof(ConvertFunctions), NULL));
+    CHECK_DBC_RC(Connection, SQLGetInfo(Connection, SQL_NUMERIC_FUNCTIONS, &NumericFunctions, sizeof(NumericFunctions), NULL));
+    CHECK_DBC_RC(Connection, SQLGetInfo(Connection, SQL_STRING_FUNCTIONS, &StringFunctions, sizeof(StringFunctions), NULL));
+    CHECK_DBC_RC(Connection, SQLGetInfo(Connection, SQL_TIMEDATE_ADD_INTERVALS, &TimedateAddIntervals, sizeof(TimedateAddIntervals), NULL));
+    CHECK_DBC_RC(Connection, SQLGetInfo(Connection, SQL_TIMEDATE_DIFF_INTERVALS, &TimedateDiffIntervals, sizeof(TimedateDiffIntervals), NULL));
+    CHECK_DBC_RC(Connection, SQLGetInfo(Connection, SQL_TIMEDATE_FUNCTIONS, &TimedateFunctions, sizeof(TimedateFunctions), NULL));
+
+    is_num(ExpConvertFunctions, ConvertFunctions);
+    is_num(ExpNumericFunctions, NumericFunctions);
+    is_num(ExpStringFunctions, StringFunctions);
+    is_num(ExpTimedateAddIntervals, TimedateAddIntervals);
+    is_num(ExpTimedateDiffIntervals, TimedateDiffIntervals);
+    is_num(ExpTimedateFunctions, TimedateFunctions);
+
+    return OK;
+}
+
 MA_ODBC_TESTS my_tests[]=
 {
   { t_gettypeinfo, "t_gettypeinfo", NORMAL },
@@ -773,6 +809,7 @@ MA_ODBC_TESTS my_tests[]=
   { odbc123odbc277, "odbc123_catalog_start_odbc277", NORMAL },
   { odbc109, "odbc109_shema_owner_term", NORMAL },
   { odbc143, "odbc143_odbc160_ANSI_QUOTES", TO_FIX },
+  {t_scalarfunctions, "t_scalarfunctions", NORMAL},
   { NULL, NULL }
 };
 

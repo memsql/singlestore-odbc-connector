@@ -517,7 +517,11 @@ SQLRETURN MADB_Dbc_GetCurrentDB(MADB_Dbc *Connection, SQLPOINTER CurrentDB, SQLI
   ret= MA_SQLAllocHandle(SQL_HANDLE_STMT, (SQLHANDLE) Connection, (SQLHANDLE*)&Stmt);
   if (!SQL_SUCCEEDED(ret))
     return ret;
-  if (!SQL_SUCCEEDED(Stmt->Methods->ExecDirect(Stmt, (char *)"SELECT IF(DATABASE() IS NOT NULL,DATABASE(),'null')", SQL_NTS)) ||
+
+  // Currently we have to check if DATABASE() != '' because SingleStore returns an empty string (rather than NULL)
+  // for a connection with no database.
+  char* currentDbQuery = "SELECT IF(DATABASE() IS NOT NULL AND DATABASE() != '',DATABASE(),'null')";
+  if (!SQL_SUCCEEDED(Stmt->Methods->ExecDirect(Stmt, currentDbQuery, SQL_NTS)) ||
       !SQL_SUCCEEDED(Stmt->Methods->Fetch(Stmt)))
   {
     MADB_CopyError(&Connection->Error, &Stmt->Error);
@@ -980,7 +984,9 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_ALTER_TABLE:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_AT_ADD_COLUMN | SQL_AT_DROP_COLUMN, StringLengthPtr);
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_AT_ADD_COLUMN | SQL_AT_DROP_COLUMN | SQL_AT_ADD_CONSTRAINT |
+                     SQL_AT_ADD_COLUMN_SINGLE | SQL_AT_ADD_COLUMN_DEFAULT | SQL_AT_ADD_COLUMN_COLLATION |
+                     SQL_AT_SET_COLUMN_DEFAULT, StringLengthPtr);
     break;
 #ifdef SQL_ASYNC_DBC_FUNCTIONS
   case SQL_ASYNC_DBC_FUNCTIONS:
@@ -1054,7 +1060,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_BINARY:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_BIT:
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
@@ -1092,7 +1098,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_CONVERT_LONGVARBINARY:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_LONGVARCHAR:
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
@@ -1119,7 +1125,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_VARBINARY:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_VARCHAR:
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
@@ -1128,10 +1134,12 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_FUNCTIONS:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
+    // CAST is not supported for all datatypes, while CONVERT is expected to arrive in the escape syntax form,
+    // in which case we fully support it.
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_FN_CVT_CONVERT, StringLengthPtr);
     break;
   case SQL_CORRELATION_NAME:
-    MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_CN_DIFFERENT, StringLengthPtr);
+    MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_CN_ANY, StringLengthPtr);
     break;
   case SQL_CREATE_ASSERTION:
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
@@ -1149,9 +1157,9 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_CREATE_TABLE:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_CT_COLUMN_COLLATION | SQL_CT_COLUMN_DEFAULT |
-                                                SQL_CT_COMMIT_DELETE | SQL_CT_CREATE_TABLE |
-                                                SQL_CT_LOCAL_TEMPORARY,
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_CT_COLUMN_COLLATION | SQL_CT_COLUMN_DEFAULT | SQL_CT_COLUMN_CONSTRAINT |
+                                                SQL_CT_COMMIT_DELETE | SQL_CT_CREATE_TABLE | SQL_CT_TABLE_CONSTRAINT |
+                                                SQL_CT_LOCAL_TEMPORARY | SQL_CT_CONSTRAINT_NAME_DEFINITION,
                      StringLengthPtr);
     break;
   case SQL_CREATE_TRANSLATION:
@@ -1182,8 +1190,9 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                                                 SQL_DL_SQL92_TIMESTAMP, StringLengthPtr);
     break;
   case SQL_DBMS_NAME:
+    // TODO: revisit this section (and everything related to name and versioning) when we decide what should be reported.
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
-                                     Dbc->mariadb ? (char *)mysql_get_server_name(Dbc->mariadb) : "MariaDB",
+                                     Dbc->mariadb ? (char *)mysql_get_server_name(Dbc->mariadb) : "MySQL",
                                      SQL_NTS, &Dbc->Error);
     break;
   case SQL_DBMS_VER:
@@ -1194,6 +1203,11 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
       if (Dbc->mariadb)
       {
         ServerVersion= mysql_get_server_version(Dbc->mariadb);
+        // TODO: revisit this section (and everything related to name and versioning) when we decide what should be reported.
+        if (ServerVersion < 50600)
+        {
+            ServerVersion = 50600;
+        }
         _snprintf(Version, sizeof(Version), "%02u.%02u.%06u", ServerVersion / 10000,
                     (ServerVersion % 10000) / 100, ServerVersion % 100);
       }
@@ -1207,7 +1221,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
      MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_DI_CREATE_INDEX | SQL_DI_DROP_INDEX, StringLengthPtr);
     break;
   case SQL_DEFAULT_TXN_ISOLATION:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_TXN_READ_COMMITTED, StringLengthPtr);
     break;
   case SQL_DESCRIBE_PARAMETER:
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
@@ -1264,15 +1278,13 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_DROP_TABLE:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_DT_CASCADE | SQL_DT_DROP_TABLE | 
-                                                SQL_DT_RESTRICT, StringLengthPtr);
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_DT_DROP_TABLE, StringLengthPtr);
     break;
   case SQL_DROP_TRANSLATION:
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_DROP_VIEW:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_DV_CASCADE | SQL_DV_DROP_VIEW | 
-                                                SQL_DV_RESTRICT, StringLengthPtr);
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_DV_DROP_VIEW, StringLengthPtr);
     break;
   case SQL_DYNAMIC_CURSOR_ATTRIBUTES1:
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_CA1_ABSOLUTE |
@@ -1332,7 +1344,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
   }
   case SQL_GROUP_BY:
-    MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_GB_NO_RELATION, StringLengthPtr);
+    MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_GB_GROUP_BY_CONTAINS_SELECT, StringLengthPtr);
     break;
   case SQL_IDENTIFIER_CASE:
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_IC_MIXED, StringLengthPtr);
@@ -1341,7 +1353,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),"`", SQL_NTS, &Dbc->Error);
     break;
   case SQL_INDEX_KEYWORDS:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_IK_ALL, StringLengthPtr);
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_IK_NONE, StringLengthPtr);
     break;
   case SQL_INFO_SCHEMA_VIEWS:
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_ISV_CHARACTER_SETS | SQL_ISV_COLLATIONS |
@@ -1372,19 +1384,17 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                                      "DUAL,EACH,ELSEIF,ENCLOSED,ESCAPED,EXIT,EXPLAIN,FLOAT4,FLOAT8,"
                                      "FORCE,FULLTEXT,HIGH_PRIORITY,HOUR_MICROSECOND,HOUR_MINUTE,"
                                      "HOUR_SECOND,IF,IGNORE,INFILE,INOUT,INT1,INT2,INT3,INT4,INT8,"
-                                     "ITERATE,KEY,KEYS,KILL,LEAVE,LIMIT,LINEAR,LINES,LOAD,LOCALTIME,"
+                                     "ITERATE,KEY,KEYS,KILL,LEAVE,LIMIT,LINES,LOAD,LOCALTIME,"
                                      "LOCALTIMESTAMP,LOCK,LONG,LONGBLOB,LONGTEXT,LOOP,LOW_PRIORITY,"
                                      "MEDIUMBLOB,MEDIUMINT,MEDIUMTEXT,MIDDLEINT,MINUTE_MICROSECOND,"
                                      "MINUTE_SECOND,MOD,MODIFIES,NO_WRITE_TO_BINLOG,OPTIMIZE,OPTIONALLY,"
-                                     "OUT,OUTFILE,PURGE,RANGE,READS,READ_ONLY,READ_WRITE,REGEXP,RELEASE,"
+                                     "OUT,OUTFILE,PURGE,RANGE,READS,REGEXP,RELEASE,"
                                      "RENAME,REPEAT,REPLACE,REQUIRE,RETURN,RLIKE,SCHEMAS,"
                                      "SECOND_MICROSECOND,SENSITIVE,SEPARATOR,SHOW,SPATIAL,SPECIFIC,"
                                      "SQLEXCEPTION,SQL_BIG_RESULT,SQL_CALC_FOUND_ROWS,SQL_SMALL_RESULT,"
                                      "SSL,STARTING,STRAIGHT_JOIN,TERMINATED,TINYBLOB,TINYINT,TINYTEXT,"
                                      "TRIGGER,UNDO,UNLOCK,UNSIGNED,USE,UTC_DATE,UTC_TIME,UTC_TIMESTAMP,"
-                                     "VARBINARY,VARCHARACTER,WHILE,X509,XOR,YEAR_MONTH,ZEROFILL,GENERAL,"
-                                     "IGNORE_SERVER_IDS,MASTER_HEARTBEAT_PERIOD,MAXVALUE,RESIGNAL,SIGNAL,"
-                                     "SLOW", SQL_NTS, &Dbc->Error);
+                                     "VARBINARY,VARCHARACTER,WHILE,XOR,YEAR_MONTH,MAXVALUE,SIGNAL", SQL_NTS, &Dbc->Error);
     break;
   case SQL_LIKE_ESCAPE_CLAUSE:
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
@@ -1403,7 +1413,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_MAX_COLUMN_NAME_LEN:
-    MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, NAME_CHAR_LEN * SYSTEM_MB_MAX_CHAR_LENGTH - 1, StringLengthPtr);
+    MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, NAME_CHAR_LEN * SYSTEM_MB_MAX_CHAR_LENGTH, StringLengthPtr);
     break;
   case SQL_MAX_COLUMNS_IN_GROUP_BY:
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, 0, StringLengthPtr);
@@ -1484,7 +1494,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
   case SQL_NUMERIC_FUNCTIONS:
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_FN_NUM_ABS | SQL_FN_NUM_ACOS | SQL_FN_NUM_ASIN |
-                                                SQL_FN_NUM_ATAN | SQL_FN_NUM_ATAN2 | SQL_FN_NUM_CEILING |
+                                                SQL_FN_NUM_ATAN | SQL_FN_NUM_CEILING |
                                                 SQL_FN_NUM_COS | SQL_FN_NUM_COT | SQL_FN_NUM_EXP |
                                                 SQL_FN_NUM_FLOOR | SQL_FN_NUM_LOG | SQL_FN_NUM_MOD |
                                                 SQL_FN_NUM_SIGN | SQL_FN_NUM_SIN | SQL_FN_NUM_SQRT |
@@ -1509,8 +1519,8 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                                      (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), "Y", SQL_NTS, &Dbc->Error);
     break;
   case SQL_OJ_CAPABILITIES:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_OJ_LEFT | SQL_OJ_RIGHT |
-                                                SQL_OJ_NESTED | SQL_OJ_INNER, StringLengthPtr);
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr,  SQL_OJ_LEFT | SQL_OJ_RIGHT | SQL_OJ_FULL | SQL_OJ_NESTED |
+        SQL_OJ_NOT_ORDERED | SQL_OJ_INNER | SQL_OJ_ALL_COMPARISON_OPS, StringLengthPtr);
     break;
   case SQL_ORDER_BY_COLUMNS_IN_SELECT:
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
@@ -1524,7 +1534,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
   case SQL_PROCEDURE_TERM:
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
-                                     "stored procedure", SQL_NTS, &Dbc->Error);
+                                     "procedure", SQL_NTS, &Dbc->Error);
     break;
   case SQL_PROCEDURES:
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
@@ -1576,7 +1586,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
   case SQL_SPECIAL_CHARACTERS:
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, 
                                       BUFFER_CHAR_LEN(BufferLength, isWChar),
-                                     "\"\\/", SQL_NTS, &Dbc->Error);
+                                     "\"\\/!@#$%^&*()-=+<>|:;,.%?", SQL_NTS, &Dbc->Error);
     break;
   case SQL_SQL_CONFORMANCE:
      MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SC_SQL92_INTERMEDIATE, StringLengthPtr);
@@ -1652,15 +1662,14 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
   case SQL_STRING_FUNCTIONS:
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_FN_STR_ASCII | SQL_FN_STR_BIT_LENGTH |
-                                                SQL_FN_STR_CHAR | SQL_FN_STR_CHAR_LENGTH |
+                                                SQL_FN_STR_CHAR | SQL_FN_STR_CHAR_LENGTH | SQL_FN_STR_CHARACTER_LENGTH |
                                                 SQL_FN_STR_CONCAT | SQL_FN_STR_INSERT | 
                                                 SQL_FN_STR_LCASE | SQL_FN_STR_LEFT | 
                                                 SQL_FN_STR_LENGTH | SQL_FN_STR_LOCATE |
                                                 SQL_FN_STR_LOCATE_2 | SQL_FN_STR_LTRIM |
                                                 SQL_FN_STR_OCTET_LENGTH | SQL_FN_STR_POSITION |
                                                 SQL_FN_STR_REPEAT | SQL_FN_STR_REPLACE |
-                                                SQL_FN_STR_RIGHT | SQL_FN_STR_RTRIM |
-                                                SQL_FN_STR_SOUNDEX | SQL_FN_STR_SPACE |
+                                                SQL_FN_STR_RIGHT | SQL_FN_STR_RTRIM | SQL_FN_STR_SPACE |
                                                 SQL_FN_STR_SUBSTRING | SQL_FN_STR_UCASE,
                      StringLengthPtr);
     break;
@@ -1679,10 +1688,14 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                                      "table", SQL_NTS, &Dbc->Error);
     break;
   case SQL_TIMEDATE_ADD_INTERVALS:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_FN_TSI_FRAC_SECOND | SQL_FN_TSI_SECOND | SQL_FN_TSI_MINUTE |
+                     SQL_FN_TSI_HOUR | SQL_FN_TSI_DAY | SQL_FN_TSI_WEEK | SQL_FN_TSI_MONTH | SQL_FN_TSI_QUARTER |
+                     SQL_FN_TSI_YEAR, StringLengthPtr);
     break;
   case SQL_TIMEDATE_DIFF_INTERVALS:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_FN_TSI_FRAC_SECOND | SQL_FN_TSI_SECOND | SQL_FN_TSI_MINUTE |
+                     SQL_FN_TSI_HOUR | SQL_FN_TSI_DAY | SQL_FN_TSI_WEEK | SQL_FN_TSI_MONTH | SQL_FN_TSI_QUARTER |
+                     SQL_FN_TSI_YEAR, StringLengthPtr);
     break;
   case SQL_TIMEDATE_FUNCTIONS:
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_FN_TD_CURDATE | SQL_FN_TD_CURRENT_DATE | 
@@ -1701,9 +1714,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_TC_DDL_COMMIT, StringLengthPtr);
     break;
   case SQL_TXN_ISOLATION_OPTION:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_TXN_READ_COMMITTED | SQL_TXN_READ_UNCOMMITTED |
-                                                SQL_TXN_REPEATABLE_READ | SQL_TXN_SERIALIZABLE,
-                      StringLengthPtr);
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_TXN_READ_COMMITTED, StringLengthPtr);
     break;
   case SQL_UNION:
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_U_UNION | SQL_U_UNION_ALL, StringLengthPtr);

@@ -58,11 +58,11 @@ SQLRETURN MADB_Dbc_GetCurrentDB(MADB_Dbc *Connection, SQLPOINTER CurrentDB, SQLI
 /* Has platform versions */
 char* MADB_GetDefaultPluginsDir(char* Buffer, size_t Size);
 
-#define MADB_SUPPORTED_CONVERSIONS  SQL_CVT_BIGINT | SQL_CVT_BIT | SQL_CVT_CHAR | SQL_CVT_DATE |\
+#define MADB_SUPPORTED_CONVERSIONS  SQL_CVT_BIGINT | SQL_CVT_BINARY | SQL_CVT_BIT | SQL_CVT_CHAR | SQL_CVT_DATE |\
                                     SQL_CVT_DECIMAL | SQL_CVT_DOUBLE | SQL_CVT_FLOAT |\
-                                    SQL_CVT_INTEGER | SQL_CVT_LONGVARCHAR | SQL_CVT_NUMERIC |\
+                                    SQL_CVT_INTEGER | SQL_CVT_LONGVARBINARY | SQL_CVT_LONGVARCHAR | SQL_CVT_NUMERIC |\
                                     SQL_CVT_REAL | SQL_CVT_SMALLINT | SQL_CVT_TIME | SQL_CVT_TIMESTAMP |\
-                                    SQL_CVT_TINYINT | SQL_CVT_VARCHAR | SQL_CVT_WCHAR | \
+                                    SQL_CVT_TINYINT | SQL_CVT_VARBINARY | SQL_CVT_VARCHAR | SQL_CVT_WCHAR | \
                                     SQL_CVT_WLONGVARCHAR | SQL_CVT_WVARCHAR
 /**************** Helper macros ****************/
 /* check if the connection is established */
