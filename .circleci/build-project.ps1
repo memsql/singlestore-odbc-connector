@@ -15,7 +15,7 @@ if (-not (Get-Command cmake -ErrorAction SilentlyContinue)) {
 
 choco install -y -r --no-progress wixtoolset
 
-cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCONC_WITH_MSI=OFF -DWITH_SSL=SCHANNEL .
+cmake -A Win32 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCONC_WITH_MSI=OFF -DWITH_SSL=SCHANNEL .
 cmake --build . --config RelWithDebInfo --parallel 2
 
 cd test
