@@ -11,6 +11,7 @@ cmake --build . --config RelWithDebInfo --parallel 2
 
 msiexec.exe /i wininstall\mariadb-connector-odbc-3.1.10-win32.msi
 
+Add-OdbcDsn -Name "maodbc_test" -DriverName "MariaDB ODBC 3.1 Driver" -DsnType "System" -SetPropertyValue @("Server=localhost", "PORT=3306", "Database=test")
 New-Item -Path "HKCU:\Software\ODBC"
 New-Item -Path "HKCU:\Software\ODBC\ODBC.INI"
 $regPath = "HKCU:\Software\ODBC\ODBC.INI\maodbc_test"
