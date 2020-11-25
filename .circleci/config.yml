@@ -40,7 +40,8 @@ jobs:
             Invoke-WebRequest -URI https://github.com/Kitware/CMake/releases/download/v3.19.0/cmake-3.19.0-win32-x86.zip -OutFile $Env:HOMEPATH\cmake-3.19.0-win32-x86.zip
             Expand-Archive $Env:HOMEPATH\cmake-3.19.0-win32-x86.zip -DestinationPath "$Env:ProgramFiles"
             Rename-Item "$Env:ProgramFiles\cmake-3.19.0-win32-x86" -NewName CMake
-            Install-WindowsFeature Net-Framework-Core
+#            Install-WindowsFeature Net-Framework-Core
+            Enable-WindowsOptionalFeature -Online -FeatureName "NetFx3"
       - run: .circleci\build-project.ps1
 
   build-macos:

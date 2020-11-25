@@ -53,4 +53,4 @@ refreshenv
 msiexec.exe /i wininstall\mariadb-connector-odbc-3.1.10-win64.msi INSTALLDIR=c:\mariadb-odbc /qn
 
 cd test
-ctest -V
+ctest -V -u $ENV:MEMSQL_USER -p $ENV:MEMSQL_PASSWORD -P $ENV:MEMSQL_PORT
