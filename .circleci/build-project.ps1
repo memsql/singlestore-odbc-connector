@@ -6,6 +6,13 @@ if (-not (Get-Command cmake -ErrorAction SilentlyContinue)) {
 choco install -y -r --no-progress wixtoolset
 refreshenv
 
+cd libmariadb
+cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo
+cmake --build . --config RelWithDebInfo
+cd ..
+cmake -DCONC_WITH_MSI=OFF -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_SIGNCODE=0 -DWITH_SSL=SCHANNEL -DWITH_OPENSSL=OFF
+cmake --build . --config RelWithDebInfo
+
 #cmake -A Win32 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCONC_WITH_MSI=OFF -DWITH_SSL=SCHANNEL .
 cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCONC_WITH_MSI=OFF -DWITH_SSL=SCHANNEL .
 cmake --build . --config RelWithDebInfo --parallel 2
