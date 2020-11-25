@@ -45,7 +45,7 @@ New-ItemProperty -Path "HKCU:\Software\ODBC\ODBC.INI\ODBC Data Sources" -Name "m
 
 refreshenv
 
-msiexec.exe /i c:\Users\circleci\project\wininstall\mariadb-connector-odbc-3.1.10-win64.msi INSTALLDIR=c:\mariadb-odbc /qn
+msiexec.exe /a c:\Users\circleci\project\wininstall\mariadb-connector-odbc-3.1.10-win64.msi TARGETDIR="C:\maria-odbc" /qn
 
 cd test
 ctest -V -u $ENV:MEMSQL_USER -p $ENV:MEMSQL_PASSWORD -P $ENV:MEMSQL_PORT
