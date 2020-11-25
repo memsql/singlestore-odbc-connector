@@ -34,5 +34,7 @@ New-ItemProperty -Path "HKCU:\Software\ODBC\ODBC.INI\ODBC Data Sources" -Name "m
 Add-OdbcDsn -Name "maodbc_test" -DriverName "MariaDB ODBC 3.1 Driver" -DsnType "System" -SetPropertyValue @("Server=localhost", "PORT=3306", "Database=test")
 #Add-OdbcDsn -Name "maodbc_test" -DriverName "MariaDB ODBC 3.1 Driver" -DsnType "System" -SetPropertyValue @("Server=localhost", "PORT=3306", "Database=test") -Platform "32-bit"
 
+refreshenv
+
 cd test
 ctest -V
