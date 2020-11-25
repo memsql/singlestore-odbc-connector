@@ -6,10 +6,12 @@ if (-not (Get-Command cmake -ErrorAction SilentlyContinue)) {
 choco install -y -r --no-progress wixtoolset
 refreshenv
 
-cmake -A Win32 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCONC_WITH_MSI=OFF -DWITH_SSL=SCHANNEL .
+#cmake -A Win32 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCONC_WITH_MSI=OFF -DWITH_SSL=SCHANNEL .
+cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCONC_WITH_MSI=OFF -DWITH_SSL=SCHANNEL .
 cmake --build . --config RelWithDebInfo --parallel 2
 
-msiexec.exe /i wininstall\mariadb-connector-odbc-3.1.10-win32.msi
+msiexec.exe /i wininstall\mariadb-connector-odbc-3.1.10-win64.msi
+#msiexec.exe /i wininstall\mariadb-connector-odbc-3.1.10-win32.msi
 
 New-Item -Path "HKCU:\Software\ODBC"
 New-Item -Path "HKCU:\Software\ODBC\ODBC.INI"
@@ -29,7 +31,8 @@ New-ItemProperty -Path $regPath -Name "UID" -Value "root"
 New-Item -Path "HKCU:\Software\ODBC\ODBC.INI\ODBC Data Sources"
 New-ItemProperty -Path "HKCU:\Software\ODBC\ODBC.INI\ODBC Data Sources" -Name "maodbc_test" -Value "MariaDB ODBC 3.1 Driver"
 
-Add-OdbcDsn -Name "maodbc_test" -DriverName "MariaDB ODBC 3.1 Driver" -DsnType "System" -SetPropertyValue @("Server=localhost", "PORT=3306", "Database=test") -Platform "32-bit"
+Add-OdbcDsn -Name "maodbc_test" -DriverName "MariaDB ODBC 3.1 Driver" -DsnType "System" -SetPropertyValue @("Server=localhost", "PORT=3306", "Database=test")
+#Add-OdbcDsn -Name "maodbc_test" -DriverName "MariaDB ODBC 3.1 Driver" -DsnType "System" -SetPropertyValue @("Server=localhost", "PORT=3306", "Database=test") -Platform "32-bit"
 
 cd test
 ctest -V
