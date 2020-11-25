@@ -39,7 +39,11 @@ Add-OdbcDsn -Name "maodbc_test" -DriverName "MariaDB ODBC 3.1 Driver" -DsnType "
 
 refreshenv
 
-msiexec.exe /i wininstall\mariadb-connector-odbc-3.1.10-win64.msi
+$msifile = Get-ChildItem $env:$(System.DefaultWorkingDirectory)\wininstall\mariadb-connector-odbc*.msi | Select-Object -First 1
+Write $msifile
+msiexec /i $msifile.fullname INSTALLDIR=c:\mariadb-odbc /qn
+
+#msiexec.exe /i wininstall\mariadb-connector-odbc-3.1.10-win64.msi
 
 cd test
 ctest -V
