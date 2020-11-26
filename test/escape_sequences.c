@@ -331,7 +331,7 @@ ODBC_TEST(convert_failures) {
   };
   char **query;
 
-  size_t n = 10;
+  size_t n = sizeof(queries) / sizeof(queries[0]);
   char **end = queries + n;
   for (query = queries; query < end; query++) {
     EXPECT_STMT(Stmt, SQLExecDirect(Stmt, (SQLCHAR*)(*query), SQL_NTS), SQL_ERROR);
