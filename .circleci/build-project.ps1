@@ -52,7 +52,7 @@ msiexec.exe /a c:\Users\circleci\project\wininstall\mariadb-connector-odbc-3.1.1
 
 $oldPath=(Get-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).Path
 
-$newPath=$oldPath+’;C:\maria-odbc\MariaDB\MariaDB ODBC Driver 64-bit’
+$newPath=$oldPath+";C:\maria-odbc\MariaDB\MariaDB ODBC Driver 64-bit"
 
 Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH –Value $newPath
 
