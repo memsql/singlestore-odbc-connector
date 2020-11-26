@@ -3661,7 +3661,9 @@ dynerror:
 }
 /* }}} */
 
-/* {{{ MADB_StmtProcedureColumns */
+/* {{{ MADB_StmtProcedureColumns
+ * Despite the name, this function works both for procedures and functions in SingleStore
+ * It returns an empty set for functions and procedures without parameters */
 SQLRETURN MADB_StmtProcedureColumns(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLINT NameLength1,
                                 char *SchemaName, SQLSMALLINT NameLength2, char *ProcName,
                                 SQLSMALLINT NameLength3, char *ColumnName, SQLSMALLINT NameLength4)
@@ -3670,7 +3672,6 @@ SQLRETURN MADB_StmtProcedureColumns(MADB_Stmt *Stmt, char *CatalogName, SQLSMALL
        *p;
   size_t Length= strlen(MADB_PROCEDURE_COLUMNS(Stmt)) + 1024;
   SQLRETURN ret;
-  unsigned int OctetsPerChar= Stmt->Connection->Charset.cs_info->char_maxlen > 0 ? Stmt->Connection->Charset.cs_info->char_maxlen: 1;
 
   MADB_CLEAR_ERROR(&Stmt->Error);
 
@@ -3681,7 +3682,7 @@ SQLRETURN MADB_StmtProcedureColumns(MADB_Stmt *Stmt, char *CatalogName, SQLSMALL
 
   p= StmtStr;
 
-  p+= _snprintf(p, Length, MADB_PROCEDURE_COLUMNS(Stmt), OctetsPerChar);
+  p+= _snprintf(p, Length, MADB_PROCEDURE_COLUMNS(Stmt));
   
   if (CatalogName)
     p+= _snprintf(p, Length - strlen(StmtStr), "WHERE SPECIFIC_SCHEMA='%s' ", CatalogName);
