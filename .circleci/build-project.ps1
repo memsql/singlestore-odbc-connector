@@ -25,6 +25,7 @@ $regPath = "HKCU:\Software\ODBC\ODBC.INI\maodbc_test"
 New-Item -Path $regPath
 New-ItemProperty -Path $regPath -Name "CONN_TIMEOUT" -Value "0"
 New-ItemProperty -Path $regPath -Name "DATABASE" -Value "test"
+New-ItemProperty -Path $regPath -Name "TEST_SCHEMA" -Value "test"
 New-ItemProperty -Path $regPath -Name "DESCRIPTION" -Value "MariaDB ODBC test"
 New-ItemProperty -Path $regPath -Name "Driver" -Value "MariaDB ODBC 3.1 Driver"
 New-ItemProperty -Path $regPath -Name "OPTIONS" -Value "0"
@@ -47,5 +48,10 @@ refreshenv
 
 msiexec.exe /a c:\Users\circleci\project\wininstall\mariadb-connector-odbc-3.1.10-win64.msi TARGETDIR="C:\maria-odbc" /qn
 
+$env:Path += ";C:\maria-odbc\MariaDB\MariaDB ODBC Driver 64-bit"
+
+refreshenv
+
 cd test
-ctest -V -u $ENV:MEMSQL_USER -p $ENV:MEMSQL_PASSWORD -P $ENV:MEMSQL_PORT
+#ctest -V -u $ENV:MEMSQL_USER -p $ENV:MEMSQL_PASSWORD -P $ENV:MEMSQL_PORT -S $ENV:MEMSQL_HOST
+ctest -V
