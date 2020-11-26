@@ -61,6 +61,6 @@ Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Co
 
 #refreshenv
 
-cd test
+#cd test
 #ctest -V -u $ENV:MEMSQL_USER -p $ENV:MEMSQL_PASSWORD -P $ENV:MEMSQL_PORT -S $ENV:MEMSQL_HOST
-ctest -V
+#ctest -V
