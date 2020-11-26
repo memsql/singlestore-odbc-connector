@@ -56,7 +56,7 @@ $newPath=$oldPath+";C:\maria-odbc\MariaDB\MariaDB ODBC Driver 64-bit"
 
 Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value $newPath
 
-refreshenv
+#refreshenv
 
 cd test
 #ctest -V -u $ENV:MEMSQL_USER -p $ENV:MEMSQL_PASSWORD -P $ENV:MEMSQL_PORT -S $ENV:MEMSQL_HOST
