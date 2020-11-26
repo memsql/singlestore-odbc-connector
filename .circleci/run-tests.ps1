@@ -10,3 +10,4 @@ $env:TEST_UID=$ENV:MEMSQL_USER
 
 cd test
 ctest -V
+exit $LASTEXITCODE
