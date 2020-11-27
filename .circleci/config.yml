@@ -9,6 +9,7 @@ commands:
             sudo apt update
             sudo apt install -y curl
             sudo apt-get update
+            sudo apt-get install -y mysql-client-core-5.5
             sudo apt-get clean
   setup-environment-macos:
     description: "Setup the macos environment"
@@ -86,7 +87,7 @@ jobs:
       TEST_PORT: 5506
       CONTINUOUS_INTEGRATION: true
     steps:
-#      - setup-environment-linux
+      - setup-environment-linux
       - checkout
       - run:
           name: Setup test cluster
