@@ -113,9 +113,16 @@ jobs:
 workflows:
   test:
     jobs:
-      - build-windows
+      - build-windows:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
       - build-macos:
           filters:
+            branches:
+              ignore: /.*/
             tags:
               only: /^v.*/
       - build-linux:
