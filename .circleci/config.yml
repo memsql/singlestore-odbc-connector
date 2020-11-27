@@ -1,7 +1,7 @@
 version: 2.1
 commands:
   setup-environment-linux:
-    description: "Setup the machine environment"
+    description: "Setup the linux environment"
     steps:
       - run:
           name: Setup Machine
@@ -9,11 +9,9 @@ commands:
             sudo apt update
             sudo apt install -y curl
             sudo apt-get update
-            sudo apt-get install -y git python-pip mysql-client-core-5.5
             sudo apt-get clean
-            sudo apt-get autoclean
   setup-environment-macos:
-    description: "Setup the machine environment"
+    description: "Setup the macos environment"
     steps:
       - run:
           name: Setup Machine
@@ -88,7 +86,7 @@ jobs:
       TEST_PORT: 5506
       CONTINUOUS_INTEGRATION: true
     steps:
-      - setup-environment-linux
+#      - setup-environment-linux
       - checkout
       - run:
           name: Setup test cluster
