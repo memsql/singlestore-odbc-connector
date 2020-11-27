@@ -231,7 +231,6 @@ void yyfree ( void * , yyscan_t yyscanner );
 
 #ifdef YY_HEADER_EXPORT_START_CONDITIONS
 #define INITIAL 0
-#define ANSI_QUOTES 1
 
 #endif
 

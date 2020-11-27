@@ -64,8 +64,6 @@ typedef struct {
   my_bool       PoorManParsing;
 
   my_bool       BatchAllowed;
-  my_bool       AnsiQuotes;
-  my_bool       NoBackslashEscape;
 
 } MADB_QUERY;
 

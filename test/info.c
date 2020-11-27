@@ -717,7 +717,8 @@ ODBC_TEST(odbc109)
   return OK;
 }
 
-
+// TODO: this should be fixed after adding of the session trackers support to the SingleStore DB-46842
+//
 ODBC_TEST(odbc143)
 {
   SQLCHAR Info[2];
@@ -771,7 +772,7 @@ MA_ODBC_TESTS my_tests[]=
   { odbc71, "odbc71_some_odbc2_types", NORMAL },
   { odbc123odbc277, "odbc123_catalog_start_odbc277", NORMAL },
   { odbc109, "odbc109_shema_owner_term", NORMAL },
-  { odbc143, "odbc143_odbc160_ANSI_QUOTES", NORMAL },
+  { odbc143, "odbc143_odbc160_ANSI_QUOTES", TO_FIX },
   { NULL, NULL }
 };
 

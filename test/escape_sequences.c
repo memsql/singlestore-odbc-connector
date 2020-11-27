@@ -472,12 +472,52 @@ ODBC_TEST(timestamp_diff) {
   return OK;
 }
 
+ODBC_TEST(quotes) {
+  char buffer[128];
+  // This query should be successfully sent to SingleStore and validated there
+  //
+  EXPECT_STMT(Stmt, SQLExecDirect(Stmt, (SQLCHAR*)("SELECT {fn \"COS\"(1)}"), SQL_NTS), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "42000");
+
+  OK_SIMPLE_STMT(Stmt, "SELECT {fn CONCAT(\"asd\"\"asd\", \"a\") }")
+  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+  IS_STR(my_fetch_str(Stmt, (SQLCHAR*)buffer, 1), "asd\"asda", 9);
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+
+  OK_SIMPLE_STMT(Stmt, "SELECT {fn CONCAT('asd''asd', 'a') }")
+  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+  IS_STR(my_fetch_str(Stmt, (SQLCHAR*)buffer, 1), "asd'asda", 9);
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+
+  OK_SIMPLE_STMT(Stmt, "SELECT {fn CONCAT('\\'''', 'a') }")
+  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+  IS_STR(my_fetch_str(Stmt, (SQLCHAR*)buffer, 1), "''a", 4);
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+
+  return OK;
+}
+
 ODBC_TEST(ansi_quotes) {
   OK_SIMPLE_STMT(Stmt, "SET sql_mode='ANSI_QUOTES'")
   OK_SIMPLE_STMT(Stmt, "SELECT {fn \"COS\"(1)}");
   OK_SIMPLE_STMT(Stmt, "SET sql_mode=''")
   return OK;
 }
+
+// TODO: this should be fixed after adding of the session trackers support to the SingleStore DB-46842
+//
+ODBC_TEST(ansi_quotes_to_fix) {
+  OK_SIMPLE_STMT(Stmt, "SET sql_mode='ANSI_QUOTES'")
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t");
+  OK_SIMPLE_STMT(Stmt, "CREATE TABLE t(`\\` int)");
+
+  OK_SIMPLE_STMT(Stmt, "SELECT {fn \"COS\"(\"\\\")} FROM t");
+
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE t");
+  OK_SIMPLE_STMT(Stmt, "SET sql_mode=''")
+  return OK;
+}
+
 
 MA_ODBC_TESTS my_tests[]=
 {
@@ -499,7 +539,9 @@ MA_ODBC_TESTS my_tests[]=
   {space, "space", NORMAL},
   {timestamp_add, "timestamp_add", NORMAL},
   {timestamp_diff, "timestamp_diff", NORMAL},
-  {ansi_quotes, "ansi_quotes", TO_FIX},
+  {quotes, "quotes", NORMAL},
+  {ansi_quotes, "ansi_quotes", NORMAL},
+  {ansi_quotes_to_fix, "ansi_quotes_to_fix", TO_FIX},
   {NULL, NULL}
 };
 

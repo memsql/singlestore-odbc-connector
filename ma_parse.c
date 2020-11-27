@@ -144,7 +144,8 @@ SQLRETURN unescapeQuery(MADB_Stmt *Stmt, MADB_DynString *res, char **src, char *
         quotedString = *src + 1;
         char Quote = **src;
 
-        if (Quote == '`' || (Quote == '"' && Stmt->Query.AnsiQuotes))
+        // TODO: add handling of the ANSI_QUOTES case after implementing DB-46842
+        if (Quote == '`')
         {
           SkipQuotedString_Noescapes(&quotedString, *srcEnd, Quote);
         } else
@@ -192,8 +193,6 @@ int MADB_ResetParser(MADB_Stmt *Stmt, char *OriginalQuery, SQLINTEGER OriginalLe
   if (OriginalQuery != NULL)
   {
     Stmt->Query.BatchAllowed=      DSN_OPTION(Stmt->Connection, MADB_OPT_FLAG_MULTI_STATEMENTS) ? '\1' : '\0';
-    Stmt->Query.AnsiQuotes=        MADB_SqlMode(Stmt->Connection, MADB_ANSI_QUOTES);
-    Stmt->Query.NoBackslashEscape= MADB_SqlMode(Stmt->Connection, MADB_NO_BACKSLASH_ESCAPES);
 
     char **OriginalQueryIterator = &OriginalQuery;
     char *OriginalQueryEnd = OriginalQuery + OriginalLength;
@@ -554,8 +553,8 @@ int ParseQuery(MADB_QUERY *Query)
         char *SavePosition;
         Quote= *p++;
         SavePosition= p; /* In case we go past eos while looking for ending quote */
-        if (Query->NoBackslashEscape || Quote == '`' || /* Backtick works with ANSI_QUOTES */
-          (Query->AnsiQuotes && Quote == '"'))/* In indetifier quotation backslash does not escape anything - CLI has error with that */
+        // TODO: add handling of the ANSI_QUOTES case after implementing DB-46842
+        if (Quote == '`')
         {
           SkipQuotedString_Noescapes(&p, end, Quote);
         }

@@ -536,20 +536,6 @@ end:
   MA_SQLFreeStmt(Stmt, SQL_DROP);
   return Connection->Error.ReturnValue;
 }
-BOOL MADB_SqlMode(MADB_Dbc *Connection, enum enum_madb_sql_mode SqlMode)
-{
-  unsigned int ServerStatus;
-
-  mariadb_get_infov(Connection->mariadb, MARIADB_CONNECTION_SERVER_STATUS, (void*)&ServerStatus);
-  switch (SqlMode)
-  {
-  case MADB_NO_BACKSLASH_ESCAPES:
-    return test(ServerStatus & SERVER_STATUS_NO_BACKSLASH_ESCAPES);
-  case MADB_ANSI_QUOTES:
-    return test(ServerStatus & SERVER_STATUS_ANSI_QUOTES);
-  }
-  return FALSE;
-}
 /* }}} */
 
 /* {{{ MADB_DbcEndTran */
@@ -1352,8 +1338,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_IC_MIXED, StringLengthPtr);
     break;
   case SQL_IDENTIFIER_QUOTE_CHAR:
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
-      MADB_SqlMode(Dbc, MADB_ANSI_QUOTES) ? "\"" : "`", SQL_NTS, &Dbc->Error);
+    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),"`", SQL_NTS, &Dbc->Error);
     break;
   case SQL_INDEX_KEYWORDS:
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_IK_ALL, StringLengthPtr);
