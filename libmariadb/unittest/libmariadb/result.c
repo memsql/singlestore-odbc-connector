@@ -1061,6 +1061,58 @@ static int test_conc160(MYSQL *mysql)
 }
 
 
+// Test for a YEAR data type reported by HVR.
+// This is testing the engine so if it fails, we need to double check we're on the young enough version of SingleStore.
+static int test_DB46528(MYSQL *mysql)
+{
+    MYSQL_STMT *mysql_stmt;
+    MYSQL_BIND bind[1];
+    int row_count;
+    unsigned short value;
+    int rc;
+    unsigned short expValues[2] = {0, 2020};
+    char *stmt = "select a from year_table order by a";
+
+    rc = mysql_query(mysql, "drop table if exists year_table");
+    check_mysql_rc(rc, mysql);
+    rc = mysql_query(mysql, "create table year_table (a year)");
+    check_mysql_rc(rc, mysql);
+    rc = mysql_query(mysql, "insert into year_table values(0)");
+    check_mysql_rc(rc, mysql);
+    rc = mysql_query(mysql, "insert into year_table values(2020)");
+    check_mysql_rc(rc, mysql);
+
+    mysql_stmt = mysql_stmt_init(mysql);
+    FAIL_IF(!mysql_stmt, mysql_error(mysql));
+
+    rc = mysql_stmt_prepare(mysql_stmt, stmt, strlen(stmt));
+    check_mysql_rc(rc, mysql);
+
+    rc = mysql_stmt_execute(mysql_stmt);
+    check_mysql_rc(rc, mysql);
+
+    memset(bind, 0, sizeof(bind));
+    bind[0].buffer_type= MYSQL_TYPE_SHORT;
+    bind[0].buffer= (char*)&value;
+    bind[0].is_null= 0;
+    bind[0].length= 0;
+    bind[0].error= 0;
+
+    rc = mysql_stmt_bind_result(mysql_stmt, bind);
+    check_mysql_rc(rc, mysql);
+
+    row_count= 0;
+    while(mysql_stmt_fetch(mysql_stmt) != MYSQL_NO_DATA)
+    {
+        FAIL_IF(*(unsigned short*)bind[0].buffer != expValues[row_count], "wrong value fetched");
+        row_count++;
+    }
+    FAIL_IF(row_count != sizeof(expValues) / sizeof(expValues[0]), "wrong number of rows fetched");
+
+    mysql_stmt_close(mysql_stmt);
+    return OK;
+}
+
 
 struct my_tests_st my_tests[] = {
   {"test_conc160", test_conc160, TEST_CONNECTION_DEFAULT, 0,  NULL,  NULL},
@@ -1082,6 +1134,7 @@ struct my_tests_st my_tests[] = {
   {"test_bug9735", test_bug9735, TEST_CONNECTION_DEFAULT, 0,  NULL,  NULL},
   {"test_bug9992", test_bug9992, TEST_CONNECTION_NEW, CLIENT_MULTI_STATEMENTS,  NULL,  NULL},
   {"test_multi_statements", test_multi_statements, TEST_CONNECTION_NEW, CLIENT_MULTI_STATEMENTS,  NULL,  NULL},
+  {"test_DB46528", test_DB46528, TEST_CONNECTION_NEW, 0,  NULL,  NULL},
   {NULL, NULL, 0, 0, NULL, NULL}
 };
 
