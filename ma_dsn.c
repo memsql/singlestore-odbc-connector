@@ -617,7 +617,6 @@ end:
    Or in other words - it is combination of ReadDsn and ParseConnString */
 BOOL MADB_ReadConnString(MADB_Dsn *Dsn, const char *String, size_t Length, char Delimiter)
 {
-
   /* Basically at this point we need DSN name only */
   if (!MADB_ParseConnString(Dsn, String, Length, Delimiter))
   {
@@ -633,7 +632,6 @@ BOOL MADB_ReadConnString(MADB_Dsn *Dsn, const char *String, size_t Length, char 
        connection string has AUTO_RECONNECT=0. Connection string should have precedence */
     MADB_ParseConnString(Dsn, String, Length, Delimiter);
   }
-
   return TRUE;
 }
 /* }}} */

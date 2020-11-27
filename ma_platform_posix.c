@@ -176,7 +176,6 @@ SQLWCHAR *MADB_ConvertToWchar(const char *Ptr, SQLLEN PtrLength, Client_Charset*
 char *MADB_ConvertFromWChar(const SQLWCHAR *Ptr, SQLINTEGER PtrLength, SQLULEN *Length, Client_Charset *cc,
                             BOOL *Error)
 {
-
   char *AscStr;
   size_t AscLen= PtrLength, PtrOctetLen;
   BOOL dummyError= 0;

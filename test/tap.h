@@ -791,14 +791,12 @@ int mydrvconnect(SQLHENV *henv, SQLHDBC *hdbc, SQLHSTMT *hstmt, SQLCHAR *connIn)
 
 int AllocEnvConn(SQLHANDLE *Env, SQLHANDLE *Connection)
 {
-
   if (*Env == NULL)
   {
     FAIL_IF(!SQL_SUCCEEDED(SQLAllocHandle(SQL_HANDLE_ENV, NULL, Env)), "Couldn't allocate environment handle");
 
     FAIL_IF(!SQL_SUCCEEDED(SQLSetEnvAttr(*Env, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)(SQLLEN)OdbcVer, 0)), "Couldn't set ODBC version");
   }
-
   FAIL_IF(!SQL_SUCCEEDED(SQLAllocHandle(SQL_HANDLE_DBC, *Env, Connection)), "Couldn't allocate connection handle");
 
   return OK;
