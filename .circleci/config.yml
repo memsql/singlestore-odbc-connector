@@ -129,21 +129,21 @@ workflows:
             parameters:
               build_type:
                 - RelWithDebInfo
-#          filters:
-#            branches:
-#              ignore: /.*/
-#            tags:
-#              only: /^v.*/
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
       - build-macos:
           matrix:
             parameters:
               build_type:
                 - RelWithDebInfo
-#          filters:
-#            branches:
-#              ignore: /.*/
-#            tags:
-#              only: /^v.*/
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
       - build-linux:
           matrix:
             parameters:
