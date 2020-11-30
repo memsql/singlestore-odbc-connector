@@ -1,13 +1,12 @@
 #!/bin/bash
 
-set -x
-set -e
+set -eo pipefail
 
 # set variables for Connector/ODBC
 export TEST_DRIVER="$PWD/libmaodbc.dylib"
 
-cmake -DCMAKE_BUILD_TYPE=Debug -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL -DWITH_IODBC=ON -DOPENSSL_ROOT_DIR=/usr/local/Cellar/openssl@1.1/1.1.1h -DOPENSSL_LIBRARIES=/usr/local/Cellar/openssl@1.1/1.1.1h/lib
-cmake --build . --config Debug
+cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL -DWITH_IODBC=ON -DOPENSSL_ROOT_DIR=/usr/local/Cellar/openssl@1.1/1.1.1h -DOPENSSL_LIBRARIES=/usr/local/Cellar/openssl@1.1/1.1.1h/lib
+cmake --build . --config ${BUILD_TYPE}
 
 ###################################################################################################################
 # run test suite

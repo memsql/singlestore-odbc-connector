@@ -5,8 +5,8 @@ if (-not (Get-Command cmake -ErrorAction SilentlyContinue)) {
 choco install -y -r --no-progress wixtoolset
 refreshenv
 
-cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCONC_WITH_MSI=OFF -DWITH_SSL=SCHANNEL .
-cmake --build . --config RelWithDebInfo --parallel 2
+cmake -DCMAKE_BUILD_TYPE=$ENV:BUILD_TYPE -DCONC_WITH_UNIT_TESTS=Off -DCONC_WITH_MSI=OFF -DWITH_SSL=SCHANNEL .
+cmake --build . --config $ENV:BUILD_TYPE --parallel 2
 
 New-Item -Path "HKCU:\Software\ODBC"
 New-Item -Path "HKCU:\Software\ODBC\ODBC.INI"

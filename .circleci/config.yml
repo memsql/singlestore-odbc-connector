@@ -29,7 +29,12 @@ orbs:
 
 jobs:
   build-windows:
+    parameters:
+      build_type:
+        type: string
     executor: win/default
+    environment:
+      BUILD_TYPE: << parameters.build_type >>
     steps:
       - checkout
       - run:
@@ -43,16 +48,20 @@ jobs:
       - run:
           name: Build project
           command: |
-            .circleci\build-project.ps1
+            .circleci\build-windows.ps1
       - run:
           name: Run tests
           command: |
             .circleci\run-tests.ps1
 
   build-macos:
+    parameters:
+      build_type:
+        type: string
     macos:
       xcode: 11.0.0
     environment:
+      BUILD_TYPE: << parameters.build_type >>
       TEST_DSN: singlestore_test
       TEST_SCHEMA: test
       CONTINUOUS_INTEGRATION: true
@@ -76,12 +85,15 @@ jobs:
     parameters:
       memsql_image:
         type: string
+      build_type:
+        type: string
     machine: true
     environment:
+      BUILD_TYPE: << parameters.build_type >>
       MEMSQL_IMAGE: << parameters.memsql_image >>
       TEST_DRIVER: singlestore_test
       TEST_DSN: singlestore_test
-      TEST_SERVER: singlestore.example.com
+      TEST_SERVER: singlestore.test.com
       TEST_SCHEMA: test
       TEST_UID: root
       TEST_PORT: 5506
@@ -113,12 +125,20 @@ workflows:
   test:
     jobs:
       - build-windows:
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
           filters:
             branches:
               ignore: /.*/
             tags:
               only: /^v.*/
       - build-macos:
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
           filters:
             branches:
               ignore: /.*/
@@ -127,6 +147,8 @@ workflows:
       - build-linux:
           matrix:
             parameters:
+              build_type:
+                - RelWithDebInfo
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
                 - memsql/cluster-in-a-box:centos-6.8.15-029542cbf3-1.9.3-1.4.1
