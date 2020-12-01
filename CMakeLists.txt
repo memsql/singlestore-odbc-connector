@@ -423,14 +423,14 @@ IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
       # Configuring ini files for testing with UnixODBC
       SET_VALUE(TEST_DRIVER "maodbc_test")
       SET_VALUE(TEST_DSN "maodbc_test")
-      SET_VALUE(TEST_PORT "3306")
-      SET_VALUE(TEST_SERVER "localhost")
+      SET_VALUE(TEST_PORT "5506")
+      SET_VALUE(TEST_SERVER "127.0.0.1")
       SET_VALUE(TEST_SOCKET "")
-      SET_VALUE(TEST_SCHEMA "test")
+      SET_VALUE(TEST_SCHEMA "odbc_test")
       SET_VALUE(TEST_UID "root")
       SET_VALUE(TEST_PASSWORD "")
 
-      MESSAGE(STATUS "Configurig Test Driver: ${TEST_DRIVER}, Test DSN: ${TEST_DSN}, tcp://${TEST_UID}@${TEST_SERVER}:${TEST_PORT}/${TEST_SCHEMA} socket: ${TEST_SOCKET}")
+      MESSAGE(STATUS "Configuring Test Driver: ${TEST_DRIVER}, Test DSN: ${TEST_DSN}, tcp://${TEST_UID}@${TEST_SERVER}:${TEST_PORT}/${TEST_SCHEMA} socket: ${TEST_SOCKET}")
 
       ADD_CUSTOM_COMMAND(TARGET maodbc POST_BUILD
         COMMAND ${CMAKE_COMMAND} ARGS -DDRIVER_LIB_LOCATION=$<TARGET_FILE:maodbc>

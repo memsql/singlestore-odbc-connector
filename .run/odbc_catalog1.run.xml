@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="odbc_catalog1" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" WORKING_DIR="file://$CMakeCurrentGenerationDir$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="mariadb_connector_odbc" TARGET_NAME="odbc_catalog1" CONFIG_NAME="RelWithDebInfo" RUN_TARGET_PROJECT_NAME="mariadb_connector_odbc" RUN_TARGET_NAME="odbc_catalog1">
+    <envs>
+      <env name="ODBCINI" value="./test/odbc.in" />
+      <env name="ODBCSYSINI" value="./test" />
+    </envs>
+    <method v="2">
+      <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+    </method>
+  </configuration>
+</component>
