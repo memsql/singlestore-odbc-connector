@@ -484,7 +484,7 @@ ODBC_TEST(charset_utf8)
                                  SQL_DRIVER_NOPROMPT));
   CHECK_DBC_RC(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
-  OK_SIMPLE_STMT(hstmt1, "SELECT _latin1 0x73E36F207061756C6F");
+  OK_SIMPLE_STMT(hstmt1, "SELECT 0x73C3A36F207061756C6F");
 
   CHECK_STMT_RC(hstmt1, SQLFetch(hstmt1));
 
@@ -521,7 +521,7 @@ ODBC_TEST(charset_utf8)
     
   CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
-  OK_SIMPLE_STMT(hstmt1, "SELECT _big5 0xA4A4");
+  OK_SIMPLE_STMT(hstmt1, "SELECT 0xE4B8AD");
 
   CHECK_STMT_RC(hstmt1, SQLFetch(hstmt1));
 

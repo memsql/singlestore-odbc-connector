@@ -1141,16 +1141,16 @@ ODBC_TEST(t_bug29402)
   SQLLEN      buflen= 0;
   SQLHDBC     hdbc1;
   SQLHSTMT    hstmt1;
-  const SQLCHAR *expected= (const SQLCHAR*)"\x80""100";
+  const SQLCHAR *expected= (const SQLCHAR*)"\x73""100";
 
   IS(AllocEnvConn(&Env, &hdbc1));
 
   /* We don't have NO_BINARY_RESULT option, and not clear atm if we need it */
-  hstmt1= ConnectWithCharset(&hdbc1, "cp1250", NULL);
+  hstmt1= ConnectWithCharset(&hdbc1, "utf8", NULL);
 
   FAIL_IF(hstmt1 == NULL, "");
 
-  CHECK_HANDLE_RC(SQL_HANDLE_STMT, hstmt1, SQLExecDirectW(hstmt1, CW("SELECT CONCAT(_cp1250 0x80, 100) concated"), SQL_NTS));
+  CHECK_HANDLE_RC(SQL_HANDLE_STMT, hstmt1, SQLExecDirectW(hstmt1, CW("SELECT CONCAT(0x73:>TINYTEXT, 100) concated"), SQL_NTS));
 
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, hstmt1, SQLDescribeCol(hstmt1, 1, column_name, sizeof(column_name),
                                 &name_length, &data_type, &column_size,
