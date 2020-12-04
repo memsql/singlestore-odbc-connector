@@ -1,0 +1,152 @@
+version: 2.1
+commands:
+  setup-environment-linux:
+    description: "Setup the linux environment"
+    steps:
+      - run:
+          name: Setup Machine
+          command: |
+            sudo apt update
+            sudo apt install -y curl
+            sudo apt-get update
+            sudo apt-get install -y mysql-client-core-5.5
+            sudo apt-get install unixodbc odbcinst
+            sudo apt-get install unixodbc-dev
+            sudo apt-get install --allow-unauthenticated -y --force-yes -m unixodbc-dev odbcinst1debian2 libodbc1
+            sudo apt-get clean
+  setup-environment-macos:
+    description: "Setup the macos environment"
+    steps:
+      - run:
+          name: Setup Machine
+          command: |
+            brew update
+            brew install curl
+            brew install libiodbc
+            brew install mysql-client
+            brew install cmake
+            brew cleanup
+
+orbs:
+  win: circleci/windows@2.4.0
+
+jobs:
+  build-windows:
+    parameters:
+      build_type:
+        type: string
+    executor: win/default
+    environment:
+      BUILD_TYPE: << parameters.build_type >>
+    steps:
+      - checkout
+      - run:
+          name: Download CMake
+          command: |
+            $ProgressPreference = "SilentlyContinue"
+            Invoke-WebRequest -URI https://github.com/Kitware/CMake/releases/download/v3.19.0/cmake-3.19.0-win64-x64.zip -OutFile $Env:HOMEPATH\cmake-3.19.0-win64-x64.zip
+            Expand-Archive $Env:HOMEPATH\cmake-3.19.0-win64-x64.zip -DestinationPath "$Env:ProgramFiles"
+            Rename-Item "$Env:ProgramFiles\cmake-3.19.0-win64-x64" -NewName CMake
+            Install-WindowsFeature Net-Framework-Core
+      - run:
+          name: Build project
+          command: |
+            .circleci\build-windows.ps1
+      - run:
+          name: Run tests
+          command: |
+            .circleci\run-tests.ps1
+
+  build-macos:
+    parameters:
+      build_type:
+        type: string
+    macos:
+      xcode: 11.0.0
+    environment:
+      BUILD_TYPE: << parameters.build_type >>
+      TEST_DSN: singlestore_test
+      TEST_SCHEMA: test
+      CONTINUOUS_INTEGRATION: true
+    steps:
+      - run:
+          name: Define Environment Variables
+          command: |
+            echo 'export TEST_DRIVER=$PWD/libmaodbc.dylib' >> $BASH_ENV
+            echo 'export TEST_SERVER=$MEMSQL_HOST' >> $BASH_ENV
+            echo 'export TEST_UID=$MEMSQL_USER' >> $BASH_ENV
+            echo 'export TEST_PORT=$MEMSQL_PORT' >> $BASH_ENV
+            echo 'export TEST_PASSWORD=$MEMSQL_PASSWORD' >> $BASH_ENV
+            source $BASH_ENV
+      - setup-environment-macos
+      - checkout
+      - run:
+          name: Run tests
+          command: |
+            ./.circleci/build-osx.sh
+  build-linux:
+    parameters:
+      memsql_image:
+        type: string
+      build_type:
+        type: string
+    machine: true
+    environment:
+      BUILD_TYPE: << parameters.build_type >>
+      MEMSQL_IMAGE: << parameters.memsql_image >>
+      TEST_DRIVER: singlestore_test
+      TEST_DSN: singlestore_test
+      TEST_SERVER: singlestore.test.com
+      TEST_SCHEMA: test
+      TEST_UID: root
+      TEST_PORT: 5506
+      CONTINUOUS_INTEGRATION: true
+    steps:
+      - setup-environment-linux
+      - checkout
+      - run:
+          name: Setup test cluster
+          command: |
+            ./scripts/ensure-test-memsql-cluster.sh
+      - run:
+          name: Create test database
+          command: |
+            mysql -h 127.0.0.1 -u root -P 5506 -e "create database test;"
+      - run:
+          name: Run tests
+          command: |
+            ./.circleci/build-linux.sh
+
+workflows:
+  test:
+    jobs:
+      - build-windows:
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
+      - build-macos:
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
+      - build-linux:
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              memsql_image:
+                - memsql/cluster-in-a-box:centos-7.1.12-4ee69e2d18-2.0.4-1.8.1
+                - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
+                - memsql/cluster-in-a-box:centos-6.8.15-029542cbf3-1.9.3-1.4.1
+                - memsql/cluster-in-a-box:6.7.18-db1caffe94-1.6.1-1.1.1
