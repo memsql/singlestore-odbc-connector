@@ -47,7 +47,7 @@ memsql-wait-start
 if [[ "${EXISTS}" -eq 0 ]]; then
     echo
     echo "Creating aggregator node"
-    docker exec -it ${CONTAINER_NAME} memsqlctl create-node --yes --port 3308
+    docker exec -it ${CONTAINER_NAME} memsqlctl create-node --yes --no-start --port 3308
     docker exec -it ${CONTAINER_NAME} memsqlctl update-config --yes --all --key minimum_core_count --value 0
     docker exec -it ${CONTAINER_NAME} memsqlctl update-config --yes --all --key minimum_memory_mb --value 0
     docker exec -it ${CONTAINER_NAME} memsqlctl start-node --yes --all
