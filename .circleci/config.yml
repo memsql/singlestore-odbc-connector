@@ -44,9 +44,9 @@ jobs:
           name: Download CMake
           command: |
             $ProgressPreference = "SilentlyContinue"
-            Invoke-WebRequest -URI https://github.com/Kitware/CMake/releases/download/v3.19.0/cmake-3.19.0-win32-x86.zip -OutFile $Env:HOMEPATH\cmake-3.19.0-win32-x86.zip
-            Expand-Archive $Env:HOMEPATH\cmake-3.19.0-win32-x86.zip -DestinationPath "$Env:ProgramFiles"
-            Rename-Item "$Env:ProgramFiles\cmake-3.19.0-win32-x86" -NewName CMake
+            Invoke-WebRequest -URI https://github.com/Kitware/CMake/releases/download/v3.19.0/cmake-3.19.0-win64-x64.zip -OutFile $Env:HOMEPATH\cmake-3.19.0-win64-x64.zip
+            Expand-Archive $Env:HOMEPATH\cmake-3.19.0-win64-x64.zip -DestinationPath "$Env:ProgramFiles"
+            Rename-Item "$Env:ProgramFiles\cmake-3.19.0-win64-x64" -NewName CMake
             Install-WindowsFeature Net-Framework-Core
       - run:
           name: Build project
@@ -146,6 +146,7 @@ workflows:
               build_type:
                 - RelWithDebInfo
               memsql_image:
+                - memsql/cluster-in-a-box:latest
                 - memsql/cluster-in-a-box:centos-7.1.12-4ee69e2d18-2.0.4-1.8.1
                 - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
                 - memsql/cluster-in-a-box:centos-6.8.15-029542cbf3-1.9.3-1.4.1
