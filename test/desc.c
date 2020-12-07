@@ -675,14 +675,14 @@ ODBC_TEST(t_set_explicit_copy)
    It does not directly belong to descriptors, but the value is taken from the descriptor field */
 ODBC_TEST(t_odbc155)
 {
-  SQLLEN Size, ExpectedDisplaySize[]= {24, 19, 26, 19, 12, 8, 26},
+  SQLLEN Size, ExpectedDisplaySize[]= {26, 19, 26, 19, 15, 8, 26},
         ExpectedOctetLength[]= {sizeof(SQL_TIMESTAMP_STRUCT), sizeof(SQL_TIMESTAMP_STRUCT), sizeof(SQL_TIMESTAMP_STRUCT),
                                 sizeof(SQL_TIMESTAMP_STRUCT), sizeof(SQL_TIME_STRUCT), sizeof(SQL_TIME_STRUCT), sizeof(SQL_TIMESTAMP_STRUCT)};
   SQLSMALLINT DecimalDigits;
-  int i, Expected[]= {4, 0, 6, 0, 3, 0, 6};
+  int i, Expected[]= {6, 0, 6, 0, 6, 0, 6};
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_odbc155");
-  OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_odbc155(ts timestamp(4), ts1 timestamp, dt datetime(6), dt1 datetime, t time(3), t1 time)");
+  OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_odbc155(ts timestamp(6), ts1 timestamp, dt datetime(6), dt1 datetime, t time(6), t1 time)");
   OK_SIMPLE_STMT(Stmt, "SELECT ts, ts1, dt, dt1, t, t1, timestamp('2007-07-02 10:31:01.000001') from t_odbc155");
 
   for (i= 0; i < sizeof(Expected)/sizeof(int); ++i)
