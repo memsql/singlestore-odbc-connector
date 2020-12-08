@@ -3372,6 +3372,14 @@ SQLRETURN MADB_StmtTablePrivileges(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLI
 }
 /* }}} */
 
+static MADB_ShortTypeInfo SqlTablesColType[5] =
+  {{SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // TABLE_CAT
+   {SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // TABLE_SCHEM
+   {SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // TABLE_NAME
+   {SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // TABLE_TYPE
+   {SQL_VARCHAR,  0, SQL_NO_NULLS, 0}};  // REMARKS
+
+
 /* {{{ MADB_StmtTables */
 SQLRETURN MADB_StmtTables(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLINT CatalogNameLength,
                           char *SchemaName, SQLSMALLINT SchemaNameLength, char *TableName,
@@ -3504,6 +3512,10 @@ SQLRETURN MADB_StmtTables(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLINT Catalo
   MDBUG_C_PRINT(Stmt->Connection, "SQL Statement: %s", StmtStr.str);
 
   ret= Stmt->Methods->ExecDirect(Stmt, StmtStr.str, SQL_NTS);
+  if (SQL_SUCCEEDED(ret))
+  {
+    MADB_FixColumnDataTypes(Stmt, SqlTablesColType);
+  }
 
   MADB_DynstrFree(&StmtStr);
 

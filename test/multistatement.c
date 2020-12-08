@@ -225,8 +225,6 @@ ODBC_TEST(t_odbc74)
 {
   SQLCHAR ref[][4]= {"\"", "'", "*/", "/*", "end", "one\\", "two\\"}, val[8];
   unsigned int i;
-  SQLHDBC     hdbc1;
-  SQLHSTMT    Stmt1;
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS odbc74; CREATE TABLE odbc74(id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,\
                         val VARCHAR(64) NOT NULL)");
@@ -252,29 +250,6 @@ ODBC_TEST(t_odbc74)
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   OK_SIMPLE_STMT(Stmt, "TRUNCATE TABLE odbc74");
-
-  AllocEnvConn(&Env, &hdbc1);
-  Stmt1= DoConnect(hdbc1, FALSE, NULL, NULL, NULL, 0, NULL, 0, NULL, NULL);
-  FAIL_IF(Stmt1 == NULL, "Could not connect and/or allocate");
-
-  OK_SIMPLE_STMT(Stmt1, "SET @@SESSION.sql_mode='NO_BACKSLASH_ESCAPES'");
-
-  OK_SIMPLE_STMT(Stmt1, "INSERT INTO odbc74 (val) VALUES('one\\');\
-                        INSERT INTO odbc74 (val) VALUES(\"two\\\");");
-  OK_SIMPLE_STMT(Stmt1, "SELECT val FROM odbc74 ORDER BY id");
-
-  /* We only have 2 last rows */
-  for (i= sizeof(ref)/sizeof(ref[0]) - 2; i < sizeof(ref)/sizeof(ref[0]); ++i)
-  {
-    CHECK_STMT_RC(Stmt1, SQLFetch(Stmt1));
-    IS_STR(my_fetch_str(Stmt1, val, 1), ref[i], sizeof(ref[i]));
-  }
-  EXPECT_STMT(Stmt1, SQLFetch(Stmt1), SQL_NO_DATA);
-
-  CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_DROP));
-  CHECK_DBC_RC(hdbc1, SQLDisconnect(hdbc1));
-  CHECK_DBC_RC(hdbc1, SQLFreeConnect(hdbc1));
-
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS odbc74");
 
   return OK;
@@ -291,7 +266,7 @@ ODBC_TEST(t_odbc95)
 
 ODBC_TEST(t_odbc126)
 {
-  SQLCHAR Query[][24]= { "CALL odbc126_1", "CALL odbc126_2", "SELECT 1, 2; SELECT 3", "SELECT 4; SELECT 5,6" };
+  SQLCHAR Query[][24]= { "CALL odbc126_1()", "CALL odbc126_2()", "SELECT 1, 2; SELECT 3", "SELECT 4; SELECT 5,6" };
   unsigned int i, ExpectedRows[]= {3, 3, 1, 1}, resCount;
   SQLLEN affected;
   SQLRETURN rc, Expected= SQL_SUCCESS;
@@ -301,15 +276,15 @@ ODBC_TEST(t_odbc126)
   OK_SIMPLE_STMT(Stmt, "DROP PROCEDURE IF EXISTS odbc126_2");
 
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE odbc126(col1 INT, col2 INT)");
-  OK_SIMPLE_STMT(Stmt, "CREATE PROCEDURE odbc126_1()\
+  OK_SIMPLE_STMT(Stmt, "CREATE PROCEDURE odbc126_1() AS\
                         BEGIN\
-                          SELECT col1, col2 FROM odbc126;\
-                          SELECT col1 FROM odbc126;\
+                          ECHO SELECT col1, col2 FROM odbc126;\
+                          ECHO SELECT col1 FROM odbc126;\
                         END");
-  OK_SIMPLE_STMT(Stmt, "CREATE PROCEDURE odbc126_2()\
+  OK_SIMPLE_STMT(Stmt, "CREATE PROCEDURE odbc126_2() AS\
                         BEGIN\
-                          SELECT col1 FROM odbc126;\
-                          SELECT col1, col2 FROM odbc126;\
+                          ECHO SELECT col1 FROM odbc126;\
+                          ECHO SELECT col1, col2 FROM odbc126;\
                         END");
 
   OK_SIMPLE_STMT(Stmt, "INSERT INTO odbc126 VALUES(1, 2), (3, 4), (5, 6)");
@@ -364,14 +339,14 @@ ODBC_TEST(diff_column_binding)
   OK_SIMPLE_STMT(Stmt, "DROP PROCEDURE IF EXISTS diff_column_binding_1");
 
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE diff_column_binding(col1 INT, col2 VARCHAR(64), col3 BIGINT unsigned)");
-  OK_SIMPLE_STMT(Stmt, "CREATE PROCEDURE diff_column_binding_1()\
+  OK_SIMPLE_STMT(Stmt, "CREATE PROCEDURE diff_column_binding_1() AS\
                         BEGIN\
-                          SELECT 1017, 1370;\
-                          SELECT * FROM diff_column_binding;\
+                          ECHO SELECT 1017, 1370;\
+                          ECHO SELECT * FROM diff_column_binding ORDER BY col1;\
                         END");
 
   OK_SIMPLE_STMT(Stmt, "INSERT INTO diff_column_binding VALUES(1370, \"abcd\", 12345), (1417, \"abcdef\", 2390), (1475, \"@1475\", 0)");
-  OK_SIMPLE_STMT(Stmt, "CALL diff_column_binding_1");
+  OK_SIMPLE_STMT(Stmt, "CALL diff_column_binding_1()");
 
   // bind first result set
   SQLBindCol(Stmt, 1, SQL_C_LONG, &bind1, sizeof(int), &indicator);
@@ -458,25 +433,25 @@ ODBC_TEST(t_odbc177)
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS odbc177_non_existent");
 
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_odbc177(col1 INT)");
-  OK_SIMPLE_STMT(Stmt, "CREATE PROCEDURE odbc177()\
+  OK_SIMPLE_STMT(Stmt, "CREATE PROCEDURE odbc177() AS\
                         BEGIN\
-                          SELECT 1;\
-                          SELECT 2 as id, 'val' as `Value` FROM dual WHERE 1=0;\
+                          ECHO SELECT 1;\
+                          ECHO SELECT 2 as id, 'val' as `Value` FROM dual WHERE 1=0;\
                           INSERT INTO t_odbc177 values(3);\
                           DELETE FROM t_odbc177 WHERE 1=0;\
-                          SELECT 5, 4;\
+                          ECHO SELECT 5, 4;\
                           DELETE FROM t_odbc177;\
-                          SELECT * FROM odbc177_non_existent;\
-                          SELECT 6;\
+                          ECHO SELECT * FROM odbc177_non_existent;\
+                          ECHO SELECT 6;\
                         END");
-  OK_SIMPLE_STMT(Stmt, "CREATE PROCEDURE odbc177_1()\
+  OK_SIMPLE_STMT(Stmt, "CREATE PROCEDURE odbc177_1() AS\
                         BEGIN\
-                          SELECT 1;\
-                          SELECT 2, 'val' FROM dual WHERE 1=0;\
+                          ECHO SELECT 1;\
+                          ECHO SELECT 2, 'val' FROM dual WHERE 1=0;\
                           INSERT INTO t_odbc177 values(3), (7);\
                           DELETE FROM t_odbc177 WHERE 1=0;\
-                          SELECT 5, 4;\
-                          SELECT 6;\
+                          ECHO SELECT 5, 4;\
+                          ECHO SELECT 6;\
                           DELETE FROM t_odbc177;\
                         END");
 
@@ -624,9 +599,9 @@ ODBC_TEST(t_odbc219)
   OK_SIMPLE_STMT(Stmt, "DROP PROCEDURE IF EXISTS odbc219");
 
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_odbc219(col1 INT)");
-  OK_SIMPLE_STMT(Stmt, "CREATE PROCEDURE odbc219()\
+  OK_SIMPLE_STMT(Stmt, "CREATE PROCEDURE odbc219() AS\
                         BEGIN\
-                          SELECT 1 as id, 'text' as val;\
+                          ECHO SELECT 1 as id, 'text' as val;\
                         END");
   for (i= 0; i < sizeof(Query)/sizeof(Query[0]); ++i)
   {

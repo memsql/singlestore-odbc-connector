@@ -116,7 +116,25 @@ ODBC_TEST(t_decimal)
   rc = SQLTransact(NULL,Connection,SQL_COMMIT);
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, rc);
 
-  OK_SIMPLE_STMT(Stmt, "select d1 from t_decimal");
+  OK_SIMPLE_STMT(Stmt, "select d1 from t_decimal order by d1");
+
+  rc = SQLFetch(Stmt);
+  CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, rc);
+
+  rc = SQLGetData(Stmt,1,SQL_C_CHAR,&str,19,NULL);
+  CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, rc);
+
+  fprintf(stdout,"decimal(SQL_C_LONG)   : %s\n",str);
+  FAIL_IF(strcmp((const char*)str, "-23.000000") != 0, "expected -23.00000");
+
+  rc = SQLFetch(Stmt);
+  CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, rc);
+
+  rc = SQLGetData(Stmt,1,SQL_C_CHAR,&str,19,NULL);
+  CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, rc);
+
+  fprintf(stdout,"decimal(SQL_C_INTEGER): %s\n",str);
+  FAIL_IF(strcmp((const char*)str,"189.000000")!=0,"expected 189.000000");
 
   rc = SQLFetch(Stmt);
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, rc);
@@ -129,28 +147,11 @@ ODBC_TEST(t_decimal)
 
   rc = SQLFetch(Stmt);
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, rc);
-    
-  rc = SQLGetData(Stmt,1,SQL_C_CHAR,&str,19,NULL);
-  CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, rc);
-    
-  fprintf(stdout,"decimal(SQL_C_INTEGER): %s\n",str);
-  FAIL_IF(strcmp((const char*)str,"189.000000")!=0,"expected 189.000000");
-
-  rc = SQLFetch(Stmt);
-  CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, rc);
 
   rc = SQLGetData(Stmt,1,SQL_C_CHAR,&str,19,NULL);
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, rc);
   fprintf(stdout,"decimal(SQL_C_CHAR)   : %s\n",str);
   FAIL_IF(strcmp((const char*)str,"189.456700")!=0,"expected 189.456700");
-
-  rc = SQLFetch(Stmt);
-  CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, rc);
-
-  rc = SQLGetData(Stmt,1,SQL_C_CHAR,&str,19,NULL);
-  CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, rc);
-  fprintf(stdout,"decimal(SQL_C_LONG)   : %s\n",str);
-  FAIL_IF(strcmp((const char*)str, "-23.000000") != 0, "expected -23.00000");
 
   rc = SQLFetch(Stmt);
   FAIL_IF(rc != SQL_NO_DATA_FOUND, "expected eof");

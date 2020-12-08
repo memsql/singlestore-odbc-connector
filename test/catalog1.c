@@ -309,29 +309,14 @@ ODBC_TEST(my_colpriv)
 
 ODBC_TEST(t_sqlprocedures)
 {
-  /* avoid errors in case binary log is activated */
-  if (!SQL_SUCCEEDED(SQLExecDirect(Stmt, "SET GLOBAL log_bin_trust_function_creators = 1", SQL_NTS)))
-  {
-    odbc_print_error(SQL_HANDLE_STMT, Stmt);
-    if (get_native_errcode(Stmt) == 1227)
-    {
-      /* Or maybe just skip it. The best would be recreate those errors and skip in more appropriate place */
-      diag("Test user doesn't have enough privileges to run this test - this test may fail in some cases");
-    }
-    else
-    {
-      return FAIL;
-    }
-  }
-
   OK_SIMPLE_STMT(Stmt, "DROP FUNCTION IF EXISTS t_sqlproc_func");
   OK_SIMPLE_STMT(Stmt,
-         "CREATE FUNCTION t_sqlproc_func (a INT) RETURNS INT RETURN SQRT(a)");
+         "CREATE FUNCTION t_sqlproc_func (a INT) RETURNS INT AS BEGIN RETURN SQRT(a); END");
 
   OK_SIMPLE_STMT(Stmt, "DROP PROCEDURE IF EXISTS t_sqlproc_proc");
   OK_SIMPLE_STMT(Stmt,
-         "CREATE PROCEDURE t_sqlproc_proc (OUT a INT) BEGIN"
-         " SELECT COUNT(*) INTO a FROM t_sqlproc;"
+         "CREATE PROCEDURE t_sqlproc_proc() AS BEGIN"
+         " ECHO SELECT COUNT(*) AS a FROM t_sqlproc;"
          "END;");
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));

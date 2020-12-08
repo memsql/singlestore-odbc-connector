@@ -641,7 +641,7 @@ ODBC_TEST(t_sps)
 
   OK_SIMPLE_STMT(Stmt, "create table t_tabsp(a int, b varchar(10))");
 
-  OK_SIMPLE_STMT(Stmt,"create procedure t_sp(x int, y char(10)) "
+  OK_SIMPLE_STMT(Stmt,"create procedure t_sp(x int, y char(10)) as "
          "begin insert into t_tabsp values(x, y); end;");
 
   CHECK_STMT_RC(Stmt, SQLPrepare(Stmt, (SQLCHAR *)"call t_sp(?,?)", SQL_NTS));
@@ -662,7 +662,7 @@ ODBC_TEST(t_sps)
     SQLFreeStmt(Stmt, SQL_RESET_PARAMS);
     SQLFreeStmt(Stmt, SQL_CLOSE);
 
-    OK_SIMPLE_STMT(Stmt, "select * from t_tabsp");
+    OK_SIMPLE_STMT(Stmt, "select * from t_tabsp order by a");
 
     rc = SQLBindCol(Stmt,1,SQL_C_LONG,&a,0,NULL);
     mystmt(Stmt,rc);

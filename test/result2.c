@@ -770,80 +770,6 @@ ODBC_TEST(t_prefetch)
     return OK;
 }
 
-
-ODBC_TEST(t_outparams)
-{
-  SQLSMALLINT ncol, i;
-  SQLINTEGER  par[3]= {10, 20, 30}, val;
-  SQLLEN      len;
-
-  OK_SIMPLE_STMT(Stmt, "DROP PROCEDURE IF EXISTS p_outparams");
-  OK_SIMPLE_STMT(Stmt, "CREATE PROCEDURE p_outparams("
-                "  IN p_in INT, "
-                "  OUT p_out INT, "
-                "  INOUT p_inout INT) "
-                "BEGIN "
-                "  SELECT p_in, p_out, p_inout; "
-                "  SET p_in = 100, p_out = 200, p_inout = 300; "
-                "  SELECT p_inout, p_in, p_out;"
-                "END");
-
-
-  for (i=0; i < sizeof(par)/sizeof(SQLINTEGER); ++i)
-  {
-    CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, i+1, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 0,
-      0, &par[i], 0, NULL));
-  }
-
-  OK_SIMPLE_STMT(Stmt, "CALL p_outparams(?, ?, ?)");
-
-  /* rs-1 */
-  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  CHECK_STMT_RC(Stmt, SQLNumResultCols(Stmt,&ncol));
-  is_num(ncol, 3);
-
-  is_num(my_fetch_int(Stmt, 1), 10);
-  /* p_out does not have value at the moment */
-  CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 2, SQL_INTEGER, &val, 0, &len));
-  is_num(len, SQL_NULL_DATA);
-  is_num(my_fetch_int(Stmt, 3), 30);
-
-  FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA, "eof expected");
-
-  /* rs-2 */
-  CHECK_STMT_RC(Stmt, SQLMoreResults(Stmt));
-
-  CHECK_STMT_RC(Stmt, SQLNumResultCols(Stmt,&ncol));
-  is_num(ncol, 3);
-  
-  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  is_num(my_fetch_int(Stmt, 1), 300);
-  is_num(my_fetch_int(Stmt, 2), 100);
-  is_num(my_fetch_int(Stmt, 3), 200);
-
-  /* rs-3 out params */
-  CHECK_STMT_RC(Stmt, SQLMoreResults(Stmt));
-  CHECK_STMT_RC(Stmt, SQLNumResultCols(Stmt,&ncol));
-  is_num(ncol, 2);
-
-  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  is_num(my_fetch_int(Stmt, 1), 200);
-  is_num(my_fetch_int(Stmt, 2), 300);
-  /* Only 1 row always */
-  FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA, "eof expected");
-
-  /* SP execution status */
-  CHECK_STMT_RC(Stmt, SQLMoreResults(Stmt));
-
-  EXPECT_STMT(Stmt, SQLMoreResults(Stmt), SQL_NO_DATA);
-
-  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
-
-  OK_SIMPLE_STMT(Stmt, "DROP PROCEDURE p_outparams");
-  return OK;
-}
-
-
 /*
   Bug #11766437: Incorrect increment(increments in multiple of SQLLEN) of 
   pointer to the length/indicator buffer(last parameter of SQLBindCol), 
@@ -1536,7 +1462,6 @@ MA_ODBC_TESTS my_tests[]=
   {t_bug62657, "t_bug62657"},
   {t_row_status, "t_row_status"},
   {t_prefetch, "t_prefetch"},
-  {t_outparams, "t_outparams"},
   {t_bug11766437, "t_bug11766437"},
   {t_odbc29, "t_odbc-29"},
   {t_odbc41, "t_odbc-41-nors_after_rs"},

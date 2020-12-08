@@ -1671,8 +1671,8 @@ ODBC_TEST(t_bug27544)
   OK_SIMPLE_STMT(Stmt, "INSERT INTO t1 VALUES (1)");
 
   OK_SIMPLE_STMT(Stmt, "DROP PROCEDURE IF EXISTS p1");
-  OK_SIMPLE_STMT(Stmt, "CREATE PROCEDURE p1() BEGIN"
-                "   SELECT a FROM t1; "
+  OK_SIMPLE_STMT(Stmt, "CREATE PROCEDURE p1() AS BEGIN"
+                "   ECHO SELECT a FROM t1; "
                 "END;");
 
   OK_SIMPLE_STMT(Stmt,"CALL p1()");
@@ -1734,10 +1734,10 @@ ODBC_TEST(t_bug16817)
   SQLCHAR name[30];
 
   OK_SIMPLE_STMT(Stmt, "DROP PROCEDURE IF EXISTS p_bug16817");
-  OK_SIMPLE_STMT(Stmt, "CREATE PROCEDURE p_bug16817 () "
+  OK_SIMPLE_STMT(Stmt, "CREATE PROCEDURE p_bug16817 () AS "
                 "BEGIN "
-                "  SELECT 'Marten' FROM DUAL; "
-                "  SELECT 'Zack' FROM DUAL; "
+                "  ECHO SELECT 'Marten' FROM DUAL; "
+                "  ECHO SELECT 'Zack' FROM DUAL; "
                "END");
 
   OK_SIMPLE_STMT(Stmt, "CALL p_bug16817()");

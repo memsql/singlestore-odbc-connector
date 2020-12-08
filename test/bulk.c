@@ -253,19 +253,19 @@ ODBC_TEST(t_bulk_insert_indicator)
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE,
                                 (SQLPOINTER)1, 0));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT id FROM my_bulk");
+  OK_SIMPLE_STMT(Stmt, "SELECT id FROM my_bulk ORDER BY IFNULL(id, 0)");
 
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, &nData, 0, &nLen));
-
-  CHECK_STMT_RC(Stmt, SQLFetchScroll(Stmt, SQL_FETCH_NEXT, 0));
-  is_num(nData, 5);
-  IS(nLen != SQL_NULL_DATA);
 
   CHECK_STMT_RC(Stmt, SQLFetchScroll(Stmt, SQL_FETCH_NEXT, 0));
   is_num(nLen, SQL_NULL_DATA);
 
   CHECK_STMT_RC(Stmt, SQLFetchScroll(Stmt, SQL_FETCH_NEXT, 0));
   is_num(nData, 3);
+  IS(nLen != SQL_NULL_DATA);
+
+  CHECK_STMT_RC(Stmt, SQLFetchScroll(Stmt, SQL_FETCH_NEXT, 0));
+  is_num(nData, 5);
   IS(nLen != SQL_NULL_DATA);
 
   FAIL_IF(SQLFetchScroll(Stmt, SQL_FETCH_NEXT, 0)!=SQL_NO_DATA_FOUND, "SQL_NO_DATA_FOUND expected");
@@ -276,7 +276,7 @@ ODBC_TEST(t_bulk_insert_indicator)
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS my_bulk");
 
   return OK;
- }
+}
 
 
 /**
@@ -343,13 +343,9 @@ ODBC_TEST(t_bulk_insert_rows)
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT id FROM my_bulk");
+  OK_SIMPLE_STMT(Stmt, "SELECT id FROM my_bulk ORDER BY IFNULL(id, 0)");
 
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, &nData, 0, &nLen));
-
-  CHECK_STMT_RC(Stmt, SQLFetchScroll(Stmt, SQL_FETCH_NEXT, 0));
-  is_num(nData, 5);
-  IS(nLen != SQL_NULL_DATA);
 
   CHECK_STMT_RC(Stmt, SQLFetchScroll(Stmt, SQL_FETCH_NEXT, 0));
   is_num(nLen, SQL_NULL_DATA);
@@ -360,6 +356,10 @@ ODBC_TEST(t_bulk_insert_rows)
 
   CHECK_STMT_RC(Stmt, SQLFetchScroll(Stmt, SQL_FETCH_NEXT, 0));
   is_num(nData, 3);
+  IS(nLen != SQL_NULL_DATA);
+
+  CHECK_STMT_RC(Stmt, SQLFetchScroll(Stmt, SQL_FETCH_NEXT, 0));
+  is_num(nData, 5);
   IS(nLen != SQL_NULL_DATA);
 
   FAIL_IF(SQLFetchScroll(Stmt, SQL_FETCH_NEXT, 0)!=SQL_NO_DATA_FOUND, "SQL_NO_DATA_FOUND expected");
@@ -385,7 +385,7 @@ ODBC_TEST(t_odbc90)
  
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS odbc90");
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE odbc90 (id int not null primary key auto_increment, \
-                          nval int not null, sval varchar(32) not null, ts timestamp)");
+                          nval int not null, sval varchar(32) not null, ts timestamp not null default now)");
 
   /* odbc 3 */
   /* This cursor closing is required, otherwise DM(on Windows) freaks out */
@@ -413,7 +413,7 @@ ODBC_TEST(t_odbc90)
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE,
     (SQLPOINTER)1, 0));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT id, nval, sval, ts FROM odbc90");
+  OK_SIMPLE_STMT(Stmt, "SELECT id, nval, sval, ts FROM odbc90 ORDER BY id");
 
   ind4[0]= 0;
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, id, 0, NULL));
@@ -440,7 +440,7 @@ ODBC_TEST(t_odbc90)
   /* odbc 2. Not sure if it's really needed internaly one call is mapped to another as well. But won't hurt. */
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS odbc90");
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE odbc90 (id int not null primary key auto_increment, \
-                                            nval int not null, sval varchar(32) not null, ts timestamp)");
+                                            nval int not null, sval varchar(32) not null, ts timestamp not null default now)");
   id[0]= 2;
   ind4[0]= SQL_COLUMN_IGNORE;
   strcpy((char*)(sval[0]), "Record 1");
@@ -485,7 +485,7 @@ ODBC_TEST(t_odbc90)
   CHECK_STMT_RC(Stmt1, SQLSetStmtAttr(Stmt1, SQL_ATTR_ROW_ARRAY_SIZE,
     (SQLPOINTER)1, 0));
 
-  OK_SIMPLE_STMT(Stmt1, "SELECT id, nval, sval, ts FROM odbc90");
+  OK_SIMPLE_STMT(Stmt1, "SELECT id, nval, sval, ts FROM odbc90 ORDER BY id");
 
   ind4[0]= 0;
   CHECK_STMT_RC(Stmt1, SQLBindCol(Stmt1, 1, SQL_C_LONG, id, 0, NULL));
@@ -568,7 +568,7 @@ ODBC_TEST(t_bulk_delete)
 ODBC_TEST(t_odbc149)
 {
   SQL_TIMESTAMP_STRUCT  Val[MAODBC_ROWS];
-  SQLINTEGER id[]= {2, 1, 3}, idBuf, row= 0;
+  SQLINTEGER id[]= {1, 2, 3}, idBuf, row= 0;
   /* Garbage in Len */
   SQLLEN tsLen[]= {0x01800000, SQL_NULL_DATA, 0x01800000}, bLen[]= {5, 3, 6}, bBufLen;
   SQLCHAR c[][8]= {"str1", "abcd", "xxxxxxy"}, cBuf[16];
@@ -605,7 +605,7 @@ ODBC_TEST(t_odbc149)
 
   CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT id, ts, c, b, w FROM odbc149")
+  OK_SIMPLE_STMT(Stmt, "SELECT id, ts, c, b, w FROM odbc149 ORDER BY id")
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, &idBuf, 0, NULL));
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_TIMESTAMP, &Val[1], 0, tsLen));
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_CHAR, cBuf, sizeof(cBuf), cInd));
@@ -617,17 +617,16 @@ ODBC_TEST(t_odbc149)
     memset(&Val[1], 0, sizeof(SQL_TIMESTAMP_STRUCT));
     CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
 
-    is_num(tsLen[0], sizeof(SQL_TIMESTAMP_STRUCT));
     if (row != 1)
     {
+      is_num(tsLen[0], sizeof(SQL_TIMESTAMP_STRUCT));
       is_num(Val[1].year, Val[row].year);
       is_num(Val[1].month, Val[row].month);
       is_num(Val[1].day, Val[row].day);
     }
     else
     {
-      /* We are supposed to get current timestamp in this row. Just checking that date's got some value */
-      FAIL_IF(Val[1].day + Val[1].month + Val[1].year  == 0, "Date shouldn't be zeroes")
+      IS(*tsLen == SQL_NULL_DATA);
     }
     
     is_num(idBuf, id[row]);

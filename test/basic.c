@@ -116,7 +116,8 @@ ODBC_TEST(simple_test1)
   SQLLEN nRowCount;
   SQLRETURN rc;
 
-  OK_SIMPLE_STMTW(Stmt, CW("DROP TABLE IF EXISTS t_basic, t_basic_2"));
+  OK_SIMPLE_STMTW(Stmt, CW("DROP TABLE IF EXISTS t_basic"));
+  OK_SIMPLE_STMTW(Stmt, CW("DROP TABLE IF EXISTS t_basic2"));
 
   /* create the table 'myodbc3_demo_result' */
   OK_SIMPLE_STMTW(Stmt,
@@ -240,7 +241,7 @@ ODBC_TEST(simple_2)
   CHECK_STMT_RC(Stmt, rc);
 
   /* FETCH RESULT SET */
-  OK_SIMPLE_STMTW(Stmt, CW("SELECT * FROM t_myodbc"));
+  OK_SIMPLE_STMTW(Stmt, CW("SELECT * FROM t_myodbc ORDER BY a"));
 
   rc= SQLBindCol(Stmt, 1, SQL_C_LONG, &nOutData, 0, NULL);
   CHECK_STMT_RC(Stmt, rc);
@@ -402,7 +403,7 @@ ODBC_TEST(t_basic)
    CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   /* FETCH RESULT SET */
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_myodbc");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_myodbc ORDER BY a");
 
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, &nOutData, 0, NULL));
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindCol(Stmt, 2, SQL_C_CHAR, szOutData, sizeof(szOutData),
@@ -1379,9 +1380,9 @@ ODBC_TEST(t_odbc48)
 {
   OK_SIMPLE_STMT(Stmt, "DROP PROCEDURE IF EXISTS test_odbc_48");
   OK_SIMPLE_STMT(Stmt,
-    "CREATE PROCEDURE test_odbc_48()"
+    "CREATE PROCEDURE test_odbc_48() AS "
     "BEGIN"
-    " SELECT 1 AS ret;"
+    " ECHO SELECT 1 AS ret;"
     "END");
   OK_SIMPLE_STMT(Stmt, "{ CALL test_odbc_48() }");
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
