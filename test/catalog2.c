@@ -107,74 +107,6 @@ ODBC_TEST(t_bug34272)
   return OK;
 }
 
-
-/*
-  Bug #49660 - constraints with same name for tables with same name but in different db led
-  to doubling of results of SQLForeignKeys
-*/
-ODBC_TEST(t_bug49660)
-{
-  SQLLEN rowsCount;
-
-  OK_SIMPLE_STMT(Stmt, "drop database if exists bug49660");
-  OK_SIMPLE_STMT(Stmt, "drop table if exists t_bug49660");
-  OK_SIMPLE_STMT(Stmt, "drop table if exists t_bug49660_r");
-
-  OK_SIMPLE_STMT(Stmt, "create database bug49660");
-  OK_SIMPLE_STMT(Stmt, "create table bug49660.t_bug49660_r (id int unsigned not null primary key, name varchar(10) not null) ENGINE=InnoDB");
-  OK_SIMPLE_STMT(Stmt, "create table bug49660.t_bug49660 (id int unsigned not null primary key, refid int unsigned not null,"
-                "foreign key t_bug49660fk (id) references bug49660.t_bug49660_r (id)) ENGINE=InnoDB");
-
-  OK_SIMPLE_STMT(Stmt, "create table t_bug49660_r (id int unsigned not null primary key, name varchar(10) not null) ENGINE=InnoDB");
-  OK_SIMPLE_STMT(Stmt, "create table t_bug49660 (id int unsigned not null primary key, refid int unsigned not null,"
-                "foreign key t_bug49660fk (id) references t_bug49660_r (id)) ENGINE=InnoDB");
-
-  CHECK_STMT_RC(Stmt, SQLForeignKeys(Stmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
-                                NULL, 0, (SQLCHAR *)"t_bug49660", SQL_NTS));
-
-  CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rowsCount));
-  is_num(rowsCount, 1); 
-  /* Going another way around - sort of more reliable */
-  FAIL_IF(SQLFetch(Stmt) == SQL_NO_DATA_FOUND, "expected data");
-
-  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt,SQL_CLOSE));
-
-  OK_SIMPLE_STMT(Stmt, "drop database if exists bug49660");
-  OK_SIMPLE_STMT(Stmt, "drop table if exists t_bug49660");
-  OK_SIMPLE_STMT(Stmt, "drop table if exists t_bug49660_r");
-
-  return OK;
-}
-
-
-/*
-  Bug #51422 - SQLForeignKeys returned keys pointing to unique fields
-*/
-ODBC_TEST(t_bug51422)
-{
-  SQLLEN rowsCount;
-  
-  OK_SIMPLE_STMT(Stmt, "drop table if exists t_bug51422");
-  OK_SIMPLE_STMT(Stmt, "drop table if exists t_bug51422_r");
-
-  OK_SIMPLE_STMT(Stmt, "create table t_bug51422_r (id int unsigned not null primary key, ukey int unsigned not null,"
-                "name varchar(10) not null, UNIQUE KEY uk(ukey)) ENGINE=InnoDB");
-  OK_SIMPLE_STMT(Stmt, "create table t_bug51422 (id int unsigned not null primary key, refid int unsigned not null,"
-                "foreign key t_bug51422fk (id) references t_bug51422_r (ukey))  ENGINE=InnoDB");
-
-  CHECK_STMT_RC(Stmt, SQLForeignKeys(Stmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
-                                NULL, 0, (SQLCHAR *)"t_bug51422", SQL_NTS));
-
-  CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rowsCount));
-  is_num(rowsCount, 0);
-
-  OK_SIMPLE_STMT(Stmt, "drop table if exists t_bug51422");
-  OK_SIMPLE_STMT(Stmt, "drop table if exists t_bug51422_r");
-
-  return OK;
-}
-
-
 /*
   Bug #36441 - SQLPrimaryKeys returns mangled strings 
 */
@@ -861,7 +793,7 @@ ODBC_TEST(t_bug55870)
                                    "bug55870", SQL_NTS,
                                    SQL_INDEX_UNIQUE, SQL_QUICK));
   CHECK_STMT_RC(hstmt1, SQLRowCount(hstmt1, &rowCount));
-  is_num(rowCount, 1);
+  is_num(rowCount, 2);
 
   CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
@@ -883,16 +815,6 @@ ODBC_TEST(t_bug55870)
 
   OK_SIMPLE_STMT(Stmt, "create table bug55870_2 (id int not null primary key, value "
                 "varchar(255) not null) ENGINE=InnoDB");
-  OK_SIMPLE_STMT(Stmt, "create table bug55870r (id int unsigned not null primary key,"
-                "refid int not null, refid2 int not null,"
-                "somevalue varchar(20) not null,  foreign key b55870fk1 (refid) "
-                "references bug55870 (a), foreign key b55870fk2 (refid2) "
-                "references bug55870_2 (id)) ENGINE=InnoDB");
-
-  /* actually... looks like no-i_s version of SQLForeignKeys is broken on latest
-     server versions. comment in "show table status..." contains nothing */
-  CHECK_STMT_RC(hstmt1, SQLForeignKeys(hstmt1, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
-    NULL, 0, (SQLCHAR *)"bug55870r", SQL_NTS));
 
   CHECK_STMT_RC(hstmt1, SQLRowCount(hstmt1, &rowCount));
   is_num(rowCount, my_print_non_format_result(hstmt1));
@@ -906,7 +828,6 @@ ODBC_TEST(t_bug55870)
   sprintf(query, "revoke select (c),insert (c),update (c) on bug55870 from %s", my_uid);
   SQLExecDirect(Stmt, query, SQL_NTS);
 
-  OK_SIMPLE_STMT(Stmt, "drop table if exists bug55870r");
   OK_SIMPLE_STMT(Stmt, "drop table if exists bug55870_2");
   OK_SIMPLE_STMT(Stmt, "drop table if exists bug55870");
   
@@ -1485,8 +1406,6 @@ MA_ODBC_TESTS my_tests[]=
 {
   {t_bug37621, "t_bug37621", NORMAL},
   {t_bug34272, "t_bug34272", NORMAL},
-  {t_bug49660, "t_bug49660", NORMAL},
-  {t_bug51422, "t_bug51422", NORMAL},
   {t_bug36441, "t_bug36441", NORMAL},
   {t_bug53235, "t_bug53235", NORMAL},
   {t_bug50195, "t_bug50195", NORMAL},

@@ -859,67 +859,6 @@ ODBC_TEST(sqlspecialcolumns)
   return OK;
 }
 
-
-ODBC_TEST(sqlforeignkeys)
-{
-  HDBC hdbc1;
-  HSTMT hstmt1;
-  SQLWCHAR wbuff[MAX_ROW_DATA_LEN+1];
-
-  /** @todo re-enable this test when I_S based SQLForeignKeys is done. */
-
-
-  CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc1));
-  CHECK_DBC_RC(hdbc1, SQLConnectW(hdbc1, wdsn, SQL_NTS, wuid, SQL_NTS,
-                            wpwd, SQL_NTS));
-
-  CHECK_DBC_RC(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
-
-  CHECK_STMT_RC(hstmt1,
-          SQLExecDirectW(hstmt1,
-                         W(L"DROP TABLE IF EXISTS t_fk_\x00e5, t_fk_\x00e3"),
-                         SQL_NTS));
-  CHECK_STMT_RC(hstmt1,
-          SQLExecDirectW(hstmt1,
-                         W(L"CREATE TABLE t_fk_\x00e3 (a INT PRIMARY KEY) "
-                           L"ENGINE=InnoDB"), SQL_NTS));
-  CHECK_STMT_RC(hstmt1,
-          SQLExecDirectW(hstmt1,
-                         W(L"CREATE TABLE t_fk_\x00e5 (b INT, parent_id INT,"
-                         L"                       FOREIGN KEY (parent_id)"
-                         L"                        REFERENCES"
-                         L"                          t_fk_\x00e3(a)"
-                         L"                        ON DELETE SET NULL)"
-                         L" ENGINE=InnoDB"), SQL_NTS));
-
-  CHECK_STMT_RC(hstmt1, SQLForeignKeysW(hstmt1, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
-                                  NULL, 0, W(L"t_fk_\x00e5"), SQL_NTS));
-
-  CHECK_STMT_RC(hstmt1, SQLFetch(hstmt1));
-  IS_WSTR(my_fetch_wstr(hstmt1, wbuff, 3, MAX_ROW_DATA_LEN+1), W(L"t_fk_\x00e3"), 7);
-  IS_WSTR(my_fetch_wstr(hstmt1, wbuff, 4, MAX_ROW_DATA_LEN+1), W(L"a"), 2);
-  IS_WSTR(my_fetch_wstr(hstmt1, wbuff, 7, MAX_ROW_DATA_LEN+1), W(L"t_fk_\x00e5"), 7);
-  IS_WSTR(my_fetch_wstr(hstmt1, wbuff, 8, MAX_ROW_DATA_LEN+1), W(L"parent_id"), 10);
-
-  FAIL_IF(SQLFetch(hstmt1)!= SQL_NO_DATA_FOUND, "eof expected");
-
-  CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
-
-  CHECK_STMT_RC(hstmt1,
-          SQLExecDirectW(hstmt1,
-                         W(L"DROP TABLE IF EXISTS t_fk_\x00e5, t_fk_\x00e3"),
-                         SQL_NTS));
-
-  CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
-
-  CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
-  CHECK_DBC_RC(hdbc1, SQLDisconnect(hdbc1));
-  CHECK_DBC_RC(hdbc1, SQLFreeConnect(hdbc1));
-
-  return OK;
-}
-
-
 ODBC_TEST(sqlprimarykeys)
 {
   HDBC hdbc1;
@@ -1616,7 +1555,6 @@ MA_ODBC_TESTS my_tests[]=
   {sqlcolumns,        "sqlcolumns",         NORMAL},
   {sqltables,         "sqltables",          NORMAL},
   {sqlspecialcolumns, "sqlspecialcolumns",  NORMAL},
-  {sqlforeignkeys,    "sqlforeignkeys",     NORMAL},
   {sqlprimarykeys,    "sqlprimarykeys",     NORMAL},
   {sqlstatistics,     "sqlstatistics",      NORMAL},
   {t_bug32161,        "t_bug32161",         NORMAL},

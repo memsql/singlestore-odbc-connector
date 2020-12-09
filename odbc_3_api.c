@@ -1566,19 +1566,12 @@ SQLRETURN SQL_API SQLForeignKeys(SQLHSTMT StatementHandle,
     SQLSMALLINT NameLength6)
 {
   MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
-  SQLRETURN ret;
 
   if(!Stmt)
     return SQL_INVALID_HANDLE;
   MADB_CLEAR_ERROR(&Stmt->Error);
 
-  MDBUG_C_ENTER(Stmt->Connection, "SQLForeignKeys");
-
-  ret= Stmt->Methods->ForeignKeys(Stmt, (char *)PKCatalogName, NameLength1, (char *)PKSchemaName, NameLength2,
-                                    (char *)PKTableName, NameLength3, (char *)FKCatalogName, NameLength4,
-                                    (char *)FKSchemaName, NameLength4, (char *)FKTableName, NameLength6);
-
-  MDBUG_C_RETURN(Stmt->Connection, ret, &Stmt->Error);
+  return MADB_SetError(&Stmt->Error,  MADB_ERR_IM001, "Foreign keys are not supported", 0);
 }
 /* }}} */
 
@@ -1598,39 +1591,12 @@ SQLRETURN SQL_API SQLForeignKeysW(SQLHSTMT StatementHandle,
     SQLSMALLINT NameLength6)
 {
   MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
-  char *CpPkCatalog= NULL,
-       *CpPkSchema= NULL,
-       *CpPkTable= NULL,
-       *CpFkCatalog= NULL,
-       *CpFkSchema= NULL,
-       *CpFkTable= NULL;
-  SQLULEN CpLength1, CpLength2, CpLength3,
-             CpLength4, CpLength5, CpLength6;
-  SQLRETURN ret;
+
   if(!Stmt)
     return SQL_INVALID_HANDLE;
   MADB_CLEAR_ERROR(&Stmt->Error);
 
-  MDBUG_C_ENTER(Stmt->Connection, "SQLForeignKeysW");
-
-  CpPkCatalog= MADB_ConvertFromWChar(PKCatalogName, NameLength1, &CpLength1, Stmt->Connection->ConnOrSrcCharset, NULL);
-  CpPkSchema= MADB_ConvertFromWChar(PKSchemaName, NameLength2, &CpLength2, Stmt->Connection->ConnOrSrcCharset, NULL);
-  CpPkTable= MADB_ConvertFromWChar(PKTableName, NameLength3, &CpLength3, Stmt->Connection->ConnOrSrcCharset, NULL);
-  CpFkCatalog= MADB_ConvertFromWChar(FKCatalogName, NameLength4, &CpLength4, Stmt->Connection->ConnOrSrcCharset, NULL);
-  CpFkSchema= MADB_ConvertFromWChar(FKSchemaName, NameLength5, &CpLength5, Stmt->Connection->ConnOrSrcCharset, NULL);
-  CpFkTable= MADB_ConvertFromWChar(FKTableName, NameLength6, &CpLength6, Stmt->Connection->ConnOrSrcCharset, NULL);
-
-  ret= Stmt->Methods->ForeignKeys(Stmt, CpPkCatalog, (SQLSMALLINT)CpLength1, CpPkSchema, (SQLSMALLINT)CpLength2,
-                                  CpPkTable, (SQLSMALLINT)CpLength3, CpFkCatalog, (SQLSMALLINT)CpLength4, 
-                                  CpFkSchema, (SQLSMALLINT)CpLength5, CpFkTable, (SQLSMALLINT)CpLength6);
-  MADB_FREE(CpPkCatalog);
-  MADB_FREE(CpPkSchema);
-  MADB_FREE(CpPkTable);
-  MADB_FREE(CpFkCatalog);
-  MADB_FREE(CpFkSchema);
-  MADB_FREE(CpFkTable);
-
-  MDBUG_C_RETURN(Stmt->Connection, ret, &Stmt->Error);
+  return MADB_SetError(&Stmt->Error,  MADB_ERR_IM001, "Foreign keys are not supported", 0);
 }
 /* }}} */
 

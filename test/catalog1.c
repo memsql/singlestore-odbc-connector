@@ -875,95 +875,6 @@ ODBC_TEST(my_information_schema)
   return OK;
 }
 
-
-/**
- Bug #4518: SQLForeignKeys returns too many foreign key
- Bug #27723: SQLForeignKeys does not escape _ and % in the table name arguments
-
- The original test case was extended to have a table that would inadvertently
- get included because of the poor escaping.
-*/
-ODBC_TEST(t_bug4518)
-{
-  SQLCHAR buff[255];
-  SQLLEN len;
-
-  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_bug4518_c, t_bug4518_c2, t_bug4518ac, "
-                "                     t_bug4518_p");
-  OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_bug4518_p (id INT PRIMARY KEY) ENGINE=InnoDB");
-  OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_bug4518_c (id INT, parent_id INT,"
-                "                          FOREIGN KEY (parent_id)"
-                "                           REFERENCES"
-                "                             t_bug4518_p(id)"
-                "                           ON DELETE SET NULL)"
-                " ENGINE=InnoDB");
-  OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_bug4518_c2 (id INT, parent_id INT,"
-                "                           FOREIGN KEY (parent_id)"
-                "                            REFERENCES"
-                "                              t_bug4518_p(id)"
-                "                          )"
-                " ENGINE=InnoDB");
-  OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_bug4518ac (id INT, parent_id INT,"
-                "                          FOREIGN KEY (parent_id)"
-                "                           REFERENCES"
-                "                             t_bug4518_p(id)"
-                "                            ON DELETE CASCADE"
-                "                            ON UPDATE NO ACTION"
-                "                          )"
-                " ENGINE=InnoDB");
-
-  CHECK_STMT_RC(Stmt, SQLForeignKeys(Stmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
-                                NULL, 0, (SQLCHAR *)"t_bug4518_c", SQL_NTS));
-
-  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  IS_STR(my_fetch_str(Stmt, buff, 3), "t_bug4518_p", 11);
-  IS_STR(my_fetch_str(Stmt, buff, 4), "id", 2);
-  IS_STR(my_fetch_str(Stmt, buff, 7), "t_bug4518_c", 11);
-  IS_STR(my_fetch_str(Stmt, buff, 8), "parent_id", 9);
-  if (1)
-  {
-    is_num(my_fetch_int(Stmt, 10), SQL_RESTRICT);
-    is_num(my_fetch_int(Stmt, 11), SQL_SET_NULL);
-  }
-  else
-  {
-    is_num(my_fetch_int(Stmt, 10), SQL_RESTRICT);
-    is_num(my_fetch_int(Stmt, 11), SQL_RESTRICT);
-  }
-
-  /* For Bug #19923: Test that schema columns are NULL. */
-  CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 2, SQL_C_CHAR, buff, sizeof(buff), &len));
-  is_num(len, SQL_NULL_DATA);
-  CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 6, SQL_C_CHAR, buff, sizeof(buff), &len));
-  is_num(len, SQL_NULL_DATA);
-
-  FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "expected no data");
-
-  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
-
-  CHECK_STMT_RC(Stmt, SQLForeignKeys(Stmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
-                                NULL, 0, (SQLCHAR *)"t_bug4518ac", SQL_NTS));
-
-  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  IS_STR(my_fetch_str(Stmt, buff, 3), "t_bug4518_p", 11);
-  IS_STR(my_fetch_str(Stmt, buff, 4), "id", 2);
-  IS_STR(my_fetch_str(Stmt, buff, 7), "t_bug4518ac", 11);
-  IS_STR(my_fetch_str(Stmt, buff, 8), "parent_id", 9);
-  if (1)
-  {
-    is_num(my_fetch_int(Stmt, 10), SQL_NO_ACTION);
-    is_num(my_fetch_int(Stmt, 11), SQL_CASCADE);
-  }
-
-  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
-
-  OK_SIMPLE_STMT(Stmt,
-         "DROP TABLE t_bug4518_c, t_bug4518_c2, t_bug4518ac, t_bug4518_p");
-
-  return OK;
-}
-
-
 /**
  Tests the non-error code paths in catalog.c that return an empty set to
  make sure the resulting empty result sets at least indicate the right
@@ -1281,55 +1192,6 @@ ODBC_TEST(t_bug14407)
   return OK;
 }
 
-
-/**
- Bug #19923: MyODBC Foreign key retrieval broken in multiple ways
- Two issues to test: schema columns should be NULL, not just an empty string,
- and more than one constraint should be returned.
-*/
-ODBC_TEST(t_bug19923)
-{
-  SQLCHAR buff[255];
-  SQLLEN len;
-
-  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_bug19923c, t_bug19923b, t_bug19923a");
-  OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_bug19923a (a INT PRIMARY KEY) ENGINE=InnoDB");
-  OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_bug19923b (b INT PRIMARY KEY) ENGINE=InnoDB");
-  OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_bug19923c (a INT, b INT, UNIQUE(a), UNIQUE(b),"
-                "CONSTRAINT `first_constraint` FOREIGN KEY (`b`) REFERENCES `t_bug19923b` (`b`),"
-                "CONSTRAINT `second_constraint` FOREIGN KEY (`a`) REFERENCES `t_bug19923a` (`a`)"
-                ") ENGINE=InnoDB");
-
-  CHECK_STMT_RC(Stmt, SQLForeignKeys(Stmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
-                                NULL, 0, (SQLCHAR *)"t_bug19923c", SQL_NTS));
-
-  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  IS_STR(my_fetch_str(Stmt, buff, 3), "t_bug19923a", 11);
-  IS_STR(my_fetch_str(Stmt, buff, 4), "a", 1);
-  IS_STR(my_fetch_str(Stmt, buff, 7), "t_bug19923c", 11);
-  IS_STR(my_fetch_str(Stmt, buff, 8), "a", 1);
-  IS_STR(my_fetch_str(Stmt, buff, 12), "second_constraint", 17);
-
-  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  IS_STR(my_fetch_str(Stmt, buff, 3), "t_bug19923b", 11);
-  IS_STR(my_fetch_str(Stmt, buff, 4), "b", 1);
-  IS_STR(my_fetch_str(Stmt, buff, 7), "t_bug19923c", 11);
-  IS_STR(my_fetch_str(Stmt, buff, 8), "b", 1);
-  IS_STR(my_fetch_str(Stmt, buff, 12), "first_constraint", 16);
-  CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 2, SQL_C_CHAR, buff, sizeof(buff), &len));
-  is_num(len, SQL_NULL_DATA);
-  CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 6, SQL_C_CHAR, buff, sizeof(buff), &len));
-  is_num(len, SQL_NULL_DATA);
-
-  FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "expected no data");
-
-  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
-
-  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_bug19923c, t_bug19923b, t_bug19923a");
-  return OK;
-}
-
-
 /*
   Bug #32864 MyODBC /Crystal Reports truncated table names,
              lost fields when names > 21chars
@@ -1572,7 +1434,6 @@ MA_ODBC_TESTS my_tests[]=
   {tmysql_showkeys, "tmysql_showkeys"},
   {t_sqltables, "t_sqltables"},
   {my_information_schema, "my_information_schema"},
-  {t_bug4518, "t_bug4518"},
   {empty_set, "empty_set"},
   {t_bug23031, "t_bug23031"},
   {bug15713, "bug15713"},
@@ -1580,8 +1441,7 @@ MA_ODBC_TESTS my_tests[]=
   {bug8860, "bug8860"},
   {t_bug26934, "t_bug26934"},
   {t_bug29888, "t_bug29888"},
-  {t_bug14407, "t_bug14407"}, 
-  {t_bug19923, "t_bug19923"},
+  {t_bug14407, "t_bug14407"},
   {t_bug32864, "t_bug32864"},
   {t_bug32989, "t_bug32989"},
   {t_bug33298, "t_bug33298"},
