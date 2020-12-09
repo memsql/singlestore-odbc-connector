@@ -717,7 +717,6 @@ ODBC_TEST(t_bug15773)
   return OK;
 }
 
-
 /**
  Bug #9927: Updating datetime columns
 */
@@ -728,7 +727,7 @@ ODBC_TEST(t_bug9927)
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_bug9927");
   OK_SIMPLE_STMT(Stmt,
          "CREATE TABLE t_bug9927 (a TIMESTAMP DEFAULT 0,"
-        "b TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)");
+        "b TIMESTAMP PRIMARY KEY ON UPDATE CURRENT_TIMESTAMP)");
 
   CHECK_STMT_RC(Stmt, SQLSpecialColumns(Stmt,SQL_ROWVER,  NULL, 0,
                                    NULL, 0, (SQLCHAR *)"t_bug9927", SQL_NTS,

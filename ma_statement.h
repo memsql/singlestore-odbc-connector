@@ -117,73 +117,6 @@ SQLRETURN    MADB_DoExecute(MADB_Stmt *Stmt, BOOL ExecDirect);
 #define MADB_STMT_RESET_CURSOR(aStmt) (aStmt)->Cursor.Position= -1; MADB_STMT_FORGET_NEXT_POS(aStmt)
 #define MADB_STMT_CLOSE_STMT(aStmt)   mysql_stmt_close((aStmt)->stmt);(aStmt)->stmt= NULL
 
-/* CASE for DATA_TYPE glued in 2 parts for ODBC v2 or v3 */
-#define MADB_SQL_DATATYPEp1\
-  "CASE DATA_TYPE"\
-  "  WHEN 'bit' THEN @dt:= IF(NUMERIC_PRECISION=1," XSTR(SQL_BIT) ", " XSTR(SQL_BINARY) ")"\
-  "  WHEN 'tinyint' THEN @dt:=" XSTR(SQL_TINYINT)\
-  "  WHEN 'smallint' THEN @dt:=" XSTR(SQL_SMALLINT)\
-  "  WHEN 'year' THEN @dt:= " XSTR(SQL_SMALLINT)\
-  "  WHEN 'mediumint' THEN @dt:=" XSTR(SQL_INTEGER)\
-  "  WHEN 'int' THEN @dt:=" XSTR(SQL_INTEGER)\
-  "  WHEN 'bigint' THEN @dt:=" XSTR(SQL_BIGINT)\
-  "  WHEN 'blob' THEN @dt:=" XSTR(SQL_LONGVARBINARY)\
-  "  WHEN 'tinyblob' THEN @dt:=" XSTR(SQL_LONGVARBINARY)\
-  "  WHEN 'mediumblob' THEN @dt:=" XSTR(SQL_LONGVARBINARY)\
-  "  WHEN 'longblob' THEN @dt:=" XSTR(SQL_LONGVARBINARY)\
-  "  WHEN 'decimal' THEN @dt:=" XSTR(SQL_DECIMAL)\
-  "  WHEN 'float' THEN @dt:=IF(NUMERIC_SCALE IS NULL," XSTR(SQL_REAL) ", "  XSTR(SQL_DECIMAL) ")"\
-  "  WHEN 'double' THEN @dt:=IF(NUMERIC_SCALE IS NULL," XSTR(SQL_DOUBLE) ", "  XSTR(SQL_DECIMAL) ")"\
-  "  WHEN 'binary' THEN @dt:=" XSTR(SQL_BINARY)\
-  "  WHEN 'varbinary' THEN @dt:=" XSTR(SQL_VARBINARY)
-
-#define MADB_SQL_DATATYPEp1U\
-  "  WHEN 'text' THEN @dt:=" XSTR(SQL_WLONGVARCHAR)\
-  "  WHEN 'tinytext' THEN @dt:=" XSTR(SQL_WLONGVARCHAR)\
-  "  WHEN 'mediumtext' THEN @dt:=" XSTR(SQL_WLONGVARCHAR)\
-  "  WHEN 'longtext' THEN @dt:=" XSTR(SQL_WLONGVARCHAR)\
-  "  WHEN 'char' THEN @dt:=" XSTR(SQL_WCHAR)\
-  "  WHEN 'enum' THEN @dt:=" XSTR(SQL_WCHAR)\
-  "  WHEN 'set' THEN @dt:=" XSTR(SQL_WCHAR)\
-  "  WHEN 'varchar' THEN @dt:=" XSTR(SQL_WVARCHAR)
-
-#define MADB_SQL_DATATYPEp1A\
-  "  WHEN 'text' THEN @dt:=" XSTR(SQL_LONGVARCHAR)\
-  "  WHEN 'tinytext' THEN @dt:=" XSTR(SQL_LONGVARCHAR)\
-  "  WHEN 'mediumtext' THEN @dt:=" XSTR(SQL_LONGVARCHAR)\
-  "  WHEN 'longtext' THEN @dt:=" XSTR(SQL_LONGVARCHAR)\
-  "  WHEN 'char' THEN @dt:=" XSTR(SQL_CHAR)\
-  "  WHEN 'enum' THEN @dt:=" XSTR(SQL_CHAR)\
-  "  WHEN 'set' THEN @dt:=" XSTR(SQL_CHAR)\
-  "  WHEN 'varchar' THEN @dt:=" XSTR(SQL_VARCHAR)
-
-#define MADB_SQL_DATATYPEp2_ODBC3\
-  "  WHEN 'date' THEN @dt:=" XSTR(SQL_TYPE_DATE)\
-  "  WHEN 'time' THEN @dt:=" XSTR(SQL_TYPE_TIME)\
-  "  WHEN 'datetime' THEN @dt:=" XSTR(SQL_TYPE_TIMESTAMP)\
-  "  WHEN 'timestamp' THEN @dt:=" XSTR(SQL_TYPE_TIMESTAMP)\
-  "  ELSE @dt:=" XSTR(SQL_LONGVARBINARY)\
-  "END AS DATA_TYPE"
-
-#define MADB_SQL_DATATYPEp2_ODBC2\
-  "  WHEN 'date' THEN @dt:=" XSTR(SQL_DATE)\
-  "  WHEN 'time' THEN @dt:=" XSTR(SQL_TIME)\
-  "  WHEN 'datetime' THEN @dt:=" XSTR(SQL_TIMESTAMP)\
-  "  WHEN 'timestamp' THEN @dt:=" XSTR(SQL_TIMESTAMP)\
-  "  ELSE @dt:=" XSTR(SQL_LONGVARBINARY)\
-  "END AS DATA_TYPE"
-
-#define MADB_SQL_DATATYPE_ODBC3U MADB_SQL_DATATYPEp1 MADB_SQL_DATATYPEp1U MADB_SQL_DATATYPEp2_ODBC3
-#define MADB_SQL_DATATYPE_ODBC3A MADB_SQL_DATATYPEp1 MADB_SQL_DATATYPEp1A MADB_SQL_DATATYPEp2_ODBC3
-#define MADB_SQL_DATATYPE_ODBC2U MADB_SQL_DATATYPEp1 MADB_SQL_DATATYPEp1U MADB_SQL_DATATYPEp2_ODBC2
-#define MADB_SQL_DATATYPE_ODBC2A MADB_SQL_DATATYPEp1 MADB_SQL_DATATYPEp1A MADB_SQL_DATATYPEp2_ODBC2
-
-#define MADB_SQL_DATATYPE(StmtHndl) (StmtHndl->Connection->Environment->OdbcVersion >= SQL_OV_ODBC3 ?\
- (StmtHndl->Connection->IsAnsi ? MADB_SQL_DATATYPE_ODBC3A : MADB_SQL_DATATYPE_ODBC3U) :\
- (StmtHndl->Connection->IsAnsi ? MADB_SQL_DATATYPE_ODBC2A : MADB_SQL_DATATYPE_ODBC2U))
-
-/************** End of DATA_TYPE *************/
-
 /************** SQLColumns       *************/
 #define MADB_DATA_TYPE_ODBC2 \
     " WHEN 'date' THEN " XSTR(SQL_DATE) \
@@ -460,6 +393,25 @@ SQLRETURN    MADB_DoExecute(MADB_Stmt *Stmt, BOOL ExecDirect);
         (StmtHndl->Connection->IsAnsi ? MADB_PROCEDURE_COLUMNS_ODBC3A : MADB_PROCEDURE_COLUMNS_ODBC3U) : \
         (StmtHndl->Connection->IsAnsi ? MADB_PROCEDURE_COLUMNS_ODBC2A : MADB_PROCEDURE_COLUMNS_ODBC2U))
 
-/************** SQLProcedureColumns **********/
+/********* End of SQLProcedureColumns *********/
+
+/************** SQLSpecialColumns *************/
+
+#define MADB_SPECIAL_COLUMNSp1 "SELECT NULL AS SCOPE, COLUMN_NAME, "
+#define MADB_SPECIAL_COLUMNSp2 \
+    " AS DATA_TYPE, " MADB_COLUMNS_TYPE_NAME " AS TYPE_NAME, " MADB_COLUMNS_COLUMN_SIZE " AS COLUMN_SIZE, " \
+    MADB_COLUMNS_BUFFER_LEN " AS BUFFER_LENGTH, " MADB_COLUMNS_DECIMAL_DIGITS " AS DECIMAL_DIGITS, " \
+    XSTR(SQL_PC_UNKNOWN) " AS PSEUDO_COLUMN FROM INFORMATION_SCHEMA.COLUMNS"
+
+#define MADB_SPECIAL_COLUMNS_ODBC3U MADB_SPECIAL_COLUMNSp1 MADB_DATA_TYPE_ODBC3U MADB_SPECIAL_COLUMNSp2
+#define MADB_SPECIAL_COLUMNS_ODBC3A MADB_SPECIAL_COLUMNSp1 MADB_DATA_TYPE_ODBC3A MADB_SPECIAL_COLUMNSp2
+#define MADB_SPECIAL_COLUMNS_ODBC2U MADB_SPECIAL_COLUMNSp1 MADB_DATA_TYPE_ODBC2U MADB_SPECIAL_COLUMNSp2
+#define MADB_SPECIAL_COLUMNS_ODBC2A MADB_SPECIAL_COLUMNSp1 MADB_DATA_TYPE_ODBC2A MADB_SPECIAL_COLUMNSp2
+
+#define MADB_SPECIAL_COLUMNS(StmtHndl) (StmtHndl->Connection->Environment->OdbcVersion >= SQL_OV_ODBC3 ?\
+        (StmtHndl->Connection->IsAnsi ? MADB_SPECIAL_COLUMNS_ODBC3A : MADB_SPECIAL_COLUMNS_ODBC3U) : \
+        (StmtHndl->Connection->IsAnsi ? MADB_SPECIAL_COLUMNS_ODBC2A : MADB_SPECIAL_COLUMNS_ODBC2U))
+
+/********** End of SQLSpecialColumns *********/
 
 #endif

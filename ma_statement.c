@@ -3617,7 +3617,10 @@ SQLRETURN MADB_StmtColumns(MADB_Stmt *Stmt,
  
   MADB_CLEAR_ERROR(&Stmt->Error);
   if (MADB_DynstrAppend(&StmtStr, MADB_COLUMNS(Stmt)))
-    goto dynerror;
+  {
+      ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
+      goto end;
+  }
 
   ADJUST_LENGTH(CatalogName, NameLength1);
   ADJUST_LENGTH(SchemaName, NameLength2);
@@ -3625,33 +3628,57 @@ SQLRETURN MADB_StmtColumns(MADB_Stmt *Stmt,
   ADJUST_LENGTH(ColumnName, NameLength4);
 
   if(MADB_DynstrAppend(&StmtStr, " WHERE TABLE_SCHEMA = "))
-    goto dynerror;
+  {
+      ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
+      goto end;
+  }
 
   if (CatalogName)
   {
     if (MADB_DynstrAppend(&StmtStr, "'") ||
         MADB_DynstrAppendMem(&StmtStr, CatalogName, NameLength1) ||
         MADB_DynstrAppend(&StmtStr, "' "))
-      goto dynerror;
+    {
+        ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
+        goto end;
+    }
   }
   else
-    if (MADB_DynstrAppend(&StmtStr, "DATABASE() "))
-      goto dynerror;
+  {
+      if (MADB_DynstrAppend(&StmtStr, "DATABASE() "))
+      {
+          ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
+          goto end;
+      }
+  }
 
   if (TableName)
-    if (MADB_DynstrAppend(&StmtStr, "AND TABLE_NAME LIKE '") ||
-        MADB_DynstrAppendMem(&StmtStr, TableName, NameLength3) ||
-        MADB_DynstrAppend(&StmtStr, "' "))
-    goto dynerror;
+  {
+      if (MADB_DynstrAppend(&StmtStr, "AND TABLE_NAME LIKE '") ||
+          MADB_DynstrAppendMem(&StmtStr, TableName, NameLength3) ||
+          MADB_DynstrAppend(&StmtStr, "' "))
+      {
+          ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
+          goto end;
+      }
+  }
 
   if (ColumnName)
-    if (MADB_DynstrAppend(&StmtStr, "AND COLUMN_NAME LIKE '") ||
-        MADB_DynstrAppendMem(&StmtStr, ColumnName, NameLength4) ||
-        MADB_DynstrAppend(&StmtStr, "' "))
-    goto dynerror;
+  {
+      if (MADB_DynstrAppend(&StmtStr, "AND COLUMN_NAME LIKE '") ||
+          MADB_DynstrAppendMem(&StmtStr, ColumnName, NameLength4) ||
+          MADB_DynstrAppend(&StmtStr, "' "))
+      {
+          ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
+          goto end;
+      }
+  }
 
   if (MADB_DynstrAppend(&StmtStr, " ORDER BY TABLE_SCHEMA, TABLE_NAME, ORDINAL_POSITION"))
-    goto dynerror;
+  {
+      ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
+      goto end;
+  }
 
   MDBUG_C_DUMP(Stmt->Connection, StmtStr.str, s);
 
@@ -3661,15 +3688,11 @@ SQLRETURN MADB_StmtColumns(MADB_Stmt *Stmt,
   {
     MADB_FixColumnDataTypes(Stmt, SqlColumnsColType);
   }
-
-  MADB_DynstrFree(&StmtStr);
   MDBUG_C_DUMP(Stmt->Connection, ret, d);
 
+end:
+  MADB_DynstrFree(&StmtStr);
   return ret;
-
-dynerror:
-  MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
-  return Stmt->Error.ReturnValue;
 }
 /* }}} */
 
@@ -3771,49 +3794,97 @@ SQLRETURN MADB_StmtSpecialColumns(MADB_Stmt *Stmt, SQLUSMALLINT IdentifierType,
                                   char *TableName, SQLSMALLINT NameLength3,
                                   SQLUSMALLINT Scope, SQLUSMALLINT Nullable)
 {
-  char StmtStr[2048],
-       *p= StmtStr;
+  MADB_DynString StmtStr;
+  SQLRETURN ret;
 
-  MADB_CLEAR_ERROR(&Stmt->Error);
+  MDBUG_C_ENTER(Stmt->Connection, "StmtSpecialColumns");
 
   /* TableName is mandatory */
   if (!TableName || !NameLength3)
   {
-    MADB_SetError(&Stmt->Error, MADB_ERR_HY009, "Tablename is required", 0);
-    return Stmt->Error.ReturnValue;
+      MADB_SetError(&Stmt->Error, MADB_ERR_HY009, "TableName is required", 0);
+      return Stmt->Error.ReturnValue;
   }
 
-  p+= _snprintf(p, 2048, "SELECT NULL AS SCOPE, COLUMN_NAME, %s,"
-                           "DATA_TYPE TYPE_NAME,"
-                           "CASE" 
-                           "  WHEN DATA_TYPE in ('bit', 'tinyint', 'smallint', 'year', 'mediumint', 'int',"
-                              "'bigint', 'decimal', 'float', 'double') THEN NUMERIC_PRECISION "
-                           "  WHEN DATA_TYPE='date' THEN 10"
-                           "  WHEN DATA_TYPE='time' THEN 8"
-                           "  WHEN DATA_TYPE in ('timestamp', 'datetime') THEN 19 "
-                           "END AS COLUMN_SIZE,"
-                           "CHARACTER_OCTET_LENGTH AS BUFFER_LENGTH,"
-                           "NUMERIC_SCALE DECIMAL_DIGITS, " 
-                           XSTR(SQL_PC_UNKNOWN) " PSEUDO_COLUMN "
-                           "FROM INFORMATION_SCHEMA.COLUMNS WHERE 1 ", MADB_SQL_DATATYPE(Stmt));
+  MADB_InitDynamicString(&StmtStr, "", 2048, 1024);
 
-  if (CatalogName && CatalogName[0])
-    p+= _snprintf(p, 2048 - strlen(StmtStr), "AND TABLE_SCHEMA LIKE '%s' ", CatalogName);
+  MADB_CLEAR_ERROR(&Stmt->Error);
+  if (MADB_DynstrAppend(&StmtStr, MADB_SPECIAL_COLUMNS(Stmt)))
+  {
+      ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
+      goto end;
+  }
+
+  ADJUST_LENGTH(CatalogName, NameLength1);
+  ADJUST_LENGTH(SchemaName, NameLength2);
+  ADJUST_LENGTH(TableName, NameLength3);
+
+  if(MADB_DynstrAppend(&StmtStr, " WHERE TABLE_SCHEMA = "))
+  {
+      ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
+      goto end;
+  }
+
+  if (CatalogName)
+  {
+      if (MADB_DynstrAppend(&StmtStr, "'") ||
+          MADB_DynstrAppendMem(&StmtStr, CatalogName, NameLength1) ||
+          MADB_DynstrAppend(&StmtStr, "' "))
+      {
+          ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
+          goto end;
+      }
+  }
   else
-    p+= _snprintf(p, 2048 - strlen(StmtStr), "AND TABLE_SCHEMA LIKE IF(DATABASE() IS NOT NULL, DATABASE(), '%%') ");
-  if (TableName && TableName[0])
-    p+= _snprintf(p, 2048 - strlen(StmtStr), "AND TABLE_NAME LIKE '%s' ", TableName);
+  {
+      if (MADB_DynstrAppend(&StmtStr, "DATABASE() "))
+      {
+          ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
+          goto end;
+      }
+  }
+
+  if (TableName && NameLength3)
+  {
+      if (MADB_DynstrAppend(&StmtStr, "AND TABLE_NAME LIKE '") ||
+          MADB_DynstrAppendMem(&StmtStr, TableName, NameLength3) ||
+          MADB_DynstrAppend(&StmtStr, "' "))
+      {
+          ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
+          goto end;
+      }
+  }
 
   if (Nullable == SQL_NO_NULLS)
-    p+= _snprintf(p, 2048 - strlen(StmtStr), "AND IS_NULLABLE <> 'YES' ");
+  {
+      if (MADB_DynstrAppend(&StmtStr, "AND IS_NULLABLE <> 'YES' "))
+      {
+          ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
+          goto end;
+      }
+  }
 
   if (IdentifierType == SQL_BEST_ROWID)
-    p+= _snprintf(p, 2048 - strlen(StmtStr), "AND COLUMN_KEY IN ('PRI', 'UNI') ");
-  else if (IdentifierType == SQL_ROWVER)
-    p+= _snprintf(p, 2048 - strlen(StmtStr), "AND DATA_TYPE='timestamp' AND EXTRA LIKE '%%CURRENT_TIMESTAMP%%' ");
-  p+= _snprintf(p, 2048 - strlen(StmtStr), "ORDER BY TABLE_SCHEMA, TABLE_NAME, COLUMN_KEY");
+  {
+      if (MADB_DynstrAppend(&StmtStr, "AND COLUMN_KEY IN ('PRI', 'UNI') "))
+      {
+          ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
+          goto end;
+      }
+  }
 
-  return Stmt->Methods->ExecDirect(Stmt, StmtStr, SQL_NTS);
+  if (MADB_DynstrAppend(&StmtStr, " ORDER BY TABLE_SCHEMA, TABLE_NAME, COLUMN_KEY"))
+  {
+      ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
+      goto end;
+  }
+
+  ret= Stmt->Methods->ExecDirect(Stmt, StmtStr.str, SQL_NTS);
+  MDBUG_C_DUMP(Stmt->Connection, ret, d);
+
+end:
+  MADB_DynstrFree(&StmtStr);
+  return ret;
 }
 /* }}} */
 
