@@ -124,10 +124,9 @@ ODBC_TEST(my_table_dbs)
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-  /* test fails on Win2003 x86 w/DM if len=5, SQL_NTS is used instead */
-  CHECK_STMT_RC(Stmt, SQLTables(Stmt,(SQLCHAR *)"mysql", SQL_NTS, NULL, 0, NULL, 0, NULL, 0));
+  CHECK_STMT_RC(Stmt, SQLTables(Stmt,(SQLCHAR *)"information_schema", SQL_NTS, NULL, 0, NULL, 0, NULL, 0));
 
-  FAIL_IF(my_print_non_format_result(Stmt) == 0, "0 tables returned for mysql");
+  FAIL_IF(my_print_non_format_result(Stmt) == 0, "0 tables returned for information_schema");
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   CHECK_STMT_RC(Stmt, SQLTables(Stmt, (SQLCHAR *)"%", 1, "", 0, "", 0, NULL, 0));
