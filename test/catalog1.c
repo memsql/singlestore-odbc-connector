@@ -456,7 +456,7 @@ ODBC_TEST(t_columns)
     { {3,2},  {10,4}, {2,2},  {10,2},  {1,2}},
     { {-6,2},  {3,4}, {0,2},  {10,2},  {0,2}},
     { {4,2}, {10,4}, {0,2},  {10,2},  {0,2}},
-    { {-6,2}, {3,4}, {0,2},  {10,2},  {1,2}}
+    { {-6,2}, {3,4}, {0,2},  {10,2},  {0,2}}
   };
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_columns");
@@ -464,8 +464,8 @@ ODBC_TEST(t_columns)
   OK_SIMPLE_STMT(Stmt,
          "CREATE TABLE t_columns (col0 SMALLINT,"
          "col1 CHAR(5), col2 VARCHAR(20) NOT NULL, col3 DECIMAL(10,2),"
-         "col4 TINYINT NOT NULL, col5 INTEGER PRIMARY KEY,"
-         "col6 TINYINT NOT NULL UNIQUE AUTO_INCREMENT) CHARSET latin1");
+         "col4 TINYINT NOT NULL, col5 INTEGER,"
+         "col6 TINYINT NOT NULL, PRIMARY KEY(col5, col6)) CHARSET latin1");
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
@@ -1040,7 +1040,8 @@ ODBC_TEST(bug8860)
 {
   SQLCHAR buff[512];
 
-OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_bug8860, `t_bug8860_a'b`");
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_bug8860");
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS `t_bug8860_a'b`");
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_bug8860 (a INT)");
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE `t_bug8860_a'b` (b INT)");
 
@@ -1094,7 +1095,8 @@ OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_bug8860, `t_bug8860_a'b`");
   FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "expected no data");
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
-  OK_SIMPLE_STMT(Stmt, "DROP TABLE t_bug8860, `t_bug8860_a'b`");
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_bug8860");
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS `t_bug8860_a'b`");
   return OK;
 }
 
@@ -1169,8 +1171,8 @@ ODBC_TEST(t_bug14407)
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   IS_STR(my_fetch_str(Stmt, col, 4), "a", 1);
-  is_num(my_fetch_int(Stmt, 11), SQL_NULLABLE);
-  IS_STR(my_fetch_str(Stmt, col, 18), "YES", 3);
+  is_num(my_fetch_int(Stmt, 11), SQL_NO_NULLS);
+  IS_STR(my_fetch_str(Stmt, col, 18), "NO", 3);
 
   FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "expected no data");
 
@@ -1184,7 +1186,7 @@ ODBC_TEST(t_bug14407)
 
   CHECK_STMT_RC(Stmt, SQLDescribeCol(Stmt, 1, col, sizeof(col), NULL, NULL, NULL,
                                 NULL, &nullable));
-  is_num(nullable, SQL_NULLABLE);
+  is_num(nullable, SQL_NO_NULLS);
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 

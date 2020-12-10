@@ -861,8 +861,8 @@ ODBC_TEST(t_bug14414)
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   IS_STR(my_fetch_str(Stmt, col, 4), "b", 1);
-  is_num(my_fetch_int(Stmt, 11), SQL_NULLABLE);
-  IS_STR(my_fetch_str(Stmt, col, 18), "YES", 3);
+  is_num(my_fetch_int(Stmt, 11), SQL_NO_NULLS);
+  IS_STR(my_fetch_str(Stmt, col, 18), "NO", 3);
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   IS_STR(my_fetch_str(Stmt, col, 4), "c", 1);
@@ -885,7 +885,7 @@ ODBC_TEST(t_bug14414)
 
   CHECK_STMT_RC(Stmt, SQLDescribeCol(Stmt, 2, col, sizeof(col), NULL, NULL, NULL,
                                 NULL, &nullable));
-  is_num(nullable, SQL_NULLABLE);
+  is_num(nullable, SQL_NO_NULLS);
 
   CHECK_STMT_RC(Stmt, SQLDescribeCol(Stmt, 3, col, sizeof(col), NULL, NULL, NULL,
                                 NULL, &nullable));

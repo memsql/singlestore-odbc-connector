@@ -619,10 +619,11 @@ ODBC_TEST(bit)
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLFetch(Stmt));
 
   IS_STR(my_fetch_str(Stmt, col, 4), "b", 1);
-  is_num(my_fetch_int(Stmt, 5), SQL_BINARY); /* DATA_TYPE */
+  is_num(my_fetch_int(Stmt, 5), SQL_BIT); /* DATA_TYPE */
   is_num(my_fetch_int(Stmt, 7), 3); /* COLUMN_SIZE */
   is_num(my_fetch_int(Stmt, 8), 3); /* BUFFER_LENGTH */
-  is_num(my_fetch_int(Stmt, 16), 3); /* CHAR_OCTET_LENGTH */
+  CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLGetData(Stmt, 16, SQL_C_LONG, &type, 0, &len));
+  is_num(len, SQL_NULL_DATA); /* CHAR_OCTET_LENGTH */
 
   FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "expected EOF");
 

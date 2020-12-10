@@ -3638,13 +3638,13 @@ SQLRETURN MADB_StmtColumns(MADB_Stmt *Stmt,
     if (MADB_DynstrAppend(&StmtStr, "DATABASE() "))
       goto dynerror;
 
-  if (TableName && NameLength3)
+  if (TableName)
     if (MADB_DynstrAppend(&StmtStr, "AND TABLE_NAME LIKE '") ||
         MADB_DynstrAppendMem(&StmtStr, TableName, NameLength3) ||
         MADB_DynstrAppend(&StmtStr, "' "))
     goto dynerror;
 
-  if (ColumnName && NameLength4)
+  if (ColumnName)
     if (MADB_DynstrAppend(&StmtStr, "AND COLUMN_NAME LIKE '") ||
         MADB_DynstrAppendMem(&StmtStr, ColumnName, NameLength4) ||
         MADB_DynstrAppend(&StmtStr, "' "))

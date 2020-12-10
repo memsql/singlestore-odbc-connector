@@ -626,7 +626,8 @@ SQLRETURN MADB_DbcConnectDB(MADB_Dbc *Connection,
       cs_name= cs->csname;
     }
 
-    if (InitClientCharset(&Connection->Charset, MADB_IS_EMPTY(cs_name) ? "utf8mb4" : cs_name))
+    // Use utf8mb3 by default if no specific charset was provided by the client.
+    if (InitClientCharset(&Connection->Charset, MADB_IS_EMPTY(cs_name) ? "utf8" : cs_name))
     {
       /* Memory allocation error */
       MADB_SetError(&Connection->Error, MADB_ERR_HY001, NULL, 0);

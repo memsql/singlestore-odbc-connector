@@ -94,8 +94,8 @@ ODBC_TEST(t_bug34272)
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
 
   CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 6, SQL_C_CHAR, dummy, col6+1, &length));
-  is_num(length,12);
-  IS_STR(dummy, "INT UNSIGNED", length+1);
+  is_num(length, 12);
+  IS_STR(dummy, "int unsigned", length+1);
 
   CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 18, SQL_C_CHAR, dummy, col18+1, &length));
   is_num(length,3);
@@ -385,7 +385,7 @@ ODBC_TEST(t_sqlprocedurecolumns)
     /*cat    schem  proc_name                  col_name     col_type          data_type    type_name */
     {my_schema, 0,     "procedure_columns_test1", "re_param8", SQL_PARAM_INPUT, SQL_DECIMAL,  "newdecimal",
     /*size buf_len  dec radix  nullable      rem def sql_data_type sub octet pos nullable*/
-      10,  10,       3,  10,    SQL_NULLABLE, "", 0,  SQL_DECIMAL,   0,  0,    8,  "YES"},
+      10,  12,       3,  10,    SQL_NULLABLE, "", 0,  SQL_DECIMAL,   0,  0,    8,  "YES"},
 
     /*cat    schem  proc_name                  col_name     col_type          data_type type_name */
     {my_schema, 0,     "procedure_columns_test1", "re_param9", SQL_PARAM_INPUT, SQL_WCHAR,  "char",
@@ -413,9 +413,9 @@ ODBC_TEST(t_sqlprocedurecolumns)
       50,   4,       31,  10,     SQL_NULLABLE, "", 0,  SQL_FLOAT,     0,  0,    14,  "YES" },
     /*----------------------------------------------------------------------------------------------------*/
     /*cat    schem  proc_name                  col_name     col_type         data_type          type_name */
-    {my_schema, 0,     "procedure_columns_test2", "re_paramA", SQL_PARAM_INPUT, SQL_VARBINARY, "blob",
+    {my_schema, 0,     "procedure_columns_test2", "re_paramA", SQL_PARAM_INPUT, SQL_LONGVARBINARY, "blob",
     /*size      buf_len   dec radix  nullable      rem def sql_data_type       sub octet     pos nullable*/
-      65535,    65535,    0,  0,     SQL_NULLABLE, "", 0,  SQL_VARBINARY,  0,  65535,    1, "YES"},
+      65535,    65535,    0,  0,     SQL_NULLABLE, "", 0,  SQL_LONGVARBINARY,  0,  65535,    1, "YES"},
 
     /*cat    schem  proc_name                  col_name     col_type         data_type          type_name */
     {my_schema, 0,     "procedure_columns_test2", "re_paramB", SQL_PARAM_INPUT, SQL_LONGVARBINARY, "longblob",
@@ -423,9 +423,9 @@ ODBC_TEST(t_sqlprocedurecolumns)
     2147483647L, 2147483647L, 0,  0,     SQL_NULLABLE, "", 0,  SQL_LONGVARBINARY,  0,  2147483647L, 2, "YES"},
 
     /*cat    schem  proc_name                  col_name     col_type               data_type          type_name */
-    {my_schema, 0,     "procedure_columns_test2", "re_paramC", SQL_PARAM_INPUT, SQL_VARBINARY, "tinyblob",
+    {my_schema, 0,     "procedure_columns_test2", "re_paramC", SQL_PARAM_INPUT, SQL_LONGVARBINARY, "tinyblob",
     /*size   buf_len dec radix  nullable      rem def sql_data_type       sub octet pos nullable*/
-     255,    255,    0,  0,     SQL_NULLABLE, "", 0,  SQL_VARBINARY,  0,  255,  3, "YES"},
+     255,    255,    0,  0,     SQL_NULLABLE, "", 0,  SQL_LONGVARBINARY,  0,  255,  3, "YES"},
 
     /*cat    schem  proc_name                  col_name     col_type         data_type          type_name */
     {my_schema, 0,     "procedure_columns_test2", "re_paramD", SQL_PARAM_INPUT, SQL_LONGVARBINARY, "mediumblob",
@@ -453,9 +453,9 @@ ODBC_TEST(t_sqlprocedurecolumns)
       50331645, 150994935, 0,  0,     SQL_NULLABLE, "", 0,  SQL_WLONGVARCHAR,  0,  150994935, 8, "YES"},
 
     /*cat    schem  proc_name                  col_name      col_type         data_type       type_name */
-    {my_schema, 0,     "procedure_columns_test2", "re_paramI", SQL_PARAM_INPUT, SQL_WVARCHAR, "text",
+    {my_schema, 0,     "procedure_columns_test2", "re_paramI", SQL_PARAM_INPUT, SQL_WLONGVARCHAR, "text",
     /*size      buf_len   dec radix  nullable      rem def sql_data_type    sub octet  pos nullable*/
-      196605,    589815,    0,  0,     SQL_NULLABLE, "", 0,  SQL_WVARCHAR, 0,  589815,  9, "YES"},
+      196605,    589815,    0,  0,     SQL_NULLABLE, "", 0,  SQL_WLONGVARCHAR, 0,  589815,  9, "YES"},
 
     /*cat    schem  proc_name                  col_name     col_type         data_type       type_name */
     {my_schema, 0,     "procedure_columns_test2", "re_paramJ", SQL_PARAM_INPUT, SQL_WLONGVARCHAR, "mediumtext",
@@ -468,34 +468,34 @@ ODBC_TEST(t_sqlprocedurecolumns)
      2147483647L, 2147483647L, 0,  0,     SQL_NULLABLE, "", 0,  SQL_WLONGVARCHAR, 0,  2147483647L, 11, "YES"},
 
     /*cat    schem  proc_name                  col_name     col_type         data_type        type_name */
-    {my_schema, 0,     "procedure_columns_test2", "re_paramL", SQL_PARAM_INPUT, SQL_WVARCHAR, "tinytext",
+    {my_schema, 0,     "procedure_columns_test2", "re_paramL", SQL_PARAM_INPUT, SQL_WLONGVARCHAR, "tinytext",
     /*size   buf_len dec radix  nullable      rem def sql_data_type    sub octet pos nullable*/
-     765,    2295,    0,  0,     SQL_NULLABLE, "", 0,  SQL_WVARCHAR, 0,  2295,  12, "YES"},
+     765,    2295,    0,  0,     SQL_NULLABLE, "", 0,  SQL_WLONGVARCHAR, 0,  2295,  12, "YES"},
 
     /*cat    schem  proc_name                  col_name     col_type         data_type    type_name */
     {my_schema, 0,     "procedure_columns_test2", "re_paramM", SQL_PARAM_INPUT, SQL_DECIMAL,  "newdecimal",
     /*size buf_len  dec radix  nullable      rem def sql_data_type sub octet pos nullable*/
-      8,   8,      2,  10,    SQL_NULLABLE, "", 0,  SQL_DECIMAL,   0,  0,   13,  "YES"},
+      8,   10,      2,  10,    SQL_NULLABLE, "", 0,  SQL_DECIMAL,   0,  0,   13,  "YES"},
     /*----------------------------------------------------------------------------------------------------*/
     /*cat    schem  proc_name                  col_name       col_type         data_type     type_name */
     {my_schema, 0,     "procedure_columns_test3", "re_param_00", SQL_PARAM_INPUT, SQL_TIMESTAMP, "datetime",
     /*size buf_len  dec radix  nullable      rem def sql_data_type  sub                  octet pos nullable*/
-      19,  19,      0,   0,     SQL_NULLABLE, "", 0, SQL_TIMESTAMP,  SQL_CODE_TIMESTAMP,  0,    1,  "YES"},
+      19,  16,      0,   0,     SQL_NULLABLE, "", 0, SQL_DATETIME,  SQL_CODE_TIMESTAMP,  0,    1,  "YES"},
 
     /*cat    schem  proc_name                  col_name       col_type          data_type      type_name */
-    {my_schema, 0,     "procedure_columns_test3", "re_param_01", SQL_PARAM_INPUT, SQL_DATETIME, "date",
+    {my_schema, 0,     "procedure_columns_test3", "re_param_01", SQL_PARAM_INPUT, SQL_DATE, "date",
     /*size buf_len  dec radix  nullable      rem def sql_data_type  sub             octet pos nullable*/
-      10,  10,       0,  0,     SQL_NULLABLE, "", 0,  SQL_DATETIME,  SQL_CODE_DATE,  0,    2,  "YES"},
+      10,  6,       0,  0,     SQL_NULLABLE, "", 0,  SQL_DATETIME,  SQL_CODE_DATE,  0,    2,  "YES"},
 
     /*cat    schem  proc_name                  col_name       col_type          data_type      type_name */
     {my_schema, 0,     "procedure_columns_test3", "re_param_02", SQL_PARAM_INPUT, SQL_TIME, "time",
     /*size buf_len  dec radix  nullable      rem def sql_data_type  sub octet pos nullable*/
-      8,   8,       0,  0,     SQL_NULLABLE, "", 0,  SQL_TIME,  SQL_CODE_TIME,  0,    3,  "YES"},
+      8,   6,       0,  0,     SQL_NULLABLE, "", 0,  SQL_DATETIME,  SQL_CODE_TIME,  0,    3,  "YES"},
 
     /*cat    schem  proc_name                  col_name       col_type                data_type           type_name */
     {my_schema, 0,     "procedure_columns_test3", "re_param_03", SQL_PARAM_INPUT, SQL_TIMESTAMP, "timestamp",
     /*size buf_len  dec radix  nullable      rem def sql_data_type sub                  octet pos nullable*/
-      19,  19,      0,  0,     SQL_NULLABLE, "", 0,  SQL_TIMESTAMP, SQL_CODE_TIMESTAMP,  0,    4,  "YES"},
+      19,  16,      0,  0,     SQL_NULLABLE, "", 0,  SQL_DATETIME, SQL_CODE_TIMESTAMP,  0,    4,  "YES"},
 
     /*cat    schem  proc_name                  col_name       col_type         data_type     type_name */
     {my_schema, 0,     "procedure_columns_test3", "re_param_04", SQL_PARAM_INPUT, SQL_SMALLINT, "year",
@@ -508,14 +508,14 @@ ODBC_TEST(t_sqlprocedurecolumns)
      10,     4,       0,  10,  SQL_NULLABLE, "", 0,  SQL_INTEGER,  0,  0,    1,  "YES"},
     /*----------------------------------------------------------------------------------------------------*/
     /*cat    schem  proc_name                  col_name           col_type         data_type type_name */
-    {my_schema, 0,     "procedure_columns_test5", "re_param_set_01", SQL_PARAM_INPUT, SQL_BINARY,  "set",
+    {my_schema, 0,     "procedure_columns_test5", "re_param_set_01", SQL_PARAM_INPUT, SQL_WVARCHAR,  "set",
     /*size buf_len  dec radix  nullable      rem def sql_data_type sub octet pos nullable*/
-      0,  0,      0,  0,     SQL_NULLABLE, "", 0,  SQL_BINARY,     0,  0,    1,  "YES"},
+      0,  0,      0,  0,     SQL_NULLABLE, "", 0,  SQL_WVARCHAR,     0,  0,    1,  "YES"},
 
     /*cat    schem  proc_name                  col_name            col_type          data_type type_name */
-    {my_schema, 0,     "procedure_columns_test5", "re_param_enum_02", SQL_PARAM_INPUT, SQL_BINARY,  "enum",
+    {my_schema, 0,     "procedure_columns_test5", "re_param_enum_02", SQL_PARAM_INPUT, SQL_WVARCHAR,  "enum",
     /*size buf_len  dec radix  nullable      rem def sql_data_type sub octet pos nullable*/
-      0,   0,       0,  0,     SQL_NULLABLE, "", 0,  SQL_BINARY,     0,  0,    2,  "YES"},
+      0,   0,       0,  0,     SQL_NULLABLE, "", 0,  SQL_WVARCHAR,     0,  0,    2,  "YES"},
   };
   
   sqlproccol empty_name[]= {
@@ -623,7 +623,7 @@ ODBC_TEST(t_sqlprocedurecolumns)
 
         IS_STR(my_fetch_str(Hstmt1, buff, 7), 
                data_to_check[iter].c07_type_name, 
-               strlen(data_to_check[iter].c07_type_name) + 1);
+               strlen(data_to_check[iter].c07_type_name));
 
         col_size= my_fetch_int(Hstmt1, 8);
         is_num(col_size, data_to_check[iter].c08_column_size);
@@ -859,7 +859,7 @@ ODBC_TEST(t_bug31067)
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
 
-  IS_STR(my_fetch_str(Stmt, buff, 13), "'bug31067'", 11);
+  IS_STR(my_fetch_str(Stmt, buff, 13), "bug31067", 11);
 
   FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "expected no data");
 
@@ -882,7 +882,7 @@ ODBC_TEST(bug12824839)
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE b12824839 "
                 "(id int primary key, vc_col varchar(32), int_col int)");
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE b12824839a "
-                "(id int, vc_col varchar(32) UNIQUE, int_col int,"
+                "(id int, vc_col varchar(32), int_col int,"
                 "primary key(id,int_col))");
 
   CHECK_STMT_RC(Stmt, SQLColumns(Stmt, my_schema, SQL_NTS, NULL, 0, "b12824839",
@@ -1267,8 +1267,8 @@ ODBC_TEST(odbc185)
   HDBC hdbc1;
   HSTMT hstmt1;
   SQLCHAR buff[MAX_ROW_DATA_LEN+1];
-  SQLSMALLINT expectedw[]= {SQL_WCHAR, SQL_WVARCHAR, SQL_WLONGVARCHAR, SQL_WLONGVARCHAR, SQL_WLONGVARCHAR, SQL_WLONGVARCHAR, SQL_WCHAR, SQL_WCHAR},
-              expecteda[]= {SQL_CHAR, SQL_VARCHAR, SQL_LONGVARCHAR, SQL_LONGVARCHAR, SQL_LONGVARCHAR, SQL_LONGVARCHAR, SQL_CHAR, SQL_CHAR};
+  SQLSMALLINT expectedw[]= {SQL_WCHAR, SQL_WVARCHAR, SQL_WLONGVARCHAR, SQL_WLONGVARCHAR, SQL_WLONGVARCHAR, SQL_WLONGVARCHAR, SQL_WVARCHAR, SQL_WVARCHAR},
+              expecteda[]= {SQL_CHAR, SQL_VARCHAR, SQL_LONGVARCHAR, SQL_LONGVARCHAR, SQL_LONGVARCHAR, SQL_LONGVARCHAR, SQL_VARCHAR, SQL_VARCHAR};
   unsigned int i;
 
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc1));
@@ -1387,7 +1387,7 @@ ODBC_TEST(odbc231)
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, COLUMN_SIZE, SQL_C_SLONG, &ColumnSize, 0, &ColumnSizeLen));
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, BUFFER_LENGTH, SQL_C_ULONG, &BufferLength, 0, &BufferLengthLen));
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  is_num((unsigned)ColumnSize, 0xffffffff);
+  is_num((unsigned)ColumnSize, 0x7fffffff);
   is_num(ColumnSizeLen, sizeof(SQLINTEGER));
   diag("Longtext size: %lu(%lx) type %s %s, buffer length: %lu(%lx) type %s %s", ColumnSize, ColumnSize, OdbcTypeAsString((SQLSMALLINT)Type1, NULL),
     Unsigned1 ? "Unsigned" : "Signed", BufferLength, BufferLength, OdbcTypeAsString((SQLSMALLINT)Type2, NULL), Unsigned2 ? "Unsigned" : "Signed");

@@ -3,7 +3,7 @@
 #define SQL_COLUMNS_BUFFER_LEN 256
 
 #define CREATE_ROUTINE_TEMPLATE \
-"CREATE %s test_procedure_columns(a TINYINT , b SMALLINT NOT NULL, c MEDIUMINT , d INT NOT NULL, e BIGINT , f DOUBLE NOT NULL, g FLOAT ,"\
+"CREATE %s test_procedure_columns(a TINYINT , b SMALLINT NOT NULL, c MEDIUMINT UNSIGNED , d INT NOT NULL, e BIGINT UNSIGNED , f DOUBLE NOT NULL, g FLOAT ,"\
 "h DECIMAL(10, 5) NOT NULL, i DATE, j TIME NOT NULL , k DATETIME, l DATETIME(6) NOT NULL , m TIMESTAMP, n TIMESTAMP(6) NOT NULL , o YEAR,"\
 "p CHAR(11) NOT NULL, q BINARY, r VARCHAR(13) NOT NULL , s VARBINARY(17), t LONGTEXT NOT NULL , u MEDIUMTEXT, v TEXT NOT NULL , w TINYTEXT,"\
 "x LONGBLOB NOT NULL, y MEDIUMBLOB, z BLOB NOT NULL, aa TINYBLOB, ab BIT(1) NOT NULL,"\
@@ -22,15 +22,15 @@ int run_sql_procedurecolumns_routine_type(SQLHANDLE Stmt, const SQLSMALLINT *Exp
     _snprintf(createStmtStr, crLength, CREATE_ROUTINE_TEMPLATE, RoutineType);
     _snprintf(dropStmtStr, drLength, DROP_ROUTINE_TEMPLATE, RoutineType);
 
-    char *ExpTypeName[33] = {"tinyint", "smallint", "mediumint", "int", "bigint", "double", "float",
+    char *ExpTypeName[33] = {"tinyint", "smallint", "mediumint unsigned", "int", "bigint unsigned", "double", "float",
                              "newdecimal", "date", "time", "datetime", "datetime", "timestamp", "timestamp", "year",
                              "char", "binary", "varchar", "varbinary", "longtext", "mediumtext", "text", "tinytext",
                              "longblob", "mediumblob", "blob", "tinyblob", "bit",
                              "json", "geography", "geographypoint", "enum", "set"};
-    SQLINTEGER ExpColSize[33] = {3, 5, 8, 10, 19, 50, 50, 10, 10, 8, 19, 26, 19, 26, 4, 33, 1, 39, 17,
+    SQLINTEGER ExpColSize[33] = {3, 5, 8, 10, 20, 50, 50, 10, 10, 8, 19, 26, 19, 26, 4, 33, 1, 39, 17,
                                  2147483647, 50331645, 196605, 765, 2147483647, 16777215, 65535, 255, -1, -1, -1, -1, -1,
                                  -1};
-    SQLSMALLINT ExpDecimalDigits[33] = {-1, -1, -1, -1, -1, 31, 31, 5, 0, 0, 0, 6, 0, 6,
+    SQLSMALLINT ExpDecimalDigits[33] = {0, 0, 0, 0, 0, 31, 31, 5, 0, 0, 0, 6, 0, 6,
                                         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
     SQLSMALLINT ExpNumPrecRadix[33] = {10, 10, 10, 10, 10, 10, 10, 10, -1, -1, -1, -1, -1, -1,
                                        10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
@@ -88,7 +88,7 @@ int run_sql_procedurecolumns_routine_type(SQLHANDLE Stmt, const SQLSMALLINT *Exp
         FAIL_IF(_stricmp(colName, ExpColName) != 0, "Wrong COLUMN_NAME returned!");
         FAIL_IF(colType != SQL_PARAM_INPUT, "Wrong PARAMETER_MODE returned!");
         FAIL_IF(dataType != ExpDataType[numOfRowsFetched], "Wrong DATA_TYPE returned!");
-        FAIL_IF(_stricmp(typeName, (SQLCHAR *) ExpTypeName[numOfRowsFetched]) != 0, "Wrong TYPE_NAME returned!");
+        FAIL_IF(_stricmp(typeName, ExpTypeName[numOfRowsFetched]) != 0, "Wrong TYPE_NAME returned!");
 
         FAIL_IF(nullable != ExpNullable[numOfRowsFetched], "Wrong NULLABLE returned!");
         if (ExpNullable[numOfRowsFetched]) {
@@ -139,17 +139,17 @@ ODBC_TEST(t_procedurecolumns3U) {
                                    SQL_DECIMAL, SQL_TYPE_DATE, SQL_TYPE_TIME, SQL_TYPE_TIMESTAMP, SQL_TYPE_TIMESTAMP,
                                    SQL_TYPE_TIMESTAMP, SQL_TYPE_TIMESTAMP, SQL_SMALLINT,
                                    SQL_WCHAR, SQL_BINARY, SQL_WVARCHAR, SQL_VARBINARY, SQL_WLONGVARCHAR,
-                                   SQL_WLONGVARCHAR, SQL_WVARCHAR, SQL_WVARCHAR,
-                                   SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_VARBINARY, SQL_VARBINARY, SQL_BIT,
-                                   SQL_LONGVARBINARY, SQL_VARBINARY, SQL_VARBINARY, SQL_BINARY, SQL_BINARY};
+                                   SQL_WLONGVARCHAR, SQL_WLONGVARCHAR, SQL_WLONGVARCHAR,
+                                   SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_BIT,
+                                   SQL_WLONGVARCHAR, SQL_VARBINARY, SQL_VARBINARY, SQL_WVARCHAR, SQL_WVARCHAR};
     SQLSMALLINT ExpSqlDataType[33] = {SQL_TINYINT, SQL_SMALLINT, SQL_INTEGER, SQL_INTEGER, SQL_BIGINT, SQL_DOUBLE,
                                       SQL_FLOAT,
                                       SQL_DECIMAL, SQL_DATETIME, SQL_DATETIME, SQL_DATETIME, SQL_DATETIME,
                                       SQL_DATETIME, SQL_DATETIME, SQL_SMALLINT,
                                       SQL_WCHAR, SQL_BINARY, SQL_WVARCHAR, SQL_VARBINARY, SQL_WLONGVARCHAR,
-                                      SQL_WLONGVARCHAR, SQL_WVARCHAR, SQL_WVARCHAR,
-                                      SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_VARBINARY, SQL_VARBINARY, SQL_BIT,
-                                      SQL_LONGVARBINARY, SQL_VARBINARY, SQL_VARBINARY, SQL_BINARY, SQL_BINARY};
+                                      SQL_WLONGVARCHAR, SQL_WLONGVARCHAR, SQL_WLONGVARCHAR,
+                                      SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_BIT,
+                                      SQL_WLONGVARCHAR, SQL_VARBINARY, SQL_VARBINARY, SQL_WVARCHAR, SQL_WVARCHAR};
 
     SQLHANDLE henv1;
     SQLHANDLE Connection1;
@@ -169,7 +169,7 @@ ODBC_TEST(t_procedurecolumns3U) {
     CHECK_DBC_RC(Connection1, SQLSetConnectAttr(Connection1, SQL_ATTR_ANSI_APP, NULL, 0));
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
-    FAIL_IF(run_sql_procedurecolumns(Stmt1, ExpDataType, ExpSqlDataType) != OK, "error running SQLColumns");
+    FAIL_IF(run_sql_procedurecolumns(Stmt1, ExpDataType, ExpSqlDataType) != OK, "error running SQLProcedureColumns");
 
     CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
     CHECK_DBC_RC(Connection1, SQLDisconnect(Connection1));
@@ -185,17 +185,17 @@ ODBC_TEST(t_procedurecolumns3A) {
                                    SQL_DECIMAL, SQL_TYPE_DATE, SQL_TYPE_TIME, SQL_TYPE_TIMESTAMP, SQL_TYPE_TIMESTAMP,
                                    SQL_TYPE_TIMESTAMP, SQL_TYPE_TIMESTAMP, SQL_SMALLINT,
                                    SQL_CHAR, SQL_BINARY, SQL_VARCHAR, SQL_VARBINARY, SQL_LONGVARCHAR,
-                                   SQL_LONGVARCHAR, SQL_VARCHAR, SQL_VARCHAR,
-                                   SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_VARBINARY, SQL_VARBINARY, SQL_BIT,
-                                   SQL_LONGVARBINARY, SQL_VARBINARY, SQL_VARBINARY, SQL_BINARY, SQL_BINARY};
+                                   SQL_LONGVARCHAR, SQL_LONGVARCHAR, SQL_LONGVARCHAR,
+                                   SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_BIT,
+                                   SQL_LONGVARCHAR, SQL_VARBINARY, SQL_VARBINARY, SQL_VARCHAR, SQL_VARCHAR};
     SQLSMALLINT ExpSqlDataType[33] = {SQL_TINYINT, SQL_SMALLINT, SQL_INTEGER, SQL_INTEGER, SQL_BIGINT, SQL_DOUBLE,
                                       SQL_FLOAT,
                                       SQL_DECIMAL, SQL_DATETIME, SQL_DATETIME, SQL_DATETIME, SQL_DATETIME,
                                       SQL_DATETIME, SQL_DATETIME, SQL_SMALLINT,
                                       SQL_CHAR, SQL_BINARY, SQL_VARCHAR, SQL_VARBINARY, SQL_LONGVARCHAR,
-                                      SQL_LONGVARCHAR, SQL_VARCHAR, SQL_VARCHAR,
-                                      SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_VARBINARY, SQL_VARBINARY, SQL_BIT,
-                                      SQL_LONGVARBINARY, SQL_VARBINARY, SQL_VARBINARY, SQL_BINARY, SQL_BINARY};
+                                      SQL_LONGVARCHAR, SQL_LONGVARCHAR, SQL_LONGVARCHAR,
+                                      SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_BIT,
+                                      SQL_LONGVARCHAR, SQL_VARBINARY, SQL_VARBINARY, SQL_VARCHAR, SQL_VARCHAR};
 
     SQLHANDLE henv1;
     SQLHANDLE Connection1;
@@ -215,7 +215,7 @@ ODBC_TEST(t_procedurecolumns3A) {
     CHECK_DBC_RC(Connection1, SQLSetConnectAttr(Connection1, SQL_ATTR_ANSI_APP, (SQLPOINTER) 1, 0));
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
-    FAIL_IF(run_sql_procedurecolumns(Stmt1, ExpDataType, ExpSqlDataType) != OK, "error running SQLColumns");
+    FAIL_IF(run_sql_procedurecolumns(Stmt1, ExpDataType, ExpSqlDataType) != OK, "error running SQLProcedureColumns");
 
     CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
     CHECK_DBC_RC(Connection1, SQLDisconnect(Connection1));
@@ -231,17 +231,17 @@ ODBC_TEST(t_procedurecolumns2U) {
                                    SQL_DECIMAL, SQL_DATE, SQL_TIME, SQL_TIMESTAMP, SQL_TIMESTAMP,
                                    SQL_TIMESTAMP, SQL_TIMESTAMP, SQL_SMALLINT,
                                    SQL_WCHAR, SQL_BINARY, SQL_WVARCHAR, SQL_VARBINARY, SQL_WLONGVARCHAR,
-                                   SQL_WLONGVARCHAR, SQL_WVARCHAR, SQL_WVARCHAR,
-                                   SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_VARBINARY, SQL_VARBINARY, SQL_BIT,
-                                   SQL_LONGVARBINARY, SQL_VARBINARY, SQL_VARBINARY, SQL_BINARY, SQL_BINARY};
+                                   SQL_WLONGVARCHAR, SQL_WLONGVARCHAR, SQL_WLONGVARCHAR,
+                                   SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_BIT,
+                                   SQL_WLONGVARCHAR, SQL_VARBINARY, SQL_VARBINARY, SQL_WVARCHAR, SQL_WVARCHAR};
     SQLSMALLINT ExpSqlDataType[33] = {SQL_TINYINT, SQL_SMALLINT, SQL_INTEGER, SQL_INTEGER, SQL_BIGINT, SQL_DOUBLE,
                                       SQL_FLOAT,
-                                      SQL_DECIMAL, SQL_DATE, SQL_TIME, SQL_TIMESTAMP, SQL_TIMESTAMP,
-                                      SQL_TIMESTAMP, SQL_TIMESTAMP, SQL_SMALLINT,
+                                      SQL_DECIMAL, SQL_DATETIME, SQL_DATETIME, SQL_DATETIME, SQL_DATETIME,
+                                      SQL_DATETIME, SQL_DATETIME, SQL_SMALLINT,
                                       SQL_WCHAR, SQL_BINARY, SQL_WVARCHAR, SQL_VARBINARY, SQL_WLONGVARCHAR,
-                                      SQL_WLONGVARCHAR, SQL_WVARCHAR, SQL_WVARCHAR,
-                                      SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_VARBINARY, SQL_VARBINARY, SQL_BIT,
-                                      SQL_LONGVARBINARY, SQL_VARBINARY, SQL_VARBINARY, SQL_BINARY, SQL_BINARY};
+                                      SQL_WLONGVARCHAR, SQL_WLONGVARCHAR, SQL_WLONGVARCHAR,
+                                      SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_BIT,
+                                      SQL_WLONGVARCHAR, SQL_VARBINARY, SQL_VARBINARY, SQL_WVARCHAR, SQL_WVARCHAR};
 
     SQLHANDLE henv1;
     SQLHANDLE Connection1;
@@ -261,7 +261,7 @@ ODBC_TEST(t_procedurecolumns2U) {
     CHECK_DBC_RC(Connection1, SQLSetConnectAttr(Connection1, SQL_ATTR_ANSI_APP, NULL, 0));
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
-    FAIL_IF(run_sql_procedurecolumns(Stmt1, ExpDataType, ExpSqlDataType) != OK, "error running SQLColumns");
+    FAIL_IF(run_sql_procedurecolumns(Stmt1, ExpDataType, ExpSqlDataType) != OK, "error running SQLProcedureColumns");
 
     CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
     CHECK_DBC_RC(Connection1, SQLDisconnect(Connection1));
@@ -277,17 +277,17 @@ ODBC_TEST(t_procedurecolumns2A) {
                                    SQL_DECIMAL, SQL_DATE, SQL_TIME, SQL_TIMESTAMP, SQL_TIMESTAMP,
                                    SQL_TIMESTAMP, SQL_TIMESTAMP, SQL_SMALLINT,
                                    SQL_CHAR, SQL_BINARY, SQL_VARCHAR, SQL_VARBINARY, SQL_LONGVARCHAR,
-                                   SQL_LONGVARCHAR, SQL_VARCHAR, SQL_VARCHAR,
-                                   SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_VARBINARY, SQL_VARBINARY, SQL_BIT,
-                                   SQL_LONGVARBINARY, SQL_VARBINARY, SQL_VARBINARY, SQL_BINARY, SQL_BINARY};
+                                   SQL_LONGVARCHAR, SQL_LONGVARCHAR, SQL_LONGVARCHAR,
+                                   SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_BIT,
+                                   SQL_LONGVARCHAR, SQL_VARBINARY, SQL_VARBINARY, SQL_VARCHAR, SQL_VARCHAR};
     SQLSMALLINT ExpSqlDataType[33] = {SQL_TINYINT, SQL_SMALLINT, SQL_INTEGER, SQL_INTEGER, SQL_BIGINT, SQL_DOUBLE,
                                       SQL_FLOAT,
-                                      SQL_DECIMAL, SQL_DATE, SQL_TIME, SQL_TIMESTAMP, SQL_TIMESTAMP,
-                                      SQL_TIMESTAMP, SQL_TIMESTAMP, SQL_SMALLINT,
+                                      SQL_DECIMAL, SQL_DATETIME, SQL_DATETIME, SQL_DATETIME, SQL_DATETIME,
+                                      SQL_DATETIME, SQL_DATETIME, SQL_SMALLINT,
                                       SQL_CHAR, SQL_BINARY, SQL_VARCHAR, SQL_VARBINARY, SQL_LONGVARCHAR,
-                                      SQL_LONGVARCHAR, SQL_VARCHAR, SQL_VARCHAR,
-                                      SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_VARBINARY, SQL_VARBINARY, SQL_BIT,
-                                      SQL_LONGVARBINARY, SQL_VARBINARY, SQL_VARBINARY, SQL_BINARY, SQL_BINARY};
+                                      SQL_LONGVARCHAR, SQL_LONGVARCHAR, SQL_LONGVARCHAR,
+                                      SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_LONGVARBINARY, SQL_BIT,
+                                      SQL_LONGVARCHAR, SQL_VARBINARY, SQL_VARBINARY, SQL_VARCHAR, SQL_VARCHAR};
 
     SQLHANDLE henv1;
     SQLHANDLE Connection1;
@@ -307,7 +307,7 @@ ODBC_TEST(t_procedurecolumns2A) {
     CHECK_DBC_RC(Connection1, SQLSetConnectAttr(Connection1, SQL_ATTR_ANSI_APP, (SQLPOINTER) 1, 0));
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
-    FAIL_IF(run_sql_procedurecolumns(Stmt1, ExpDataType, ExpSqlDataType) != OK, "error running SQLColumns");
+    FAIL_IF(run_sql_procedurecolumns(Stmt1, ExpDataType, ExpSqlDataType) != OK, "error running SQLProcedureColumns");
 
     CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
     CHECK_DBC_RC(Connection1, SQLDisconnect(Connection1));

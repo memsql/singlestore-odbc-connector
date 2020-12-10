@@ -191,9 +191,7 @@ MADB_SetIrdRecord(MADB_Stmt *Stmt, MADB_DescRecord *Record, MYSQL_FIELD *Field)
   MADB_RESET(Record->BaseColumnName, Field->org_name);
   Record->AutoUniqueValue= (Field->flags & AUTO_INCREMENT_FLAG) ? SQL_TRUE : SQL_FALSE;
   Record->CaseSensitive=   (Field->flags & BINARY_FLAG) ? SQL_TRUE : SQL_FALSE;
-  Record->Nullable= ( (Field->flags & NOT_NULL_FLAG) &&
-                      !Record->AutoUniqueValue &&
-                      Field->type != MYSQL_TYPE_TIMESTAMP) ? SQL_NO_NULLS : SQL_NULLABLE;
+  Record->Nullable= (Field->flags & NOT_NULL_FLAG) ? SQL_NO_NULLS : SQL_NULLABLE;
   Record->Unsigned= (Field->flags & UNSIGNED_FLAG) ? SQL_TRUE : SQL_FALSE;
   /* We assume it might be updatable if tablename exists */
   Record->Updateable= (Field->table && Field->table[0]) ? SQL_ATTR_READWRITE_UNKNOWN : SQL_ATTR_READONLY;
