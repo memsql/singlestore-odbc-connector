@@ -319,7 +319,7 @@ ODBC_TEST(my_position)
     rc = SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)1 , 0);
     CHECK_STMT_RC(Stmt, rc);
 
-    OK_SIMPLE_STMT(Stmt,"select * from my_position");
+    OK_SIMPLE_STMT(Stmt,"select * from my_position order by col1");
 
     rc = SQLBindCol(Stmt,1,SQL_C_LONG,&nData,0,&nrow);
     CHECK_STMT_RC(Stmt,rc);
@@ -351,7 +351,7 @@ ODBC_TEST(my_position)
     rc = SQLFreeStmt(Stmt,SQL_CLOSE);
     CHECK_STMT_RC(Stmt,rc);
 
-    OK_SIMPLE_STMT(Stmt, "select * from my_position");
+    OK_SIMPLE_STMT(Stmt, "select * from my_position order by col1");
     CHECK_STMT_RC(Stmt,rc);
 
     CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
@@ -391,12 +391,12 @@ ODBC_TEST(my_position1)
   SQLCHAR   szData[15][15]= {0};
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS my_position");
-  OK_SIMPLE_STMT(Stmt, "CREATE TABLE my_position (col1 INT, col2 VARCHAR(30))");
+  OK_SIMPLE_STMT(Stmt, "CREATE TABLE my_position (col1 INT, col2 VARCHAR(30), id INT)");
 
-  OK_SIMPLE_STMT(Stmt, "INSERT INTO my_position VALUES (1,'MySQL1'), (2,'MySQL2'),"
-         "(3,'MySQL3'), (4,'MySQL4'), (5,'MySQL5'), (6,'MySQL6'), (7,'MySQL7'),"
-         "(8,'MySQL8'), (9,'MySQL9'), (10,'MySQL10'), (11,'MySQL11'),"
-         "(12,'MySQL12')");
+  OK_SIMPLE_STMT(Stmt, "INSERT INTO my_position VALUES (1,'MySQL1',1), (2,'MySQL2',2),"
+         "(3,'MySQL3',3), (4,'MySQL4',4), (5,'MySQL5',5), (6,'MySQL6',6), (7,'MySQL7',7),"
+         "(8,'MySQL8',8), (9,'MySQL9',9), (10,'MySQL10',10), (11,'MySQL11',11),"
+         "(12,'MySQL12',12)");
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
@@ -409,7 +409,7 @@ ODBC_TEST(my_position1)
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE,
                                 (SQLPOINTER)3, 0));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_position");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_position ORDER BY id");
 
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, &nData, 0, nrow));
 
@@ -444,7 +444,7 @@ ODBC_TEST(my_position1)
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_position");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_position ORDER BY id");
 
   CHECK_STMT_RC(Stmt, SQLFetchScroll(Stmt, SQL_FETCH_ABSOLUTE, 4));
 
@@ -476,14 +476,14 @@ ODBC_TEST(my_zero_irow_update)
     SQLINTEGER nData[15];
 
     OK_SIMPLE_STMT(Stmt, "drop table if exists my_zero_irow");
-    OK_SIMPLE_STMT(Stmt, "create table my_zero_irow(col1 int, col2 varchar(30))");
+    OK_SIMPLE_STMT(Stmt, "create table my_zero_irow(col1 int, col2 varchar(30), id INT)");
 
-    OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(1,'MySQL1')");
-    OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(2,'MySQL2')");
-    OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(3,'MySQL3')");
-    OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(4,'MySQL4')");
-    OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(5,'MySQL5')");
-    OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(6,'MySQL6')");
+    OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(1,'MySQL1',1)");
+    OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(2,'MySQL2',2)");
+    OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(3,'MySQL3',3)");
+    OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(4,'MySQL4',4)");
+    OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(5,'MySQL5',5)");
+    OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(6,'MySQL6',6)");
 
     rc = SQLFreeStmt(Stmt,SQL_CLOSE);
     CHECK_STMT_RC(Stmt,rc);
@@ -497,7 +497,7 @@ ODBC_TEST(my_zero_irow_update)
     rc = SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)3 , 0);
     CHECK_STMT_RC(Stmt, rc);
 
-    OK_SIMPLE_STMT(Stmt, "select * from my_zero_irow");
+    OK_SIMPLE_STMT(Stmt, "select * from my_zero_irow order by id");
     CHECK_STMT_RC(Stmt,rc);
 
     rc = SQLBindCol(Stmt,1,SQL_C_LONG,&nData,0,nrow);
@@ -523,7 +523,7 @@ ODBC_TEST(my_zero_irow_update)
     rc = SQLFreeStmt(Stmt,SQL_CLOSE);
     CHECK_STMT_RC(Stmt,rc);
 
-    OK_SIMPLE_STMT(Stmt, "select * from my_zero_irow");
+    OK_SIMPLE_STMT(Stmt, "select * from my_zero_irow order by id");
     CHECK_STMT_RC(Stmt,rc);
 
     rc = SQLFetchScroll(Stmt,SQL_FETCH_ABSOLUTE,2);
@@ -560,13 +560,13 @@ ODBC_TEST(my_zero_irow_delete)
   SQLINTEGER nData[15];
 
   OK_SIMPLE_STMT(Stmt, "drop table if exists my_zero_irow");
-  OK_SIMPLE_STMT(Stmt, "create table my_zero_irow(col1 int, col2 varchar(30))");
-  OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(1,'MySQL1')");
-  OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(2,'MySQL2')");
-  OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(3,'MySQL3')");
-  OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(4,'MySQL4')");
-  OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(5,'MySQL5')");
-  OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(6,'MySQL6')");
+  OK_SIMPLE_STMT(Stmt, "create table my_zero_irow(col1 int, col2 varchar(30), id int)");
+  OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(1,'MySQL1',1)");
+  OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(2,'MySQL2',2)");
+  OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(3,'MySQL3',3)");
+  OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(4,'MySQL4',4)");
+  OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(5,'MySQL5',5)");
+  OK_SIMPLE_STMT(Stmt, "insert into my_zero_irow values(6,'MySQL6',6)");
 
 
   rc = SQLFreeStmt(Stmt,SQL_CLOSE);
@@ -581,7 +581,7 @@ ODBC_TEST(my_zero_irow_delete)
   rc = SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)3 , 0);
   CHECK_STMT_RC(Stmt, rc);
 
-  OK_SIMPLE_STMT(Stmt,"select * from my_zero_irow");
+  OK_SIMPLE_STMT(Stmt,"select * from my_zero_irow order by id");
   CHECK_STMT_RC(Stmt,rc);
 
   rc = SQLBindCol(Stmt,1,SQL_C_LONG,&nData,0,nrow);
@@ -599,7 +599,7 @@ ODBC_TEST(my_zero_irow_delete)
   rc = SQLFreeStmt(Stmt,SQL_CLOSE);
   CHECK_STMT_RC(Stmt,rc);
 
-  OK_SIMPLE_STMT(Stmt, "select * from my_zero_irow");
+  OK_SIMPLE_STMT(Stmt, "select * from my_zero_irow order by id");
 
   rc = SQLFetchScroll(Stmt,SQL_FETCH_ABSOLUTE,1);
   CHECK_STMT_RC(Stmt,rc);

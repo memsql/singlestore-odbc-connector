@@ -347,7 +347,7 @@ ODBC_TEST(t_fetch_array)
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_fetch_array (id INT NOT NULL)");
   OK_SIMPLE_STMT(Stmt, "INSERT INTO t_fetch_array VALUES(1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12)");
 
-  OK_SIMPLE_STMT(Stmt, "SELECT id FROM t_fetch_array");
+  OK_SIMPLE_STMT(Stmt, "SELECT id FROM t_fetch_array ORDER BY id");
 
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE,
     (SQLPOINTER)(sizeof(id)/sizeof(SQLINTEGER)), 0));

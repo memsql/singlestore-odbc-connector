@@ -67,7 +67,7 @@ ODBC_TEST(my_ts)
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt,SQL_CLOSE));
 
   /* now fetch and verify the results .. */
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_ts");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_ts ORDER BY ts");
 
   /* now fetch first row */
   CHECK_STMT_RC(Stmt, SQLFetchScroll(Stmt, SQL_FETCH_ABSOLUTE, 1));
@@ -482,7 +482,15 @@ ODBC_TEST(t_time1)
   SQLFreeStmt(Stmt, SQL_RESET_PARAMS);
   SQLFreeStmt(Stmt, SQL_CLOSE);
 
-  OK_SIMPLE_STMT(Stmt, "select t from t_time");
+  OK_SIMPLE_STMT(Stmt, "select t from t_time order by t");
+
+  rc = SQLFetch(Stmt);
+  CHECK_STMT_RC(Stmt,rc);
+
+  rc = SQLGetData(Stmt, 1, SQL_C_CHAR, data, sizeof(data), &length);
+  CHECK_STMT_RC(Stmt,rc);
+  is_num(length, 8);
+  IS_STR(data, "00:00:00", 9);
 
   rc = SQLFetch(Stmt);
   CHECK_STMT_RC(Stmt,rc);
@@ -491,38 +499,6 @@ ODBC_TEST(t_time1)
   CHECK_STMT_RC(Stmt,rc);
   is_num(length, 8);
   IS_STR(data, "00:00:03", 9);
-
-  rc = SQLFetch(Stmt);
-  CHECK_STMT_RC(Stmt,rc);
-
-  rc = SQLGetData(Stmt, 1, SQL_C_CHAR, data, sizeof(data), &length);
-  CHECK_STMT_RC(Stmt,rc);
-  is_num(length, 8);
-  IS_STR(data, "01:00:00", 9);
-
-  rc = SQLFetch(Stmt);
-  CHECK_STMT_RC(Stmt,rc);
-
-  rc = SQLGetData(Stmt, 1, SQL_C_CHAR, data, sizeof(data), &length);
-  CHECK_STMT_RC(Stmt,rc);
-  is_num(length, 8);
-  IS_STR(data, "19:00:00", 9);
-
-  rc = SQLFetch(Stmt);
-  CHECK_STMT_RC(Stmt,rc);
-
-  rc = SQLGetData(Stmt, 1, SQL_C_CHAR, data, sizeof(data), &length);
-  CHECK_STMT_RC(Stmt,rc);
-  is_num(length, 8);
-  IS_STR(data, "01:01:00", 9);
-
-  rc = SQLFetch(Stmt);
-  CHECK_STMT_RC(Stmt,rc);
-
-  rc = SQLGetData(Stmt, 1, SQL_C_CHAR, data, sizeof(data), &length);
-  CHECK_STMT_RC(Stmt,rc);
-  is_num(length, 8);
-  IS_STR(data, "01:00:01", 9);
 
   rc = SQLFetch(Stmt);
   CHECK_STMT_RC(Stmt,rc);
@@ -546,6 +522,30 @@ ODBC_TEST(t_time1)
   rc = SQLGetData(Stmt, 1, SQL_C_CHAR, data, sizeof(data), &length);
   CHECK_STMT_RC(Stmt,rc);
   is_num(length, 8);
+  IS_STR(data, "01:00:00", 9);
+
+  rc = SQLFetch(Stmt);
+  CHECK_STMT_RC(Stmt,rc);
+
+  rc = SQLGetData(Stmt, 1, SQL_C_CHAR, data, sizeof(data), &length);
+  CHECK_STMT_RC(Stmt,rc);
+  is_num(length, 8);
+  IS_STR(data, "01:00:01", 9);
+
+  rc = SQLFetch(Stmt);
+  CHECK_STMT_RC(Stmt,rc);
+
+  rc = SQLGetData(Stmt, 1, SQL_C_CHAR, data, sizeof(data), &length);
+  CHECK_STMT_RC(Stmt,rc);
+  is_num(length, 8);
+  IS_STR(data, "01:01:00", 9);
+
+  rc = SQLFetch(Stmt);
+  CHECK_STMT_RC(Stmt,rc);
+
+  rc = SQLGetData(Stmt, 1, SQL_C_CHAR, data, sizeof(data), &length);
+  CHECK_STMT_RC(Stmt,rc);
+  is_num(length, 8);
   IS_STR(data, "01:01:01", 9);
 
   rc = SQLFetch(Stmt);
@@ -554,7 +554,7 @@ ODBC_TEST(t_time1)
   rc = SQLGetData(Stmt, 1, SQL_C_CHAR, data, sizeof(data), &length);
   CHECK_STMT_RC(Stmt,rc);
   is_num(length, 8);
-  IS_STR(data, "00:00:00", 9);
+  IS_STR(data, "10:11:12", 9);
 
   rc = SQLFetch(Stmt);
   CHECK_STMT_RC(Stmt,rc);
@@ -562,7 +562,7 @@ ODBC_TEST(t_time1)
   rc = SQLGetData(Stmt, 1, SQL_C_CHAR, data, sizeof(data), &length);
   CHECK_STMT_RC(Stmt,rc);
   is_num(length, 8);
-  IS_STR(data, "10:11:12", 9);
+  IS_STR(data, "19:00:00", 9);
 
   rc = SQLFetch(Stmt);
   IS(rc == SQL_NO_DATA);

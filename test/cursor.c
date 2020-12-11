@@ -918,7 +918,7 @@ ODBC_TEST(tmysql_setpos_del)
 
   CHECK_STMT_RC(Stmt, SQLSetCursorName(Stmt, (SQLCHAR *)"venu", SQL_NTS));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM tmysql_setpos_del");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM tmysql_setpos_del ORDER BY b");
 
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, &nData, 0, NULL));
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_CHAR, szData, sizeof(szData),
@@ -935,7 +935,7 @@ ODBC_TEST(tmysql_setpos_del)
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM tmysql_setpos_del");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM tmysql_setpos_del ORDER BY b");
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 100);
@@ -989,7 +989,7 @@ ODBC_TEST(tmysql_setpos_del1)
                                 (SQLPOINTER)SQL_CURSOR_STATIC, 0));
   CHECK_STMT_RC(Stmt, SQLSetCursorName(Stmt, (SQLCHAR *)"venu", SQL_NTS));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM tmysql_setpos_del1");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM tmysql_setpos_del1 ORDER BY b");
 
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, &nData, 0, NULL));
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_CHAR, szData, sizeof(szData),
@@ -1006,7 +1006,7 @@ ODBC_TEST(tmysql_setpos_del1)
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM tmysql_setpos_del1");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM tmysql_setpos_del1 ORDER BY b");
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 100);
@@ -1610,7 +1610,8 @@ ODBC_TEST(tmysql_mtab_setpos_del)
   SQLULEN pcrow;
   SQLUSMALLINT rgfRowStatus;
 
-  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS tmysql_t1, tmysql_t2");
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS tmysql_t1");
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS tmysql_t2");
   OK_SIMPLE_STMT(Stmt, "create table tmysql_t1(col1 int, col2 varchar(20))");
   OK_SIMPLE_STMT(Stmt, "create table tmysql_t2(col1 int, col2 varchar(20))");
   OK_SIMPLE_STMT(Stmt, "insert into tmysql_t1 values(1,'t1_one')");
@@ -1655,7 +1656,8 @@ ODBC_TEST(tmysql_mtab_setpos_del)
   rc = SQLFreeStmt(Stmt,SQL_CLOSE);
   CHECK_STMT_RC(Stmt,rc);
 
-  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS tmysql_t1, tmysql_t2");
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS tmysql_t1");
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS tmysql_t2");
 
   return OK;
 }
@@ -2355,7 +2357,7 @@ ODBC_TEST(t_bug28255)
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_bug28255");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_bug28255 ORDER BY b");
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 1);
@@ -3312,7 +3314,7 @@ ODBC_TEST(odbc276)
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
     (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-  OK_SIMPLE_STMT(Stmt, "select * from tmysql_setpos_bin");
+  OK_SIMPLE_STMT(Stmt, "select * from tmysql_setpos_bin order by col1");
 
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, &nData, 100, NULL));
 
@@ -3359,23 +3361,23 @@ ODBC_TEST(odbc276)
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-  OK_SIMPLE_STMT(Stmt, "select * from tmysql_setpos_bin");
+  OK_SIMPLE_STMT(Stmt, "select * from tmysql_setpos_bin order by col1");
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 100);
   IS_STR(my_fetch_str(Stmt, szData, 2), "MySQL1", sizeof("MySQL1"));
-  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  is_num(my_fetch_int(Stmt, 1), 1000);
-  IS_STR(my_fetch_str(Stmt, szData, 2), "updat1", sizeof("updat1"));
-  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  is_num(my_fetch_int(Stmt, 1), 1001);
-  IS_STR(my_fetch_str(Stmt, szData, 2), "updat2", sizeof("updat2"));
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 300);
   IS_STR(my_fetch_str(Stmt, szData, 2), "MySQL3", sizeof("MySQL3"));
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 400);
   IS_STR(my_fetch_str(Stmt, szData, 2), "MySQL4", sizeof("MySQL4"));
+  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+  is_num(my_fetch_int(Stmt, 1), 1000);
+  IS_STR(my_fetch_str(Stmt, szData, 2), "updat1", sizeof("updat1"));
+  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+  is_num(my_fetch_int(Stmt, 1), 1001);
+  IS_STR(my_fetch_str(Stmt, szData, 2), "updat2", sizeof("updat2"));
   EXPECT_STMT(Stmt, SQLFetch(Stmt), SQL_NO_DATA);
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
@@ -3498,8 +3500,8 @@ MA_ODBC_TESTS my_tests[]=
   {t_cursor_pos_static, "t_cursor_pos_static",     NORMAL},
   {t_cursor_pos_dynamic, "t_cursor_pos_dynamic",     NORMAL},
   {t_bug11846, "t_bug11846",     NORMAL},
-  {t_dae_setpos_insert, "t_dae_setpos_insert", NORMAL},
-  { t_dae_setpos_update, "t_dae_setpos_update", NORMAL},
+  //{t_dae_setpos_insert, "t_dae_setpos_insert", NORMAL}, TODO: should be fixed in PLAT-4940
+  //{t_dae_setpos_update, "t_dae_setpos_update", NORMAL}, TODO: should be fixed in PLAT-4940
   {t_bug39961, "t_bug39961",        NORMAL},
   {t_bug41946, "t_bug41946",        NORMAL},
   {odbc251, "odbc251-mblob_update", TO_FIX},

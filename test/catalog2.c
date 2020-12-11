@@ -125,10 +125,12 @@ ODBC_TEST(t_bug36441)
 OK_SIMPLE_STMT(Stmt, "drop table if exists t_bug36441_0123456789");
   OK_SIMPLE_STMT(Stmt, "create table t_bug36441_0123456789("
 	              "pk_for_table1 integer not null auto_increment,"
-	              "c1_for_table1 varchar(128) not null unique,"
+	              "c1_for_table1 varchar(128) not null,"
 	              "c2_for_table1 binary(32) null,"
-                "unique_key int unsigned not null unique,"
-	              "primary key(pk_for_table1, c1_for_table1))");
+                "unique_key int unsigned not null,"
+                "unique key(pk_for_table1, c1_for_table1, unique_key),"
+	              "primary key(pk_for_table1, c1_for_table1),"
+                "shard key(pk_for_table1, c1_for_table1))");
 
   CHECK_STMT_RC(Stmt, SQLPrimaryKeys(Stmt, NULL, SQL_NTS, NULL, SQL_NTS, "t_bug36441_0123456789", SQL_NTS));
 
@@ -683,7 +685,7 @@ ODBC_TEST(t_bug57182)
   SQLCHAR buff[24];
 
   OK_SIMPLE_STMT(Stmt, "drop procedure if exists bug57182");
-  if (!SQL_SUCCEEDED(SQLExecDirect(Stmt, "CREATE DEFINER=`adb`@`%` PROCEDURE `bug57182`(in id int, in name varchar(20)) "
+  if (!SQL_SUCCEEDED(SQLExecDirect(Stmt, "CREATE PROCEDURE `bug57182`(id int, name varchar(20)) AS "
     "BEGIN"
     "  insert into simp values (id, name);"
     "END", SQL_NTS)))
@@ -714,7 +716,7 @@ ODBC_TEST(t_bug57182)
   IS_STR(my_fetch_str(Stmt, buff, 3), "bug57182", 9);
   IS_STR(my_fetch_str(Stmt, buff, 4), "name", 5);
   IS_STR(my_fetch_str(Stmt, buff, 7), "varchar", 8);
-  is_num(my_fetch_int(Stmt, 8), 20);
+  is_num(my_fetch_int(Stmt, 8), 60);
 
   FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA, "No data expected");
   
@@ -968,7 +970,7 @@ ODBC_TEST(sqlcolumns_nodbselected)
 ODBC_TEST(t_bug14085211_part1)
 {
   SQLCHAR  buff[8192];
-  SQLCHAR  db_64_name[65]  = "database_64_symbols_long_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+  SQLCHAR  db_60_name[61]  = "database_64_symbols_long_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
   SQLCHAR  tab_64_name[65] = "table____64_symbols_long_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
   SQLCHAR  col_64_name[65] = "column___64_symbols_long_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
 
@@ -989,23 +991,23 @@ ODBC_TEST(t_bug14085211_part1)
                              "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"\
                              "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
 
-  sprintf(buff, "DROP DATABASE IF EXISTS %s", db_64_name);
+  sprintf(buff, "DROP DATABASE IF EXISTS %s", db_60_name);
   CHECK_STMT_RC(Stmt, SQLExecDirect(Stmt, buff, SQL_NTS));
 
-  sprintf(buff, "CREATE DATABASE %s", db_64_name);
+  sprintf(buff, "CREATE DATABASE %s", db_60_name);
   CHECK_STMT_RC(Stmt, SQLExecDirect(Stmt, buff, SQL_NTS));
 
-  sprintf(buff, "CREATE TABLE %s.%s(%s varchar(10))", db_64_name, tab_64_name, col_64_name);
+  sprintf(buff, "CREATE TABLE %s.%s(%s varchar(10))", db_60_name, tab_64_name, col_64_name);
   CHECK_STMT_RC(Stmt, SQLExecDirect(Stmt, buff, SQL_NTS));
 
   /* Lets check if SQLTables can get these long names  */
-  CHECK_STMT_RC(Stmt, SQLTables(Stmt, (SQLCHAR *)db_64_name, SQL_NTS, NULL, SQL_NTS,
+  CHECK_STMT_RC(Stmt, SQLTables(Stmt, (SQLCHAR *)db_60_name, SQL_NTS, NULL, SQL_NTS,
                                   (SQLCHAR *)tab_64_name, SQL_NTS, 
                                   "BASE TABLE" /*,VIEW" */, SQL_NTS));
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   /* check the database name */
-  IS_STR(my_fetch_str(Stmt, buff, 1), db_64_name, 64);
+  IS_STR(my_fetch_str(Stmt, buff, 1), db_60_name, 64);
 
   /* check the table name */
   IS_STR(my_fetch_str(Stmt, buff, 3), tab_64_name, 64);
@@ -1023,7 +1025,7 @@ ODBC_TEST(t_bug14085211_part1)
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-  sprintf(buff, "DROP DATABASE IF EXISTS %s", db_64_name);
+  sprintf(buff, "DROP DATABASE IF EXISTS %s", db_60_name);
   CHECK_STMT_RC(Stmt, SQLExecDirect(Stmt, buff, SQL_NTS));
 
   return OK;
@@ -1217,18 +1219,25 @@ ODBC_TEST(odbc119)
   SQLLEN  RowCount;
 
   OK_SIMPLE_STMT(Stmt, "drop table if exists t_odbc119");
-  OK_SIMPLE_STMT(Stmt, "create table t_odbc119(id int not null primary key auto_increment, "
-    "ui_p1 INT NOT NULL, iu_p2 INT NOT NULL, a varchar(100) not null, KEY `INDEX` (`a`), UNIQUE KEY `UNIQUE` (ui_p1, iu_p2)) ENGINE=InnoDB");
+  OK_SIMPLE_STMT(Stmt, "create table t_odbc119(id int not null auto_increment PRIMARY KEY, "
+    "ui_p1 INT NOT NULL, iu_p2 INT NOT NULL, a varchar(100) not null, KEY `INDEX` (`a`), UNIQUE KEY `UNIQUE` (ui_p1, iu_p2, id)) ENGINE=InnoDB");
 
   CHECK_STMT_RC(Stmt, SQLStatistics(Stmt, NULL, SQL_NTS, NULL, SQL_NTS,
     "t_odbc119", SQL_NTS,
     SQL_INDEX_ALL, SQL_QUICK));
   CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &RowCount));
-  is_num(RowCount, 4);
+  is_num(RowCount, 6);
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
 
-  IS_STR(my_fetch_str(Stmt, StrValue, 6), "PRIMARY", 6);
+  IS_STR(my_fetch_str(Stmt, StrValue, 6), "PRIMARY", 8);
+  IS_STR(my_fetch_str(Stmt, StrValue, 9), "id", 3);
+  is_num(my_fetch_int(Stmt, 4), 0);
+  is_num(my_fetch_int(Stmt, 8), 1);
+
+  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+
+  IS_STR(my_fetch_str(Stmt, StrValue, 6), "PRIMARY", 8);
   IS_STR(my_fetch_str(Stmt, StrValue, 9), "id", 3);
   is_num(my_fetch_int(Stmt, 4), 0);
   is_num(my_fetch_int(Stmt, 8), 1);
@@ -1245,6 +1254,12 @@ ODBC_TEST(odbc119)
   IS_STR(my_fetch_str(Stmt, StrValue, 9), "iu_p2", 6);
   is_num(my_fetch_int(Stmt, 4), 0);
   is_num(my_fetch_int(Stmt, 8), 2);
+  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+
+  IS_STR(my_fetch_str(Stmt, StrValue, 6), "UNIQUE", 7);
+  IS_STR(my_fetch_str(Stmt, StrValue, 9), "id", 3);
+  is_num(my_fetch_int(Stmt, 4), 0);
+  is_num(my_fetch_int(Stmt, 8), 3);
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
 
   IS_STR(my_fetch_str(Stmt, StrValue, 6), "INDEX", 6);

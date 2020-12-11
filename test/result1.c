@@ -331,7 +331,7 @@ ODBC_TEST(t_desc_col)
   IS(desc_col_check(Stmt1, 16, "c16", iOdbc() ? SQL_WLONGVARCHAR : SQL_LONGVARCHAR, 65535, 65535, 0,  SQL_NULLABLE) == OK);
   IS(desc_col_check(Stmt1, 17, "c17", iOdbc() ? SQL_WLONGVARCHAR : SQL_LONGVARCHAR, 16777215, 16777215, 0,  SQL_NULLABLE) == OK);
   /* Test may fail here if connection charset mbmaxlen > 1 */
-  IS(desc_col_check(Stmt1, 18, "c18", iOdbc() ? SQL_WLONGVARCHAR : SQL_LONGVARCHAR, 4294967295UL, 16777215 , 0,  SQL_NULLABLE) == OK);
+  IS(desc_col_check(Stmt1, 18, "c18", iOdbc() ? SQL_WLONGVARCHAR : SQL_LONGVARCHAR, 4294967295UL, 1431655765 , 0,  SQL_NULLABLE) == OK);
   IS(desc_col_check(Stmt1, 19, "c19", SQL_LONGVARBINARY, 255, 255, 0,  SQL_NULLABLE) == OK);
   IS(desc_col_check(Stmt1, 20, "c20", SQL_LONGVARBINARY, 65535, 65535, 0,  SQL_NULLABLE) == OK);
   IS(desc_col_check(Stmt1, 21, "c21", SQL_LONGVARBINARY, 16777215, 16777215, 0,  SQL_NULLABLE) == OK);
@@ -690,7 +690,7 @@ ODBC_TEST(t_zerolength)
   SQLSetStmtAttr(Stmt, SQL_ATTR_CONCURRENCY, (SQLPOINTER) SQL_CONCUR_ROWVER, 0);
   SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER) SQL_CURSOR_KEYSET_DRIVEN, 0);
 
-  OK_SIMPLE_STMT(Stmt,"select * from t_zerolength");
+  OK_SIMPLE_STMT(Stmt,"select * from t_zerolength order by length(str)");
 
   rc = SQLFetch(Stmt);
   CHECK_STMT_RC(Stmt,rc);
@@ -1162,13 +1162,13 @@ ODBC_TEST(t_desccolext)
         i1 int,\
         i2 int(10) not null,\
         i3 int unsigned,\
-        i4 int zerofill,\
+        i4 int,\
         b1 bigint,\
         b2 bigint(10),\
         b3 bigint unsigned,\
         f1 float,\
         f2 float(10),\
-        f3 float(24) zerofill,\
+        f3 float(24),\
         f4 float(10,4),\
         d1 double,\
         d2 double(30,3),\
@@ -1190,7 +1190,7 @@ ODBC_TEST(t_desccolext)
         yr3 year(4),\
         c1 char(10),\
         c2 char(10) binary,\
-        c3 national char(10),\
+        c3 char(10),\
         v1 varchar(10),\
         v2 varchar(10) binary,\
         v3 national varchar(10),\
@@ -1335,13 +1335,13 @@ ODBC_TEST(t_colattributes)
          "i1 INT,"
          "i2 INT(10) NOT NULL,"
          "i3 INT UNSIGNED,"
-         "i4 INT ZEROFILL,"
+         "i4 INT,"
          "b1 BIGINT,"
          "b2 BIGINT(10),"
          "b3 BIGINT UNSIGNED,"
          "f1 FLOAT,"
          "f2 FLOAT(10),"
-         "f3 FLOAT(24) ZEROFILL,"
+         "f3 FLOAT(24),"
          "f4 FLOAT(10,4),"
          "d1 DOUBLE,"
          "d2 DOUBLE(30,3),"
@@ -1363,7 +1363,7 @@ ODBC_TEST(t_colattributes)
          "yr3 YEAR(4),"
          "c1 CHAR(10),"
          "c2 CHAR(10) BINARY,"
-         "c3 NATIONAL CHAR(10),"
+         "c3 CHAR(10),"
          "v1 VARCHAR(10),"
          "v2 VARCHAR(10) BINARY,"
          "v3 NATIONAL VARCHAR(10),"
@@ -1427,7 +1427,7 @@ ODBC_TEST(t_exfetch)
   rc = SQLTransact(NULL,Connection,SQL_COMMIT);
   CHECK_DBC_RC(Connection,rc);
 
-  rc = SQLExecDirect(Stmt, (SQLCHAR *)"select * from t_exfetch",SQL_NTS);
+  rc = SQLExecDirect(Stmt, (SQLCHAR *)"select * from t_exfetch order by col1",SQL_NTS);
   CHECK_STMT_RC(Stmt,rc);
 
   rc = SQLBindCol(Stmt,1,SQL_C_LONG,&i,0,NULL);
@@ -2230,7 +2230,7 @@ ODBC_TEST(t_bug34429)
   OK_SIMPLE_STMT(Stmt, "drop table if exists t_bug34429");
   OK_SIMPLE_STMT(Stmt, "create table t_bug34429 (x varchar(200))");
   OK_SIMPLE_STMT(Stmt, "insert into t_bug34429 values "
-                "(concat(repeat('x', 32), repeat('y', 32), repeat('z',16)))");
+                "(concat(lpad('', 32, 'x'), lpad('', 32, 'y'), lpad('', 16, 'z')))");
   OK_SIMPLE_STMT(Stmt, "select x from t_bug34429");
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));

@@ -64,7 +64,7 @@ ODBC_TEST(t_relative)
 
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROWS_FETCHED_PTR, &nrows, 0));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_relative");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_relative order by id");
 
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_ULONG, &iarray, 0, NULL));
 
@@ -159,7 +159,7 @@ ODBC_TEST(t_relative1)
 
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROWS_FETCHED_PTR, &nrows, 0));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_relative1");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_relative1 ORDER BY id");
 
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, &i, 0, NULL));
 
@@ -335,7 +335,7 @@ ODBC_TEST(t_relative2)
 
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt,SQL_ATTR_ROWS_FETCHED_PTR,&nrows,0));
 
-  OK_SIMPLE_STMT(Stmt, "select * from t_relative2");
+  OK_SIMPLE_STMT(Stmt, "select * from t_relative2 order by id");
 
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt,1,SQL_C_LONG,&iarray,0,len));
 

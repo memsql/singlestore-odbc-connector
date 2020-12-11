@@ -292,7 +292,7 @@ ODBC_TEST(t_bug32821)
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT a,b,c FROM t_bug32821");
+  OK_SIMPLE_STMT(Stmt, "SELECT a,b,c FROM t_bug32821 order by b");
 
   CHECK_STMT_RC( Stmt, SQLBindCol( Stmt, 1, SQL_C_BIT,    &a, 0, &a_ind ) );
   CHECK_STMT_RC( Stmt, SQLBindCol( Stmt, 2, SQL_C_ULONG,  &b, 0, &b_ind ) );
@@ -303,6 +303,7 @@ ODBC_TEST(t_bug32821)
   while( (rc= SQLFetchScroll(Stmt, SQL_FETCH_NEXT, 0)) != SQL_NO_DATA_FOUND)
   {
     diag("testing row #%d", i+1);
+    diag("%d %d %d", a, b, c);
     is_num(a, expected_a[i]);
     is_num(b, expected_b[i]);
     is_num(c, expected_c[i]);
@@ -388,7 +389,7 @@ ODBC_TEST(t_bug32684)
   SQLWCHAR wbuf[20];
   SQLCHAR abuf[20];
   SQLLEN wlen, alen;
-  OK_SIMPLE_STMT(Stmt, "select repeat('x', 100), repeat('y', 100)");
+  OK_SIMPLE_STMT(Stmt, "select lpad('', 100, 'x'), lpad('', 100, 'y')");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
 
   do
@@ -944,7 +945,7 @@ ODBC_TEST(t_odbc58)
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_SHORT, (SQLPOINTER)&smint_col, 4, &len2));
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_LONG, (SQLPOINTER)&int_col,  4, &len3));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT text_col, smint_col, int_col FROM t_odbc58");
+  OK_SIMPLE_STMT(Stmt, "SELECT text_col, smint_col, int_col FROM t_odbc58 order by length(text_col) desc");
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
 

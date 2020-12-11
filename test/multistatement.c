@@ -388,7 +388,7 @@ ODBC_TEST(t_odbc159)
   SQLRETURN rc;
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS _temp_odbc159;\
-                        CREATE TEMPORARY TABLE _temp_odbc159 AS(SELECT * FROM INFORMATION_SCHEMA.STATISTICS);\
+                        CREATE TEMPORARY TABLE _temp_odbc159 AS SELECT * FROM INFORMATION_SCHEMA.STATISTICS;\
                         SELECT * FROM _temp_odbc159 LIMIT 5;");
 
   do {
@@ -515,8 +515,8 @@ ODBC_TEST(t_odbc177)
 
 ODBC_TEST(t_odbc169)
 {
-  SQLCHAR Query[][80]= {"SELECT 1 Col1; SELECT * from t_odbc169", "SELECT * from t_odbc169 ORDER BY col1 DESC; SELECT col3, col2 from t_odbc169",
-                        "INSERT INTO t_odbc169 VALUES(8, 7, 'Row #4');SELECT * from t_odbc169"};
+  SQLCHAR Query[][100]= {"SELECT 1 Col1; SELECT * from t_odbc169 ORDER BY col1", "SELECT * from t_odbc169 ORDER BY col1 DESC; SELECT col3, col2 from t_odbc169 ORDER BY col1",
+                        "INSERT INTO t_odbc169 VALUES(8, 7, 'Row #4');SELECT * from t_odbc169 ORDER BY col1"};
   char Expected[][3][7]={ {"1", "", "" },       /* RS 1*/
                           {"1", "2", "Row 1"},  /* RS 2*/
                           {"3", "4", "Row 2"},

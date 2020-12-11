@@ -119,12 +119,12 @@ ODBC_TEST(t_prep_buffer_length)
   rc = SQLExecute(Stmt);
   mystmt(Stmt,rc);
 
-  length= 10;    
+  length= 9;    
 
   rc = SQLExecute(Stmt);
   mystmt(Stmt,rc);
 
-  length= 9;    
+  length= 10;
 
   rc = SQLExecute(Stmt);
   mystmt(Stmt,rc);
@@ -137,7 +137,7 @@ ODBC_TEST(t_prep_buffer_length)
   SQLFreeStmt(Stmt,SQL_RESET_PARAMS);
   SQLFreeStmt(Stmt,SQL_CLOSE);
 
-  OK_SIMPLE_STMT(Stmt, "select * from t_prep_buffer_length");
+  OK_SIMPLE_STMT(Stmt, "select * from t_prep_buffer_length order by length(a)");
 
   rc = SQLBindCol(Stmt, 1, SQL_C_CHAR, buffer, 15, &length);
   mystmt(Stmt,rc);
@@ -160,15 +160,15 @@ ODBC_TEST(t_prep_buffer_length)
   mystmt(Stmt,rc);
 
   diag("outdata: %s (%ld)\n", buffer, length);
-  is_num(length, 10);
-  IS_STR(buffer, "abcdefghij", 10);
+  is_num(length, 9);
+  IS_STR(buffer, "abcdefghi", 9);
 
   rc = SQLFetch(Stmt);
   mystmt(Stmt,rc);
 
   diag("outdata: %s (%ld)\n", buffer, length);
-  is_num(length, 9);
-  IS_STR(buffer, "abcdefghi", 9);
+  is_num(length, 10);
+  IS_STR(buffer, "abcdefghij", 10);
 
   rc = SQLFetch(Stmt);
   mystmt(Stmt,rc);
@@ -274,7 +274,7 @@ ODBC_TEST(t_prep_scroll)
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
                                 (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_prep_scroll");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_prep_scroll ORDER BY a");
 
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, &data, 0, NULL));
 

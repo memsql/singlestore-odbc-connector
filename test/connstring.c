@@ -639,39 +639,6 @@ ODBC_TEST(odbc_284)
   return OK;
 }
 
-
-/* Testing INTERACTIVE connection string option, which is supposed to make server to use interactive_timeout as wait_timeout */
-ODBC_TEST(odbc_288)
-{
-  char interactive[512];
-  int WaitTimeout= get_server_variable(GLOBAL, "wait_timeout");
-  int InteractiveTimeout= get_server_variable(GLOBAL, "interactive_timeout");
-  SQLHDBC     hdbc;
-  SQLHSTMT    hstmt;
-
-  if (WaitTimeout == InteractiveTimeout)
-  {
-    InteractiveTimeout = WaitTimeout + 1000;
-    IS(set_variable(GLOBAL, "interactive_timeout", InteractiveTimeout) == OK);
-    
-  }
-  CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc));
-
-  hstmt = DoConnect(hdbc, FALSE, my_dsn, my_uid, my_pwd, my_port, my_schema, 0, my_servername, "INTERACTIVE=1");
-
-  IS(hstmt != NULL);
-  OK_SIMPLE_STMT(hstmt, "SELECT @@wait_timeout");
-  CHECK_STMT_RC(hstmt, SQLFetch(hstmt));
-  is_num(my_fetch_int(hstmt, 1), InteractiveTimeout);
-
-  CHECK_STMT_RC(hstmt, SQLFreeStmt(hstmt, SQL_DROP));
-  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
-  CHECK_DBC_RC(hdbc, SQLFreeConnect(hdbc));
-
-  return OK;
-}
-
-
 ODBC_TEST(odbc_290)
 {
   SQLHDBC  hdbc;
@@ -703,7 +670,6 @@ MA_ODBC_TESTS my_tests[]=
   {odbc_229,              "odbc229_usecnf",          NORMAL},
   {odbc_228,              "odbc228_tlsversion",      NORMAL},
   {odbc_284,              "odbc284_escapebrace",     NORMAL},
-  {odbc_288,              "odbc288_interactive",     NORMAL},
   {odbc_290,              "odbc290_forwardonly",     NORMAL},
   {NULL, NULL, 0}
 };

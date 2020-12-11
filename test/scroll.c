@@ -38,7 +38,7 @@ ODBC_TEST(t_scroll)
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
                                 (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_scroll");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_scroll ORDER BY col1");
 
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_ULONG, &i, 0, NULL));
 
@@ -154,7 +154,7 @@ ODBC_TEST(t_array_relative_10)
   rc = SQLSetStmtAttr(Stmt, SQL_ATTR_ROWS_FETCHED_PTR, &nrows, 0);
   CHECK_STMT_RC(Stmt,rc);
 
-  OK_SIMPLE_STMT(Stmt, "select * from t_array_relative_10");
+  OK_SIMPLE_STMT(Stmt, "select * from t_array_relative_10 order by id");
 
   rc = SQLBindCol(Stmt,1,SQL_C_LONG,iarray,0,NULL);
   CHECK_STMT_RC(Stmt,rc);
@@ -292,7 +292,7 @@ ODBC_TEST(t_relative_1)
     rc = SQLSetStmtAttr(Stmt,SQL_ATTR_ROWS_FETCHED_PTR,&nrows,0);
     CHECK_STMT_RC(Stmt,rc);
 
-    OK_SIMPLE_STMT(Stmt, "select * from t_relative_1");
+    OK_SIMPLE_STMT(Stmt, "select * from t_relative_1 order by id");
 
     rc = SQLBindCol(Stmt,1,SQL_C_LONG,&i,0,NULL);
     CHECK_STMT_RC(Stmt,rc);
@@ -502,7 +502,7 @@ ODBC_TEST(t_array_relative_2)
     rc = SQLSetStmtAttr(Stmt,SQL_ATTR_ROWS_FETCHED_PTR,&nrows,0);
     CHECK_STMT_RC(Stmt,rc);
 
-    OK_SIMPLE_STMT(Stmt, "select * from t_array_relative_2");
+    OK_SIMPLE_STMT(Stmt, "select * from t_array_relative_2 order by id");
 
     rc = SQLBindCol(Stmt,1,SQL_C_LONG,iarray,0,NULL);
     CHECK_STMT_RC(Stmt,rc);
@@ -708,7 +708,7 @@ ODBC_TEST(t_array_relative_2)
     rc = SQLSetStmtAttr(Stmt,SQL_ATTR_ROWS_FETCHED_PTR,&nrows,0);
     CHECK_STMT_RC(Stmt,rc);
 
-    OK_SIMPLE_STMT(Stmt, "select * from t_array_relative_2");
+    OK_SIMPLE_STMT(Stmt, "select * from t_array_relative_2 order by id");
     CHECK_STMT_RC(Stmt,rc);
 
     rc = SQLBindCol(Stmt,1,SQL_C_LONG,iarray,0,NULL);
@@ -814,7 +814,7 @@ ODBC_TEST(t_absolute_1)
     rc = SQLSetStmtAttr(Stmt,SQL_ATTR_ROWS_FETCHED_PTR,&nrows,0);
     CHECK_STMT_RC(Stmt,rc);
 
-    OK_SIMPLE_STMT(Stmt, "select * from t_absolute_1");
+    OK_SIMPLE_STMT(Stmt, "select * from t_absolute_1 order by id");
 
     rc = SQLBindCol(Stmt,1,SQL_C_LONG,&i,0,NULL);
     CHECK_STMT_RC(Stmt,rc);
@@ -999,7 +999,7 @@ ODBC_TEST(t_absolute_2)
     rc = SQLSetStmtAttr(Stmt,SQL_ATTR_ROWS_FETCHED_PTR,&nrows,0);
     CHECK_STMT_RC(Stmt,rc);
 
-    OK_SIMPLE_STMT(Stmt, "select * from t_absolute_2");
+    OK_SIMPLE_STMT(Stmt, "select * from t_absolute_2 order by id");
     CHECK_STMT_RC(Stmt,rc);
 
     rc = SQLBindCol(Stmt,1,SQL_C_LONG,iarray,0,NULL);
@@ -1166,7 +1166,7 @@ ODBC_TEST(t_absolute_2)
     rc = SQLSetStmtAttr(Stmt,SQL_ATTR_ROWS_FETCHED_PTR,&nrows,0);
     CHECK_STMT_RC(Stmt,rc);
 
-    OK_SIMPLE_STMT(Stmt, "select * from t_absolute_2");
+    OK_SIMPLE_STMT(Stmt, "select * from t_absolute_2 order by id");
     CHECK_STMT_RC(Stmt,rc);
 
     rc = SQLBindCol(Stmt,1,SQL_C_LONG,iarray,0,NULL);

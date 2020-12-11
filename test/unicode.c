@@ -929,6 +929,8 @@ ODBC_TEST(sqlstatistics)
 
   IS_WSTR(my_fetch_wstr(hstmt1, wbuff, 3, MAX_ROW_DATA_LEN+1), W(L"t_a\x00e3g"), 6);
 
+  CHECK_STMT_RC(hstmt1, SQLFetch(hstmt1));
+
   FAIL_IF(SQLFetch(hstmt1)!= SQL_NO_DATA_FOUND, "eof expected");
 
   CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
@@ -1453,8 +1455,8 @@ ODBC_TEST(t_odbc72)
 
 ODBC_TEST(t_odbc203)
 {
-  wchar_t Query[][80]= {L"SELECT 1 Col1; SELECT * from t_odbc203", L"SELECT * from t_odbc203 ORDER BY col1 DESC; SELECT col3, col2 from t_odbc203",
-                        L"INSERT INTO t_odbc203 VALUES(8, 7, 'Row #4');SELECT * from t_odbc203"};
+  wchar_t Query[][100]= {L"SELECT 1 Col1; SELECT * from t_odbc203 ORDER BY col1", L"SELECT * from t_odbc203 ORDER BY col1 DESC; SELECT col3, col2 from t_odbc203 ORDER BY col1",
+                        L"INSERT INTO t_odbc203 VALUES(8, 7, 'Row #4');SELECT * from t_odbc203 ORDER BY col1"};
   wchar_t Expected[][3][7]={{L"1", L"", L""},        /* RS 1*/
                             {L"1", L"2", L"Row 1"},  /* RS 2*/
                             {L"3", L"4", L"Row 2"},

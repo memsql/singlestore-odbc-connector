@@ -617,7 +617,7 @@ ODBC_TEST(t_bug49466)
   
   CHECK_STMT_RC(Stmt, SQLGetDiagRec(SQL_HANDLE_STMT, Stmt1, 1, sqlstate, &error,
                                message, sizeof(message), &len));
-  is_num(error, 1305);
+  is_num(error, 1128);
   
   CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1,SQL_DROP));
   CHECK_DBC_RC(Connection1, SQLDisconnect(Connection1));
