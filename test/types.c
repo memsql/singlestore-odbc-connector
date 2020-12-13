@@ -457,7 +457,7 @@ ODBC_TEST(t_bug27862_1)
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, hstmt1, SQLColAttribute(hstmt1, 1, SQL_DESC_OCTET_LENGTH, NULL, 0,
                                  NULL, &len));
   /* Octet length should *not* include terminanting null character according to ODBC specs. This check may fail if multibyte charset is used for connection */
-  is_num(len, 4);
+  is_num(len, 12);
 
   CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
   CHECK_DBC_RC(hdbc1, SQLDisconnect(hdbc1));

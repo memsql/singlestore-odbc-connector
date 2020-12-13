@@ -720,7 +720,7 @@ ODBC_TEST(t_odbc166)
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_odbc166");
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_odbc166(val decimal(20,4) NOT NULL)");
   OK_SIMPLE_STMT(Stmt, "INSERT INTO  t_odbc166 VALUES(cast('12345.5678' as decimal(20,4))),(2064612258.11000)");
-  OK_SIMPLE_STMT(Stmt, "SELECT val FROM t_odbc166");
+  OK_SIMPLE_STMT(Stmt, "SELECT val FROM t_odbc166 ORDER BY val");
 
   CHECK_STMT_RC(Stmt, SQLColAttribute(Stmt, 1, SQL_COLUMN_DISPLAY_SIZE, NULL, 0, NULL, &Size));
   /* 20(precision) + sign + decimal point */

@@ -186,7 +186,7 @@ ODBC_TEST(my_pcbvalue_add)
     CHECK_STMT_RC(Stmt, rc);
 
     /* Open the resultset of table 'my_pcbValue_add' */
-    OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_pcbValue_add");
+    OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_pcbValue_add ORDER BY id");
     CHECK_STMT_RC(Stmt,rc);
 
     /* goto the last row */
@@ -223,7 +223,7 @@ ODBC_TEST(my_pcbvalue_add)
     CHECK_DBC_RC(Connection,rc);
 
     /* Now fetch and verify the data */
-    OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_pcbValue_add");
+    OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_pcbValue_add ORDER BY id");
     CHECK_STMT_RC(Stmt,rc);
 
     rc = SQLFetch(Stmt);
