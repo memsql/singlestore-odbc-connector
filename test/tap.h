@@ -143,7 +143,7 @@ static SQLHANDLE     Env, Connection, Stmt, wConnection, wStmt;
 static SQLINTEGER    OdbcVer=        SQL_OV_ODBC3;
 
 static unsigned int  my_port=        5506;
-char          ma_strport[12]= "PORT=3306";
+char          ma_strport[12]= "PORT=5506";
 
 static int Travis= 0, TravisOnOsx= 0;
 

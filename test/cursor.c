@@ -2678,8 +2678,8 @@ ODBC_TEST(t_bug32420)
 
   /* Don't cache result option in the connection string */
   sprintf((char *)conn, "DSN=%s;UID=%s;PASSWORD=%s;"
-          "DATABASE=%s;SERVER=%s;OPTION=1048576",
-          my_dsn, my_uid, my_pwd, my_schema, my_servername);
+          "DATABASE=%s;PORT=%d;SERVER=%s;OPTION=1048576",
+          my_dsn, my_uid, my_pwd, my_schema, my_port, my_servername);
 
   CHECK_ENV_RC(Env, SQLAllocHandle(SQL_HANDLE_DBC, Env, &hdbc1));
 
@@ -2709,7 +2709,7 @@ ODBC_TEST(t_bug32420)
 
   CHECK_STMT_RC(hstmt1, SQLSetStmtOption(hstmt1, SQL_ROWSET_SIZE, 4));
 
-  OK_SIMPLE_STMT(hstmt1, "select * from bug32420");
+  OK_SIMPLE_STMT(hstmt1, "select * from bug32420 order by tt_int");
   CHECK_STMT_RC(hstmt1, SQLBindCol(hstmt1, 1, SQL_C_LONG, nData, 0, NULL));
   CHECK_STMT_RC(hstmt1, SQLBindCol(hstmt1, 2, SQL_C_CHAR, szData, sizeof(szData[0]),
                             NULL));
@@ -2797,7 +2797,7 @@ ODBC_TEST(t_bug32420)
 
   CHECK_STMT_RC(hstmt1, SQLSetStmtOption(hstmt1, SQL_ROWSET_SIZE, 4));
 
-  OK_SIMPLE_STMT(hstmt1, "select * from bug32420");
+  OK_SIMPLE_STMT(hstmt1, "select * from bug32420 order by tt_int");
   CHECK_STMT_RC(hstmt1, SQLBindCol(hstmt1, 1, SQL_C_LONG, nData, 0, NULL));
   CHECK_STMT_RC(hstmt1, SQLBindCol(hstmt1, 2, SQL_C_CHAR, szData, sizeof(szData[0]),
                             NULL));

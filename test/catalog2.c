@@ -203,61 +203,32 @@ ODBC_TEST(t_bug50195)
 {
   SQLHDBC     hdbc1;
   SQLHSTMT    hstmt1;
-  char        expected_privs[][24]={ "ALTER", "CREATE", "CREATE VIEW", "DELETE", "DROP", "INDEX",
-                                    "INSERT", "REFERENCES", "SHOW VIEW", "TRIGGER", "UPDATE" },
-              expected_103[][24]={ "ALTER", "CREATE", "CREATE VIEW", "DELETE", "DELETE VERSIONING ROWS",
-                         "DROP", "INDEX", "INSERT", "REFERENCES", "SHOW VIEW", "TRIGGER", "UPDATE" },
+  char        expected_privs[][24]={ "ALTER", "ALTER PIPELINE", "ALTER ROUTINE", "ALTER VIEW",
+                                     "CREATE", "CREATE PIPELINE", "CREATE ROUTINE", "CREATE VIEW",
+                                     "DELETE", "DROP", "DROP PIPELINE", "DROP VIEW",
+                                     "EXECUTE", "INDEX", "INSERT", "REFERENCES",
+                                     "SHOW PIPELINE", "SHOW VIEW", "START PIPELINE", "TRIGGER", "UPDATE" },
               *expected= expected_privs[0];
   int         i, privs_count= sizeof(expected_privs)/sizeof(expected_privs[0]);
   SQLCHAR     priv[24];
   SQLLEN      len;
 
-  if (ServerNotOlderThan(Connection, 10, 3, 4))
-  {
-    expected= expected_103[0];
-    privs_count= sizeof(expected_103)/sizeof(expected_103[0]);
-
-    if (ServerNotOlderThan(Connection, 10, 3, 15))
-    {
-      strcpy(expected_103[4], "DELETE HISTORY");
-    }
-  }
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS bug50195");
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE bug50195 (i INT NOT NULL)");
 
-  if (Travis != 0  && TravisOnOsx == 0)
+  SQLExecDirect(Stmt, (SQLCHAR *)"DROP USER bug50195@'%'", SQL_NTS);
+  OK_SIMPLE_STMT(Stmt, "CREATE USER bug50195@'%' IDENTIFIED BY 's3CureP@wd'");
+  if (!SQL_SUCCEEDED(SQLExecDirect(Stmt, "GRANT ALL ON bug50195 TO bug50195@'%'", SQL_NTS)))
   {
-    diag("Test is run in Travis");
-    SQLExecDirect(Stmt, (SQLCHAR *)"DROP USER bug50195@'%'", SQL_NTS);
-    OK_SIMPLE_STMT(Stmt, "CREATE USER bug50195@'%' IDENTIFIED BY 's3CureP@wd'");
-
-    OK_SIMPLE_STMT(Stmt, "GRANT ALL ON bug50195 TO bug50195@'%'");
-    OK_SIMPLE_STMT(Stmt, "REVOKE SELECT ON bug50195 FROM bug50195@'%'");
-  }
-  else
-  {
-    SQLExecDirect(Stmt, (SQLCHAR *)"DROP USER bug50195@127.0.0.1", SQL_NTS);
-    SQLExecDirect(Stmt, (SQLCHAR *)"DROP USER bug50195@localhost", SQL_NTS);
-
-    OK_SIMPLE_STMT(Stmt, "CREATE USER bug50195@127.0.0.1 IDENTIFIED BY 's3CureP@wd'");
-    OK_SIMPLE_STMT(Stmt, "CREATE USER bug50195@localhost IDENTIFIED BY 's3CureP@wd'");
-
-    if (!SQL_SUCCEEDED(SQLExecDirect(Stmt, "GRANT ALL ON bug50195 TO bug50195@'127.0.0.1'", SQL_NTS)))
+    odbc_print_error(SQL_HANDLE_STMT, Stmt);
+    if (get_native_errcode(Stmt) == 1142)
     {
-      odbc_print_error(SQL_HANDLE_STMT, Stmt);
-      if (get_native_errcode(Stmt) == 1142)
-      {
-        skip("Test user doesn't have enough privileges to run this test");
-      }
-      return FAIL;
+      skip("Test user doesn't have enough privileges to run this test");
     }
-
-    OK_SIMPLE_STMT(Stmt, "GRANT ALL ON bug50195 TO bug50195@'localhost'");
-
-    OK_SIMPLE_STMT(Stmt, "REVOKE SELECT ON bug50195 FROM bug50195@127.0.0.1");
-    OK_SIMPLE_STMT(Stmt, "REVOKE SELECT ON bug50195 FROM bug50195@localhost");
+    return FAIL;
   }
 
+  OK_SIMPLE_STMT(Stmt, "REVOKE SELECT ON bug50195 FROM bug50195@'%'");
   OK_SIMPLE_STMT(Stmt, "FLUSH PRIVILEGES");
 
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc1));
@@ -268,15 +239,7 @@ ODBC_TEST(t_bug50195)
   {
     diag("Couldn't connect with new user or allocate the stmt");
 
-    if (Travis != 0  && TravisOnOsx == 0)
-    {
-      OK_SIMPLE_STMT(Stmt, "DROP USER bug50195@'%'");
-    }
-    else
-    {
-      OK_SIMPLE_STMT(Stmt, "DROP USER bug50195@127.0.0.1");
-      OK_SIMPLE_STMT(Stmt, "DROP USER bug50195@localhost");
-    }
+    OK_SIMPLE_STMT(Stmt, "DROP USER bug50195@'%'");
     OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS bug50195");
 
     return FAIL;
@@ -300,16 +263,8 @@ ODBC_TEST(t_bug50195)
   CHECK_DBC_RC(hdbc1, SQLDisconnect(hdbc1));
   CHECK_DBC_RC(hdbc1, SQLFreeConnect(hdbc1));
 
-  if (Travis != 0  && TravisOnOsx == 0)
-  {
-    OK_SIMPLE_STMT(Stmt, "DROP USER bug50195@'%'");
-  }
-  else
-  {
-    OK_SIMPLE_STMT(Stmt, "DROP USER bug50195@127.0.0.1");
-    OK_SIMPLE_STMT(Stmt, "DROP USER bug50195@localhost");
-  }
-  
+
+  OK_SIMPLE_STMT(Stmt, "DROP USER bug50195@'%'");
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS bug50195");
 
   return OK;
