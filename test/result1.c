@@ -1581,9 +1581,10 @@ ODBC_TEST(tmysql_rowstatus)
   rc = SQLSetPos(Stmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
   CHECK_STMT_RC(Stmt,rc);
 
-  OK_SIMPLE_STMT(hstmt1,
-          "UPDATE tmysql_rowstatus SET col1 = 999,"
-          "col2 = 'pos-update' WHERE CURRENT OF venu_cur");
+  EXPECT_STMT(hstmt1,
+          SQLExecDirect(hstmt1, (SQLCHAR*)"UPDATE tmysql_rowstatus SET col1 = 999,"
+          "col2 = 'pos-update' WHERE CURRENT OF venu_cur", SQL_NTS), SQL_ERROR);
+  CHECK_SQLSTATE(hstmt1, "HYC00");
 
   rc = SQLExtendedFetch(Stmt,SQL_FETCH_LAST,1,NULL,NULL);
   CHECK_STMT_RC(Stmt,rc);

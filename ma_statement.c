@@ -587,16 +587,22 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
     MADB_DynString StmtStr;
     char *TableName;
 
-    /* Make sure we have a delete or update statement
-       MADB_QUERY_DELETE and MADB_QUERY_UPDATE defined in the enum to have the same value
-       as SQL_UPDATE and SQL_DELETE, respectively */
-    if (Stmt->Query.QueryType == MADB_QUERY_DELETE || Stmt->Query.QueryType == MADB_QUERY_UPDATE)
+    /* Make sure we have a delete clause, update clause is not yet supported in the positioned command.
+       MADB_QUERY_DELETE is defined in the enum to have the same value as SQL_DELETE.
+       */
+    if (Stmt->Query.QueryType == MADB_QUERY_DELETE)
     {
       Stmt->PositionedCommand= 1;
     }
+    else if (Stmt->Query.QueryType == MADB_QUERY_UPDATE)
+    {
+      // TODO(PLAT-5080): Support positioned updates.
+      MADB_SetError(&Stmt->Error, MADB_ERR_HYC00, "UPDATE clause is not supported for a positioned command", 0);
+      return Stmt->Error.ReturnValue;
+    }
     else
     {
-      MADB_SetError(&Stmt->Error, MADB_ERR_42000, "Invalid SQL Syntax: DELETE or UPDATE expected for positioned update", 0);
+      MADB_SetError(&Stmt->Error, MADB_ERR_42000, "Invalid SQL Syntax: DELETE is expected for a positioned command", 0);
       return Stmt->Error.ReturnValue;
     }
 
@@ -4330,151 +4336,9 @@ SQLRETURN MADB_StmtSetPos(MADB_Stmt *Stmt, SQLSETPOSIROW RowNumber, SQLUSMALLINT
     break;
   case SQL_UPDATE:
     {
-      char        *TableName= MADB_GetTableName(Stmt);
-      my_ulonglong Start=     0, 
-                   End=       mysql_stmt_num_rows(Stmt->stmt);
-      SQLRETURN    result=    SQL_INVALID_HANDLE; /* Just smth we cannot normally get */   
-
-      if (!TableName)
-      {
-        MADB_SetError(&Stmt->Error, MADB_ERR_IM001, "Updatable Cursors with multiple tables are not supported", 0);
-        return Stmt->Error.ReturnValue;
-      }
-      
-      Stmt->AffectedRows= 0;
-
-      if ((SQLLEN)RowNumber > Stmt->LastRowFetched)
-      {
-        MADB_SetError(&Stmt->Error, MADB_ERR_S1107, NULL, 0);
-        return Stmt->Error.ReturnValue;
-      }
-
-      if (RowNumber < 0 || RowNumber > End)
-      {
-        MADB_SetError(&Stmt->Error, MADB_ERR_HY109, NULL, 0);
-        return Stmt->Error.ReturnValue;
-      }
-
-      if (Stmt->Options.CursorType == SQL_CURSOR_DYNAMIC)
-        if (!SQL_SUCCEEDED(Stmt->Methods->RefreshDynamicCursor(Stmt)))
-          return Stmt->Error.ReturnValue;
-
-      Stmt->DaeRowNumber= MAX(1,RowNumber);
-      
-      /* Cursor is open, but no row was fetched, so we simulate
-         that first row was fetched */
-      if (Stmt->Cursor.Position < 0)
-        Stmt->Cursor.Position= 1;
-
-      if (RowNumber)
-        Start= End= Stmt->Cursor.Position + RowNumber -1;
-      else
-      {
-        Start= Stmt->Cursor.Position;
-        /* TODO: if num_rows returns 1, End is 0? Start would be 1, no */
-        End= MIN(mysql_stmt_num_rows(Stmt->stmt)-1, Start + Stmt->Ard->Header.ArraySize - 1);
-      }
-      /* Stmt->ArrayOffset will be incremented in StmtExecute() */
-      Start+= Stmt->ArrayOffset;
-
-      /* TODO: SQL_ATTR_ROW_STATUS_PTR should be filled */
-      while (Start <= End)
-      {
-        SQLSMALLINT param= 0, column;
-        MADB_StmtDataSeek(Stmt, Start);
-        Stmt->Methods->RefreshRowPtrs(Stmt);
-        
-        /* We don't need to prepare the statement, if SetPos was called
-           from SQLParamData() function */
-        if (!ArrayOffset)
-        {
-          if (!SQL_SUCCEEDED(MADB_DaeStmt(Stmt, SQL_UPDATE)))
-          {
-            MADB_SETPOS_AGG_RESULT(result, Stmt->Error.ReturnValue);
-            /* Moving to the next row */
-            Stmt->DaeRowNumber++;
-            Start++;
-
-            continue;
-          }
-
-          for(column= 0; column < MADB_STMT_COLUMN_COUNT(Stmt); ++column)
-          {
-            SQLLEN          *LengthPtr= NULL;
-            my_bool         GetDefault= FALSE;
-            MADB_DescRecord *Rec=       MADB_DescGetInternalRecord(Stmt->Ard, column, MADB_DESC_READ);
-
-            /* TODO: shouldn't here be IndicatorPtr? */
-            if (Rec->OctetLengthPtr)
-              LengthPtr= GetBindOffset(Stmt->Ard, Rec, Rec->OctetLengthPtr, Stmt->DaeRowNumber > 1 ? Stmt->DaeRowNumber - 1 : 0, sizeof(SQLLEN)/*Rec->OctetLength*/);
-            if (!Rec->inUse ||
-                (LengthPtr && *LengthPtr == SQL_COLUMN_IGNORE))
-            {
-              GetDefault= TRUE;
-              continue;
-            }
-            
-            /* TODO: Looks like this whole thing is not really needed. Not quite clear if !InUse should result in going this way */
-            if (GetDefault)
-            {
-              SQLLEN Length= 0;
-              /* set a default value */
-              if (Stmt->Methods->GetData(Stmt, column + 1, SQL_C_CHAR, NULL, 0, &Length, TRUE) != SQL_ERROR && Length)
-              {
-                MADB_FREE(Rec->DefaultValue);
-                if (Length > 0) 
-                {
-                  Rec->DefaultValue= (char *)MADB_CALLOC(Length + 1);
-                  Stmt->Methods->GetData(Stmt, column + 1, SQL_C_CHAR, Rec->DefaultValue, Length+1, 0, TRUE);
-                }
-                Stmt->DaeStmt->Methods->BindParam(Stmt->DaeStmt, param + 1, SQL_PARAM_INPUT, SQL_CHAR, SQL_C_CHAR, 0, 0,
-                              Rec->DefaultValue, Length, NULL);
-                ++param;
-                continue;
-              }
-            }
-
-            if (!GetDefault)
-            {
-              Stmt->DaeStmt->Methods->BindParam(Stmt->DaeStmt, param + 1, SQL_PARAM_INPUT, Rec->ConciseType, Rec->Type,
-                      Rec->DisplaySize, Rec->Scale,
-                      GetBindOffset(Stmt->Ard, Rec, Rec->DataPtr, Stmt->DaeRowNumber > 1 ? Stmt->DaeRowNumber -1 : 0, Rec->OctetLength),
-                      Rec->OctetLength, LengthPtr);
-            }
-            if (PARAM_IS_DAE(LengthPtr) && !DAE_DONE(Stmt->DaeStmt))
-            {
-              Stmt->Status= SQL_NEED_DATA;
-              ++param;
-              continue;
-            }
-
-            ++param;
-          }                             /* End of for(column=0;...) */
-          if (Stmt->Status == SQL_NEED_DATA)
-            return SQL_NEED_DATA;
-        }                               /* End of if (!ArrayOffset) */ 
-        
-        if (Stmt->DaeStmt->Methods->Execute(Stmt->DaeStmt, FALSE) != SQL_ERROR)
-        {
-          Stmt->AffectedRows+= Stmt->DaeStmt->AffectedRows;
-        }
-        else
-        {
-          MADB_CopyError(&Stmt->Error, &Stmt->DaeStmt->Error);
-        }
-
-        MADB_SETPOS_AGG_RESULT(result, Stmt->DaeStmt->Error.ReturnValue);
-
-        Stmt->DaeRowNumber++;
-        Start++;
-      }                                 /* End of while (Start <= End) */
-
-      Stmt->Methods->StmtFree(Stmt->DaeStmt, SQL_DROP);
-      Stmt->DaeStmt= NULL;
-      Stmt->DataExecutionType= MADB_DAE_NORMAL;
-
-      /* Making sure we do not return initial value */
-      return result ==  SQL_INVALID_HANDLE ? SQL_SUCCESS :result;
+      // TODO(PLAT-5080): Support positioned updates.
+      MADB_SetError(&Stmt->Error, MADB_ERR_HYC00, "UPDATE clause is not supported for a positioned command", 0);
+      return Stmt->Error.ReturnValue;
     }
   case SQL_DELETE:
     {

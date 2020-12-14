@@ -257,7 +257,6 @@ ODBC_TEST(sqlchar)
   FAIL_IF(SQLFetch(hstmt1)!= SQL_NO_DATA_FOUND, "eof expected");
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(hstmt1, SQL_DROP));
-  is_num(SQLFreeHandle(SQL_HANDLE_STMT, hstmt1), SQL_INVALID_HANDLE);
 
   CHECK_DBC_RC(hdbc1, SQLDisconnect(hdbc1));
   CHECK_DBC_RC(hdbc1, SQLFreeConnect(hdbc1));
@@ -386,20 +385,16 @@ ODBC_TEST(sqlsetcursorname)
   /* create new statement handle */
   CHECK_DBC_RC(hdbc1, SQLAllocHandle(SQL_HANDLE_STMT, hdbc1, &hstmt_pos));
 
-  /* now update the name field to 'updated' using positioned cursor */
-  CHECK_STMT_RC(hstmt_pos,
+  EXPECT_STMT(hstmt_pos,
           SQLExecDirectW(hstmt_pos,
                          W(L"UPDATE my_demo_cursor SET name='updated' "
-                           L"WHERE CURRENT OF a\x00e3b"), SQL_NTS));
-
-  CHECK_STMT_RC(hstmt_pos, SQLRowCount(hstmt_pos, &nRowCount));
-  is_num(nRowCount, 1);
+                           L"WHERE CURRENT OF a\x00e3b"), SQL_NTS), SQL_ERROR);
 
   CHECK_STMT_RC(hstmt_pos, SQLFreeStmt(hstmt_pos, SQL_CLOSE));
   CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
   /* Now delete 2nd row */
-  OK_SIMPLE_STMT(hstmt1, "SELECT * FROM my_demo_cursor");
+  OK_SIMPLE_STMT(hstmt1, "SELECT * FROM my_demo_cursor ORDER BY id");
 
   /* goto the second row */
   CHECK_STMT_RC(hstmt1, SQLFetchScroll(hstmt1, SQL_FETCH_ABSOLUTE, 2L));
@@ -420,7 +415,7 @@ ODBC_TEST(sqlsetcursorname)
   CHECK_STMT_RC(hstmt_pos, SQLFreeHandle(SQL_HANDLE_STMT, hstmt_pos));
 
   /* Now fetch and verify the data */
-  OK_SIMPLE_STMT(hstmt1, "SELECT * FROM my_demo_cursor");
+  OK_SIMPLE_STMT(hstmt1, "SELECT * FROM my_demo_cursor ORDER BY id");
 
   CHECK_STMT_RC(hstmt1, SQLFetch(hstmt1));
   is_num(my_fetch_int(hstmt1, 1), 0);
@@ -436,7 +431,7 @@ ODBC_TEST(sqlsetcursorname)
 
   CHECK_STMT_RC(hstmt1, SQLFetch(hstmt1));
   is_num(my_fetch_int(hstmt1, 1), 4);
-  IS_STR(my_fetch_str(hstmt1, data, 2), "updated", 7);
+  IS_STR(my_fetch_str(hstmt1, data, 2), "MySQL4", 6);
 
   FAIL_IF(SQLFetch(hstmt1)!= SQL_NO_DATA_FOUND, "eof expected");
 
