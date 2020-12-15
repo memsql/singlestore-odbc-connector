@@ -762,8 +762,8 @@ ODBC_TEST(t_bug55870)
 
   CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
-  CHECK_STMT_RC(hstmt1, SQLColumnPrivileges(hstmt1, my_schema, SQL_NTS, 0, 0, "bug55870",
-                                      SQL_NTS, "c", SQL_NTS));
+  EXPECT_STMT(hstmt1, SQLColumnPrivileges(hstmt1, my_schema, SQL_NTS, 0, 0, "bug55870",
+                                      SQL_NTS, "c", SQL_NTS), SQL_SUCCESS_WITH_INFO);
 
   CHECK_STMT_RC(hstmt1, SQLRowCount(hstmt1, &rowCount));
   is_num(rowCount, my_print_non_format_result(hstmt1));

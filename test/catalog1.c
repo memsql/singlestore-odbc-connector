@@ -223,84 +223,21 @@ ODBC_TEST(my_table_dbs)
 ODBC_TEST(my_colpriv)
 {
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS test_colprev1");
-  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS test_colprev2");
-  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS test_colprev3");
+  OK_SIMPLE_STMT(Stmt, "CREATE TABLE test_colprev1(a INT)");
 
-  OK_SIMPLE_STMT(Stmt, "CREATE TABLE test_colprev1(a INT,b INT,c INT, d INT)");
-  OK_SIMPLE_STMT(Stmt, "CREATE TABLE test_colprev2(a INT,b INT,c INT, d INT)");
-  OK_SIMPLE_STMT(Stmt, "CREATE TABLE test_colprev3(a INT,b INT,c INT, d INT)");
-
-  (void)SQLExecDirect(Stmt, (SQLCHAR *)"DROP USER my_colpriv", SQL_NTS);
-  OK_SIMPLE_STMT(Stmt, "CREATE USER my_colpriv IDENTIFIED BY 's3CureP@wd'");
-
-  OK_SIMPLE_STMT(Stmt, "GRANT SELECT(a,b),INSERT(d),UPDATE(c) ON test_colprev1 TO my_colpriv");
-  OK_SIMPLE_STMT(Stmt, "GRANT SELECT(c,a),UPDATE(a,b) ON test_colprev3 TO my_colpriv");
-
-  OK_SIMPLE_STMT(Stmt, "FLUSH PRIVILEGES");
-
-  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
-
-  CHECK_STMT_RC(Stmt, SQLColumnPrivileges(Stmt,
+  // column_privileges table is not implemented on the engine side, so we expect an empty set here.
+  EXPECT_STMT(Stmt, SQLColumnPrivileges(Stmt,
                                      NULL, SQL_NTS, NULL, SQL_NTS,
                                      (SQLCHAR *)"test_colprev1", SQL_NTS,
-                                     (SQLCHAR *)/*NULL*/"%", SQL_NTS));
-
-  diag("1) Privileges on all columns from test_colprev1");
-  is_num(4, my_print_non_format_result(Stmt));
-
-  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
-
-  CHECK_STMT_RC(Stmt, SQLColumnPrivileges(Stmt,
-                                     NULL, SQL_NTS, NULL, SQL_NTS,
-                                     (SQLCHAR *)"test_colprev1", SQL_NTS,
-                                     (SQLCHAR *)"a", SQL_NTS));
-
-  diag("2) Privileges on column 'a' from test_colprev1");
-  is_num(my_print_non_format_result(Stmt), 1);
+                                     (SQLCHAR *)/*NULL*/"%", SQL_NTS), SQL_SUCCESS_WITH_INFO);
+  CHECK_SQLSTATE(Stmt, "01000");
+  SQLLEN rowCount;
+  CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rowCount));
+  is_num(rowCount, 0);
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-  CHECK_STMT_RC(Stmt, SQLColumnPrivileges(Stmt,
-                                     NULL, SQL_NTS, NULL, SQL_NTS,
-                                     (SQLCHAR *)"test_colprev2", SQL_NTS,
-                                     (SQLCHAR *)"%", SQL_NTS));
-
-  diag("3) Privileges on all columns from test_colprev2");
-  is_num(my_print_non_format_result(Stmt), 0);
-
-  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
-
-  CHECK_STMT_RC(Stmt, SQLColumnPrivileges(Stmt,
-                                     NULL, SQL_NTS, NULL, SQL_NTS,
-                                     (SQLCHAR *)"test_colprev3", SQL_NTS,
-                                     (SQLCHAR *)"%", SQL_NTS));
-
-  diag("4) Privileges on all columns from test_colprev3");
-  is_num(my_print_non_format_result(Stmt), 4);
-
-  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
-
-  CHECK_STMT_RC(Stmt, SQLColumnPrivileges(Stmt,
-                                     NULL, SQL_NTS, NULL, SQL_NTS,
-                                     (SQLCHAR *)"test_%", SQL_NTS,
-                                     (SQLCHAR *)"%", SQL_NTS));
-
- // is_num(my_print_non_format_result(Stmt), 0);
-
-  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
-
-  CHECK_STMT_RC(Stmt, SQLColumnPrivileges(Stmt,
-                                     (SQLCHAR *)"mysql", SQL_NTS, NULL, SQL_NTS,
-                                     (SQLCHAR *)"columns_priv", SQL_NTS,
-                                     NULL, SQL_NTS));
-
-  my_print_non_format_result(Stmt);
-
-  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
-
-  OK_SIMPLE_STMT(Stmt, "DROP USER my_colpriv");
-
-  OK_SIMPLE_STMT(Stmt, "DROP TABLE test_colprev1, test_colprev2, test_colprev3");
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE test_colprev1");
 
   return OK;
 }

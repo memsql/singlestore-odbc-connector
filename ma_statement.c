@@ -3315,7 +3315,7 @@ SQLRETURN MADB_StmtColumnPrivileges(MADB_Stmt *Stmt, char *CatalogName, SQLSMALL
                                     SQLSMALLINT NameLength3, char *ColumnName, SQLSMALLINT NameLength4)
 {
   char StmtStr[1024];
-  char *p;
+  SQLRETURN ret;
 
   MADB_CLEAR_ERROR(&Stmt->Error);
 
@@ -3326,22 +3326,18 @@ SQLRETURN MADB_StmtColumnPrivileges(MADB_Stmt *Stmt, char *CatalogName, SQLSMALL
     return Stmt->Error.ReturnValue;
   }
 
-  p= StmtStr;
-  p+= _snprintf(StmtStr, 1024, "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL as TABLE_SCHEM, TABLE_NAME,"
+  // Currently, the engine does not implement column_privileges table, so we submit a query that returns an empty
+  // result set.
+  _snprintf(StmtStr, 1024, "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL as TABLE_SCHEM, TABLE_NAME,"
                                  "COLUMN_NAME, NULL AS GRANTOR, GRANTEE, PRIVILEGE_TYPE AS PRIVILEGE,"
-                                 "IS_GRANTABLE FROM INFORMATION_SCHEMA.COLUMN_PRIVILEGES WHERE ");
-  if (CatalogName && CatalogName[0])
-    p+= _snprintf(p, 1024 - strlen(StmtStr), "TABLE_SCHEMA LIKE '%s' ", CatalogName);
-  else
-    p+= _snprintf(p, 1024 - strlen(StmtStr), "TABLE_SCHEMA LIKE DATABASE() ");
-  if (TableName && TableName[0])
-    p+= _snprintf(p, 1024 - strlen(StmtStr), "AND TABLE_NAME LIKE '%s' ", TableName);
-  if (ColumnName && ColumnName[0])
-    p+= _snprintf(p, 1024 - strlen(StmtStr), "AND COLUMN_NAME LIKE '%s' ", ColumnName);
-
-   p+= _snprintf(p, 1024 - strlen(StmtStr), "ORDER BY TABLE_SCHEM, TABLE_NAME, COLUMN_NAME, PRIVILEGE");
+                                 "IS_GRANTABLE FROM INFORMATION_SCHEMA.COLUMN_PRIVILEGES WHERE 1=0");
   
-  return Stmt->Methods->ExecDirect(Stmt, StmtStr, (SQLINTEGER)strlen(StmtStr));
+  ret = Stmt->Methods->ExecDirect(Stmt, StmtStr, (SQLINTEGER)strlen(StmtStr));
+  if (SQL_SUCCEEDED(ret))
+  {
+      ret = MADB_SetError(&Stmt->Error, MADB_ERR_01000, "COLUMN_PRIVILEGES is currently not supported, so the empty result is returned.", 0);
+  }
+  return ret;
 }
 /* }}} */
 
