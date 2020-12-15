@@ -24,7 +24,7 @@ ODBC_TEST(scalar_function) {
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE scalar_function(col TEXT)");
 
   OK_SIMPLE_STMT(Stmt, "INSERT INTO scalar_function VALUES('a'), ('abc'), ('asasasas   asdads\n\r ;? asd')");
-  OK_SIMPLE_STMT(Stmt, "SELECT {fn CONCAT({fn UCASE(col)}, RTRIM(LTRIM('  !  '))) } FROM scalar_function ORDER BY col");
+  OK_SIMPLE_STMT(Stmt, "SELECT {fn CONCAT({fn UCASE((col))}, RTRIM((LTRIM('  !  ')))) } FROM scalar_function ORDER BY col");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   IS_STR(my_fetch_str(Stmt, (SQLCHAR*)buffer, 1), "A!", 3);
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
@@ -42,8 +42,8 @@ ODBC_TEST(scalar_function) {
   OK_SIMPLE_STMT(Stmt, "SELECT {fn CONCAT('abc', 'def')}");
   OK_SIMPLE_STMT(Stmt, "SELECT {fn LCASE('AbC')}");
   OK_SIMPLE_STMT(Stmt, "SELECT {fn LEFT('AbC', 1)}");
-  OK_SIMPLE_STMT(Stmt, "SELECT {fn LOCATE('abcabcd', 'abc')}");
-  OK_SIMPLE_STMT(Stmt, "SELECT {fn LOCATE('abcabcd', 'abc', 2)}");
+  OK_SIMPLE_STMT(Stmt, "SELECT {fn LOCATE('abcabcd', (('abc')))}");
+  OK_SIMPLE_STMT(Stmt, "SELECT {fn LOCATE('abcabcd', ('abc'), (2))}");
   OK_SIMPLE_STMT(Stmt, "SELECT {fn LTRIM('    abc')}");
   OK_SIMPLE_STMT(Stmt, "SELECT {fn OCTET_LENGTH('abc')}");
   OK_SIMPLE_STMT(Stmt, "SELECT {fn POSITION('bbabcbb' in 'abc')}")

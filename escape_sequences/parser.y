@@ -505,7 +505,7 @@ lexeme :
 	{
 		$$ = $1;
 	}
-	| OPENING_ROUND_BRACKET lexeme OPENING_ROUND_BRACKET
+	| OPENING_ROUND_BRACKET lexeme CLOSING_ROUND_BRACKET
 	{
 		// "($2)"
 		//
