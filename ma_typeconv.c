@@ -498,6 +498,7 @@ SQLRETURN MADB_Timestamp2Sql(MADB_Stmt *Stmt, MADB_DescRecord *CRec, void* DataP
 
   switch (SqlRec->ConciseType) {
   case SQL_TYPE_DATE:
+  case SQL_DATE:
     if (ts->hour + ts->minute + ts->second + ts->fraction != 0)
     {
       return MADB_SetError(&Stmt->Error, MADB_ERR_22008, "Time fields are nonzero", 0);
@@ -510,6 +511,7 @@ SQLRETURN MADB_Timestamp2Sql(MADB_Stmt *Stmt, MADB_DescRecord *CRec, void* DataP
     tm->day=   ts->day;
     break;
   case SQL_TYPE_TIME:
+  case SQL_TIME:
     if (ts->fraction != 0)
     {
       return MADB_SetError(&Stmt->Error, MADB_ERR_22008, "Fractional seconds fields are nonzero", 0);

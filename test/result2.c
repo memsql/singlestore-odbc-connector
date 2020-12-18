@@ -226,7 +226,7 @@ ODBC_TEST(t_bug39644)
   OK_SIMPLE_STMT(Stmt, "create table t_bug39644(col1 INT, col2 INT,"\
 	            "col3 BIT, col4 BIT)");
 
-  OK_SIMPLE_STMT(Stmt, "insert into t_bug39644 VALUES (5, 0, 1, 0)");
+  OK_SIMPLE_STMT(Stmt, "insert into t_bug39644 VALUES (256, 0, 1, 0)");
 
   /* Do SELECT */
   OK_SIMPLE_STMT(Stmt, "SELECT * from t_bug39644");
@@ -262,8 +262,9 @@ ODBC_TEST(t_bug32821)
   SQLRETURN     rc;
   SQLUINTEGER   b;
   SQLUSMALLINT  c;
-  SQLLEN        a_ind, b_ind, c_ind, i, j, k;
+  SQLLEN        a_ind, b_ind, c_ind, d_ind, e_ind, i, j, k;
   unsigned char a;
+  SQLINTEGER d, e;
 
   SQL_NUMERIC_STRUCT b_numeric;
 
@@ -272,15 +273,17 @@ ODBC_TEST(t_bug32821)
   SQLLEN      sPar= sizeof(SQLUINTEGER);
 
   /* 131071 = 0x1ffff - all 1 for field c*/
-  SQLCHAR * insStmt= (SQLCHAR*)"insert into t_bug32821 values (0,0,0),(1,1,1)\
-                      ,(1,255,131071),(1,258,?)";
+  SQLCHAR * insStmt= (SQLCHAR*)"insert into t_bug32821 values (0,0,0,0x00,0x00),(1,1,1,0x01,0x01)\
+                      ,(1,255,131071,0xff,0x0101),(-1,258,?,0xffff,0xffffff)";
   const unsigned char expected_a[]= {'\0', '\1', '\1', '\1'};
-  const SQLUINTEGER   expected_b[]= {0L, 1L, 255L, 258L};
+  const SQLUINTEGER   expected_b[]= {0L, 1L, 255, 258};
   const SQLUSMALLINT  expected_c[]= {0, 1, 65535, 0};
+  const SQLINTEGER  expected_d[]= {0, 1, 255, 65535};
+  const SQLINTEGER  expected_e[]= {0, 1, 257, 16777215};
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_bug32821");
 
-  OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_bug32821 (a BIT(1), b BIT(16), c BIT(17))");
+  OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_bug32821 (a BIT(1), b BIT(16), c BIT(17), d BLOB, e BINARY(5))");
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
@@ -292,21 +295,25 @@ ODBC_TEST(t_bug32821)
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT a,b,c FROM t_bug32821 order by b");
+  OK_SIMPLE_STMT(Stmt, "SELECT a,b,c,d,e FROM t_bug32821 order by b");
 
   CHECK_STMT_RC( Stmt, SQLBindCol( Stmt, 1, SQL_C_BIT,    &a, 0, &a_ind ) );
   CHECK_STMT_RC( Stmt, SQLBindCol( Stmt, 2, SQL_C_ULONG,  &b, 0, &b_ind ) );
   /*CHECK_STMT_RC( Stmt, SQLBindCol( Stmt, 1, SQL_C_TYPE_DATE,  &d, 0, &b_ind ) );*/
   CHECK_STMT_RC( Stmt, SQLBindCol( Stmt, 3, SQL_C_USHORT, &c, 0, &c_ind ) );
+  CHECK_STMT_RC( Stmt, SQLBindCol( Stmt, 4, SQL_C_LONG, &d, 0, &d_ind ) );
+  CHECK_STMT_RC( Stmt, SQLBindCol( Stmt, 5, SQL_C_LONG, &e, 0, &e_ind ) );
 
   i= 0;
   while( (rc= SQLFetchScroll(Stmt, SQL_FETCH_NEXT, 0)) != SQL_NO_DATA_FOUND)
   {
     diag("testing row #%d", i+1);
-    diag("%d %d %d", a, b, c);
+    diag("%d %d %d %d %d", a, b, c, d, e);
     is_num(a, expected_a[i]);
     is_num(b, expected_b[i]);
     is_num(c, expected_c[i]);
+    is_num(d, expected_d[i]);
+    is_num(e, expected_e[i]);
 
     /*SQLGetData(Stmt, 1, SQL_C_BIT, &a, 0, &a_ind);
     is_num(a, expected_a[i]);

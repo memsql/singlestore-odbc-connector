@@ -1137,11 +1137,11 @@ ODBC_TEST(t_bug67702)
                                       SQL_NTS));
 
   CHECK_STMT_RC(Stmt, SQLExecDirect(Stmt, "INSERT INTO bug67702(id, vc, yesno)"\
-                                      "VALUES (1, 'abcd', 1)", 
+                                      "VALUES (1, 'abcd', 0)",
                                       SQL_NTS));
 
   /* Set parameter values here to make it clearer where each one goes */
-  c1= 0;
+  c1= 1;
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_BIT, 
                                   SQL_BIT, 1, 0, &c1, 0, NULL));
 
@@ -1153,7 +1153,7 @@ ODBC_TEST(t_bug67702)
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 3, SQL_PARAM_INPUT, SQL_C_CHAR,
                                   SQL_VARCHAR, 4, 0, data1, 0, &paramlen));
 
-  c2= 1;
+  c2= 0;
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 4, SQL_PARAM_INPUT, SQL_C_BIT,
                                   SQL_BIT, 1, 0, &c2, 0, NULL));
 
@@ -1163,10 +1163,10 @@ ODBC_TEST(t_bug67702)
                                       "`yesno` = ?", SQL_NTS));
   SQLFreeStmt(Stmt, SQL_CLOSE);
 
-  /* Now check the result of update the bit field should be set to 0 */
+  /* Now check the result of update the bit field should be set to 1 */
   CHECK_STMT_RC(Stmt, SQLExecDirect(Stmt, "SELECT `yesno` FROM `bug67702`", SQL_NTS));
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  FAIL_IF(my_fetch_int(Stmt, 1) != 0, "comparison failed");
+  FAIL_IF(my_fetch_int(Stmt, 1) != c1, "comparison failed");
   
   SQLFreeStmt(Stmt, SQL_CLOSE);
   CHECK_STMT_RC(Stmt, SQLExecDirect(Stmt, "drop table if exists bug67702", SQL_NTS));

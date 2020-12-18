@@ -1138,7 +1138,7 @@ ODBC_TEST(odbc45)
     }
   }
 
-  OK_SIMPLE_STMT(Stmt, "SELECT val FROM odbc45");
+  OK_SIMPLE_STMT(Stmt, "SELECT val FROM odbc45 ORDER BY id");
 
   for (i= 0; i<sizeof(XpctdValue); ++i)
   {
@@ -1234,7 +1234,7 @@ ODBC_TEST(timestruct_param)
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_TIME, SQL_TYPE_TIME, 8, 0, &tp, 0, NULL));
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 2, SQL_PARAM_INPUT, SQL_C_TIME, SQL_TYPE_TIME, 8, 0, &tp, 0, NULL));
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 3, SQL_PARAM_INPUT, SQL_C_TIME, SQL_TYPE_TIME, 8, 0, &tp, 0, NULL));
-  OK_SIMPLE_STMT(Stmt, "SELECT ?, CAST('15:58:33' AS TIME) = ?, {t '15:58:33'} = ?");
+  OK_SIMPLE_STMT(Stmt, "SELECT ? :> TIME, CAST('15:58:33' AS TIME) = ?, {t '15:58:33'} = ?");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 1, SQL_C_TIME, &tr, sizeof(SQL_TIME_STRUCT), NULL));
   is_num(tr.hour, 15);
@@ -1248,7 +1248,7 @@ ODBC_TEST(timestruct_param)
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_TIMESTAMP, SQL_TYPE_TIMESTAMP, 20, 0, &ts, 0, NULL));
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 2, SQL_PARAM_INPUT, SQL_C_TIME, SQL_TYPE_TIME, 8, 0, &tp, 0, NULL));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT 1 FROM DUAL WHERE '2020-04-07 01:28:56'=? AND CAST('15:58:33' AS TIME) = ?");
+  OK_SIMPLE_STMT(Stmt, "SELECT 1 FROM DUAL WHERE ('2020-04-07 01:28:56' :> TIMESTAMP)=? AND CAST('15:58:33' AS TIME) = ?");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 1);
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));

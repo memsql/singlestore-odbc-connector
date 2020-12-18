@@ -1230,6 +1230,42 @@ void ps_fetch_bin(MYSQL_BIND *r_param,
 }
 /* }}} */
 
+/* {{{ ps_fetch_bit */
+static
+void ps_fetch_bit(MYSQL_BIND *r_param,
+                  const MYSQL_FIELD *field,
+                  unsigned char **row)
+{
+    ulong field_length = net_field_length(row);
+    uchar reverseBit[8] = {};
+    // We expect the field_length to be 8, but if (in a very unlikely case) this is not true, let's pick the smallest
+    // 8 bytes from the field or all of them if there are less than 8.
+    ulong curPos = MAX(0, field_length - 8);
+
+    // reverse the BIT value.
+    // we cannot do that in-place because this may be called multiple times and we don't want to re-reverse the value.
+    while(curPos < field_length)
+    {
+        reverseBit[curPos] = *(*row + field_length - curPos - 1);
+        curPos++;
+    }
+
+    uchar *current_pos= reverseBit + r_param->offset, *end= reverseBit + MIN(8, field_length);
+    size_t copylen= 0;
+    if (current_pos < end)
+    {
+        copylen= end - current_pos;
+        if (r_param->buffer_length)
+            memcpy(r_param->buffer, current_pos, MIN(copylen, r_param->buffer_length));
+    }
+    if (copylen < r_param->buffer_length &&
+        (r_param->buffer_type == MYSQL_TYPE_STRING ||
+         r_param->buffer_type == MYSQL_TYPE_JSON))
+        ((char *)r_param->buffer)[copylen]= 0;
+    (*row)+= field_length;
+}
+/* }}} */
+
 /* {{{ _mysqlnd_init_ps_subsystem */
 void mysql_init_ps_subsystem(void)
 {
@@ -1306,9 +1342,9 @@ void mysql_init_ps_subsystem(void)
   mysql_ps_fetch_functions[MYSQL_TYPE_LONG_BLOB].pack_len  = MYSQL_PS_SKIP_RESULT_STR;
   mysql_ps_fetch_functions[MYSQL_TYPE_LONG_BLOB].max_len  = -1;
 
-  mysql_ps_fetch_functions[MYSQL_TYPE_BIT].func  = ps_fetch_bin;
+  mysql_ps_fetch_functions[MYSQL_TYPE_BIT].func  = ps_fetch_bit;
   mysql_ps_fetch_functions[MYSQL_TYPE_BIT].pack_len  = MYSQL_PS_SKIP_RESULT_STR;
-  mysql_ps_fetch_functions[MYSQL_TYPE_BIT].max_len  = -1;
+  mysql_ps_fetch_functions[MYSQL_TYPE_BIT].max_len  = 1;
 
   mysql_ps_fetch_functions[MYSQL_TYPE_VAR_STRING].func    = ps_fetch_string;
   mysql_ps_fetch_functions[MYSQL_TYPE_VAR_STRING].pack_len  = MYSQL_PS_SKIP_RESULT_STR;

@@ -1499,7 +1499,7 @@ void MADB_InitStatusPtr(SQLUSMALLINT *Ptr, SQLULEN Size, SQLSMALLINT InitialValu
 /* {{{ MADB_BinaryFieldType */
 BOOL MADB_BinaryFieldType(SQLSMALLINT FieldType)
 {
-  return FieldType == SQL_BINARY || FieldType == SQL_BIT;
+  return FieldType == SQL_BINARY || FieldType == SQL_VARBINARY || FieldType == SQL_LONGVARBINARY || FieldType == SQL_BIT;
 }
 /* }}} */
 
@@ -1613,6 +1613,13 @@ SQLRETURN MADB_PrepareBind(MADB_Stmt *Stmt, int RowNumber)
         }
       }
       break;
+    case SQL_C_BIT:
+      MADB_FREE(ArdRec->InternalBuffer);
+      ArdRec->InternalBuffer=        (char *)MADB_CALLOC(8);
+      Stmt->result[i].buffer=        ArdRec->InternalBuffer;
+      Stmt->result[i].buffer_length= 8;
+      Stmt->result[i].buffer_type=   MYSQL_TYPE_LONGLONG;
+      break;
     case SQL_C_TINYINT:
     case SQL_C_UTINYINT:
     case SQL_C_STINYINT:
@@ -1629,9 +1636,9 @@ SQLRETURN MADB_PrepareBind(MADB_Stmt *Stmt, int RowNumber)
         /* To keep things simple - we will use internal buffer of the column size, and later(in the MADB_FixFetchedValues) will copy (correct part of)
            it to the application's buffer taking care of endianness. Perhaps it'd be better just not to support this type of conversion */
         MADB_FREE(ArdRec->InternalBuffer);
-        ArdRec->InternalBuffer=        (char *)MADB_CALLOC(IrdRec->OctetLength);
+        ArdRec->InternalBuffer=        (char *)MADB_CALLOC(MIN(IrdRec->OctetLength, ArdRec->OctetLength));
         Stmt->result[i].buffer=        ArdRec->InternalBuffer;
-        Stmt->result[i].buffer_length= (unsigned long)IrdRec->OctetLength;
+        Stmt->result[i].buffer_length= (unsigned long)MIN(IrdRec->OctetLength, ArdRec->OctetLength);
         Stmt->result[i].buffer_type=   MYSQL_TYPE_BLOB;
         break;
       }
@@ -1731,11 +1738,9 @@ SQLRETURN MADB_FixFetchedValues(MADB_Stmt *Stmt, int RowNumber, MYSQL_ROW_OFFSET
         {
         case SQL_C_BIT:
         {
-          char *p= (char *)Stmt->result[i].buffer;
-          if (p)
-          {
-            *p= test(*p != '\0');
-          }
+          unsigned long long *p= (unsigned long long *)Stmt->result[i].buffer;
+          memset(DataPtr, 0, ArdRec->OctetLength);
+          *(char*)DataPtr = (char)(*p != 0);
         }
         break;
         case SQL_C_TYPE_TIMESTAMP:
@@ -1877,34 +1882,33 @@ SQLRETURN MADB_FixFetchedValues(MADB_Stmt *Stmt, int RowNumber, MYSQL_ROW_OFFSET
             {
               if (Stmt->result[i].buffer_length >= (unsigned long)ArdRec->OctetLength)
               {
-                if (LittleEndian())
+                if (!LittleEndian())
                 {
-                  /* We currently got the bigendian number. If we or littleendian machine, we need to switch bytes */
-                  SwitchEndianness((char*)Stmt->result[i].buffer + Stmt->result[i].buffer_length - ArdRec->OctetLength,
+                  /* We currently got the little-endian number. If we or big-endian machine, we need to switch bytes */
+                  SwitchEndianness((char*)Stmt->result[i].buffer,
                     ArdRec->OctetLength,
                     (char*)DataPtr,
                     ArdRec->OctetLength);
                 }
                 else
                 {
-                  memcpy(DataPtr, (void*)((char*)Stmt->result[i].buffer + Stmt->result[i].buffer_length - ArdRec->OctetLength), ArdRec->OctetLength);
+                  memcpy(DataPtr, Stmt->result[i].buffer, ArdRec->OctetLength);
                 }
               }
               else
               {
                 /* We won't write to the whole memory pointed by DataPtr, thus to need to zerofill prior to that */
                 memset(DataPtr, 0, ArdRec->OctetLength);
-                if (LittleEndian())
+                if (!LittleEndian())
                 {
                   SwitchEndianness((char*)Stmt->result[i].buffer,
                     Stmt->result[i].buffer_length,
-                    (char*)DataPtr,
+                    (char*)DataPtr + ArdRec->OctetLength - Stmt->result[i].buffer_length,
                     ArdRec->OctetLength);
                 }
                 else
                 {
-                  memcpy((void*)((char*)DataPtr + ArdRec->OctetLength - Stmt->result[i].buffer_length),
-                    Stmt->result[i].buffer, Stmt->result[i].buffer_length);
+                  memcpy(DataPtr, Stmt->result[i].buffer, Stmt->result[i].buffer_length);
                 }
               }
               *LengthPtr= *Stmt->stmt->bind[i].length;
