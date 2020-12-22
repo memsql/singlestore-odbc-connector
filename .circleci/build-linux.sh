@@ -23,6 +23,12 @@ DEBIAN_FRONTEND=noninteractive sudo apt-get install --allow-unauthenticated -y -
 cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL
 cmake --build . --config ${BUILD_TYPE}
 
+## Export password
+if [ -n "$MEMSQL_PASSWORD" ]
+then
+  export TEST_PASSWORD=$MEMSQL_PASSWORD
+fi
+
 ###################################################################################################################
 # run test suite
 ###################################################################################################################
