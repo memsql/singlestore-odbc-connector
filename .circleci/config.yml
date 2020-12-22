@@ -86,14 +86,20 @@ jobs:
             ./.circleci/build-osx.sh
   build-linux:
     parameters:
+      memsql_password:
+        type: string
+      machine_class:
+        type: string
       memsql_image:
         type: string
       build_type:
         type: string
     machine: true
+    resource_class: << parameters.machine_class >>
     environment:
       BUILD_TYPE: << parameters.build_type >>
       MEMSQL_IMAGE: << parameters.memsql_image >>
+      MEMSQL_PASSWORD: << parameters.memsql_password >>
       TEST_DRIVER: singlestore_test
       TEST_DSN: singlestore_test
       TEST_SERVER: singlestore.test.com
@@ -107,11 +113,15 @@ jobs:
       - run:
           name: Setup test cluster
           command: |
-            ./scripts/ensure-test-memsql-cluster.sh
+            if [ "$MEMSQL_PASSWORD" = "" ]
+            then
+              ./scripts/ensure-test-memsql-cluster.sh
+            else
+              ./scripts/ensure-test-memsql-cluster-password.sh
+            fi
       - run:
           name: Create test database
-          command: |
-            mysql -h 127.0.0.1 -u root -P 5506 -e "create database test;"
+          command: ./create-database.sh
       - run:
           name: Run tests
           command: |
@@ -143,10 +153,24 @@ workflows:
       - build-linux:
           matrix:
             parameters:
+              machine_class:
+                - medium
+              memsql_password:
+                - ""
               build_type:
                 - RelWithDebInfo
               memsql_image:
-                - memsql/cluster-in-a-box:centos-7.1.12-4ee69e2d18-2.0.4-1.8.1
                 - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
                 - memsql/cluster-in-a-box:centos-6.8.15-029542cbf3-1.9.3-1.4.1
-                - memsql/cluster-in-a-box:6.7.18-db1caffe94-1.6.1-1.1.1
+      - build-linux:
+          matrix:
+            parameters:
+              machine_class:
+                - large
+              memsql_password:
+                - password
+              build_type:
+                - RelWithDebInfo
+              memsql_image:
+                - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
+                - memsql/cluster-in-a-box:centos-7.1.13-11ddea2a3a-3.0.0-1.9.3
