@@ -121,11 +121,10 @@ jobs:
             fi
       - run:
           name: Create test database
-          command: ./create-database.sh
+          command: ./.circleci/create-database.sh
       - run:
           name: Run tests
-          command: |
-            ./.circleci/build-linux.sh
+          command: ./.circleci/build-linux.sh
 
 workflows:
   test:
