@@ -829,6 +829,27 @@ SQLRETURN MADB_DbcConnectDB(MADB_Dbc *Connection,
   if (mysql_autocommit(Connection->mariadb, (my_bool)Connection->AutoCommit))
     goto err;
 
+  if (!Dsn->CompatMode) {
+    MYSQL_RES *result;
+    MYSQL_ROW row;
+    const char *StmtString= "SELECT @@memsql_version";
+
+    LOCK_MARIADB(Connection);
+    if (mysql_query(Connection->mariadb, StmtString))
+    {
+      UNLOCK_MARIADB(Connection);
+      return MADB_SetNativeError(&Connection->Error, SQL_HANDLE_DBC, Connection->mariadb);
+    }
+    result= mysql_store_result(Connection->mariadb);
+    UNLOCK_MARIADB(Connection);
+    if ((row = mysql_fetch_row(result)))
+    {
+      char* ss_version = (char*) row[0];
+      mysql_optionsv(Connection->mariadb, MYSQL_SS_VERSION, ss_version);
+    }
+    mysql_free_result(result);
+  }
+
   /* Set isolation level */
   if (Connection->IsolationLevel)
     for (i=0; i < 4; i++)
@@ -1192,17 +1213,16 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
   case SQL_DBMS_NAME:
     // TODO: revisit this section (and everything related to name and versioning) when we decide what should be reported.
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
-                                     Dbc->mariadb ? (char *)mysql_get_server_name(Dbc->mariadb) : "MySQL",
+                                      !Dbc->Dsn->CompatMode ? "SingleStore" : "MySQL",
                                      SQL_NTS, &Dbc->Error);
     break;
   case SQL_DBMS_VER:
     {
       char Version[13];
       unsigned long ServerVersion= 0L;
-      
       if (Dbc->mariadb)
       {
-        ServerVersion= mysql_get_server_version(Dbc->mariadb);
+        ServerVersion = !Dbc->Dsn->CompatMode ? single_store_get_server_version(Dbc->mariadb) : mysql_get_server_version(Dbc->mariadb);
         // TODO: revisit this section (and everything related to name and versioning) when we decide what should be reported.
         if (ServerVersion < 50600)
         {

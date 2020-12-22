@@ -54,7 +54,7 @@ void MADB_SetCapabilities(MADB_Dbc *Dbc, unsigned long ServerVersion)
 
 BOOL MADB_ServerSupports(MADB_Dbc *Dbc, char Capability)
 {
-  return test(Dbc->ServerCapabilities & Capability);
+  return FALSE;
 }
 /* }}} */
 

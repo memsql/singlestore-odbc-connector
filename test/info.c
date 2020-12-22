@@ -252,7 +252,126 @@ ODBC_TEST(t_bug3780)
   return OK;
 }
 
+#define SS_NAME_LEN 64
 
+ODBC_TEST(compat_mode_on_test)
+{
+    SQLHENV env1;
+    SQLHDBC dbc1;
+    SQLHSTMT statement1;
+    SQLCHAR ss_version_str[10];
+    SQLCHAR   conn[512];
+    SQLCHAR   dbmsName[MAX_NAME_LEN];
+    SQLSMALLINT dbmsNameInfo, versionInfo;
+    SQLCHAR server_version[SS_NAME_LEN+1];
+    char compat_mode[18]= "COMPAT_MODE=1";
+
+    sprintf((char *)conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;%s;%s;%s",
+            my_drivername, my_servername, my_uid, my_pwd, ma_strport, compat_mode, add_connstr);
+    diag(conn);
+
+    IS(mydrvconnect(&env1, &dbc1, &statement1, conn) == OK);
+
+    CHECK_DBC_RC(dbc1, SQLGetInfo(dbc1, SQL_DBMS_NAME, dbmsName,
+                                         MAX_NAME_LEN, &dbmsNameInfo));
+
+    is_num(dbmsNameInfo, 5);
+    IS_STR(dbmsName, "MySQL", dbmsNameInfo);
+
+    CHECK_DBC_RC(dbc1, SQLGetInfo(dbc1, SQL_DBMS_VER, server_version,
+                                         SS_NAME_LEN, &versionInfo));
+
+    OK_SIMPLE_STMT(Stmt, "SELECT @@version");
+    CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+    my_fetch_str(Stmt, ss_version_str, 1);
+
+    ODBC_Disconnect(env1, dbc1, statement1);
+
+    size_t major, minor, patch, ss_version_int;
+    char ss_version[13];
+    char *p;
+
+    FAIL_IF(!(p = ss_version_str), "Value should be assigned")
+
+    major = strtol(p, &p, 10);
+    p += 1; /* consume the dot */
+    minor = strtol(p, &p, 10);
+    p += 1; /* consume the dot */
+    patch = strtol(p, &p, 10);
+
+    ss_version_int = major * 10000L + (unsigned long)(minor * 100L + patch);
+    if (ss_version_int < 50600)
+    {
+        ss_version_int = 50600;
+    }
+    _snprintf(ss_version, sizeof(ss_version), "%02u.%02u.%06u", ss_version_int / 10000,
+              (ss_version_int % 10000) / 100, ss_version_int % 100);
+
+    IS_STR(ss_version, server_version, strlen(ss_version));
+
+    return OK;
+}
+
+ODBC_TEST(compat_mode_off_test)
+{
+    SQLHENV env1;
+    SQLHDBC dbc1;
+    SQLHSTMT statement1;
+    SQLCHAR ss_version_str[10];
+    SQLCHAR   conn[2][512];
+    SQLCHAR   dbmsName[MAX_NAME_LEN];
+    SQLSMALLINT dbmsNameInfo, versionInfo;
+    SQLCHAR server_version[SS_NAME_LEN+1];
+    char compat_mode[18]= "COMPAT_MODE=0";
+    int i;
+    sprintf((char *)conn[0], "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;%s;%s;%s",
+            my_drivername, my_servername, my_uid, my_pwd, ma_strport, compat_mode, add_connstr);
+    sprintf((char *)conn[1], "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;%s;%s",
+            my_drivername, my_servername, my_uid, my_pwd, ma_strport, add_connstr);
+    /*
+     * Test without `COMPAT_MODE`(default) and with `COMPAT_MODE=0`
+     */
+    for (i = 0; i < 2; i++) {
+        diag(conn[i]);
+
+        IS(mydrvconnect(&env1, &dbc1, &statement1, conn[i]) == OK);
+
+        CHECK_DBC_RC(dbc1, SQLGetInfo(dbc1, SQL_DBMS_NAME, dbmsName,
+                                      MAX_NAME_LEN, &dbmsNameInfo));
+
+        is_num(dbmsNameInfo, 11);
+        IS_STR(dbmsName, "SingleStore", dbmsNameInfo);
+
+        CHECK_DBC_RC(dbc1, SQLGetInfo(dbc1, SQL_DBMS_VER, server_version,
+                                      SS_NAME_LEN, &versionInfo));
+
+        OK_SIMPLE_STMT(Stmt, "SELECT @@memsql_version");
+        CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+        my_fetch_str(Stmt, ss_version_str, 1);
+
+        ODBC_Disconnect(env1, dbc1, statement1);
+
+        size_t major, minor, patch, ss_version_int;
+        char ss_version[13];
+        char *p;
+
+        FAIL_IF(!(p = ss_version_str), "Value should be assigned")
+
+        major = strtol(p, &p, 10);
+        p += 1; /* consume the dot */
+        minor = strtol(p, &p, 10);
+        p += 1; /* consume the dot */
+        patch = strtol(p, &p, 10);
+
+        ss_version_int = major * 10000L + (unsigned long)(minor * 100L + patch);
+        _snprintf(ss_version, sizeof(ss_version), "%02u.%02u.%06u", ss_version_int / 10000,
+                  (ss_version_int % 10000) / 100, ss_version_int % 100);
+
+        IS_STR(ss_version, server_version, strlen(ss_version));
+    }
+
+    return OK;
+}
 /*
   Bug#16653
   MyODBC 3 / truncated UID when performing Data Import in MS Excel
@@ -796,6 +915,8 @@ MA_ODBC_TESTS my_tests[]=
   { t_bug14639, "t_bug14639", NORMAL },
   { t_bug31055, "t_bug31055", NORMAL },
   { t_bug3780, "t_bug3780", NORMAL },
+  { compat_mode_on_test, "compat_mode_on_test", NORMAL },
+  { compat_mode_off_test, "compat_mode_off_test", NORMAL },
   { t_bug16653, "t_bug16653", NORMAL },
   { t_bug30626, "t_bug30626", NORMAL },
   { t_bug43855, "t_bug43855", NORMAL },

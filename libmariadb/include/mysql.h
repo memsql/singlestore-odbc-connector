@@ -217,6 +217,7 @@ extern const char *SQLSTATE_UNKNOWN;
     MYSQL_OPT_MAX_ALLOWED_PACKET,
     MYSQL_OPT_NET_BUFFER_LENGTH,
     MYSQL_OPT_TLS_VERSION,
+    MYSQL_SS_VERSION,
 
     /* MariaDB specific */
     MYSQL_PROGRESS_CALLBACK=5999,
@@ -338,6 +339,7 @@ struct st_mysql_options {
     void  *unused_0;
     char *host,*user,*passwd,*unix_socket,*server_version,*host_info;
     char *info,*db;
+    char *ss_version;
     const struct ma_charset_info_st *charset;      /* character set */
     MYSQL_FIELD *fields;
     MA_MEM_ROOT field_alloc;
@@ -552,6 +554,7 @@ int		STDCALL mysql_kill(MYSQL *mysql,unsigned long pid);
 int		STDCALL mysql_ping(MYSQL *mysql);
 char *		STDCALL mysql_stat(MYSQL *mysql);
 char *		STDCALL mysql_get_server_info(MYSQL *mysql);
+unsigned long   STDCALL single_store_get_server_version(MYSQL *mysql);
 unsigned long   STDCALL mysql_get_server_version(MYSQL *mysql);
 char *		STDCALL mysql_get_host_info(MYSQL *mysql);
 unsigned int	STDCALL mysql_get_proto_info(MYSQL *mysql);

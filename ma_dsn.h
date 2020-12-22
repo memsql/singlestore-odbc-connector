@@ -138,6 +138,7 @@ typedef struct st_madb_dsn
   my_bool ReadMycnf;
   my_bool InteractiveClient;
   my_bool ForceForwardOnly;
+  my_bool CompatMode;
   /* --- Internal --- */
   int isPrompt;
   MADB_DsnKey *Keys;

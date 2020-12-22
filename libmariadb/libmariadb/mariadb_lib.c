@@ -2801,6 +2801,24 @@ mysql_get_server_info(MYSQL *mysql)
   return((char*) mysql->server_version);
 }
 
+static size_t single_store_server_version_id(MYSQL *mysql)
+{
+    size_t major, minor, patch;
+    char *p;
+
+    if (!(p = mysql->ss_version)) {
+        return 0;
+    }
+
+    major = strtol(p, &p, 10);
+    p += 1; /* consume the dot */
+    minor = strtol(p, &p, 10);
+    p += 1; /* consume the dot */
+    patch = strtol(p, &p, 10);
+
+    return (major * 10000L + (unsigned long)(minor * 100L + patch));
+}
+
 static size_t mariadb_server_version_id(MYSQL *mysql)
 {
   size_t major, minor, patch;
@@ -2817,6 +2835,11 @@ static size_t mariadb_server_version_id(MYSQL *mysql)
   patch = strtol(p, &p, 10);
 
   return (major * 10000L + (unsigned long)(minor * 100L + patch));
+}
+
+unsigned long STDCALL single_store_get_server_version(MYSQL *mysql)
+{
+    return (unsigned long)single_store_server_version_id(mysql);
 }
 
 unsigned long STDCALL mysql_get_server_version(MYSQL *mysql)
@@ -2926,6 +2949,9 @@ mysql_optionsv(MYSQL *mysql,enum mysql_option option, ...)
     break;
   case MYSQL_OPT_PROTOCOL:
     mysql->options.protocol= *((uint *)arg1);
+    break;
+  case MYSQL_SS_VERSION:
+    mysql->ss_version= (char *)arg1;
     break;
 #ifdef _WIN32
   case MYSQL_SHARED_MEMORY_BASE_NAME:
