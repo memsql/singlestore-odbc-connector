@@ -133,6 +133,9 @@ jobs:
         type: string
     docker:
       - image: centos8
+        auth:
+          username: sometesttiiid
+          password: $DOCKERHUB_PASSWORD
     environment:
       BUILD_TYPE: << parameters.build_type >>
       MEMSQL_IMAGE: << parameters.memsql_image >>
