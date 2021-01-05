@@ -162,25 +162,22 @@ jobs:
       MEMSQL_IMAGE: << parameters.memsql_image >>
       TEST_DRIVER: singlestore_test
       TEST_DSN: singlestore_test
-      TEST_SERVER: singlestore.test.com
       TEST_SCHEMA: test
-      TEST_UID: root
-      TEST_PORT: 5506
       CONTINUOUS_INTEGRATION: true
     steps:
+      - run:
+          name: Define Environment Variables
+          command: |
+            echo 'export TEST_SERVER=$MEMSQL_HOST' >> $BASH_ENV
+            echo 'export TEST_UID=$MEMSQL_USER' >> $BASH_ENV
+            echo 'export TEST_PORT=$MEMSQL_PORT' >> $BASH_ENV
+            echo 'export TEST_PASSWORD=$MEMSQL_PASSWORD' >> $BASH_ENV
+            source $BASH_ENV
       - setup-environment-centos
-      - setup-docker-centos
       - checkout
       - run:
-          name: Setup test cluster
-          command: |
-              ./scripts/ensure-test-memsql-cluster.sh
-      - run:
-          name: Create test database
-          command: ./.circleci/create-database.sh
-      - run:
           name: Run tests
-          command: ./.circleci/build-linux.sh
+          command: ./.circleci/build-centos.sh
 
 workflows:
   test:
