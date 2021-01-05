@@ -121,7 +121,7 @@ jobs:
       TEST_PORT: 5506
       CONTINUOUS_INTEGRATION: true
     steps:
-      - ./.circleci/setup-environment-linux.sh
+      - ./.circleci/setup-environment-docker.sh
       - checkout
       - run:
           name: Setup test cluster
@@ -150,6 +150,7 @@ jobs:
           username: sometesttiiid
           password: $DOCKERHUB_PASSWORD
     environment:
+      IMAGE_NAME: << parameters.os_version >>
       BUILD_TYPE: << parameters.build_type >>
       TEST_DRIVER: singlestore_test
       TEST_DSN: singlestore_test
@@ -167,7 +168,7 @@ jobs:
       - checkout
       - run:
           name: Setup Environment
-          command: ./.circleci/setup-environment-linux.sh
+          command: ./.circleci/setup-environment-docker.sh
       - run:
           name: Run tests
           command: ./.circleci/build-docker.sh
