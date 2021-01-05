@@ -24,7 +24,7 @@ commands:
             yum install curl
             yum install mysql
             yum install unixODBC
-            yum install -y unixODBC-devel
+            yum -y install unixODBC-devel
 
   setup-environment-macos:
     description: "Setup the macos environment"
