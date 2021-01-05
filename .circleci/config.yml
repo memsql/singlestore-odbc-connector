@@ -132,9 +132,9 @@ jobs:
       build_type:
         type: string
     docker:
-      - image: centos8
+      - image: circleci/golang:1.15
         auth:
-          username: sometesttiiid
+          username: mydockerhub-user
           password: $DOCKERHUB_PASSWORD
     environment:
       BUILD_TYPE: << parameters.build_type >>
@@ -147,6 +147,9 @@ jobs:
       TEST_PORT: 5506
       CONTINUOUS_INTEGRATION: true
     steps:
+      - run:
+          name: Install Docker client
+          command: apk add docker-cli
       - setup-environment-linux
       - checkout
       - run:
