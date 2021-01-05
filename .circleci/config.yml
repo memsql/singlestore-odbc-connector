@@ -21,9 +21,9 @@ commands:
           name: Setup Machine
           command: |
             yum update
-            yum install curl
-            yum install mysql
-            yum install unixODBC
+            yum -y install curl
+            yum -y install mysql
+            yum -y install unixODBC
             yum -y install unixODBC-devel
 
   setup-environment-macos:
