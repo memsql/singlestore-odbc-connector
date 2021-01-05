@@ -132,7 +132,7 @@ jobs:
       build_type:
         type: string
     docker:
-      - image: centos8
+      - image: centos
         auth:
           username: sometesttiiid
           password: $DOCKERHUB_PASSWORD
