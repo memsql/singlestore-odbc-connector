@@ -15,7 +15,7 @@ New-Item -Path $regPath
 New-ItemProperty -Path $regPath -Name "CONN_TIMEOUT" -Value "0"
 New-ItemProperty -Path $regPath -Name "DATABASE" -Value "test"
 New-ItemProperty -Path $regPath -Name "DESCRIPTION" -Value "MariaDB ODBC test"
-New-ItemProperty -Path $regPath -Name "Driver" -Value "MariaDB ODBC 3.1 Driver"
+New-ItemProperty -Path $regPath -Name "DRIVER" -Value "MariaDB ODBC 3.1 Driver"
 New-ItemProperty -Path $regPath -Name "OPTIONS" -Value "0"
 New-ItemProperty -Path $regPath -Name "PORT" -Value $ENV:MEMSQL_PORT
 New-ItemProperty -Path $regPath -Name "PWD" -Value $ENV:MEMSQL_PASSWORD
@@ -28,7 +28,8 @@ New-ItemProperty -Path "HKCU:\Software\ODBC\ODBC.INI\ODBC Data Sources" -Name "m
 
 refreshenv
 
-msiexec.exe /a c:\Users\circleci\project\wininstall\mariadb-connector-odbc-3.1.10-win64.msi TARGETDIR="C:\maria-odbc" /qn
+$msifile = Get-ChildItem C:\Users\circleci\project\wininstall\mariadb-connector-odbc*.msi | Select-Object -First 1
+msiexec.exe /i $msifile INSTALLDIR="C:\mariadb-odbc" /qn
 
 $oldpath = (Get-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).path
 $newpath = "$oldpath;C:\maria-odbc\MariaDB\MariaDB ODBC Driver 64-bit"
