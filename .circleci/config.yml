@@ -24,17 +24,9 @@ commands:
             yum -y install curl
             yum -y install mysql
             yum -y install git
+            yum -y install cmake
             yum -y install unixODBC
             yum -y install unixODBC-devel
-  setup-docker-centos:
-    description: "Setup docker for centos"
-    steps:
-      - run:
-          name: Setup Docker
-          command: |
-            yum install -y yum-utils device-mapper-persistent-data lvm2
-            yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-            yum install -y docker
   setup-environment-macos:
     description: "Setup the macos environment"
     steps:
