@@ -169,6 +169,7 @@ jobs:
       CONTINUOUS_INTEGRATION: true
     steps:
       - setup-environment-centos
+      - setup-docker-centos
       - checkout
       - run:
           name: Setup test cluster
