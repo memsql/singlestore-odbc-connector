@@ -14,7 +14,7 @@ else
   apt-get install -y mysql-client-core-5.5
   apt-get install -y unixodbc odbcinst
   apt-get install -y unixodbc-dev
-  apt-get install build-essential
+  apt-get install -y build-essential
   apt-get install --allow-unauthenticated -y --force-yes -m unixodbc-dev odbcinst1debian2 libodbc1
   apt-get clean
 fi
