@@ -143,9 +143,9 @@ jobs:
           command: |
             if [ "IMAGE_NAME" == centos* ]
             then
-              ./circleci/setup-environment-centos.sh
+              ./.circleci/setup-environment-centos.sh
             else
-              ./circleci/setup-environment-debian.sh
+              ./.circleci/setup-environment-debian.sh
             fi
       - checkout
       - run:
