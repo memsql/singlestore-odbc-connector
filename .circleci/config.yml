@@ -25,8 +25,8 @@ commands:
             yum -y install mysql
             yum -y install git
             yum -y install gcc gcc-c++
-            yum -y install make
-            yum -y install cmake
+            yum -y install make cmake
+            yum -y install openssl
             yum -y install unixODBC
             yum -y install unixODBC-devel
   setup-environment-macos:
