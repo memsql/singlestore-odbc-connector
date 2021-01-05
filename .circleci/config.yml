@@ -1,34 +1,5 @@
 version: 2.1
 commands:
-  setup-environment-linux:
-    description: "Setup the linux environment"
-    steps:
-      - run:
-          name: Setup Machine
-          command: |
-            sudo apt update
-            sudo apt install -y curl
-            sudo apt-get update
-            sudo apt-get install -y mysql-client-core-5.5
-            sudo apt-get install unixodbc odbcinst
-            sudo apt-get install unixodbc-dev
-            sudo apt-get install --allow-unauthenticated -y --force-yes -m unixodbc-dev odbcinst1debian2 libodbc1
-            sudo apt-get clean
-  setup-environment-centos:
-    description: "Setup the centos environment"
-    steps:
-      - run:
-          name: Setup Machine
-          command: |
-            yum update
-            yum -y install curl
-            yum -y install mysql
-            yum -y install git
-            yum -y install gcc gcc-c++
-            yum -y install make cmake
-            yum -y install openssl
-            yum -y install unixODBC
-            yum -y install unixODBC-devel
   setup-environment-macos:
     description: "Setup the macos environment"
     steps:
@@ -123,7 +94,7 @@ jobs:
       TEST_PORT: 5506
       CONTINUOUS_INTEGRATION: true
     steps:
-      - setup-environment-linux
+      - ./.circleci/setup-environment-linux.sh
       - checkout
       - run:
           name: Setup test cluster
@@ -140,20 +111,20 @@ jobs:
       - run:
           name: Run tests
           command: ./.circleci/build-linux.sh
-  build-centos:
+  build-docker:
     parameters:
-      memsql_image:
+      os_version:
         type: string
       build_type:
         type: string
     docker:
-      - image: centos
+      - image: << parameters.os_version >>
         auth:
           username: sometesttiiid
           password: $DOCKERHUB_PASSWORD
     environment:
+      IMAGE_NAME: << parameters.os_version >>
       BUILD_TYPE: << parameters.build_type >>
-      MEMSQL_IMAGE: << parameters.memsql_image >>
       TEST_DRIVER: singlestore_test
       TEST_DSN: singlestore_test
       TEST_SCHEMA: test
@@ -167,11 +138,19 @@ jobs:
             echo 'export TEST_PORT=$MEMSQL_PORT' >> $BASH_ENV
             echo 'export TEST_PASSWORD=$MEMSQL_PASSWORD' >> $BASH_ENV
             source $BASH_ENV
-      - setup-environment-centos
+      - run:
+          name: Setup Environment
+          command: |
+            if [ "IMAGE_NAME" == centos* ]
+            then
+              ./circleci/setup-environment-centos.sh
+            else
+              ./circleci/setup-environment-debian.sh
+            fi
       - checkout
       - run:
           name: Run tests
-          command: ./.circleci/build-centos.sh
+          command: ./.circleci/build-docker.sh
 
 workflows:
   test:
@@ -219,10 +198,19 @@ workflows:
 #              memsql_image:
 #                - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
 #                - memsql/cluster-in-a-box:centos-7.1.13-11ddea2a3a-3.0.0-1.9.3
-      - build-centos:
+      - build-docker:
           matrix:
             parameters:
+              os_version:
+                - debian:8
+                - debian:9
               build_type:
                 - RelWithDebInfo
-              memsql_image:
-                - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
+      - build-docker:
+          matrix:
+            parameters:
+              os_version:
+                - centos:centos6
+                - centos:centos7
+              build_type:
+                - RelWithDebInfo
