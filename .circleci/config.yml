@@ -132,9 +132,9 @@ jobs:
       build_type:
         type: string
     docker:
-      - image: circleci/golang:1.15
+      - image: centos8
         auth:
-          username: mydockerhub-user
+          username: sometesttiiid
           password: $DOCKERHUB_PASSWORD
     environment:
       BUILD_TYPE: << parameters.build_type >>
