@@ -17,10 +17,10 @@ commands:
   setup-environment-docker:
     description: "Setup the centos environment"
     parameters:
-      os_version:
+      image:
         type: string
     environment:
-      IMAGE_NAME: << parameters.os_version >>
+      IMAGE_NAME: << parameters.image >>
     steps:
       - run:
           name: Setup Machine
