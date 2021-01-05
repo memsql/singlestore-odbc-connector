@@ -1,5 +1,32 @@
 version: 2.1
 commands:
+  setup-environment-linux:
+    description: "Setup the linux environment"
+    steps:
+      - run:
+          name: Setup Machine
+          command: |
+            sudo apt update
+            sudo apt install -y curl
+            sudo apt-get update
+            sudo apt-get install -y mysql-client-core-5.5
+            sudo apt-get install unixodbc odbcinst
+            sudo apt-get install unixodbc-dev
+            sudo apt-get install --allow-unauthenticated -y --force-yes -m unixodbc-dev odbcinst1debian2 libodbc1
+            sudo apt-get clean
+  setup-environment-centos:
+    description: "Setup the centos environment"
+    steps:
+      - run:
+          name: Setup Machine
+          command: |
+            yum update
+            yum -y install curl
+            yum -y install mysql
+            yum -y install git
+            yum -y install gcc gcc-c++
+            yum -y install make cmake
+            yum -y install unixODBC unixODBC-devel
   setup-environment-macos:
     description: "Setup the macos environment"
     steps:
@@ -143,9 +170,9 @@ jobs:
           command: |
             if [[ $IMAGE_NAME == centos* ]]
             then
-              ./.circleci/setup-environment-centos.sh
+              setup-environment-centos
             else
-              ./.circleci/setup-environment-linux.sh
+              setup-environment-linux
             fi
       - checkout
       - run:
