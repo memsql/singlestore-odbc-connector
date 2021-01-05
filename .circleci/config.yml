@@ -24,6 +24,7 @@ commands:
             yum -y install curl
             yum -y install mysql
             yum -y install git
+            yum -y install gcc gcc-c++
             yum -y install cmake
             yum -y install unixODBC
             yum -y install unixODBC-devel
