@@ -14,36 +14,6 @@ commands:
             sudo apt-get install unixodbc-dev
             sudo apt-get install --allow-unauthenticated -y --force-yes -m unixodbc-dev odbcinst1debian2 libodbc1
             sudo apt-get clean
-  setup-environment-docker:
-    description: "Setup the centos environment"
-    parameters:
-      image:
-        type: string
-    environment:
-      IMAGE_NAME: << parameters.image >>
-    steps:
-      - run:
-          name: Setup Machine
-          command: |
-            if [[ $IMAGE_NAME == centos* ]]
-            then
-              yum update
-              yum -y install curl
-              yum -y install mysql
-              yum -y install git
-              yum -y install gcc gcc-c++
-              yum -y install make cmake
-              yum -y install unixODBC unixODBC-devel
-            else
-              sudo apt update
-              sudo apt install -y curl
-              sudo apt-get update
-              sudo apt-get install -y mysql-client-core-5.5
-              sudo apt-get install unixodbc odbcinst
-              sudo apt-get install unixodbc-dev
-              sudo apt-get install --allow-unauthenticated -y --force-yes -m unixodbc-dev odbcinst1debian2 libodbc1
-              sudo apt-get clean
-            fi
   setup-environment-centos:
     description: "Setup the centos environment"
     steps:
@@ -194,9 +164,10 @@ jobs:
             echo 'export TEST_PORT=$MEMSQL_PORT' >> $BASH_ENV
             echo 'export TEST_PASSWORD=$MEMSQL_PASSWORD' >> $BASH_ENV
             source $BASH_ENV
-      - setup-environment-docker:
-          image: << parameters.os_version >>
       - checkout
+      - run:
+          name: Setup Environment
+          command: ./.circleci/setup-environment-linux.sh
       - run:
           name: Run tests
           command: ./.circleci/build-docker.sh
