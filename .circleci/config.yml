@@ -160,49 +160,49 @@ jobs:
 workflows:
   test:
     jobs:
-#      - build-windows:
-#          matrix:
-#            parameters:
-#              build_type:
-#                - RelWithDebInfo
-#          filters:
-#            branches:
-#              ignore: /.*/
-#            tags:
-#              only: /^v.*/
-#      - build-macos:
-#          matrix:
-#            parameters:
-#              build_type:
-#                - RelWithDebInfo
-#          filters:
-#            branches:
-#              ignore: /.*/
-#            tags:
-#              only: /^v.*/
-#      - build-linux:
-#          matrix:
-#            parameters:
-#              machine_class:
-#                - medium
-#              memsql_password:
-#                - ""
-#              build_type:
-#                - RelWithDebInfo
-#              memsql_image:
-#                - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
-#      - build-linux:
-#          matrix:
-#            parameters:
-#              machine_class:
-#                - large
-#              memsql_password:
-#                - password
-#              build_type:
-#                - RelWithDebInfo
-#              memsql_image:
-#                - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
-#                - memsql/cluster-in-a-box:centos-7.1.13-11ddea2a3a-3.0.0-1.9.3
+      - build-windows:
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
+      - build-macos:
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
+      - build-linux:
+          matrix:
+            parameters:
+              machine_class:
+                - medium
+              memsql_password:
+                - ""
+              build_type:
+                - RelWithDebInfo
+              memsql_image:
+                - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
+      - build-linux:
+          matrix:
+            parameters:
+              machine_class:
+                - large
+              memsql_password:
+                - password
+              build_type:
+                - RelWithDebInfo
+              memsql_image:
+                - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
+                - memsql/cluster-in-a-box:centos-7.1.13-11ddea2a3a-3.0.0-1.9.3
       - build-docker:
           matrix:
             parameters:
