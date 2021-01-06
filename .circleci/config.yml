@@ -133,9 +133,6 @@ jobs:
         type: string
     docker:
       - image: << parameters.os_version >>
-        auth:
-          username: sometesttiiid
-          password: $DOCKERHUB_PASSWORD
     environment:
       IMAGE_NAME: << parameters.os_version >>
       BUILD_TYPE: << parameters.build_type >>
@@ -218,7 +215,7 @@ workflows:
           matrix:
             parameters:
               os_version:
-                - centos:centos6
                 - centos:centos7
+                - centos:centos8
               build_type:
                 - RelWithDebInfo
