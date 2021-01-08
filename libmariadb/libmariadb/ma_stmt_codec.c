@@ -1240,14 +1240,16 @@ void ps_fetch_bit(MYSQL_BIND *r_param,
     uchar reverseBit[8] = {};
     // We expect the field_length to be 8, but if (in a very unlikely case) this is not true, let's pick the smallest
     // 8 bytes from the field or all of them if there are less than 8.
-    ulong curPos = MAX(0, field_length - 8);
+    ulong curPos = field_length >= 8 ? field_length - 8 : 0;
+    ulong revPos = 0;
 
     // reverse the BIT value.
     // we cannot do that in-place because this may be called multiple times and we don't want to re-reverse the value.
     while(curPos < field_length)
     {
-        reverseBit[curPos] = *(*row + field_length - curPos - 1);
+        reverseBit[revPos] = *(*row + field_length - curPos - 1);
         curPos++;
+        revPos++;
     }
 
     uchar *current_pos= reverseBit + r_param->offset, *end= reverseBit + MIN(8, field_length);

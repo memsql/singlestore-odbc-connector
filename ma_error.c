@@ -61,6 +61,7 @@ MADB_ERROR MADB_ErrorList[] =
   { "22015", "", "Interval field overflow", SQL_ERROR},
   { "22018", "22005", "Invalid character value for cast specification", SQL_ERROR},
   { "22019", "", "Invalid escape character", SQL_ERROR},
+  { "22023", "", "Invalid parameter value", SQL_ERROR},
   { "22025", "", "Invalid escape sequence", SQL_ERROR},
   { "22026", "", "String data, length mismatch", SQL_ERROR},
   { "23000", "", "Integrity constraint violation", SQL_ERROR},

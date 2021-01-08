@@ -377,7 +377,7 @@ ODBC_TEST(sqlsetcursorname)
   CHECK_STMT_RC(hstmt1, SQLSetCursorNameW(hstmt1, WW("a\x00e3b"), SQL_NTS));
 
   /* Open the resultset of table 'my_demo_cursor' */
-  OK_SIMPLE_STMT(hstmt1, "SELECT * FROM my_demo_cursor");
+  OK_SIMPLE_STMT(hstmt1, "SELECT * FROM my_demo_cursor ORDER BY id");
 
   /* goto the last row */
   CHECK_STMT_RC(hstmt1, SQLFetchScroll(hstmt1, SQL_FETCH_LAST, 1L));

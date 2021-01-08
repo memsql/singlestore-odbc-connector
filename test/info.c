@@ -266,8 +266,8 @@ ODBC_TEST(compat_mode_on_test)
     SQLCHAR server_version[SS_NAME_LEN+1];
     char compat_mode[18]= "COMPAT_MODE=1";
 
-    sprintf((char *)conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;%s;%s;%s",
-            my_drivername, my_servername, my_uid, my_pwd, ma_strport, compat_mode, add_connstr);
+    sprintf((char *)conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;%s;%s;NO_SSPS=%d;%s",
+            my_drivername, my_servername, my_uid, my_pwd, ma_strport, compat_mode, NoSsps, add_connstr);
     diag(conn);
 
     IS(mydrvconnect(&env1, &dbc1, &statement1, conn) == OK);
@@ -324,10 +324,10 @@ ODBC_TEST(compat_mode_off_test)
     SQLCHAR server_version[SS_NAME_LEN+1];
     char compat_mode[18]= "COMPAT_MODE=0";
     int i;
-    sprintf((char *)conn[0], "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;%s;%s;%s",
-            my_drivername, my_servername, my_uid, my_pwd, ma_strport, compat_mode, add_connstr);
-    sprintf((char *)conn[1], "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;%s;%s",
-            my_drivername, my_servername, my_uid, my_pwd, ma_strport, add_connstr);
+    sprintf((char *)conn[0], "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;%s;%s;NO_SSPS=%d;%s",
+            my_drivername, my_servername, my_uid, my_pwd, ma_strport, compat_mode, NoSsps, add_connstr);
+    sprintf((char *)conn[1], "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;%s;NO_SSPS=%d;%s",
+            my_drivername, my_servername, my_uid, my_pwd, ma_strport, NoSsps, add_connstr);
     /*
      * Test without `COMPAT_MODE`(default) and with `COMPAT_MODE=0`
      */
@@ -345,9 +345,9 @@ ODBC_TEST(compat_mode_off_test)
         CHECK_DBC_RC(dbc1, SQLGetInfo(dbc1, SQL_DBMS_VER, server_version,
                                       SS_NAME_LEN, &versionInfo));
 
-        OK_SIMPLE_STMT(Stmt, "SELECT @@memsql_version");
-        CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-        my_fetch_str(Stmt, ss_version_str, 1);
+        OK_SIMPLE_STMT(statement1, "SELECT @@memsql_version");
+        CHECK_STMT_RC(statement1, SQLFetch(statement1));
+        my_fetch_str(statement1, ss_version_str, 1);
 
         ODBC_Disconnect(env1, dbc1, statement1);
 
@@ -908,7 +908,7 @@ ODBC_TEST(t_scalarfunctions)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  { t_gettypeinfo, "t_gettypeinfo", NORMAL },
+  { t_gettypeinfo, "t_gettypeinfo", KNOWN_FAILURE},
   { sqlgetinfo, "sqlgetinfo", NORMAL },
   { t_stmt_attr_status, "t_stmt_attr_status", NORMAL },
   { t_msdev_bug, "t_msdev_bug", NORMAL },

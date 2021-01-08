@@ -13,7 +13,7 @@ New-Item -Path "HKCU:\Software\ODBC\ODBC.INI"
 $regPath = "HKCU:\Software\ODBC\ODBC.INI\maodbc_test"
 New-Item -Path $regPath
 New-ItemProperty -Path $regPath -Name "CONN_TIMEOUT" -Value "0"
-New-ItemProperty -Path $regPath -Name "DATABASE" -Value "test"
+New-ItemProperty -Path $regPath -Name "DATABASE" -Value "odbc_test"
 New-ItemProperty -Path $regPath -Name "DESCRIPTION" -Value "MariaDB ODBC test"
 New-ItemProperty -Path $regPath -Name "DRIVER" -Value "MariaDB ODBC 3.1 Driver"
 New-ItemProperty -Path $regPath -Name "OPTIONS" -Value "0"

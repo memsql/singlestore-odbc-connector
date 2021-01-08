@@ -141,6 +141,7 @@ static unsigned long my_options= 67108866;
 
 static SQLHANDLE     Env, Connection, Stmt, wConnection, wStmt;
 static SQLINTEGER    OdbcVer=        SQL_OV_ODBC3;
+static my_bool       NoSsps = 1;
 
 static unsigned int  my_port=        5506;
 char          ma_strport[12]= "PORT=5506";
@@ -163,29 +164,31 @@ static MARIADB_CHARSET_INFO  utf8mb3= { 33, 1, "utf8", "utf8_general_ci", "", 65
 int   tests_planned= 0;
 char *test_status[]= {"not ok", "ok", "skip"};
 
-#define FAIL          0
-#define OK            1
-#define SKIP          2
+// Test status codes based on what mode is running.
+#define SSPS_FAIL 1
+#define SSPS_OK 2
+#define SSPS_TO_FIX 4
+
+#define CSPS_FAIL 16
+#define CSPS_OK 32
+#define CSPS_TO_FIX 64
+
+// Test return codes.
+#define FAIL 0
+#define OK 1
+#define SKIP 2
 
 /* Test Typesv*/
 /* Normal test - failure is failure, i.e. bad thing */
-#define NORMAL        OK
+#define NORMAL (SSPS_OK | CSPS_OK)
 /* Known failure - yes, we need to fix it, but we do not want it to distract us from
    things that are really interesting. And no, we don't know what causes failure */
-#define KNOWN_FAILURE FAIL
+#define KNOWN_FAILURE (SSPS_FAIL | CSPS_FAIL)
 /* The problem is in test */
 #define TEST_PROBLEM  2
 /* Test for the known problem waiting for a fix. */
-#define TO_FIX        3
+#define TO_FIX (SSPS_TO_FIX | CSPS_TO_FIX)
 
-const char comments[][2][64]= { {"\t#TODO: not ok - test is known to fail, unknown reason",
-                                 "\t#Yay, seems like this problem has been magically fixed"},
-                                {"",""},
-                                {"\t#TODO: Test is marked as requiring fix",
-                                 "\t#TODO: Test is marked as requiring fix"},
-                                {"\t#TODO: Test is for the known problem that is waiting for a fix",
-                                 "\t#The problem seems to be fixed. Mark test as normal"}
-                              };
 #define MAX_ROW_DATA_LEN 1000
 #define MAX_NAME_LEN     255
 
@@ -207,6 +210,58 @@ int a()
 
 #define plan(a)\
   tests_planned= a;\
+
+
+const char* comments [3][2] = {
+        {"\t#%s Test is known to fail. Either unknown reason or a known reason that WON'T FIX anytime soon or WON'T FIX at all by design",
+         "\t#%s This test was expected to fail, but didn't. Consider re-running multiple times and moving to OK bucket"}, // Expected FAIL cases
+         {"\t#%s TODO: not ok - the test should have passed, but didn't",
+          "\t#%s Ok - test passed as expected"}, // Expected OK cases
+         {"\t#%s TODO: Test is for the known problem that is waiting for a fix",
+          "\t#%s The problem seems to be fixed. Mark test as normal"} // Expected TO_FIX cases
+};
+
+my_bool test_expected_to_succeed(int expected_test_result, my_bool no_ssps)
+{
+    return (expected_test_result & (no_ssps ? CSPS_OK : SSPS_OK)) != 0;
+}
+
+void get_test_error_message(int expected_test_result, int rc, char* comment)
+{
+    if (rc == SKIP)
+    {
+        return;
+    }
+
+    char *mode = NoSsps ? "[CSPS]" : "[SSPS]";
+
+    if (NoSsps)
+    {
+        if (expected_test_result & CSPS_FAIL)
+        {
+            sprintf(comment, comments[0][rc], mode);
+        } else if (expected_test_result & CSPS_OK)
+        {
+            sprintf(comment, comments[1][rc], mode);
+        } else if (expected_test_result & CSPS_TO_FIX)
+        {
+            sprintf(comment, comments[2][rc], mode);
+        }
+    } else
+    {
+        if (expected_test_result & SSPS_FAIL)
+        {
+            sprintf(comment, comments[0][rc], mode);
+        } else if (expected_test_result & SSPS_OK)
+        {
+            sprintf(comment, comments[1][rc], mode);
+        } else if (expected_test_result & SSPS_TO_FIX)
+        {
+            sprintf(comment, comments[2][rc], mode);
+        }
+    }
+}
+
 
 void mark_all_tests_normal(MA_ODBC_TESTS *tests)
 {
@@ -688,10 +743,20 @@ do {\
   }\
 } while(0)
 
+#define EXPECT_FAIL_MODE(_Stmt, _Function, _Mode, _SqlState) \
+do {                                                  \
+    EXPECT_STMT(_Stmt, _Function, NoSsps == (_Mode) ? SQL_ERROR : SQL_SUCCESS); \
+    if (NoSsps == (_Mode)) {CHECK_SQLSTATE(_Stmt, _SqlState);} \
+}while(0)
+
+#define SSPS_ENABLED 0
+#define SSPS_DISABLED 1
+
 int my_fetch_int(SQLHANDLE Stmt, unsigned int ColumnNumber)
 {
   int value= 0;
   SQLGetData(Stmt, ColumnNumber, SQL_INTEGER, &value, 0, NULL);
+  diag(" my_fetch_int: %d", value);
   return value;
 }
 
@@ -824,14 +889,14 @@ SQLHANDLE DoConnect(SQLHANDLE Connection, BOOL DoWConnect,
   }
   else
   {
-    _snprintf(DSNString, 1024, "DSN=%s;UID=%s;PWD={%s};PORT=%u;DATABASE=%s;OPTION=%lu;SERVER=%s;%s", dsn ? dsn : (const char*)my_dsn,
+    _snprintf(DSNString, 1024, "DSN=%s;UID=%s;PWD={%s};PORT=%u;DATABASE=%s;OPTION=%lu;SERVER=%s;NO_SSPS=%d;%s", dsn ? dsn : (const char*)my_dsn,
       uid ? uid : (const char*)my_uid, pwd ? pwd : (const char*)my_pwd, port ? port : my_port,
       schema ? schema : (const char*)my_schema, options ? *options : my_options, server ? server : (const char*)my_servername,
-      add_parameters ? add_parameters : "");
-    diag("DSN=%s;UID=%s;PWD={%s};PORT=%u;DATABASE=%s;OPTION=%lu;SERVER=%s;%s", dsn ? dsn : (const char*)my_dsn,
+      NoSsps, add_parameters ? add_parameters : "");
+    diag("DSN=%s;UID=%s;PWD={%s};PORT=%u;DATABASE=%s;OPTION=%lu;SERVER=%s;NO_SSPS=%d;%s", dsn ? dsn : (const char*)my_dsn,
            uid ? uid : (const char*)my_uid, "********", port ? port : my_port,
            schema ? schema : (const char*)my_schema, options ? *options : my_options, server ? server : (const char*)my_servername,
-           add_parameters ? add_parameters : "");
+           NoSsps, add_parameters ? add_parameters : "");
   }
 
   if (DoWConnect == FALSE)
@@ -964,12 +1029,78 @@ int reset_changed_server_variables(void)
 }
 
 
+int connect_and_run_tests(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
+{
+    int         rc, i=1, all_tests = 0, failed=0;
+    SQLWCHAR   *buff_before_test;
+    char        comment[256];
+
+    if (ODBC_Connect(&Env,&Connection,&Stmt) == FAIL)
+    {
+        odbc_print_error(SQL_HANDLE_DBC, Connection);
+        ODBC_Disconnect(Env,Connection,Stmt);
+        fprintf(stdout, "HALT! Could not connect to the server\n");
+        return 1;
+    }
+    if (ProvideWConnection && ODBC_ConnectW(Env, &wConnection, &wStmt) == FAIL)
+    {
+        odbc_print_error(SQL_HANDLE_DBC, wConnection);
+        ODBC_Disconnect(Env, wConnection, wStmt);
+        fprintf(stdout, "HALT! Could not connect to the server with Unicode function\n");
+        return 1;
+    }
+
+    fprintf(stdout, "1..%d\n", tests_planned);
+    while (tests->title)
+    {
+        buff_before_test= buff_pos;
+
+        all_tests++;
+        rc= tests->my_test();
+        comment[0] = '\0';
+        if (rc!= SKIP && !test_expected_to_succeed(tests->test_type, NoSsps))
+        {
+            get_test_error_message(tests->test_type, rc, comment);
+            rc= OK;
+        }
+        else if (rc == FAIL)
+        {
+            failed++;
+        }
+
+        if (reset_changed_server_variables())
+        {
+            fprintf(stdout, "HALT! An error occurred while tried to reset server variables changed by the test!\n");
+        }
+
+        buff_pos= buff_before_test;
+        *buff_pos= 0;
+        if (Stmt != NULL)
+        {
+            SQLFreeStmt(Stmt, SQL_DROP);
+        }
+
+        fprintf(stdout, "%s %d - %s%s\n", test_status[rc], i++,tests->title, comment);
+        tests++;
+
+        SQLAllocHandle(SQL_HANDLE_STMT, Connection, &Stmt);
+        /* reset Statement */
+        fflush(stdout);
+    }
+
+    ODBC_Disconnect(Env,Connection,Stmt);
+
+    if (failed)
+    {
+        fprintf(stdout,"Failed %d out of %d tests!\n", failed, all_tests);
+        return 1;
+    }
+    return 0;
+}
+
+
 int run_tests_ex(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
 {
-  int         rc, i=1, failed=0;
-  const char *comment;
-  SQLWCHAR   *buff_before_test;
-
   utf16= (little_endian() ? &utf16le : &utf16be);
   utf32= (little_endian() ? &utf32le : &utf32be);
 
@@ -1004,64 +1135,19 @@ int run_tests_ex(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
       TravisOnOsx= 1;
     }
   }
-  
-  if (ODBC_Connect(&Env,&Connection,&Stmt) == FAIL)
-  {
-    odbc_print_error(SQL_HANDLE_DBC, Connection); 
-    ODBC_Disconnect(Env,Connection,Stmt);
-    fprintf(stdout, "HALT! Could not connect to the server\n");
-    return 1;
-  }
-  if (ProvideWConnection && ODBC_ConnectW(Env, &wConnection, &wStmt) == FAIL)
-  {
-    odbc_print_error(SQL_HANDLE_DBC, wConnection);
-    ODBC_Disconnect(Env, wConnection, wStmt);
-    fprintf(stdout, "HALT! Could not connect to the server with Unicode function\n");
-    return 1;
-  }
 
-  fprintf(stdout, "1..%d\n", tests_planned);
-  while (tests->title)
-  {
-    buff_before_test= buff_pos;
+  fprintf(stdout, "Running tests in the client-side prepared statements mode...\n");
+  NoSsps = 1;
+  int csps_fail = connect_and_run_tests(tests, ProvideWConnection);
+  fprintf(stdout, "Tests %s in the client-side prepared statements mode!\n\n", csps_fail ? "failed" : "passed");
 
-    rc= tests->my_test();
-    comment= "";
-    if (rc!= SKIP && tests->test_type != NORMAL)
-    {
-      comment= comments[tests->test_type][rc];
-      rc= OK;
-    }
-    else if (rc == FAIL)
-    {
-      failed++;
-    }
 
-    if (reset_changed_server_variables())
-    {
-      fprintf(stdout, "HALT! An error occurred while tried to reset server variables changed by the test!\n");
-    }
+  fprintf(stdout, "Running tests in the server-side prepared statements mode...\n");
+  NoSsps = 0;
+  int ssps_fail = connect_and_run_tests(tests, ProvideWConnection);
+  fprintf(stdout, "Tests %s in the server-side prepared statements mode!\n\n", ssps_fail ? "failed" : "passed");
 
-    buff_pos= buff_before_test;
-    *buff_pos= 0;
-    if (Stmt != NULL)
-    {
-      SQLFreeStmt(Stmt, SQL_DROP);
-    }
-
-    fprintf(stdout, "%s %d - %s%s\n", test_status[rc], i++,tests->title, comment);
-    tests++;
-
-    SQLAllocHandle(SQL_HANDLE_STMT, Connection, &Stmt);
-    /* reset Statement */
-    fflush(stdout);
-  }
-
-  ODBC_Disconnect(Env,Connection,Stmt);
-
-  if (failed)
-    return 1;
-  return 0;
+  return csps_fail || ssps_fail;
 }
 
 int run_tests(MA_ODBC_TESTS *tests)

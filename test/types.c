@@ -945,7 +945,7 @@ ODBC_TEST(t_bindsqlnum_basic)
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLPrepare(Stmt, (SQLCHAR *)"select ?", SQL_NTS));
 
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_NUMERIC,
-                                  SQL_DECIMAL, 5, 3,
+                                  SQL_DECIMAL, 6, 3,
                                   sqlnum, 0, NULL));
 
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLExecute(Stmt));
@@ -953,7 +953,7 @@ ODBC_TEST(t_bindsqlnum_basic)
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLGetData(Stmt, 1, SQL_C_CHAR, outstr, 20, NULL));
   IS_STR(outstr, "25.212", 6);
   is_num(sqlnum->sign, 1);
-  is_num(sqlnum->precision, 5);
+  is_num(sqlnum->precision, 6);
   is_num(sqlnum->scale, 3);
 
   free(sqlnum);
@@ -1075,11 +1075,11 @@ int sqlnum_test_to_str(SQLHANDLE Stmt, SQLCHAR *numdata, SQLCHAR prec,
 ODBC_TEST(t_sqlnum_to_str)
 {
   {SQLCHAR numdata[]= {0xD5, 0x50, 0x94, 0x49, 0,0,0,0,0,0,0,0,0,0,0,0};
-   IS(OK == sqlnum_test_to_str(Stmt, numdata, 10, 4, 1, "123445.6789", ""));}
+   IS(OK == sqlnum_test_to_str(Stmt, numdata, 11, 4, 1, "123445.6789", ""));}
 
   /* fractional truncation */
   {SQLCHAR numdata[]= {0xD5, 0x50, 0x94, 0x49, 0,0,0,0,0,0,0,0,0,0,0,0};
-   IS(OK == sqlnum_test_to_str(Stmt, numdata, 9, 2, 1, "12344567.8", "01S07"));}
+   IS(OK == sqlnum_test_to_str(Stmt, numdata, 10, 2, 1, "12344567.8", "01S07"));}
   {SQLCHAR numdata[]= {0xD5, 0x50, 0x94, 0x49, 0,0,0,0,0,0,0,0,0,0,0,0};
    IS(OK == sqlnum_test_to_str(Stmt, numdata, 8, 2, 1, "12344567", "01S07"));}
 

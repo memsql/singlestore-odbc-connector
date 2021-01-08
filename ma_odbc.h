@@ -311,6 +311,13 @@ struct st_ma_odbc_stmt
   enum MADB_StmtState       State;
   MYSQL_STMT                **MultiStmts;
   unsigned int              MultiStmtNr;
+  // CspsResult and CspsMultiStmtResult fields are only storing the result sets for the client-side prepared statements.
+  // They're convenient to work with because we can fully release the memory via C driver API.
+  // That's pretty much the only reason for keeping those.
+  // NOTE: no cursor logic, fetching, update, insert or delete operations, etc. should happen on these fields,
+  // the corresponding MYSQL_STMT object is responsible for that.
+  MYSQL_RES                 *CspsResult;
+  MYSQL_RES                 **CspsMultiStmtResult;
   unsigned int              MultiStmtMaxParam;
   SQLLEN                    LastRowFetched;
   MYSQL_BIND                *result;

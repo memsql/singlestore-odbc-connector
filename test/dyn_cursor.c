@@ -113,7 +113,7 @@ ODBC_TEST(my_dynamic_pos_cursor)
     CHECK_STMT_RC(hstmt_pos,rc);
 
     /* Now fetch and verify the data */
-    OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_dynamic_cursor");
+    OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_dynamic_cursor ORDER BY id");
 
     rc = SQLFetch(Stmt);
     CHECK_STMT_RC(Stmt,rc);
@@ -261,6 +261,12 @@ ODBC_TEST(my_dynamic_pos_cursor1)
 
     is_num(i, 7);
     IS_STR(data, "MySQL7", 7);
+
+    rc = SQLFetchScroll(Stmt,SQL_FETCH_LAST,1L);
+    CHECK_STMT_RC(Stmt,rc);
+
+    is_num(i, 10);
+    IS_STR(data, "MySQL10", 8);
 
     rc = SQLFetchScroll(Stmt,SQL_FETCH_ABSOLUTE,10L);
     FAIL_IF(rc!=SQL_NO_DATA_FOUND,"Eof expected");

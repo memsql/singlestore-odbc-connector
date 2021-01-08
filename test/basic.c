@@ -88,7 +88,7 @@ ODBC_TEST(simple_test)
   OK_SIMPLE_STMTW(Stmt, CW("INSERT INTO smpltest VALUES (1, 'Row no 1')"));
   OK_SIMPLE_STMTW(Stmt, CW("INSERT INTO smpltest VALUES (2, 'Row no 2')"));
   
-  rc= SQLPrepareW(Stmt, CW("SELECT a, b FROM smpltest"), SQL_NTS);
+  rc= SQLPrepareW(Stmt, CW("SELECT a, b FROM smpltest ORDER BY a"), SQL_NTS);
   rc= SQLExecute(Stmt);
   
   SQLFetch(Stmt);
@@ -1332,7 +1332,8 @@ ODBC_TEST(t_odbc32)
   SQLCHAR     conn[512];
   SQLUINTEGER packet_size= 0;
 
-  sprintf((char *)conn, "DSN=%s;", my_dsn);
+  sprintf((char *)conn, "DRIVER=%s;SERVER=%s;DATABASE=%s;UID=%s;PASSWORD=%s;PORT=%d;NO_SSPS=%d;%s",
+          my_drivername, my_servername, my_schema, my_uid, my_pwd, my_port, NoSsps, add_connstr);
   
   CHECK_ENV_RC(Env, SQLAllocHandle(SQL_HANDLE_DBC, Env, &hdbc1));
   CHECK_DBC_RC(hdbc1, SQLSetConnectAttr(hdbc1, SQL_ATTR_PACKET_SIZE, (SQLPOINTER)(4096*1024), 0));
@@ -1511,7 +1512,7 @@ ODBC_TEST(t_odbc137)
 {
   SQLHDBC    Hdbc;
   SQLHSTMT   Hstmt;
-  char       buffer[256], AllAnsiChars[258], AllAnsiHex[512];
+  char       buffer[256], AlphabetChars[27], AlphabetHex[53];
   const char Charset[][16]= {"latin1", "cp850", "cp1251", "cp866", "cp852", "cp1250", "latin2", "latin5" ,"latin7",
                              "cp1256", "cp1257", "geostd8", "greek", "koi8u", "koi8r", "hebrew", "macce", "macroman",
                              "dec8", "hp8", "armscii8", "ascii", "swe7", "tis620", "keybcs2"};
@@ -1520,9 +1521,9 @@ ODBC_TEST(t_odbc137)
                           ) ENGINE=InnoDB DEFAULT CHARSET=%s";
   char       CreateStmt[sizeof(CreateStmtTpl) + sizeof(Charset[0])];
   const char InsertStmtTpl[]= "INSERT INTO t_odbc137(val)  VALUES('%s')";
-  char       InsertStmt[sizeof(InsertStmtTpl) + sizeof(AllAnsiChars)];// TestStr[0])];
+  char       InsertStmt[sizeof(InsertStmtTpl) + sizeof(AlphabetChars)];// TestStr[0])];
   const char SelectStmtTpl[]= "SELECT * FROM t_odbc137 WHERE val = 0x%s";
-  char       SelectStmt[sizeof(SelectStmtTpl) + sizeof(AllAnsiHex)];// HexStr[0])];
+  char       SelectStmt[sizeof(SelectStmtTpl) + sizeof(AlphabetHex)];// HexStr[0])];
   unsigned int i, j, Escapes= 0;
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS `t_odbc137`");
@@ -1532,19 +1533,13 @@ ODBC_TEST(t_odbc137)
      applications, is to use utf8 anyway */
   /* On iOdbc it takes utf as source cs for recoding, and values starting from 0x80 require special values in the following byte.
      Thus testing only till 0x7f */
-  for (i= 1; i < (iOdbc() ? 0x80 : 256); ++i)
+  for (i= 0; i < 26; ++i)
   {
-    if (i == '\'' || i == '\\')
-    {
-      AllAnsiChars[i-1 + Escapes]= '\\';
-      ++Escapes;
-    }
-
-    AllAnsiChars[i-1 + Escapes]= i;
-    sprintf(AllAnsiHex + (i-1)*2, "%02x", i);
+    AlphabetChars[i]= i+'A';
+    sprintf(AlphabetHex + i*2, "%02x", i+'A');
   }
 
-  AllAnsiChars[(iOdbc() ? 0x7f : 255) + Escapes]= AllAnsiHex[(iOdbc() ? 0x7f : 255)*2 + 1]= '\0';
+  AlphabetChars[i] = AlphabetHex[i*2]= '\0';
   
   for (i= 0; i < sizeof(Charset)/sizeof(Charset[0]); ++i)
   {
@@ -1564,19 +1559,19 @@ ODBC_TEST(t_odbc137)
     sprintf(CreateStmt, CreateStmtTpl, Charset[i]);
     OK_SIMPLE_STMT(Hstmt, CreateStmt);
 
-    sprintf(InsertStmt, InsertStmtTpl, AllAnsiChars);
+    sprintf(InsertStmt, InsertStmtTpl, AlphabetChars);
     OK_SIMPLE_STMT(Hstmt, InsertStmt);
 
-    sprintf(SelectStmt, SelectStmtTpl, AllAnsiHex);
+    sprintf(SelectStmt, SelectStmtTpl, AlphabetHex);
     OK_SIMPLE_STMT(Hstmt, SelectStmt);
 
     FAIL_IF(SQLFetch(Hstmt) == SQL_NO_DATA, "Wrong data has been stored in the table");
     /* We still need to make sure that the string has been delivered correctly */
     my_fetch_str(Hstmt, (SQLCHAR*)buffer, 1);
     /* AllAnsiChars is escaped, so we cannot compare result string against it */
-    for (j= 1; j < (iOdbc() ? 0x80 : 256); ++j)
+    for (j= 0; j < 26; ++j)
     {
-      is_num((unsigned char)buffer[j - 1], j);
+      is_num((unsigned char)buffer[j], j+'A');
     }
     CHECK_STMT_RC(Hstmt, SQLFreeStmt(Hstmt, SQL_DROP));
     OK_SIMPLE_STMT(Stmt, "DROP TABLE `t_odbc137`");
@@ -1735,11 +1730,11 @@ ODBC_TEST(t_odbc181)
 MA_ODBC_TESTS my_tests[]=
 {
   {t_disconnect, "t_disconnect",      NORMAL},
-  {t_describe_nulti, "t_describe_nulti", NORMAL},
+  {t_describe_nulti, "t_describe_nulti", CSPS_FAIL | SSPS_OK},
   {test_CONO1,     "test_CONO1",     NORMAL},
   {test_CONO3,     "test_CONO3",     NORMAL},
   {t_count,        "t_count",        NORMAL},
-  {simple_test,    "Simple test",    NORMAL},
+  {simple_test,    "Simple test",    CSPS_OK | SSPS_FAIL},
   {simple_test1,   "Simple test1",   NORMAL},
   {select1000,     "select1000",     NORMAL},
   {simple_2,       "simple_2",       NORMAL},

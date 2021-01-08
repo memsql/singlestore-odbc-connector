@@ -43,6 +43,12 @@ SQLRETURN MADB_Str2Ts(const char *Str, size_t Length, MYSQL_TIME *Tm, BOOL Inter
     goto end;//MADB_SetError(Error, MADB_ERR_22008, NULL, 0);
   }  
 
+  if (Start[0]=='-')
+  {
+      Tm->neg = 1;
+      Start++;
+  }
+
   /* Determine time type:
   MYSQL_TIMESTAMP_DATE: [-]YY[YY].MM.DD
   MYSQL_TIMESTAMP_DATETIME: [-]YY[YY].MM.DD hh:mm:ss.mmmmmm
@@ -377,7 +383,7 @@ SQLRETURN MADB_Char2Sql(MADB_Stmt *Stmt, MADB_DescRecord *CRec, void* DataPtr, S
       }
 
       *LengthPtr= 1;
-      **(char**)Buffer= MADB_ConvertCharToBit(Stmt, DataPtr);
+      **(char**)Buffer= *(char*)DataPtr;
       MaBind->buffer_type= MYSQL_TYPE_TINY;
       break;
   case SQL_DATETIME:
@@ -569,6 +575,7 @@ SQLRETURN MADB_Time2Sql(MADB_Stmt *Stmt, MADB_DescRecord *CRec, void* DataPtr, S
   if(SqlRec->ConciseType == SQL_TYPE_TIMESTAMP ||
     SqlRec->ConciseType == SQL_TIMESTAMP || SqlRec->ConciseType == SQL_DATETIME)
   {
+    /* Don't add the current local time logic.
     time_t sec_time;
     struct tm * cur_tm;
 
@@ -578,7 +585,7 @@ SQLRETURN MADB_Time2Sql(MADB_Stmt *Stmt, MADB_DescRecord *CRec, void* DataPtr, S
     tm->year= 1900 + cur_tm->tm_year;
     tm->month= cur_tm->tm_mon + 1;
     tm->day= cur_tm->tm_mday;
-    tm->second_part= 0;
+    tm->second_part= 0;*/
     
     tm->time_type= MYSQL_TIMESTAMP_DATETIME;
     MaBind->buffer_type= MYSQL_TYPE_TIMESTAMP;
@@ -788,3 +795,426 @@ SQLRETURN MADB_C2SQL(MADB_Stmt* Stmt, MADB_DescRecord *CRec, MADB_DescRecord *Sq
   return SQL_SUCCESS;
 }
 /* }}} */
+
+#define CALC_ALL_FLDS_RC(_agg_rc, _field_rc) if (_field_rc != SQL_SUCCESS && _agg_rc != SQL_ERROR) _agg_rc= _field_rc
+
+/* {{{ MADB_CspsConvertSql2C
+ Converts a single value from the result set into the desired type and stores it into the bound data buffer.
+ This the client-side prepared statement function only, as the "value" is represented differently for CSPS and SSPS. */
+SQLRETURN MADB_CspsConvertSql2C(MADB_Stmt *Stmt, MYSQL_FIELD *field, MYSQL_BIND *bind, char* val, unsigned long fieldLen)
+{
+    char *value = val;
+    my_bool alloced = FALSE;
+    if (field->type == MYSQL_TYPE_BIT)
+    {
+        // BIT comes in the big-endian format, so we need to convert it to the little-endian.
+        value = MADB_CALLOC(8);
+        alloced = TRUE;
+
+        unsigned long curPos = fieldLen >= 8 ? fieldLen - 8 : 0;
+        unsigned int revPos = 0;
+        while (curPos < fieldLen)
+        {
+            value[revPos] = *(val + fieldLen - curPos - 1);
+            curPos++;
+            revPos++;
+        }
+    }
+
+    int rc = SQL_SUCCESS;
+    switch(bind->buffer_type)
+    {
+        case MYSQL_TYPE_TINY:
+        case MYSQL_TYPE_SHORT:
+        case MYSQL_TYPE_YEAR:
+        case MYSQL_TYPE_INT24:
+        case MYSQL_TYPE_LONG:
+        case MYSQL_TYPE_LONGLONG:
+        {
+            int ret;
+            // We determine the data representation based on the field type. We could ideally do that by
+            // leveraging the field->charsetnr, but for integer types the charsetnr is reported as binary,
+            // whereas the data is stored as a string.
+            // So the only source of truth we have is the field type reported by the engine.
+            switch(field->type)
+            {
+                case MYSQL_TYPE_BIT:
+                case MYSQL_TYPE_TINY_BLOB:
+                case MYSQL_TYPE_BLOB:
+                case MYSQL_TYPE_MEDIUM_BLOB:
+                case MYSQL_TYPE_LONG_BLOB:
+                    // Binary representation.
+                    ret = MADB_ConvertBinaryToInteger(bind, value, fieldLen);
+                    break;
+                default:
+                    // String representation.
+                    ret = MADB_ConvertCharToInteger(bind, value, fieldLen);
+            }
+            if (!SQL_SUCCEEDED(ret))
+            {
+                CALC_ALL_FLDS_RC(rc, ret);
+            }
+            break;
+        }
+        case MYSQL_TYPE_FLOAT:
+        case MYSQL_TYPE_DOUBLE:
+        {
+            // Should we return an error here for an invalid argument?
+            char *stopscan;
+            SQLDOUBLE val = strtod(value, &stopscan);
+            if (bind->buffer_type == MYSQL_TYPE_FLOAT)
+            {
+                *(float *) bind->buffer = val;
+                bind->buffer_length = sizeof(float);
+            } else
+            {
+                *(SQLDOUBLE *) bind->buffer = val;
+                bind->buffer_length = sizeof(double);
+            }
+            break;
+        }
+        case MYSQL_TYPE_TIME:
+        case MYSQL_TYPE_DATE:
+        case MYSQL_TYPE_TIMESTAMP:
+        {
+            BOOL isTime;
+            int ret = MADB_Str2Ts(value, fieldLen, (MYSQL_TIME *) bind->buffer, FALSE, &Stmt->Error, &isTime);
+            if (!SQL_SUCCEEDED(ret))
+            {
+                CALC_ALL_FLDS_RC(rc, ret);
+            }
+            break;
+        }
+        default:
+        {
+            // A lot of types will be processed here:
+            // case MYSQL_TYPE_STRING:
+            // case MYSQL_TYPE_VAR_STRING:
+            // case MYSQL_TYPE_VARCHAR:
+            // case MYSQL_TYPE_TINY_BLOB:
+            // case MYSQL_TYPE_BLOB:
+            // case MYSQL_TYPE_MEDIUM_BLOB:
+            // case MYSQL_TYPE_LONG_BLOB:
+            // case MYSQL_TYPE_DECIMAL:
+            // case MYSQL_TYPE_NEWDECIMAL:
+            // case MYSQL_TYPE_JSON:
+            // case MYSQL_TYPE_SET:
+            // case MYSQL_TYPE_ENUM:
+            // Offset is handled here to allow buffered fetches when the application calls SQLGetData.
+            unsigned long offset = bind->offset;
+            if (fieldLen >= offset)
+            {
+                const char* start = value + offset;
+                const char* end = value + fieldLen;
+                unsigned long copyLen = end - start;
+                if (start < end)
+                {
+                    if (copyLen > bind->buffer_length)
+                    {
+                        copyLen = bind->buffer_length;
+                        rc = MYSQL_DATA_TRUNCATED;
+                        *bind->error = 1;
+                    }
+                    memcpy(bind->buffer, start, copyLen);
+                }
+                if (copyLen < bind->buffer_length)
+                {
+                    ((char *) bind->buffer)[copyLen] = '\0';
+                }
+            }
+            *bind->length = fieldLen;
+            break;
+        }
+    }
+
+    if (alloced)
+    {
+        MADB_FREE(value);
+    }
+
+    return rc;
+}
+/* }}} */
+
+#undef CALC_ALL_FLDS_RC
+
+/* {{{ MADB_ConvertIntegerToChar */
+/* Converts Src into Dest based on the integer SourceType. */
+SQLLEN MADB_ConvertIntegerToChar(MADB_Stmt *Stmt, int SourceType, void* Src, char* Dest)
+{
+    SQLBIGINT num;
+    my_bool isUnsigned = FALSE;
+    switch (SourceType)
+    {
+        case SQL_C_UBIGINT:
+            num = *(SQLUBIGINT*)Src;
+            isUnsigned = TRUE;
+            break;
+        case SQL_C_ULONG:
+            num = *(SQLUINTEGER*)Src;
+            isUnsigned = TRUE;
+            break;
+        case SQL_C_USHORT:
+            num = *(SQLUSMALLINT*)Src;
+            isUnsigned = TRUE;
+            break;
+        case SQL_C_UTINYINT:
+            num = *(SQLCHAR*)Src;
+            isUnsigned = TRUE;
+            break;
+        case SQL_BIGINT:
+        case SQL_C_SBIGINT:
+            num = *(SQLBIGINT*)Src;
+            break;
+        case SQL_C_SHORT:
+        case SQL_C_SSHORT:
+            num = *(SQLSMALLINT*)Src;
+            break;
+        case SQL_C_TINYINT:
+        case SQL_C_STINYINT:
+            num = *(SQLCHAR*)Src;
+            break;
+        default:
+            num = *(SQLINTEGER*)Src;
+            break;
+    }
+
+    char* formatting = isUnsigned ? "%llu" : "%lld";
+
+#ifdef _WIN32
+    formatting = isUnsigned ? "%I64u" : "%I64d";
+#endif
+
+    sprintf(Dest, formatting, num);
+    return strlen(Dest);
+}
+/* }}} */
+
+/* {{{ */
+/* Converts Src into Dest based on the Datetime SourceType. */
+SQLRETURN MADB_ConvertDatetimeToChar(MADB_Stmt *Stmt, int SourceType, void* Src, char* Dest)
+{
+    int ret = SQL_SUCCESS;
+    char *DestIter = Dest;
+
+    // Let's use YYYY-MM-DD HH:MM:SS.MS format. We don't need to prepend zeros for single-digit values, because the
+    // engine correctly handles such input (e.g. 2020-1-1).
+    // I'm not sure if it's a right place to do any sanity checks, maybe we should just pass over whatever was
+    // set by the client.
+    switch (SourceType)
+    {
+        case SQL_C_TIME:
+        case SQL_C_TYPE_TIME:
+        {
+            SQL_TIME_STRUCT *ts = (SQL_TIME_STRUCT *) Src;
+            DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_USHORT, &ts->hour, DestIter);
+            *DestIter++ = ':';
+            DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_USHORT, &ts->minute, DestIter);
+            *DestIter++ = ':';
+            DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_USHORT, &ts->second, DestIter);
+            *DestIter = '\0';
+            break;
+        }
+        case SQL_C_DATE:
+        case SQL_C_TYPE_DATE:
+        {
+            SQL_DATE_STRUCT *ds = (SQL_DATE_STRUCT*) Src;
+            DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_SHORT, &ds->year, DestIter);
+            *DestIter++ = '-';
+            DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_USHORT, &ds->month, DestIter);
+            *DestIter++ = '-';
+            DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_USHORT, &ds->day, DestIter);
+            *DestIter = '\0';
+            break;
+        }
+        case SQL_C_TIMESTAMP:
+        case SQL_C_TYPE_TIMESTAMP:
+        {
+            SQL_TIMESTAMP_STRUCT *ts = (SQL_TIMESTAMP_STRUCT *) Src;
+            DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_SHORT, &ts->year, DestIter);
+            *DestIter++ = '-';
+            DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_USHORT, &ts->month, DestIter);
+            *DestIter++ = '-';
+            DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_USHORT, &ts->day, DestIter);
+            *DestIter++ = ' ';
+            DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_USHORT, &ts->hour, DestIter);
+            *DestIter++ = ':';
+            DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_USHORT, &ts->minute, DestIter);
+            *DestIter++ = ':';
+            DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_USHORT, &ts->second, DestIter);
+            if (ts->fraction / 1000) {
+                SQLUINTEGER fraction = ts->fraction / 1000;
+                *DestIter++ = '.';
+
+                // frac array cannot have more than 6 characters that represent fraction, but allocating big enough,
+                // just in case.
+                int fracLen, fillZeros = 0;
+                char frac[10];
+                memset(frac, 0, sizeof(frac));
+                fracLen = MADB_ConvertIntegerToChar(Stmt, SQL_C_ULONG, &fraction, frac);
+                while(fracLen + fillZeros++ < 6)
+                {
+                    *DestIter++ = '0';
+                }
+                strcpy(DestIter, frac);
+                DestIter += fracLen;
+            }
+            *DestIter = '\0';
+            break;
+        }
+        default:
+            // Invalid parameter value.
+            ret = MADB_SetError(&Stmt->Error, MADB_ERR_22023, "Invalid date/time parameter type", 0);
+    }
+
+    return ret;
+}
+/* }}} */
+
+
+#ifndef _WIN32
+#define _strtoi64 strtoll
+#define _strtoiu64 strtoull
+#endif
+
+#define TINYINT_MIN (-128)
+#define TINYINT_MAX 127
+#define UTINYINT_MAX 255
+#define SMALLINT_MIN (-32768)
+#define SMALLINT_MAX 32767
+#define USMALLINT_MAX 65535
+#define INTEGER_MIN (-2147483648)
+#define INTEGER_MAX 2147483647
+#define UINTEGER_MAX 4294967295
+
+
+/* {{{ MADB_ConvertCharToInteger
+ Converts SQL char into the relevant C integer type and stores the result in the MYSQL_BIND. */
+SQLRETURN MADB_ConvertCharToInteger(MYSQL_BIND* Dest, char* Src, unsigned int fieldLen)
+{
+    SQLRETURN rc = SQL_SUCCESS;
+    char *badPtr;
+    SQLBIGINT val = Dest->is_unsigned ? _strtoiu64(Src, &badPtr, 10) : _strtoi64(Src, &badPtr, 10);
+    if (badPtr && badPtr - Src < fieldLen)
+    {
+        rc = MYSQL_DATA_TRUNCATED;
+        *Dest->error = 1;
+    }
+
+    switch (Dest->buffer_type)
+    {
+        case MYSQL_TYPE_TINY:
+            if (Dest->is_unsigned)
+            {
+                if (val < 0 || val > UTINYINT_MAX)
+                {
+                    rc = MYSQL_DATA_TRUNCATED;
+                    *Dest->error = 1;
+                }
+                *(unsigned char*)Dest->buffer = val;
+            } else
+            {
+                if (val < TINYINT_MIN || val > TINYINT_MAX)
+                {
+                    rc = MYSQL_DATA_TRUNCATED;
+                    *Dest->error = 1;
+                }
+                *(char*)Dest->buffer = val;
+            }
+            Dest->buffer_length = sizeof(SQLCHAR);
+            break;
+        case MYSQL_TYPE_SHORT:
+        case MYSQL_TYPE_YEAR:
+            if (Dest->is_unsigned)
+            {
+                if (val < 0 || val > USMALLINT_MAX)
+                {
+                    rc = MYSQL_DATA_TRUNCATED;
+                    *Dest->error = 1;
+                }
+                *(SQLUSMALLINT *)Dest->buffer = val;
+            } else
+            {
+                if (val < SMALLINT_MIN || val > SMALLINT_MAX)
+                {
+                    rc = MYSQL_DATA_TRUNCATED;
+                    *Dest->error = 1;
+                }
+                *(SQLSMALLINT *)Dest->buffer = val;
+            }
+            Dest->buffer_length = sizeof(SQLSMALLINT);
+            break;
+        case MYSQL_TYPE_LONG:
+        case MYSQL_TYPE_INT24:
+            if (Dest->is_unsigned)
+            {
+                if (val < 0 || val > UINTEGER_MAX)
+                {
+                    rc = MYSQL_DATA_TRUNCATED;
+                    *Dest->error = 1;
+                }
+                *(SQLUINTEGER *)Dest->buffer = val;
+            } else
+            {
+                if (val < INTEGER_MIN || val > INTEGER_MAX)
+                {
+                    rc = MYSQL_DATA_TRUNCATED;
+                    *Dest->error = 1;
+                }
+                *(SQLINTEGER *)Dest->buffer = val;
+            }
+            Dest->buffer_length = sizeof(SQLINTEGER);
+            break;
+        case MYSQL_TYPE_LONGLONG:
+            if (Dest->is_unsigned)
+            {
+                *(SQLUBIGINT *)Dest->buffer = val;
+            } else
+            {
+                *(SQLBIGINT *)Dest->buffer = val;
+            }
+            Dest->buffer_length = sizeof(SQLBIGINT);
+            break;
+    }
+
+    return rc;
+}
+/* }}} */
+
+/* {{{ MADB_ConvertBinaryToInteger
+ This simply copies the binary data into the integer variable and handles truncation. */
+SQLRETURN MADB_ConvertBinaryToInteger(MYSQL_BIND* Dest, char* Src, unsigned int fieldLen)
+{
+    int rc = SQL_SUCCESS;
+    unsigned long offset = Dest->offset;
+    if (fieldLen >= offset)
+    {
+        const char* start = Src + offset;
+        const char* end = Src + fieldLen;
+        unsigned long copyLen = end - start;
+        if (start < end)
+        {
+            if (copyLen > Dest->buffer_length)
+            {
+                copyLen = Dest->buffer_length;
+                rc = MYSQL_DATA_TRUNCATED;
+                *Dest->error = 1;
+            }
+            memcpy(Dest->buffer, start, copyLen);
+        }
+    }
+    *Dest->length = fieldLen;
+
+    return rc;
+}
+/* }}} */
+
+#undef TINYINT_MIN
+#undef TINYINT_MAX
+#undef UTINYINT_MAX
+#undef SMALLINT_MIN
+#undef SMALLINT_MAX
+#undef USMALLINT_MAX
+#undef INTEGER_MIN
+#undef INTEGER_MAX
+#undef UINTEGER_MAX

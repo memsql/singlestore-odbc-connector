@@ -102,6 +102,14 @@ SQLUSMALLINT MapColAttributeDescType(SQLUSMALLINT FieldIdentifier);
 MYSQL_RES*   FetchMetadata          (MADB_Stmt *Stmt);
 SQLRETURN    MADB_DoExecute(MADB_Stmt *Stmt, BOOL ExecDirect);
 
+SQLRETURN    MADB_StmtFetchColumn(MADB_Stmt* Stmt, MYSQL_BIND *bind, unsigned int column, unsigned long offset);
+SQLRETURN    MADB_FetchCsps(MADB_Stmt* Stmt);
+SQLRETURN    MADB_FetchColumnCsps(MADB_Stmt* Stmt, MYSQL_BIND *bind, unsigned int column, unsigned long offset);
+
+void         MADB_CspsFreeResult(MADB_Stmt *Stmt, MYSQL_RES** CspsRes, MYSQL_STMT* stmt);
+void         MADB_CspsCopyResult(MADB_Stmt *Stmt, MYSQL_RES* CspsRes, MYSQL_STMT* stmt);
+void         MADB_CspsFreeDAE(MADB_Stmt *Stmt);
+
 #define MADB_MAX_CURSOR_NAME 64 * 3 + 1
 #define MADB_CHECK_STMT_HANDLE(a,b)\
   if (!(a) || !(a)->b)\
@@ -116,6 +124,8 @@ SQLRETURN    MADB_DoExecute(MADB_Stmt *Stmt, BOOL ExecDirect);
 #define MADB_STMT_FORGET_NEXT_POS(aStmt) (aStmt)->Cursor.Next= NULL
 #define MADB_STMT_RESET_CURSOR(aStmt) (aStmt)->Cursor.Position= -1; MADB_STMT_FORGET_NEXT_POS(aStmt)
 #define MADB_STMT_CLOSE_STMT(aStmt)   mysql_stmt_close((aStmt)->stmt);(aStmt)->stmt= NULL
+#define MADB_SSPS_ENABLED(aStmt) (aStmt)->Connection->Dsn->NoSsps == FALSE
+#define MADB_SSPS_DISABLED(aStmt) !(MADB_SSPS_ENABLED(aStmt))
 
 /************** SQLColumns       *************/
 #define MADB_DATA_TYPE_ODBC2 \

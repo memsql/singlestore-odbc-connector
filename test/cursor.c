@@ -3453,7 +3453,7 @@ MA_ODBC_TESTS my_tests[]=
 {
   {my_positioned_cursor, "my_positioned_cursor",     NORMAL},
   {my_setpos_cursor, "my_setpos_cursor",     NORMAL},
-  //{t_bug5853, "t_bug5853",     NORMAL}, TODO: should be fixed in PLAT-4940
+  {t_bug5853, "t_bug5853",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
   {t_setpos_del_all, "t_setpos_del_all",     NORMAL},
   {t_setpos_upd_decimal, "t_setpos_upd_decimal",     NORMAL},
   {t_setpos_position, "t_setpos_position",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
@@ -3495,8 +3495,8 @@ MA_ODBC_TESTS my_tests[]=
   {t_cursor_pos_static, "t_cursor_pos_static",     NORMAL},
   {t_cursor_pos_dynamic, "t_cursor_pos_dynamic",     NORMAL},
   {t_bug11846, "t_bug11846",     NORMAL},
-  //{t_dae_setpos_insert, "t_dae_setpos_insert", NORMAL}, TODO: should be fixed in PLAT-4940
-  //{t_dae_setpos_update, "t_dae_setpos_update", NORMAL}, TODO: should be fixed in PLAT-4940
+  {t_dae_setpos_insert, "t_dae_setpos_insert", CSPS_OK | SSPS_FAIL},
+  {t_dae_setpos_update, "t_dae_setpos_update", TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
   {t_bug39961, "t_bug39961",        NORMAL},
   {t_bug41946, "t_bug41946",        NORMAL},
   {odbc251, "odbc251-mblob_update", TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.

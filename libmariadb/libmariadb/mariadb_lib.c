@@ -2010,8 +2010,9 @@ static void mysql_close_memory(MYSQL *mysql)
   free(mysql->db);
   free(mysql->unix_socket);
   free(mysql->server_version);
+  free(mysql->ss_version);
   mysql->host_info= mysql->host= mysql->unix_socket=
-                    mysql->server_version=mysql->user=mysql->passwd=mysql->db=0;
+                    mysql->server_version=mysql->ss_version=mysql->user=mysql->passwd=mysql->db=0;
 }
 
 void my_set_error(MYSQL *mysql,
@@ -2951,7 +2952,7 @@ mysql_optionsv(MYSQL *mysql,enum mysql_option option, ...)
     mysql->options.protocol= *((uint *)arg1);
     break;
   case MYSQL_SS_VERSION:
-    mysql->ss_version= (char *)arg1;
+    mysql->ss_version= strdup((char *)arg1); // temporary until PLAT-5088 is fixed.
     break;
 #ifdef _WIN32
   case MYSQL_SHARED_MEMORY_BASE_NAME:

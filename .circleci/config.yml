@@ -67,7 +67,7 @@ jobs:
     environment:
       BUILD_TYPE: << parameters.build_type >>
       TEST_DSN: singlestore_test
-      TEST_SCHEMA: test
+      TEST_SCHEMA: odbc_test
       CONTINUOUS_INTEGRATION: true
     steps:
       - run:
@@ -101,10 +101,10 @@ jobs:
       BUILD_TYPE: << parameters.build_type >>
       MEMSQL_IMAGE: << parameters.memsql_image >>
       MEMSQL_PASSWORD: << parameters.memsql_password >>
-      TEST_DRIVER: singlestore_test
+      TEST_DRIVER: "MariaDB ODBC 3.1 Driver"
       TEST_DSN: singlestore_test
       TEST_SERVER: singlestore.test.com
-      TEST_SCHEMA: test
+      TEST_SCHEMA: odbc_test
       TEST_UID: root
       TEST_PORT: 5506
       CONTINUOUS_INTEGRATION: true
