@@ -1000,9 +1000,15 @@ SQLRETURN MADB_StmtPutData(MADB_Stmt *Stmt, SQLPOINTER DataPtr, SQLLEN StrLen_or
           IpdRecord->DataPtr = dataBuffer;
       }
       IpdRecord->InternalLength += (unsigned long)Length;
-
       // We should probably update the OctetLength to make sure the offset for DataPtr is correct.
       IpdRecord->OctetLength = IpdRecord->InternalLength;
+
+      // If ConvertedDataPtr is not NULL, memory was allocated to convert from WCHAR to CHAR, so we'd need to release
+      // that memory after it's copied into the IPD record.
+      if (ConvertedDataPtr)
+      {
+          MADB_FREE(ConvertedDataPtr);
+      }
       return SQL_SUCCESS;
   }
 
@@ -1267,7 +1273,7 @@ SQLRETURN MADB_InsertParam(MADB_Stmt* Stmt, MADB_DescRecord* ApdRecord, MADB_Des
             {
                 ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001,"Failed to append the parameter", 0);
             }
-            return ret;
+            goto end;
         } else if (*IndicatorPtr == SQL_COLUMN_IGNORE && ApdRecord->DefaultValue)
         {
             if (MADB_DynstrAppend(&data, ApdRecord->DefaultValue))
@@ -1747,6 +1753,13 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
               if (!SQL_SUCCEEDED(ret) && j == Start + Stmt->Apd->Header.ArraySize) {
                   goto end;
               }
+          }
+
+          // If final_query underlying string is not null, we may have unreleased memory. That can happen if
+          // SQL_PARAM_IGNORE is provided for a parameter.
+          if (final_query.str)
+          {
+              MADB_DynstrFree(&final_query);
           }
 
           // Free the previous result if there was any.
@@ -3570,11 +3583,10 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
         Bind.buffer_length= Stmt->stmt->fields[Offset].max_length + 1;
         OK_SUCCESS_OR_TRUNCATION(Stmt, MADB_StmtFetchColumn(Stmt, &Bind, Offset, 0));
         RETURN_ERROR_OR_CONTINUE(MADB_Str2Ts(ClientValue, Bind.length_value, &tm, FALSE, &Stmt->Error, &isTime));
+        MADB_FREE(ClientValue);
       }
       else
       {
-
-
         Bind.buffer_length= sizeof(MYSQL_TIME);
         Bind.buffer= (void *)&tm;
         /* c/c is too smart to convert hours to days and days to hours, we don't need that */
@@ -3613,6 +3625,7 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
         Bind.buffer_length= Stmt->stmt->fields[Offset].max_length + 1;
         OK_SUCCESS_OR_TRUNCATION(Stmt, MADB_StmtFetchColumn(Stmt, &Bind, Offset, 0));
         RETURN_ERROR_OR_CONTINUE(MADB_Str2Ts(ClientValue, Bind.length_value, &tm, TRUE, &Stmt->Error, &isTime));
+        MADB_FREE(ClientValue);
       }
       else
       {
