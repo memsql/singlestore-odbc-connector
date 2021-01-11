@@ -1332,8 +1332,7 @@ ODBC_TEST(t_odbc32)
   SQLCHAR     conn[512];
   SQLUINTEGER packet_size= 0;
 
-  sprintf((char *)conn, "DRIVER=%s;SERVER=%s;DATABASE=%s;UID=%s;PASSWORD=%s;PORT=%d;NO_SSPS=%d;%s",
-          my_drivername, my_servername, my_schema, my_uid, my_pwd, my_port, NoSsps, add_connstr);
+  sprintf((char *)conn, "DSN=%s;", my_dsn);
   
   CHECK_ENV_RC(Env, SQLAllocHandle(SQL_HANDLE_DBC, Env, &hdbc1));
   CHECK_DBC_RC(hdbc1, SQLSetConnectAttr(hdbc1, SQL_ATTR_PACKET_SIZE, (SQLPOINTER)(4096*1024), 0));

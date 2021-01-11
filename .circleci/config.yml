@@ -100,11 +100,11 @@ jobs:
     environment:
       BUILD_TYPE: << parameters.build_type >>
       MEMSQL_IMAGE: << parameters.memsql_image >>
-      MEMSQL_PASSWORD: << parameters.memsql_password >>
+      MEMSQL_PASSWORD: << parameters.memsql_password >> # root user's password to connect and create a test user
       TEST_DRIVER: "MariaDB ODBC 3.1 Driver"
       TEST_DSN: singlestore_test
       TEST_SERVER: singlestore.test.com
-      TEST_SCHEMA: odbc_test
+      TEST_SCHEMA: ""
       TEST_UID: root
       TEST_PORT: 5506
       CONTINUOUS_INTEGRATION: true
@@ -120,9 +120,6 @@ jobs:
             else
               ./scripts/ensure-test-memsql-cluster-password.sh
             fi
-      - run:
-          name: Create test database
-          command: ./.circleci/create-database.sh
       - run:
           name: Run tests
           command: ./.circleci/build-linux.sh

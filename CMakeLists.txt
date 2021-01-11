@@ -423,8 +423,8 @@ IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
       SET_VALUE(TEST_SERVER "127.0.0.1")
       SET_VALUE(TEST_SOCKET "")
       SET_VALUE(TEST_SCHEMA "odbc_test")
-      SET_VALUE(TEST_UID "root")
-      SET_VALUE(TEST_PASSWORD "")
+      SET_VALUE(TEST_UID "odbc_user")
+      SET_VALUE(TEST_PASSWORD "odbc_password")
 
       MESSAGE(STATUS "Configuring Test Driver: ${TEST_DRIVER}, Test DSN: ${TEST_DSN}, tcp://${TEST_UID}@${TEST_SERVER}:${TEST_PORT}/${TEST_SCHEMA} socket: ${TEST_SOCKET}")
 

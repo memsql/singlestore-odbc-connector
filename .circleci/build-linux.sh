@@ -20,7 +20,7 @@ DEBIAN_FRONTEND=noninteractive sudo apt-get update
 DEBIAN_FRONTEND=noninteractive sudo apt-get install --allow-unauthenticated -y --force-yes -m unixodbc-dev odbcinst1debian2 libodbc1 
 
 ## build odbc connector
-cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL
+cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_SSL=OPENSSL
 cmake --build . --config ${BUILD_TYPE}
 
 ## Export password

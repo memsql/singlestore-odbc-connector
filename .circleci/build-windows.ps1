@@ -20,7 +20,7 @@ function Invoke-Executable {
 Invoke-Executable -ScriptBlock { choco install -y -r --no-progress wixtoolset } -ErrorAction Stop
 refreshenv
 
-Invoke-Executable -ScriptBlock { cmake -DCMAKE_BUILD_TYPE=$ENV:BUILD_TYPE -DCONC_WITH_UNIT_TESTS=Off -DCONC_WITH_MSI=OFF -DWITH_SSL=SCHANNEL . } -ErrorAction Stop
+Invoke-Executable -ScriptBlock { cmake -DCMAKE_BUILD_TYPE=$ENV:BUILD_TYPE -DWITH_SSL=SCHANNEL . } -ErrorAction Stop
 Invoke-Executable -ScriptBlock { cmake --build . --config $ENV:BUILD_TYPE --parallel 2 } -ErrorAction Stop
 
 
@@ -34,11 +34,11 @@ New-ItemProperty -Path $regPath -Name "DESCRIPTION" -Value "MariaDB ODBC test"
 New-ItemProperty -Path $regPath -Name "DRIVER" -Value "MariaDB ODBC 3.1 Driver"
 New-ItemProperty -Path $regPath -Name "OPTIONS" -Value "0"
 New-ItemProperty -Path $regPath -Name "PORT" -Value $ENV:MEMSQL_PORT
-New-ItemProperty -Path $regPath -Name "PWD" -Value $ENV:MEMSQL_PASSWORD
+New-ItemProperty -Path $regPath -Name "PWD" -Value "odbc_password"
 New-ItemProperty -Path $regPath -Name "SERVER" -Value $ENV:MEMSQL_HOST
 New-ItemProperty -Path $regPath -Name "SSLVERIFY" -Value "0"
 New-ItemProperty -Path $regPath -Name "TCPIP" -Value "1"
-New-ItemProperty -Path $regPath -Name "UID" -Value $ENV:MEMSQL_USER
+New-ItemProperty -Path $regPath -Name "UID" -Value "odbc_user"
 New-Item -Path "HKCU:\Software\ODBC\ODBC.INI\ODBC Data Sources"
 New-ItemProperty -Path "HKCU:\Software\ODBC\ODBC.INI\ODBC Data Sources" -Name "maodbc_test" -Value "MariaDB ODBC 3.1 Driver"
 

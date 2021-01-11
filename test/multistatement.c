@@ -395,6 +395,11 @@ ODBC_TEST(t_odbc159)
   SQLSMALLINT ColumnsCount, expCols[]= {0,0,16};
   SQLRETURN rc;
 
+  // This test requires some data to be present in the INFORMATION_SCHEMA.STATISTICS.
+  // We can achieve that by creating a table with a necessary number of columns.
+  OK_SIMPLE_STMT(Stmt, "CREATE TABLE IF NOT EXISTS dummy(a INT NOT NULL, b INT NOT NULL, PRIMARY KEY(a, b), UNIQUE KEY(a, b))");
+
+
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS _temp_odbc159;\
                         CREATE TEMPORARY TABLE _temp_odbc159 AS SELECT * FROM INFORMATION_SCHEMA.STATISTICS;\
                         SELECT * FROM _temp_odbc159 LIMIT 5;");
@@ -424,8 +429,10 @@ ODBC_TEST(t_odbc159)
   } while (rc != SQL_NO_DATA);
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
-
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS _temp_odbc159");
+
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS dummy");
 
   return OK;
 }

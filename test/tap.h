@@ -123,10 +123,13 @@ BOOL   UseDsnOnly= FALSE;
 static SQLCHAR *my_dsn=        (SQLCHAR *)"maodbc_test";
 static SQLCHAR *my_uid=        (SQLCHAR *)"root";
 static SQLCHAR *my_pwd=        (SQLCHAR *)"";
-static SQLCHAR *my_schema=     (SQLCHAR *)"odbc_test";
+static SQLCHAR *my_schema=     (SQLCHAR *)"";
 static SQLCHAR *my_drivername= (SQLCHAR *)"MariaDB ODBC 3.1 Driver";
 static SQLCHAR *my_servername= (SQLCHAR *)"127.0.0.1";
 static SQLCHAR *add_connstr=   (SQLCHAR*)"";
+static SQLCHAR *my_test_uid =  (SQLCHAR *)"odbc_user";
+static SQLCHAR *my_test_pwd =  (SQLCHAR *)"odbc_password";
+static SQLCHAR *my_test_db =   (SQLCHAR *)"odbc_test";
 
 static SQLWCHAR *wdsn;
 static SQLWCHAR *wuid;
@@ -1028,6 +1031,43 @@ int reset_changed_server_variables(void)
   return error;
 }
 
+int prepare_test_user_and_database()
+{
+    if (ODBC_Connect(&Env,&Connection,&Stmt) == FAIL)
+    {
+        odbc_print_error(SQL_HANDLE_DBC, Connection);
+        ODBC_Disconnect(Env,Connection,Stmt);
+        fprintf(stdout, "HALT! Could not connect to the server\n");
+        return 1;
+    }
+
+    char DropUserStmt[128];
+    char CreateUserStmt[128];
+    char GrantUserStmt[128];
+    char CreateDbStmt[128];
+    _snprintf(DropUserStmt, 128, "DROP USER IF EXISTS `%s`", my_test_uid);
+    _snprintf(CreateUserStmt, 128, "CREATE USER `%s`@`%` IDENTIFIED BY '%s'", my_test_uid, my_test_pwd);
+    _snprintf(GrantUserStmt, 128, "GRANT ALL ON *.* TO `%s`@`%` WITH GRANT OPTION", my_test_uid);
+    _snprintf(CreateDbStmt, 128, "CREATE DATABASE IF NOT EXISTS %s", my_test_db);
+
+    fprintf(stdout,"Creating test user: `%s` and a test database `%s`\n", my_test_uid, my_test_db);
+    if (!SQL_SUCCEEDED(SQLExecDirect(Stmt, (SQLCHAR*)DropUserStmt, SQL_NTS)) ||
+        !SQL_SUCCEEDED(SQLExecDirect(Stmt, (SQLCHAR*)CreateUserStmt, SQL_NTS)) ||
+        !SQL_SUCCEEDED(SQLExecDirect(Stmt, (SQLCHAR*)GrantUserStmt, SQL_NTS)) ||
+        !SQL_SUCCEEDED(SQLExecDirect(Stmt, (SQLCHAR*)CreateDbStmt, SQL_NTS)))
+    {
+        odbc_print_error(SQL_HANDLE_STMT, Stmt);
+        ODBC_Disconnect(Env,Connection,Stmt);
+        return 1;
+    }
+
+    my_uid = my_test_uid;
+    my_pwd = my_test_pwd;
+    my_schema = my_test_db;
+
+    ODBC_Disconnect(Env,Connection,Stmt);
+}
+
 
 int connect_and_run_tests(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
 {
@@ -1101,6 +1141,11 @@ int connect_and_run_tests(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
 
 int run_tests_ex(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
 {
+  if (prepare_test_user_and_database())
+  {
+      return 1;
+  }
+
   utf16= (little_endian() ? &utf16le : &utf16be);
   utf32= (little_endian() ? &utf32le : &utf32be);
 
@@ -1127,14 +1172,6 @@ int run_tests_ex(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
   wdrivername= str2sqlwchar_on_gbuff((const char*)my_drivername, strlen((const char*)my_drivername) + 1, utf8, DmUnicode);
   wstrport=    str2sqlwchar_on_gbuff((const char*)ma_strport,    strlen((const char*)ma_strport) + 1,    utf8, DmUnicode);
   wadd_connstr=str2sqlwchar_on_gbuff((const char*)add_connstr,   strlen((const char*)add_connstr) + 1,   utf8, DmUnicode);
-  if (getenv("TRAVIS") != NULL)
-  {
-    Travis= 1;
-    if (_stricmp(getenv("TRAVIS_OS_NAME"), "osx") == 0)
-    {
-      TravisOnOsx= 1;
-    }
-  }
 
   fprintf(stdout, "Running tests in the client-side prepared statements mode...\n");
   NoSsps = 1;
