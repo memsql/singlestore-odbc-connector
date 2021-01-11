@@ -379,29 +379,6 @@ SQLRETURN MADB_StmtFree(MADB_Stmt *Stmt, SQLUSMALLINT Option)
 }
 /* }}} */
 
-/* {{{ MADB_CheckIfExecDirectPossible
-       Checking if we can deploy mariadb_stmt_execute_direct */
-BOOL MADB_CheckIfExecDirectPossible(MADB_Stmt *Stmt)
-{
-  return MADB_ServerSupports(Stmt->Connection, MADB_CAPABLE_EXEC_DIRECT)
-      && !(Stmt->Apd->Header.ArraySize > 1)                              /* With array of parameters exec_direct will be not optimal */
-      && MADB_FindNextDaeParam(Stmt->Apd, -1, 1) == MADB_NOPARAM;
-}
-/* }}} */
-
-/* {{{ MADB_BulkInsertPossible
-       Checking if we can deploy mariadb_stmt_execute_direct */
-BOOL MADB_BulkInsertPossible(MADB_Stmt *Stmt)
-{
-  return MADB_ServerSupports(Stmt->Connection, MADB_CAPABLE_PARAM_ARRAYS)
-      && (Stmt->Apd->Header.ArraySize > 1)
-      && (Stmt->Apd->Header.BindType == SQL_PARAM_BIND_BY_COLUMN)        /* First we support column-wise binding */
-      && (Stmt->Query.QueryType == MADB_QUERY_INSERT || Stmt->Query.QueryType == MADB_QUERY_UPDATE)
-      && MADB_FindNextDaeParam(Stmt->Apd, -1, 1) == MADB_NOPARAM;        /* TODO: should be not very hard ot optimize to use bulk in this
-                                                                         case for chunks of the array, delimitered by param rows with DAE
-                                                                         In particular, MADB_FindNextDaeParam should consider Stmt->ArrayOffset */
-}
-/* }}} */
 /* {{{ MADB_StmtExecDirect */
 SQLRETURN MADB_StmtExecDirect(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER TextLength)
 {
@@ -762,15 +739,7 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
       Stmt->State = MADB_SS_PREPARED;
       return SQL_SUCCESS;
   }
-
-  if (ExecDirect && MADB_CheckIfExecDirectPossible(Stmt))
-  {
-    return MADB_EDPrepare(Stmt);
-  }
-  else
-  {
-    return MADB_RegularPrepare(Stmt);
-  }
+  return MADB_RegularPrepare(Stmt);
 }
 /* }}} */
 
@@ -1191,17 +1160,13 @@ static void ResetInternalLength(MADB_Stmt *Stmt, unsigned int ParamOffset)
 
 /* {{{ MADB_DoExecute */
 /* Actually executing on the server, doing required actions with C API, and processing execution result */
-SQLRETURN MADB_DoExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
+SQLRETURN MADB_DoExecute(MADB_Stmt *Stmt)
 {
   SQLRETURN ret= SQL_SUCCESS;
 
   /**************************** mysql_stmt_bind_param **********************************/
-  if (ExecDirect)
-  {
-    mysql_stmt_attr_set(Stmt->stmt, STMT_ATTR_PREBIND_PARAMS, &Stmt->ParamCount);
-  }
-
-  mysql_stmt_attr_set(Stmt->stmt, STMT_ATTR_ARRAY_SIZE, (void*)&Stmt->Bulk.ArraySize);
+  unsigned int arr_size = 0;
+  mysql_stmt_attr_set(Stmt->stmt, STMT_ATTR_ARRAY_SIZE, (void*)&arr_size);
 
   if (Stmt->ParamCount)
   {
@@ -1211,11 +1176,9 @@ SQLRETURN MADB_DoExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
 
   /**************************** mysql_stmt_execute *************************************/
 
-  MDBUG_C_PRINT(Stmt->Connection, ExecDirect ? "mariadb_stmt_execute_direct(%0x,%s)"
-    : "mariadb_stmt_execute(%0x)(%s)", Stmt->stmt, STMT_STRING(Stmt));
+  MDBUG_C_PRINT(Stmt->Connection, "mariadb_stmt_execute(%0x)(%s)", Stmt->stmt, STMT_STRING(Stmt));
 
-  if ((ExecDirect && mariadb_stmt_execute_direct(Stmt->stmt, STMT_STRING(Stmt), strlen(STMT_STRING(Stmt))))
-    || (!ExecDirect && mysql_stmt_execute(Stmt->stmt)))
+  if (mysql_stmt_execute(Stmt->stmt))
   {
     ret= MADB_SetNativeError(&Stmt->Error, SQL_HANDLE_STMT, Stmt->stmt);
     MDBUG_C_PRINT(Stmt->Connection, "mysql_stmt_execute:ERROR%s", "");
@@ -1599,8 +1562,6 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
   unsigned int ErrorCount=    0;
   unsigned int StatementNr;
   unsigned int ParamOffset=   0; /* for multi statements */
-               /* Will use it for STMT_ATTR_ARRAY_SIZE and as indicator if we are deploying MariaDB bulk insert feature */
-  unsigned int MariadbArrSize= MADB_BulkInsertPossible(Stmt) != FALSE ? (unsigned int)Stmt->Apd->Header.ArraySize : 0;
   SQLULEN      j, Start=      0;
   /* For multistatement direct execution */
   char        *CurQuery= Stmt->Query.RefinedText, *QueriesEnd= Stmt->Query.RefinedText + Stmt->Query.RefinedLength;
@@ -1900,16 +1861,6 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
   {
     *Stmt->Ipd->Header.RowsProcessedPtr= 0;
   }
- 
-  if (MariadbArrSize > 1)
-  {
-    if (MADB_DOING_BULK_OPER(Stmt))
-    {
-      //MADB_CleanBulkOperationData(Stmt);
-    }
-    Stmt->Bulk.ArraySize=  MariadbArrSize;
-    Stmt->Bulk.HasRowsToSkip= 0;
-  }
 
   for (StatementNr= 0; StatementNr < STMT_COUNT(Stmt->Query); ++StatementNr)
   {
@@ -1958,113 +1909,87 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
       memset(Stmt->params, 0, sizeof(MYSQL_BIND) * MADB_STMT_PARAM_COUNT(Stmt));
     }
 
-    if (MADB_DOING_BULK_OPER(Stmt))
+    /* Convert and bind parameters */
+    for (j= Start; j < Start + Stmt->Apd->Header.ArraySize; ++j)
     {
-      if (!SQL_SUCCEEDED(MADB_ExecuteBulk(Stmt, ParamOffset)))
+      /* "... In an IPD, this SQLUINTEGER * header field points to a buffer containing the number
+         of sets of parameters that have been processed, including error sets. ..." */
+      if (Stmt->Ipd->Header.RowsProcessedPtr)
       {
-        /* Doing just the same thing as we would do in general case */
-        MADB_CleanBulkOperData(Stmt, ParamOffset);
-        ErrorCount= (unsigned int)Stmt->Apd->Header.ArraySize;
-        MADB_SetStatusArray(Stmt, SQL_PARAM_DIAG_UNAVAILABLE);
-        goto end;
+        *Stmt->Ipd->Header.RowsProcessedPtr= *Stmt->Ipd->Header.RowsProcessedPtr + 1;
       }
-      else if (!mysql_stmt_field_count(Stmt->stmt) && !Stmt->MultiStmts)
+
+      if (Stmt->Apd->Header.ArrayStatusPtr &&
+        Stmt->Apd->Header.ArrayStatusPtr[j-Start] == SQL_PARAM_IGNORE)
+      {
+        if (Stmt->Ipd->Header.ArrayStatusPtr)
+        {
+          Stmt->Ipd->Header.ArrayStatusPtr[j-Start]= SQL_PARAM_UNUSED;
+        }
+        continue;
+      }
+
+      for (i= ParamOffset; i < ParamOffset + MADB_STMT_PARAM_COUNT(Stmt); ++i)
+      {
+        MADB_DescRecord *ApdRecord, *IpdRecord;
+
+        if ((ApdRecord= MADB_DescGetInternalRecord(Stmt->Apd, i, MADB_DESC_READ)) &&
+          (IpdRecord= MADB_DescGetInternalRecord(Stmt->Ipd, i, MADB_DESC_READ)))
+        {
+          /* check if parameter was bound */
+          if (!ApdRecord->inUse)
+          {
+            ret= MADB_SetError(&Stmt->Error, MADB_ERR_07002, NULL, 0);
+            goto end;
+          }
+
+          if (MADB_ConversionSupported(ApdRecord, IpdRecord) == FALSE)
+          {
+            ret= MADB_SetError(&Stmt->Error, MADB_ERR_07006, NULL, 0);
+            goto end;
+          }
+
+          Stmt->params[i-ParamOffset].length= NULL;
+
+          ret= MADB_C2SQL(Stmt, ApdRecord, IpdRecord, j - Start, &Stmt->params[i-ParamOffset]);
+          if (!SQL_SUCCEEDED(ret))
+          {
+            goto end;
+          }
+        }
+      }                 /* End of for() on parameters */
+
+      if (Stmt->RebindParams && MADB_STMT_PARAM_COUNT(Stmt))
+      {
+        Stmt->stmt->bind_param_done= 1;
+        Stmt->RebindParams= FALSE;
+      }
+
+      ret= MADB_DoExecute(Stmt);
+
+      if (!SQL_SUCCEEDED(ret))
+      {
+        ++ErrorCount;
+      }
+      /* We need to unset InternalLength, i.e. reset dae length counters for next stmt.
+         However that length is not used anywhere, and is not clear what is it needed for */
+      ResetInternalLength(Stmt, ParamOffset);
+
+      if (Stmt->Ipd->Header.ArrayStatusPtr)
+      {
+        Stmt->Ipd->Header.ArrayStatusPtr[j-Start]= SQL_SUCCEEDED(ret) ? SQL_PARAM_SUCCESS :
+          (j == Stmt->Apd->Header.ArraySize - 1) ? SQL_PARAM_ERROR : SQL_PARAM_DIAG_UNAVAILABLE;
+      }
+      if (!mysql_stmt_field_count(Stmt->stmt) && SQL_SUCCEEDED(ret) && !Stmt->MultiStmts)
       {
         Stmt->AffectedRows+= mysql_stmt_affected_rows(Stmt->stmt);
       }
-      /* Suboptimal, but more reliable and simple */
-      MADB_CleanBulkOperData(Stmt, ParamOffset);
-      Stmt->ArrayOffset+= (int)Stmt->Apd->Header.ArraySize;
-      if (Stmt->Ipd->Header.RowsProcessedPtr)
+      ++Stmt->ArrayOffset;
+      if (!SQL_SUCCEEDED(ret) && j == Start + Stmt->Apd->Header.ArraySize)
       {
-        *Stmt->Ipd->Header.RowsProcessedPtr= *Stmt->Ipd->Header.RowsProcessedPtr + Stmt->Apd->Header.ArraySize;
+        goto end;
       }
-      MADB_SetStatusArray(Stmt, SQL_PARAM_SUCCESS);
-    }
-    else
-    {
-      /* Convert and bind parameters */
-      for (j= Start; j < Start + Stmt->Apd->Header.ArraySize; ++j)
-      {
-        /* "... In an IPD, this SQLUINTEGER * header field points to a buffer containing the number
-           of sets of parameters that have been processed, including error sets. ..." */
-        if (Stmt->Ipd->Header.RowsProcessedPtr)
-        {
-          *Stmt->Ipd->Header.RowsProcessedPtr= *Stmt->Ipd->Header.RowsProcessedPtr + 1;
-        }
-
-        if (Stmt->Apd->Header.ArrayStatusPtr &&
-          Stmt->Apd->Header.ArrayStatusPtr[j-Start] == SQL_PARAM_IGNORE)
-        {
-          if (Stmt->Ipd->Header.ArrayStatusPtr)
-          {
-            Stmt->Ipd->Header.ArrayStatusPtr[j-Start]= SQL_PARAM_UNUSED;
-          }
-          continue;
-        }
-
-        for (i= ParamOffset; i < ParamOffset + MADB_STMT_PARAM_COUNT(Stmt); ++i)
-        {
-          MADB_DescRecord *ApdRecord, *IpdRecord;
-
-          if ((ApdRecord= MADB_DescGetInternalRecord(Stmt->Apd, i, MADB_DESC_READ)) &&
-            (IpdRecord= MADB_DescGetInternalRecord(Stmt->Ipd, i, MADB_DESC_READ)))
-          {
-            /* check if parameter was bound */
-            if (!ApdRecord->inUse)
-            {
-              ret= MADB_SetError(&Stmt->Error, MADB_ERR_07002, NULL, 0);
-              goto end;
-            }
-
-            if (MADB_ConversionSupported(ApdRecord, IpdRecord) == FALSE)
-            {
-              ret= MADB_SetError(&Stmt->Error, MADB_ERR_07006, NULL, 0);
-              goto end;
-            }
-
-            Stmt->params[i-ParamOffset].length= NULL;
-
-            ret= MADB_C2SQL(Stmt, ApdRecord, IpdRecord, j - Start, &Stmt->params[i-ParamOffset]);
-            if (!SQL_SUCCEEDED(ret))
-            {
-              goto end;
-            }
-          }
-        }                 /* End of for() on parameters */
-
-        if (Stmt->RebindParams && MADB_STMT_PARAM_COUNT(Stmt))
-        {
-          Stmt->stmt->bind_param_done= 1;
-          Stmt->RebindParams= FALSE;
-        }
-
-        ret= MADB_DoExecute(Stmt, ExecDirect && MADB_CheckIfExecDirectPossible(Stmt));
-
-        if (!SQL_SUCCEEDED(ret))
-        {
-          ++ErrorCount;
-        }
-        /* We need to unset InternalLength, i.e. reset dae length counters for next stmt.
-           However that length is not used anywhere, and is not clear what is it needed for */
-        ResetInternalLength(Stmt, ParamOffset);
-
-        if (Stmt->Ipd->Header.ArrayStatusPtr)
-        {
-          Stmt->Ipd->Header.ArrayStatusPtr[j-Start]= SQL_SUCCEEDED(ret) ? SQL_PARAM_SUCCESS :
-            (j == Stmt->Apd->Header.ArraySize - 1) ? SQL_PARAM_ERROR : SQL_PARAM_DIAG_UNAVAILABLE;
-        }
-        if (!mysql_stmt_field_count(Stmt->stmt) && SQL_SUCCEEDED(ret) && !Stmt->MultiStmts)
-        {
-          Stmt->AffectedRows+= mysql_stmt_affected_rows(Stmt->stmt);
-        }
-        ++Stmt->ArrayOffset;
-        if (!SQL_SUCCEEDED(ret) && j == Start + Stmt->Apd->Header.ArraySize)
-        {
-          goto end;
-        }
-      }     /* End of for() thru paramsets(parameters array) */
-    }       /* End of if (bulk/not bulk) execution */
+    }     /* End of for() thru paramsets(parameters array) */
 
     if (QUERY_IS_MULTISTMT(Stmt->Query))
     {

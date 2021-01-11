@@ -100,7 +100,7 @@ struct st_ma_stmt_methods
 SQLRETURN    MADB_StmtInit          (MADB_Dbc *Connection, SQLHANDLE *pHStmt);
 SQLUSMALLINT MapColAttributeDescType(SQLUSMALLINT FieldIdentifier);
 MYSQL_RES*   FetchMetadata          (MADB_Stmt *Stmt);
-SQLRETURN    MADB_DoExecute(MADB_Stmt *Stmt, BOOL ExecDirect);
+SQLRETURN    MADB_DoExecute(MADB_Stmt *Stmt);
 
 SQLRETURN    MADB_StmtFetchColumn(MADB_Stmt* Stmt, MYSQL_BIND *bind, unsigned int column, unsigned long offset);
 SQLRETURN    MADB_FetchCsps(MADB_Stmt* Stmt);
