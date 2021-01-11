@@ -2802,6 +2802,12 @@ mysql_get_server_info(MYSQL *mysql)
   return((char*) mysql->server_version);
 }
 
+char * STDCALL
+ss_get_server_info(MYSQL *mysql)
+{
+  return((char*) mysql->ss_version);
+}
+
 static size_t single_store_server_version_id(MYSQL *mysql)
 {
     size_t major, minor, patch;
@@ -2952,7 +2958,11 @@ mysql_optionsv(MYSQL *mysql,enum mysql_option option, ...)
     mysql->options.protocol= *((uint *)arg1);
     break;
   case MYSQL_SS_VERSION:
-    mysql->ss_version= strdup((char *)arg1); // temporary until PLAT-5088 is fixed.
+    if (!(mysql->ss_version= strdup((char*)arg1)))
+    {
+      SET_CLIENT_ERROR(mysql, CR_OUT_OF_MEMORY, SQLSTATE_UNKNOWN, 0);
+      goto end;
+    }
     break;
 #ifdef _WIN32
   case MYSQL_SHARED_MEMORY_BASE_NAME:

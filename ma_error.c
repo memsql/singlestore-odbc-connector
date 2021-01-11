@@ -160,7 +160,8 @@ char* MADB_PutErrorPrefix(MADB_Dbc *dbc, MADB_Error *error)
     if (dbc != NULL && dbc->mariadb != NULL)
     {
       error->PrefixLen += _snprintf(error->SqlErrorMsg + error->PrefixLen,
-        SQL_MAX_MESSAGE_LENGTH + 1 - error->PrefixLen, "[%s]", mysql_get_server_info(dbc->mariadb)); 
+        SQL_MAX_MESSAGE_LENGTH + 1 - error->PrefixLen, "[%s]",
+        dbc->Dsn->CompatMode ? mysql_get_server_info(dbc->mariadb) : ss_get_server_info(dbc->mariadb));
     }
   }
   return error->SqlErrorMsg + error->PrefixLen;

@@ -554,6 +554,7 @@ int		STDCALL mysql_kill(MYSQL *mysql,unsigned long pid);
 int		STDCALL mysql_ping(MYSQL *mysql);
 char *		STDCALL mysql_stat(MYSQL *mysql);
 char *		STDCALL mysql_get_server_info(MYSQL *mysql);
+char *		STDCALL ss_get_server_info(MYSQL *mysql);
 unsigned long   STDCALL single_store_get_server_version(MYSQL *mysql);
 unsigned long   STDCALL mysql_get_server_version(MYSQL *mysql);
 char *		STDCALL mysql_get_host_info(MYSQL *mysql);
