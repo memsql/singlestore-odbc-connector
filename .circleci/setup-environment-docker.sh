@@ -3,8 +3,8 @@ then
   yum update
   yum -y install git cmake make gcc openssl-devel unixODBC unixODBC-devel
 else
-  sudo apt-get update
-  sudo apt-get install -y cmake make gcc libssl-dev unixodbc-dev
+  apt-get update
+  apt-get install -y cmake make gcc libssl-dev unixodbc-dev
 #  apt update
 #  apt install -y curl
 #  apt-get update
