@@ -103,7 +103,7 @@ jobs:
       TEST_DRIVER: singlestore_test
       TEST_DSN: singlestore_test
       TEST_SERVER: singlestore.test.com
-      TEST_SCHEMA: test
+      TEST_SCHEMA: odbc_test
       TEST_UID: root
       TEST_PORT: 5506
       CONTINUOUS_INTEGRATION: true
@@ -136,7 +136,7 @@ jobs:
     environment:
       IMAGE_NAME: << parameters.os_version >>
       BUILD_TYPE: << parameters.build_type >>
-      TEST_DRIVER: singlestore_test
+      TEST_DRIVER: "MariaDB ODBC 3.1 Driver"
       TEST_DSN: singlestore_test
       TEST_SCHEMA: test
       CONTINUOUS_INTEGRATION: true
