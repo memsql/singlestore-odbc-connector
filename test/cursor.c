@@ -1877,7 +1877,7 @@ ODBC_TEST(tmysql_setpos_pkdel2)
 
   CHECK_STMT_RC(Stmt, SQLSetCursorName(Stmt, (SQLCHAR *)"venu", SQL_NTS));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT b,c FROM tmysql_setpos_pkdel2");
+  OK_SIMPLE_STMT(Stmt, "SELECT b,c FROM tmysql_setpos_pkdel2 order by a");
 
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, &nData, 0, NULL));
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_CHAR, szData, sizeof(szData),
@@ -1897,7 +1897,7 @@ ODBC_TEST(tmysql_setpos_pkdel2)
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM tmysql_setpos_pkdel2");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM tmysql_setpos_pkdel2 order by a");
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 100);
