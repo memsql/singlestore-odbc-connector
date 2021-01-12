@@ -89,7 +89,8 @@ ODBC_TEST(client_side_prepare)
     CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
     CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-    SQLWCHAR aCol[20] = {};
+    SQLWCHAR aCol[20];
+    memset(aCol, 0, sizeof(aCol));
     SQLLEN aColLen;
     SQLCHAR bCol[20];
     SQLLEN bColLen;
@@ -778,7 +779,8 @@ ODBC_TEST(client_side_get_data_many_types)
     CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
     CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-    SQLWCHAR aCol[20] = {};
+    SQLWCHAR aCol[20];
+    memset(aCol, 0, sizeof(aCol));
     SQLLEN aColLen;
     SQLCHAR bCol[20];
     SQLLEN bColLen;

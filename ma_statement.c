@@ -995,7 +995,7 @@ SQLRETURN MADB_StmtPutData(MADB_Stmt *Stmt, SQLPOINTER DataPtr, SQLLEN StrLen_or
           {
               return MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to allocate memory for the long data", 0);
           }
-          memcpy(dataBuffer + oldLength, dataToAppend, Length);
+          memcpy((char*)dataBuffer + oldLength, dataToAppend, Length);
           ((char*)dataBuffer)[oldLength + Length] = '\0';
           IpdRecord->DataPtr = dataBuffer;
       }
@@ -1504,7 +1504,7 @@ Since the paramset may contain multiple parameter rows, ParamSetIdx denotes the 
 in the paramset that we're currently processing).
 QueryOffset denotes the position from which we start constructing the final_query (for single-statement queries
 QueryOffset is always 0). */
-SQLRETURN MADB_InsertParams(MADB_Stmt *Stmt, unsigned long QueryOffset, int ParamSetIdx, int ParamOffset, MADB_DynString* final_query)
+SQLRETURN MADB_InsertParams(MADB_Stmt *Stmt, unsigned long QueryOffset, SQLULEN ParamSetIdx, unsigned int ParamOffset, MADB_DynString* final_query)
 {
     int i = 0;
     unsigned long ParamIdx;
@@ -1532,7 +1532,7 @@ SQLRETURN MADB_InsertParams(MADB_Stmt *Stmt, unsigned long QueryOffset, int Para
             MADB_GetDynamic(&Stmt->Query.ParamPositions, &ParamIdx, i);
 
             // Append the part preceding the parameter.
-            uint LenBeforeParam = (Stmt->Query.RefinedText + ParamIdx) - query;
+            unsigned int LenBeforeParam = (Stmt->Query.RefinedText + ParamIdx) - query;
             MADB_DynstrAppendMem(final_query, query, LenBeforeParam);
             query += LenBeforeParam + 1; // omit the ?
 
@@ -1667,7 +1667,7 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
           // SELECT (params from bound item 1) ... UNION ALL SELECT (params from bound item 2 ...).
           // These separate SELECTs will obviously return the same number of columns, so we are sure this query succeeds
           // as long as each individual query succeeds.
-          int IdxArrayStatusToUpd = Start;
+          SQLULEN IdxArrayStatusToUpd = Start;
           for (j = Start; j < Start + Stmt->Apd->Header.ArraySize; ++j)
           {
               // "... In an IPD, this SQLUINTEGER * header field points to a buffer containing the number
@@ -2825,7 +2825,7 @@ SQLRETURN MADB_FetchCsps(MADB_Stmt *Stmt)
 {
     MADB_DescRecord *ArdRec, *IrdRec;
     MYSQL_ROW row;
-    int             i;
+    unsigned int             i;
     int rc = SQL_SUCCESS;
     unsigned long *field_lengths;
 

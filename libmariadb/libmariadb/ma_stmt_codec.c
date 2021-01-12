@@ -1237,7 +1237,8 @@ void ps_fetch_bit(MYSQL_BIND *r_param,
                   unsigned char **row)
 {
     ulong field_length = net_field_length(row);
-    uchar reverseBit[8] = {};
+    uchar reverseBit[8];
+    memset(reverseBit, 0, sizeof(reverseBit));
     // We expect the field_length to be 8, but if (in a very unlikely case) this is not true, let's pick the smallest
     // 8 bytes from the field or all of them if there are less than 8.
     ulong curPos = field_length >= 8 ? field_length - 8 : 0;

@@ -1048,7 +1048,7 @@ SQLRETURN MADB_ConvertDatetimeToChar(MADB_Stmt *Stmt, int SourceType, void* Src,
 
                 // frac array cannot have more than 6 characters that represent fraction, but allocating big enough,
                 // just in case.
-                int fracLen, fillZeros = 0;
+                SQLLEN fracLen, fillZeros = 0;
                 char frac[10];
                 memset(frac, 0, sizeof(frac));
                 fracLen = MADB_ConvertIntegerToChar(Stmt, SQL_C_ULONG, &fraction, frac);
@@ -1074,7 +1074,6 @@ SQLRETURN MADB_ConvertDatetimeToChar(MADB_Stmt *Stmt, int SourceType, void* Src,
 
 #ifndef _WIN32
 #define _strtoi64 strtoll
-#define _strtoiu64 strtoull
 #endif
 
 #define TINYINT_MIN (-128)
@@ -1094,7 +1093,7 @@ SQLRETURN MADB_ConvertCharToInteger(MYSQL_BIND* Dest, char* Src, unsigned int fi
 {
     SQLRETURN rc = SQL_SUCCESS;
     char *badPtr;
-    SQLBIGINT val = Dest->is_unsigned ? _strtoiu64(Src, &badPtr, 10) : _strtoi64(Src, &badPtr, 10);
+    SQLBIGINT val = Dest->is_unsigned ? strtoull(Src, &badPtr, 10) : _strtoi64(Src, &badPtr, 10);
     if (badPtr && badPtr - Src < fieldLen)
     {
         rc = MYSQL_DATA_TRUNCATED;
