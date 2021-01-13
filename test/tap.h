@@ -1060,6 +1060,7 @@ int prepare_test_user_and_database()
         ODBC_Disconnect(Env,Connection,Stmt);
         return 1;
     }
+    fprintf(stdout,"The user and the database were created successfully!\n");
 
     my_uid = my_test_uid;
     my_pwd = my_test_pwd;
