@@ -1046,8 +1046,8 @@ int prepare_test_user_and_database()
     char GrantUserStmt[128];
     char CreateDbStmt[128];
     _snprintf(DropUserStmt, 128, "DROP USER IF EXISTS `%s`", my_test_uid);
-    _snprintf(CreateUserStmt, 128, "CREATE USER `%s`@`%` IDENTIFIED BY '%s'", my_test_uid, my_test_pwd);
-    _snprintf(GrantUserStmt, 128, "GRANT ALL ON *.* TO `%s`@`%` WITH GRANT OPTION", my_test_uid);
+    _snprintf(CreateUserStmt, 128, "CREATE USER `%s`@`%%` IDENTIFIED BY '%s'", my_test_uid, my_test_pwd);
+    _snprintf(GrantUserStmt, 128, "GRANT ALL ON *.* TO `%s`@`%%` WITH GRANT OPTION", my_test_uid);
     _snprintf(CreateDbStmt, 128, "CREATE DATABASE IF NOT EXISTS %s", my_test_db);
 
     fprintf(stdout,"Creating test user: `%s` and a test database `%s`\n", my_test_uid, my_test_db);
