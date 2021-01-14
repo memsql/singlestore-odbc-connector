@@ -209,6 +209,7 @@ workflows:
               os_version:
                 - debian:8
                 - debian:9
+                - debian:10
               build_type:
                 - RelWithDebInfo
       - build-docker:
