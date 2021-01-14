@@ -1278,6 +1278,67 @@ ODBC_TEST(client_side_multistatements)
 }
 
 
+ODBC_TEST(client_side_ipd)
+{
+    int i;
+    SQLCHAR aParam[3] = "1";
+    SQLLEN alen = SQL_NTS;
+    SQL_TIMESTAMP_STRUCT bParam = {0};
+    memset(&bParam, 0, sizeof(bParam));
+    bParam.hour = 17;
+    bParam.minute = 26;
+    bParam.second = 35;
+    SQLLEN bLen = sizeof(SQL_TIMESTAMP_STRUCT);
+    SQL_TIMESTAMP_STRUCT cParam = {2021, 1, 13};
+    SQLLEN cLen = sizeof(SQL_TIMESTAMP_STRUCT);
+    SQL_TIMESTAMP_STRUCT dParam = {2021, 1, 13, 17, 26, 35, 123456000};
+    SQLLEN dLen = sizeof(SQL_TIMESTAMP_STRUCT);
+
+    OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS cs_ipd");
+    OK_SIMPLE_STMT(Stmt, "CREATE TABLE cs_ipd(a BIT(1), b time, c date, d datetime(6))");
+    CHECK_STMT_RC(Stmt, SQLPrepare(Stmt, (SQLCHAR *) "INSERT INTO cs_ipd VALUES(?, ?, ?, ?)", SQL_NTS));
+
+    CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_CHAR, SQL_BIT, SQL_NTS, 0, aParam, sizeof(aParam), &alen));
+    CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 2, SQL_PARAM_INPUT, SQL_TYPE_TIMESTAMP, SQL_TYPE_TIME, SQL_NTS, 0, &bParam, sizeof(bParam), &bLen));
+    CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 3, SQL_PARAM_INPUT, SQL_TYPE_TIMESTAMP, SQL_TYPE_DATE, SQL_NTS, 0, &cParam, sizeof(cParam), &cLen));
+    CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 4, SQL_PARAM_INPUT, SQL_TYPE_TIMESTAMP, SQL_TYPE_TIMESTAMP, SQL_NTS, 0, &dParam, sizeof(dParam), &dLen));
+
+    CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
+    CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+
+    OK_SIMPLE_STMT(Stmt,"SELECT a, b, c, d  FROM cs_ipd");
+
+    SQLCHAR aCol;
+    SQLLEN aColLen;
+    SQL_TIME_STRUCT bCol;
+    SQLLEN bColLen;
+    SQL_DATE_STRUCT cCol;
+    SQLLEN cColLen;
+    SQL_TIMESTAMP_STRUCT dCol;
+    SQLLEN dColLen;
+
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_BIT, &aCol, sizeof(aCol), &aColLen));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_TYPE_TIME, &bCol, sizeof(bCol), &bColLen));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_TYPE_DATE, &cCol, sizeof(cCol), &cColLen));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_TYPE_TIMESTAMP, &dCol, sizeof(dCol), &dColLen));
+
+    CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+    is_num(1, aCol);
+    FAIL_IF(bCol.hour != bParam.hour || bCol.minute != bParam.minute || bCol.second != bParam.second, "wrong TIME returned");
+    FAIL_IF(cCol.year != cParam.year || cCol.month != cParam.month || cCol.day != cParam.day, "wrong DATE returned");
+    FAIL_IF(dCol.year != dParam.year || dCol.month != dParam.month || dCol.day != dParam.day ||
+            dCol.hour != dParam.hour || dCol.minute != dParam.minute || dCol.second != dParam.second ||
+            dCol.fraction != dParam.fraction, "wrong TIMESTAMP returned");
+
+    FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA, "SQL_NO_DATA expected");
+
+    CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+    OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS cs_ipd");
+
+    return OK;
+}
+
+
 MA_ODBC_TESTS my_tests[] =
 {
     {client_side_show,                      "client_side_show", CSPS_OK | SSPS_FAIL},
@@ -1298,6 +1359,7 @@ MA_ODBC_TESTS my_tests[] =
     {client_side_set_pos_del,               "client_side_set_pos_del", NORMAL},
     {client_side_set_pos_del_multiple_rows, "client_side_set_pos_del_multiple_rows", NORMAL},
     {client_side_multistatements,           "client_side_multistatements", NORMAL},
+    {client_side_ipd, "client_side_ipd", NORMAL},
     {NULL, NULL}
 };
 

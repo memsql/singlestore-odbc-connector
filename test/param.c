@@ -1167,16 +1167,18 @@ ODBC_TEST(odbc182)
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_odbc182(col1 time)");
 
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_TIMESTAMP, SQL_TIME, 8, 3, &ts, 0, NULL));
-  EXPECT_FAIL_MODE(Stmt, SQLExecDirect(Stmt, "INSERT INTO t_odbc182 VALUES(?)", SQL_NTS), SSPS_ENABLED, "22008");
+  EXPECT_STMT(Stmt, SQLExecDirect(Stmt, "INSERT INTO t_odbc182 VALUES(?)", SQL_NTS), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "22008");
 
   ts.fraction= 0;
   ts.hour= 24;
-  EXPECT_FAIL_MODE(Stmt, SQLExecDirect(Stmt, "INSERT INTO t_odbc182 VALUES(?)", SQL_NTS), SSPS_ENABLED, "22007");
+  EXPECT_STMT(Stmt, SQLExecDirect(Stmt, "INSERT INTO t_odbc182 VALUES(?)", SQL_NTS), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "22007");
 
   ts.hour= 12;
   OK_SIMPLE_STMT(Stmt, "INSERT INTO t_odbc182 VALUES(?)");
 
-  OK_SIMPLE_STMT(Stmt, "SELECT col1 FROM t_odbc182 ORDER BY col1");
+  OK_SIMPLE_STMT(Stmt, "SELECT col1 FROM t_odbc182");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   IS_STR(my_fetch_str(Stmt, buffer, 1), "12:34:56", 8);
 
@@ -1322,7 +1324,7 @@ MA_ODBC_TESTS my_tests[]=
   {insert_fetched_null, "insert_fetched_null", NORMAL},
   {odbc45, "odbc-45-binding2bit", NORMAL},
   {odbc151, "odbc-151-buffer_length", NORMAL},
-  {odbc182, "odbc-182-timestamp2time", CSPS_FAIL | SSPS_OK},
+  {odbc182, "odbc-182-timestamp2time", NORMAL},
   {odbc212, "odbc-212-sqlbindparam_inout_type", NORMAL},
   {timestruct_param, "timestruct_param-seconds", NORMAL},
   {consequent_direxec, "consequent_direxec", NORMAL},

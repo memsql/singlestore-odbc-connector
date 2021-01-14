@@ -738,22 +738,16 @@ ODBC_TEST(t_odbc43)
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 2, SQL_PARAM_INPUT, SQL_C_CHAR,
     SQL_TIME, 0, 0, GoodTime, 0, &Len));
 
-  EXPECT_STMT(Stmt, SQLExecute(Stmt), NoSsps ? SQL_SUCCESS : SQL_ERROR);
-  if (NoSsps == FALSE)
-  {
-      CHECK_SQLSTATE(Stmt, "22008");
-  }
+  EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "22008");
 
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_DATE,
     0, 0, GoodDate, 0, &Len));
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 2, SQL_PARAM_INPUT, SQL_C_CHAR,
     SQL_TIME, 0, 0, TimeWithFraction, 0, &Len));
 
-  EXPECT_STMT(Stmt, SQLExecute(Stmt), NoSsps ? SQL_SUCCESS : SQL_ERROR);
-  if (NoSsps == FALSE)
-  {
-      CHECK_SQLSTATE(Stmt, "22008");
-  }
+  EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "22008");
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE t_odbc43");
 

@@ -242,15 +242,15 @@ ODBC_TEST(t_tstotime1)
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 3, SQL_PARAM_INPUT, SQL_C_CHAR,
                                   SQL_TIMESTAMP, 0, 0, &ts, sizeof(ts), NULL));
 
-  /* Here currently it's supposed to fail - when binding strings as date/time types, connector doesn't parse them,
-     and thus does not detect and report error. Created ODBC-43 for it */
-  EXPECT_FAIL_MODE(Stmt, SQLExecute(Stmt), SSPS_ENABLED, "22008");
+  EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "22008");
 
   /* Taking only date part */
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
                                   SQL_DATE, 0, 0, &ts, 10, NULL));
 
-  EXPECT_FAIL_MODE(Stmt, SQLExecute(Stmt), SSPS_ENABLED, "22008");
+  EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "22008");
 
   /* are not taking fractional part */
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 2, SQL_PARAM_INPUT, SQL_C_CHAR,
@@ -265,8 +265,7 @@ ODBC_TEST(t_tstotime1)
 
   OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_tstotime1");
 
-  // All 3 rows were added in the CSPS case, only 1 row is added in the SSPS case.
-  IS(NoSsps ? 3 : 1 == myrowcount(Stmt));
+  is_num(1, myrowcount(Stmt));
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_RESET_PARAMS));
@@ -1110,12 +1109,14 @@ ODBC_TEST(t_bug60648)
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_TYPE_TIMESTAMP,
     SQL_TYPE_DATE, 0, 0, &param, 0, NULL));
 
-  EXPECT_FAIL_MODE(Stmt, SQLExecute(Stmt), SSPS_ENABLED, "22008");
+  EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "22008");
 
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_TYPE_TIMESTAMP,
     SQL_TYPE_TIME, 0, 0, &param, 0, NULL));
 
-  EXPECT_FAIL_MODE(Stmt, SQLExecute(Stmt), SSPS_ENABLED, "22008");
+  EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "22008");
 
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_TYPE_TIMESTAMP,
     SQL_TYPE_TIMESTAMP, 0, 0, &param, 0, NULL));
@@ -1234,22 +1235,26 @@ ODBC_TEST(t_odbc70)
 
   ts2.year= ts2.month= ts2.day= 0;
 
-  EXPECT_FAIL_MODE(Stmt, SQLExecute(Stmt), SSPS_ENABLED, "22007");
+  EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "22007");
 
   ts1.year= ts1.month= ts1.day= 0;
   ts2.year= ts2.month= ts2.day= 1;
 
-  EXPECT_FAIL_MODE(Stmt, SQLExecute(Stmt), SSPS_ENABLED, "22007");
+  EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "22007");
 
   ts1.year= ts1.month= ts1.day= 1;
   ts.year= ts.month= ts.day= 0;
 
-  EXPECT_FAIL_MODE(Stmt, SQLExecute(Stmt), SSPS_ENABLED, "22007");
+  EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "22007");
 
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_TIMESTAMP,
     0, 0, ZeroDate, 0, NULL));
 
-  EXPECT_FAIL_MODE(Stmt, SQLExecute(Stmt), SSPS_ENABLED, "22018");
+  EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "22018");
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_odbc70");
 
@@ -1277,12 +1282,14 @@ ODBC_TEST(t_17613161)
 
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_TIME,
     SQL_TIME, 0, 0, &ts, sizeof(ts), NULL));
-  EXPECT_FAIL_MODE(Stmt, SQLExecute(Stmt), SSPS_ENABLED, "22007");
+  EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "22007");
 
   /* Such conversion is not supported */
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_TIME,
     SQL_INTERVAL_HOUR_TO_SECOND, 0, 0, &ts, sizeof(ts), NULL));
-  EXPECT_FAIL_MODE(Stmt, SQLExecute(Stmt), SSPS_ENABLED, "07006");
+  EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "07006");
 
   /* For interval types big hours should work fine */
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_INTERVAL_HOUR_TO_SECOND,
@@ -1519,7 +1526,7 @@ MA_ODBC_TESTS my_tests[]=
 {
   {my_ts,         "my_ts",       NORMAL},
   {t_tstotime,    "t_tstotime",  NORMAL},
-  {t_tstotime1,   "t_tstotime1", TO_FIX},
+  {t_tstotime1,   "t_tstotime1", NORMAL},
   {t_bug25846,    "t_bug25846",  NORMAL},
   {t_time,        "t_time",      NORMAL},
   {t_time1,       "t_time1",     NORMAL},

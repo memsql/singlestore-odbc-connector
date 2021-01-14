@@ -453,14 +453,18 @@ SQLRETURN MADB_TsConversionIsPossible(SQL_TIMESTAMP_STRUCT *ts, SQLSMALLINT SqlT
   case SQL_TYPE_TIME:
     if (ts->fraction)
     {
-      return MADB_SetError(Error, MADB_ERR_22008, NULL, 0);
+      return MADB_SetError(Error, MADB_ERR_22008, "Fractional seconds fields are nonzero", 0);
+    }
+    if (!VALID_TIME(ts))
+    {
+        return MADB_SetError(Error, MADB_ERR_22007, "Invalid time", 0);
     }
     break;
   case SQL_DATE:
   case SQL_TYPE_DATE:
     if (ts->hour + ts->minute + ts->second + ts->fraction)
     {
-      return MADB_SetError(Error, MADB_ERR_22008, NULL, 0);
+      return MADB_SetError(Error, MADB_ERR_22008, "Time fields are nonzero", 0);
     }
   default:
     /* This only would be good for SQL_TYPE_TIME. If C type is time(isTime!=0), and SQL type is timestamp, date fields may be NULL - driver should set them to current date */
@@ -990,9 +994,12 @@ SQLLEN MADB_ConvertIntegerToChar(MADB_Stmt *Stmt, int SourceType, void* Src, cha
 }
 /* }}} */
 
+#define NEEDS_DATE_FIELDS(Type) Type == SQL_DATE || Type == SQL_TYPE_DATE || Type == SQL_TIMESTAMP || Type == SQL_TYPE_TIMESTAMP
+#define NEEDS_TIME_FIELDS(Type) Type == SQL_TIME || Type == SQL_TYPE_TIME || Type == SQL_TIMESTAMP || Type == SQL_TYPE_TIMESTAMP
+
 /* {{{ */
 /* Converts Src into Dest based on the Datetime SourceType. */
-SQLRETURN MADB_ConvertDatetimeToChar(MADB_Stmt *Stmt, int SourceType, void* Src, char* Dest)
+SQLRETURN MADB_ConvertDatetimeToChar(MADB_Stmt *Stmt, int SourceType, int SqlType, void* Src, char* Dest)
 {
     int ret = SQL_SUCCESS;
     char *DestIter = Dest;
@@ -1007,6 +1014,10 @@ SQLRETURN MADB_ConvertDatetimeToChar(MADB_Stmt *Stmt, int SourceType, void* Src,
         case SQL_C_TYPE_TIME:
         {
             SQL_TIME_STRUCT *ts = (SQL_TIME_STRUCT *) Src;
+            if (!VALID_TIME(ts))
+            {
+                return MADB_SetError(&Stmt->Error, MADB_ERR_22007, "Invalid time", 0);
+            }
             DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_USHORT, &ts->hour, DestIter);
             *DestIter++ = ':';
             DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_USHORT, &ts->minute, DestIter);
@@ -1031,33 +1042,56 @@ SQLRETURN MADB_ConvertDatetimeToChar(MADB_Stmt *Stmt, int SourceType, void* Src,
         case SQL_C_TYPE_TIMESTAMP:
         {
             SQL_TIMESTAMP_STRUCT *ts = (SQL_TIMESTAMP_STRUCT *) Src;
-            DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_SHORT, &ts->year, DestIter);
-            *DestIter++ = '-';
-            DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_USHORT, &ts->month, DestIter);
-            *DestIter++ = '-';
-            DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_USHORT, &ts->day, DestIter);
-            *DestIter++ = ' ';
-            DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_USHORT, &ts->hour, DestIter);
-            *DestIter++ = ':';
-            DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_USHORT, &ts->minute, DestIter);
-            *DestIter++ = ':';
-            DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_USHORT, &ts->second, DestIter);
-            if (ts->fraction / 1000) {
-                SQLUINTEGER fraction = ts->fraction / 1000;
-                *DestIter++ = '.';
+            // Before we convert let's check for invalid cases:
+            // If we convert into DATE, SQL_TIMESTAMP_STRUCT cannot contain any TIME-related fields or fraction.
+            // If we convert into TIME, SQL_TIMESTAMP_STRUCT must contain a valid time and have no fraction.
+            RETURN_ERROR_OR_CONTINUE(MADB_TsConversionIsPossible(ts, SqlType, &Stmt->Error, MADB_ERR_22007, 0));
 
-                // frac array cannot have more than 6 characters that represent fraction, but allocating big enough,
-                // just in case.
-                SQLLEN fracLen, fillZeros = 0;
-                char frac[10];
-                memset(frac, 0, sizeof(frac));
-                fracLen = MADB_ConvertIntegerToChar(Stmt, SQL_C_ULONG, &fraction, frac);
-                while(fracLen + fillZeros++ < 6)
+            // For DATE and TIMESTAMP we create the YYYY-MM-DD part.
+            if (NEEDS_DATE_FIELDS(SqlType))
+            {
+                DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_SHORT, &ts->year, DestIter);
+                *DestIter++ = '-';
+                DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_USHORT, &ts->month, DestIter);
+                *DestIter++ = '-';
+                DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_USHORT, &ts->day, DestIter);
+                if (SqlType == SQL_TIMESTAMP || SqlType == SQL_TYPE_TIMESTAMP)
                 {
-                    *DestIter++ = '0';
+                    *DestIter++ = ' ';
                 }
-                strcpy(DestIter, frac);
-                DestIter += fracLen;
+            }
+
+            // For TIME and TIMESTAMP we create the HH:MM:SS part.
+            if (NEEDS_TIME_FIELDS(SqlType))
+            {
+                DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_USHORT, &ts->hour, DestIter);
+                *DestIter++ = ':';
+                DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_USHORT, &ts->minute, DestIter);
+                *DestIter++ = ':';
+                DestIter += MADB_ConvertIntegerToChar(Stmt, SQL_C_USHORT, &ts->second, DestIter);
+            }
+
+            // For TIMESTAMP we also add a fraction.
+            if (SqlType == SQL_TIMESTAMP || SqlType == SQL_TYPE_TIMESTAMP)
+            {
+                if (ts->fraction / 1000)
+                {
+                    SQLUINTEGER fraction = ts->fraction / 1000;
+                    *DestIter++ = '.';
+
+                    // frac array cannot have more than 6 characters that represent fraction, but allocating big enough,
+                    // just in case.
+                    SQLLEN fracLen, fillZeros = 0;
+                    char frac[10];
+                    memset(frac, 0, sizeof(frac));
+                    fracLen = MADB_ConvertIntegerToChar(Stmt, SQL_C_ULONG, &fraction, frac);
+                    while (fracLen + fillZeros++ < 6)
+                    {
+                        *DestIter++ = '0';
+                    }
+                    strcpy(DestIter, frac);
+                    DestIter += fracLen;
+                }
             }
             *DestIter = '\0';
             break;
@@ -1071,6 +1105,8 @@ SQLRETURN MADB_ConvertDatetimeToChar(MADB_Stmt *Stmt, int SourceType, void* Src,
 }
 /* }}} */
 
+#undef NEEDS_DATE_FIELDS
+#undef NEEDS_TIME_FIELDS
 
 #ifndef _WIN32
 #define _strtoi64 strtoll

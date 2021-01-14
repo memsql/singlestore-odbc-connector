@@ -1225,6 +1225,18 @@ void MADB_SetStatusArray(MADB_Stmt *Stmt, SQLUSMALLINT Status)
   }
 }
 
+SQLRETURN ConstructBitValue(MADB_Stmt *Stmt, void* DataPtr, MADB_DynString *Target)
+{
+    // ODBC recognizes only BIT(1), so let's send over 1 or 0 based on the first char.
+    char* bitParam = *(SQLCHAR *) DataPtr == '\0' ? "0" : "1";
+    if (MADB_DynstrAppend(Target, bitParam))
+    {
+        return MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to append a bit parameter", 0);
+    }
+    return SQL_SUCCESS;
+}
+
+
 /* {{{ MADB_InsertParam */
 /* This function gets the client parameter from the ApdRecord or from the IpdRecord (if its a Long Data parameter).
 Since the paramset may contain multiple parameter rows, ParamSetIdx denotes the offset in the paramset (i.e. the row
@@ -1336,9 +1348,15 @@ SQLRETURN MADB_InsertParam(MADB_Stmt* Stmt, MADB_DescRecord* ApdRecord, MADB_Des
         case SQL_C_TYPE_DATE:
         case SQL_C_TYPE_TIMESTAMP:
         {
+            if (!MADB_ConversionSupported(ApdRecord, IpdRecord))
+            {
+                ret = MADB_SetError(&Stmt->Error, MADB_ERR_07006, "Conversion is not supported", 0);
+                goto end;
+            }
+
             // Make the buffer big enough to handle any possible invalid input.
             char converted[50];
-            ret = MADB_ConvertDatetimeToChar(Stmt, ApdRecord->ConciseType, DataPtr, converted);
+            ret = MADB_ConvertDatetimeToChar(Stmt, ApdRecord->ConciseType, IpdRecord->ConciseType, DataPtr, converted);
             if (!SQL_SUCCEEDED(ret))
             {
                 goto end;
@@ -1363,11 +1381,9 @@ SQLRETURN MADB_InsertParam(MADB_Stmt* Stmt, MADB_DescRecord* ApdRecord, MADB_Des
         case SQL_INTERVAL_HOUR_TO_MINUTE:
         case SQL_INTERVAL_HOUR_TO_SECOND:
         case SQL_INTERVAL_MINUTE_TO_SECOND:
-            // TODO: handle intervals if we need to.
-            // SingleStore does not recognize these types, so we may simply convert them to strings and let the engine
-            // handle these types.
-            // Haven't found a more appropriate error code, so returning the general error.
-            ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY000, "INTERVAL data types are not supported", 0);
+            // TODO(PLAT-5085): handle intervals when they're implemented on the engine side.
+            // SingleStore does not recognize INTERVAL type, so let's return an "unsupported conversion" error.
+            ret = MADB_SetError(&Stmt->Error, MADB_ERR_07006, "Conversion of INTERVAL data is not supported", 0);
             goto end;
             break;
         case SQL_CHAR:
@@ -1377,10 +1393,35 @@ SQLRETURN MADB_InsertParam(MADB_Stmt* Stmt, MADB_DescRecord* ApdRecord, MADB_Des
             // DAE parameter is stored in the IpdRecord, and it's length should be properly calculated by now, so just
             // reuse it. Otherwise, calculate the length explicitly.
             Length = PARAM_IS_DAE(OctetLengthPtr) ? IpdRecord->OctetLength : MADB_CalculateLength(Stmt, OctetLengthPtr, ApdRecord, DataPtr);
-            if (MADB_DynstrAppendMem(&data, (char *) DataPtr, Length))
+
+            switch(IpdRecord->Type)
             {
-                ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to append a char parameter", 0);
-                goto end;
+                case SQL_BIT:
+                    if (!SQL_SUCCEEDED(ConstructBitValue(Stmt, DataPtr, &data)))
+                    {
+                        goto end;
+                    }
+                    EncloseInQuotes = FALSE;
+                    break;
+                case SQL_DATETIME:
+                {
+                    MYSQL_TIME Tm;
+                    SQL_TIMESTAMP_STRUCT Ts;
+                    BOOL isTime;
+
+                    /* Enforcing constraints on date/time values */
+                    RETURN_ERROR_OR_CONTINUE(MADB_Str2Ts(DataPtr, Length, &Tm, FALSE, &Stmt->Error, &isTime));
+                    MADB_CopyMadbTimeToOdbcTs(&Tm, &Ts);
+                    RETURN_ERROR_OR_CONTINUE(MADB_TsConversionIsPossible(&Ts, IpdRecord->ConciseType, &Stmt->Error, MADB_ERR_22018, isTime));
+                    // if everything is ok, fall below and append a char* DataPtr.
+                }
+                default:
+                    if (MADB_DynstrAppendMem(&data, (char *) DataPtr, Length))
+                    {
+                        ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to append a char parameter", 0);
+                        goto end;
+                    }
+                    break;
             }
             break;
         }
@@ -1422,11 +1463,8 @@ SQLRETURN MADB_InsertParam(MADB_Stmt* Stmt, MADB_DescRecord* ApdRecord, MADB_Des
         }
         case SQL_C_BIT:
         {
-            // ODBC recognizes only BIT(1), so let's send over 1 or 0 based on the first char.
-            char* bitParam = *(SQLCHAR *) DataPtr == '\0' ? "0" : "1";
-            if (MADB_DynstrAppend(&data, bitParam))
+            if (!SQL_SUCCEEDED(ConstructBitValue(Stmt, DataPtr, &data)))
             {
-                ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to append a bit parameter", 0);
                 goto end;
             }
             EncloseInQuotes = FALSE;
