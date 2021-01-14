@@ -68,7 +68,7 @@ ODBC_TEST(my_dynamic_pos_cursor)
     CHECK_STMT_RC(Stmt, rc);
 
     /* Open the resultset of table 'my_demo_cursor' */
-    OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_dynamic_cursor");
+    OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_dynamic_cursor order by id");
     CHECK_STMT_RC(Stmt,rc);
 
     /* goto the last row */
@@ -76,17 +76,8 @@ ODBC_TEST(my_dynamic_pos_cursor)
     CHECK_STMT_RC(Stmt,rc);
 
     /* now update the name field to 'update' using positioned cursor */
-    OK_SIMPLE_STMT(hstmt_pos, "UPDATE my_dynamic_cursor SET id=300, name='updated' WHERE CURRENT OF mysqlcur");
-
-    rc = SQLRowCount(hstmt_pos, &nRowCount);
-    CHECK_STMT_RC(hstmt_pos, rc);
-
-    diag(" total rows updated:%d\n",nRowCount);
-    is_num(nRowCount, 1);
-
-    /* Now delete the newly updated record */
-    strcpy((char*)szData,"updated");
-    nData = 300;
+    EXPECT_STMT(hstmt_pos, SQLExecDirect(hstmt_pos, "UPDATE my_dynamic_cursor SET name='updated' WHERE CURRENT OF mysqlcur", SQL_NTS), SQL_ERROR);
+    CHECK_SQLSTATE(hstmt_pos, "HYC00");
 
     rc = SQLSetPos(Stmt,1,SQL_DELETE,SQL_LOCK_UNLOCK);
     FAIL_IF(rc!=SQL_ERROR,"Error expected");
@@ -122,7 +113,7 @@ ODBC_TEST(my_dynamic_pos_cursor)
     CHECK_STMT_RC(hstmt_pos,rc);
 
     /* Now fetch and verify the data */
-    OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_dynamic_cursor");
+    OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_dynamic_cursor ORDER BY id");
 
     rc = SQLFetch(Stmt);
     CHECK_STMT_RC(Stmt,rc);
@@ -192,7 +183,7 @@ ODBC_TEST(my_dynamic_pos_cursor1)
     CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt,SQL_ATTR_ROW_ARRAY_SIZE,(SQLPOINTER)3,0));
 
     /* Open the resultset of table 'my_demo_cursor' */
-    OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_dynamic_cursor");
+    OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_dynamic_cursor ORDER BY id");
 
     /* goto the last row
     TODO: This does not really go to the last row - it fetches 3 rows(SQL_ATTR_ROW_ARRAY_SIZE) starting from 5th, and then cursor should be on 5th after the command */
@@ -211,14 +202,8 @@ ODBC_TEST(my_dynamic_pos_cursor1)
     CHECK_STMT_RC(Stmt,rc); */
 
     /* now update the name field to 'update' using positioned cursor */
-    OK_SIMPLE_STMT(hstmt_pos, "UPDATE my_dynamic_cursor SET id=999, name='updated' WHERE CURRENT OF mysqlcur");
-
-    CHECK_STMT_RC(hstmt_pos, SQLRowCount(hstmt_pos, &nRowCount));
-
-    diag(" total rows updated:%d\n",nRowCount);
-    is_num(nRowCount, 1);
-    strcpy(szData[1],"updated");
-    nData[1] = 999;
+    EXPECT_STMT(hstmt_pos, SQLExecDirect(hstmt_pos, "UPDATE my_dynamic_cursor SET name='updated' WHERE CURRENT OF mysqlcur", SQL_NTS), SQL_ERROR);
+    CHECK_SQLSTATE(hstmt_pos, "HYC00");
 
     CHECK_STMT_RC(Stmt,SQLSetPos(Stmt,2,SQL_DELETE,SQL_LOCK_NO_CHANGE));
     CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &nRowCount));
@@ -251,7 +236,7 @@ ODBC_TEST(my_dynamic_pos_cursor1)
     rc = SQLSetStmtAttr(Stmt,SQL_ATTR_ROW_ARRAY_SIZE,(SQLPOINTER)1,0);
     CHECK_STMT_RC(Stmt,rc);
 
-    OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_dynamic_cursor");
+    OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_dynamic_cursor ORDER BY id");
 
     rc = SQLBindCol(Stmt,1,SQL_C_LONG,&i,0,NULL);
     CHECK_STMT_RC(Stmt,rc);
@@ -268,14 +253,20 @@ ODBC_TEST(my_dynamic_pos_cursor1)
     rc = SQLFetchScroll(Stmt,SQL_FETCH_NEXT,1L);
     CHECK_STMT_RC(Stmt,rc);
 
-    is_num(i, 999);
-    IS_STR(data, "updated", 8);
+    is_num(i, 5);
+    IS_STR(data, "MySQL5", 7);
 
     rc = SQLFetchScroll(Stmt,SQL_FETCH_NEXT,1L);
     CHECK_STMT_RC(Stmt,rc);
 
     is_num(i, 7);
     IS_STR(data, "MySQL7", 7);
+
+    rc = SQLFetchScroll(Stmt,SQL_FETCH_LAST,1L);
+    CHECK_STMT_RC(Stmt,rc);
+
+    is_num(i, 10);
+    IS_STR(data, "MySQL10", 8);
 
     rc = SQLFetchScroll(Stmt,SQL_FETCH_ABSOLUTE,10L);
     FAIL_IF(rc!=SQL_NO_DATA_FOUND,"Eof expected");
@@ -725,9 +716,9 @@ MA_ODBC_TESTS my_tests[]=
 {
   {my_dynamic_pos_cursor, "my_dynamic_pos_cursor",   NORMAL},
   {my_dynamic_pos_cursor1, "my_dynamic_pos_cursor1", NORMAL},
-  {my_position, "my_position",                       NORMAL},
-  { my_position1, "my_position1",                    NORMAL },
-  { my_zero_irow_update, "my_zero_irow_update",      NORMAL },
+  {my_position, "my_position",                       TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  { my_position1, "my_position1",                    TO_FIX }, // TODO(PLAT-5080): positioned updates are not yet supported.
+  { my_zero_irow_update, "my_zero_irow_update",      TO_FIX }, // TODO(PLAT-5080): positioned updates are not yet supported.
   {my_zero_irow_delete, "my_zero_irow_delete",       NORMAL},
   {my_dynamic_cursor, "my_dynamic_cursor",           NORMAL},
   {NULL, NULL}

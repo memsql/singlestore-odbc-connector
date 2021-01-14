@@ -55,8 +55,8 @@ typedef struct {
   size_t        RefinedLength;
   MADB_DynArray Tokens;
   MADB_DynArray SubQuery; /* List of queries or batches of queries, that can be executed together at once */
-  /* So far only falg whether we have any parameters */
   my_bool       HasParameters;
+  MADB_DynArray ParamPositions;
   /* This is more for multistatements for optimization - if none of queries returns result,
      we can send them via text protocol */
   my_bool       ReturnsResult;

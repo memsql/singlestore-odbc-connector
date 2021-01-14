@@ -501,7 +501,7 @@ ODBC_TEST(t_sqlprocedurecolumns)
   OK_SIMPLE_STMT(Hstmt1, "drop procedure if exists procedure_columns_test5");
 
   OK_SIMPLE_STMT(Hstmt1, "create procedure procedure_columns_test1(re_param1 TINYINT, re_param2 SMALLINT," \
-                "re_param3 MEDIUMINT, `re_param 4` INT UNSIGNED, re_param5 BIGINT, re_param6 FLOAT(4,2)," \
+                "re_param3 MEDIUMINT UNSIGNED, `re_param 4` INT UNSIGNED, re_param5 BIGINT, re_param6 FLOAT(4,2)," \
                 "re_param7 DOUBLE(5,2), re_param8 DECIMAL(10,3) unSIGned, re_param9 CHAR(32)," \
                 "re_param10 VARCHAR(64) charset utf8, ignore_param INT, re_param11 long VARBINARY, re_param12 double, re_param13 float) as " \
                 "begin end;"
@@ -772,9 +772,6 @@ ODBC_TEST(t_bug55870)
 
   OK_SIMPLE_STMT(Stmt, "create table bug55870_2 (id int not null primary key, value "
                 "varchar(255) not null) ENGINE=InnoDB");
-
-  CHECK_STMT_RC(hstmt1, SQLRowCount(hstmt1, &rowCount));
-  is_num(rowCount, my_print_non_format_result(hstmt1));
 
   /** surprise-surprise - just removing table is not enough to remove related
       records from tables_priv and columns_priv

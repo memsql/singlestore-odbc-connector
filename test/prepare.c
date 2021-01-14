@@ -710,11 +710,7 @@ ODBC_TEST(t_prepare)
     mystmt(Stmt,rc);
 
     CHECK_STMT_RC(Stmt, SQLPrepare(Stmt, (SQLCHAR *)"select * from t_prepare "
-                              "where col2 = ? AND col1 = ?",SQL_NTS));
-
-    rc = SQLNumResultCols(Stmt,&pccol);
-    mystmt(Stmt,rc);
-    is_num(pccol, 3);
+                              "where col2 = ? AND col1 = ? order by col1",SQL_NTS));
 
     rc = SQLBindCol(Stmt,1,SQL_C_LONG,&nodata,0,&nlen);
     mystmt(Stmt,rc);
@@ -733,6 +729,12 @@ ODBC_TEST(t_prepare)
     nlen= strlen(szidata);
     rc = SQLExecute(Stmt);
     mystmt(Stmt,rc);
+
+    // With the client-side prepared statements we won't be able to tell the number of columns in the result set after
+    // the "prepare" phase. So this is expected to fail after prepare, but should work well after "execute".
+    rc = SQLNumResultCols(Stmt,&pccol);
+    mystmt(Stmt,rc);
+    is_num(pccol, 3);
 
     rc = SQLFetch(Stmt);
     mystmt(Stmt,rc);
@@ -1216,45 +1218,8 @@ ODBC_TEST(t_odbc141)
   {
     skip("Test user doesn't have enough privileges to run this test");
   }
-  FAIL_IF(NativeError!=29 && NativeError != 13, "Expected 13 or 29 native error"); /* File not found or No such file or directory... */
+  FAIL_IF(NativeError!=1017, "Expected 1017 native error"); /* File not found or No such file or directory... */
 
-  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
-
-  return OK;
-}
-
-
-ODBC_TEST(t_odbc269)
-{
-  unsigned int i;
-
-  /* Not sure when "BEGIN NOT ATOMIC" was introduced, but it's not supported in 5.5, and 10.0 is already not supported */
-  if (ServerNotOlderThan(Connection, 10, 1, 0) == FALSE)
-  {
-    skip("The test requires min 10.5.0 version")
-  }
-
-  OK_SIMPLE_STMT(Stmt, "BEGIN NOT ATOMIC SET @SOME_ODBC267= 'someinfo';  SELECT 1, @SOME_ODBC267; SELECT 127, 'value',2020; END");
-
-  for (i= 0; i < 2; ++i)
-  {
-    IS(my_print_non_format_result_ex(Stmt, FALSE) == 1);
-    CHECK_STMT_RC(Stmt, SQLMoreResults(Stmt)/* == SQL_SUCCESS*/);
-  }
-
-  EXPECT_STMT(Stmt, SQLMoreResults(Stmt), SQL_NO_DATA_FOUND);
-  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
-
-  CHECK_STMT_RC(Stmt, SQLPrepare(Stmt, "BEGIN NOT ATOMIC SET @SOME_ODBC267= 'someinfo';  SELECT 1, @SOME_ODBC267; SELECT 127, 'value',2020; END", SQL_NTS));
-  CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
-
-  for (i= 0; i < 2; ++i)
-  {
-    IS(my_print_non_format_result_ex(Stmt, FALSE) == 1);
-    CHECK_STMT_RC(Stmt, SQLMoreResults(Stmt)/* == SQL_SUCCESS*/);
-  }
-
-  EXPECT_STMT(Stmt, SQLMoreResults(Stmt), SQL_NO_DATA_FOUND);
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   return OK;
@@ -1263,25 +1228,24 @@ ODBC_TEST(t_odbc269)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {t_prep_basic, "t_prep_basic"},
-  {t_prep_buffer_length, "t_prep_buffer_length"},
-  {t_prep_truncate, "t_prep_truncate"},
-  {t_prep_scroll, "t_prep_scroll"},
-  {t_prep_getdata, "t_prep_getdata"},
-  {t_prep_getdata1, "t_prep_getdata1"},
-  {t_prep_catalog, "t_prep_catalog"},
-  {t_sps, "t_sps"},
-  {t_prepare, "t_prepare"},
-  {t_prepare1, "t_prepare1"},
-  {tmysql_bindcol, "tmysql_bindcol"},
-  {tmysql_bindparam, "tmysql_bindparam"},
-  {t_acc_update, "t_acc_update"},
-  {t_bug29871, "t_bug29871"},
-  {t_bug67340, "t_bug67340"},
-  {t_bug67702, "t_bug67702"},
-  {t_odbc57, "odbc-57-query_in_parenthesis"},
-  {t_odbc141, "odbc-141-load_data_infile"},
-  {t_odbc269, "odbc-269-begin_not_atomic"},
+  {t_prep_basic, "t_prep_basic", NORMAL},
+  {t_prep_buffer_length, "t_prep_buffer_length", NORMAL},
+  {t_prep_truncate, "t_prep_truncate", NORMAL},
+  {t_prep_scroll, "t_prep_scroll", NORMAL},
+  {t_prep_getdata, "t_prep_getdata", NORMAL},
+  {t_prep_getdata1, "t_prep_getdata1", NORMAL},
+  {t_prep_catalog, "t_prep_catalog", NORMAL},
+  {t_sps, "t_sps", NORMAL},
+  {t_prepare, "t_prepare", NORMAL},
+  {t_prepare1, "t_prepare1", NORMAL},
+  {tmysql_bindcol, "tmysql_bindcol", NORMAL},
+  {tmysql_bindparam, "tmysql_bindparam", NORMAL},
+  {t_acc_update, "t_acc_update", NORMAL},
+  {t_bug29871, "t_bug29871", NORMAL},
+  {t_bug67340, "t_bug67340", CSPS_OK | SSPS_FAIL},
+  {t_bug67702, "t_bug67702", NORMAL},
+  {t_odbc57, "odbc-57-query_in_parenthesis", NORMAL},
+  {t_odbc141, "odbc-141-load_data_infile", NORMAL},
   {NULL, NULL}
 };
 
@@ -1290,6 +1254,5 @@ int main(int argc, char **argv)
   int tests= sizeof(my_tests)/sizeof(MA_ODBC_TESTS) - 1;
   get_options(argc, argv);
   plan(tests);
-  mark_all_tests_normal(my_tests);
   return run_tests(my_tests);
 }

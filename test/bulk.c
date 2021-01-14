@@ -45,7 +45,6 @@ ODBC_TEST(t_bulk_insert_nts)
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_CHAR, &a[0], 30, indicator));
 
   OK_SIMPLE_STMT(Stmt, "SELECT a FROM t_bulk_insert LIMIT 1");
-
  
   CHECK_STMT_RC(Stmt, SQLBulkOperations(Stmt, SQL_ADD));
 
@@ -92,11 +91,10 @@ ODBC_TEST(t_bulk_insert_test)
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_DOUBLE, &d[0], 8, d_indicator));
 
   OK_SIMPLE_STMT(Stmt, "SELECT a,b,c FROM t_bulk_insert LIMIT 1");
-
  
 //  CHECK_STMT_RC(Stmt, SQLBulkOperations(Stmt, SQL_ADD));
 
-  CHECK_DBC_RC(Stmt, SQLEndTran(SQL_HANDLE_DBC, Connection, 0));
+  CHECK_DBC_RC(Connection, SQLEndTran(SQL_HANDLE_DBC, Connection, 0));
 
   SQLFreeHandle(SQL_HANDLE_STMT, Stmt);
 
@@ -546,6 +544,7 @@ ODBC_TEST(t_bulk_delete)
                                 (SQLPOINTER)2, 0));
   OK_SIMPLE_STMT(Stmt, "DELETE FROM t_bulk_delete WHERE id=?");
 
+  CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)1, 0));
   OK_SIMPLE_STMT(Stmt, "SELECT id, val FROM t_bulk_delete");
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
@@ -555,9 +554,6 @@ ODBC_TEST(t_bulk_delete)
   EXPECT_STMT(Stmt, SQLFetch(Stmt), SQL_NO_DATA);
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
-
-  CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE,
-                                (SQLPOINTER)1, 0));
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_bulk_delete");
 
@@ -605,6 +601,7 @@ ODBC_TEST(t_odbc149)
 
   CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
 
+  CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)1, 0));
   OK_SIMPLE_STMT(Stmt, "SELECT id, ts, c, b, w FROM odbc149 ORDER BY id")
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, &idBuf, 0, NULL));
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_TIMESTAMP, &Val[1], 0, tsLen));

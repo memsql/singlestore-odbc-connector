@@ -761,9 +761,6 @@ ODBC_TEST(paramarray_select)
   SQLUSMALLINT  paramStatusArray[STMTS_TO_EXEC];
   SQLULEN       paramsProcessed, i;
 
-  diag("select with paramarray not supported");
-  return SKIP;
-
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_PARAM_BIND_TYPE, SQL_PARAM_BIND_BY_COLUMN, 0));
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)STMTS_TO_EXEC, 0));
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_PARAM_STATUS_PTR, paramStatusArray, 0));
@@ -865,23 +862,12 @@ ODBC_TEST(t_bug56804)
   CHECK_STMT_RC(Stmt, SQLBindParameter( Stmt, 2, SQL_PARAM_INPUT, SQL_C_SLONG,
     SQL_DECIMAL, 4, 0, c2, 4, d2));
 
-  
-  if (ServerNotOlderThan(Connection, 10, 2, 7))
-  {
-    /* Starting from 10.2.7 connector will use bulk operations, which is solid, and either success or fail all together */
-    EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_ERROR);
-    memset(ExpectedStatus, 0x00ff & SQL_PARAM_DIAG_UNAVAILABLE, sizeof(ExpectedStatus));
-  }
-  else
-  {
-    EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_SUCCESS_WITH_INFO);
-    memset(ExpectedStatus, 0x00ff & SQL_PARAM_SUCCESS, sizeof(ExpectedStatus));
-    /* all errors but last have SQL_PARAM_DIAG_UNAVAILABLE */
-    ExpectedStatus[1]= ExpectedStatus[6]= SQL_PARAM_DIAG_UNAVAILABLE;
-    ExpectedStatus[9]= SQL_PARAM_ERROR;
-    SolidOperation= FALSE;
-  }
-  
+
+  EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_SUCCESS_WITH_INFO);
+  memset(ExpectedStatus, 0x00ff & SQL_PARAM_SUCCESS, sizeof(ExpectedStatus));
+  /* all errors but last have SQL_PARAM_DIAG_UNAVAILABLE */
+  ExpectedStatus[1] = ExpectedStatus[6]= SQL_PARAM_DIAG_UNAVAILABLE;
+  ExpectedStatus[9]= SQL_PARAM_ERROR;
 
   /* Following tests are here to ensure that driver works how it is currently
      expected to work, and they need to be changed if driver changes smth in the
@@ -908,14 +894,7 @@ ODBC_TEST(t_bug56804)
     /* just to make sure we got 1 diagnostics record ... */
     is_num(i, 2);
     /* ... and what the record is for the last error */
-    if (SolidOperation)
-    {
-      FAIL_IF(strstr(message, "Duplicate entry '1'") == NULL, "comparison failed");
-    }
-    else
-    {
-      FAIL_IF(strstr(message, "Duplicate entry '9'") == NULL, "comparison failed");
-    }
+    FAIL_IF(strstr(message, "Duplicate entry '9'") == NULL, "comparison failed");
   }
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
@@ -1025,7 +1004,7 @@ ODBC_TEST(insert_fetched_null)
                                                             nullable_val varchar(50) CHARACTER SET utf8, mask int unsigned not null,\
                                                             empty_val varchar(50) CHARACTER SET utf8)");
 
-  OK_SIMPLE_STMT(Stmt, "SELECT 1, 0.001, _utf8'Text val', NULL, 127, _utf8''");
+  OK_SIMPLE_STMT(Stmt, "SELECT 1, 0.001, 'Text val', NULL, 127, ''");
 
   memset(len, 0, sizeof(len));
 
@@ -1105,8 +1084,8 @@ ODBC_TEST(insert_fetched_null)
 ODBC_TEST(odbc45)
 {
   SQLSMALLINT i;
-  SQLLEN      len= 0;
-  SQLCHAR     val[][4]=        {"0",            "1"};//, "4", "-1", "0.5", "z"},
+  SQLLEN      len= SQL_NTS;
+  SQLCHAR     val[][4]=        {"\0",            "\1"};//, "4", "-1", "0.5", "z"},
   SQLWCHAR    valw[][4]=       { { '0', '\0' }, { '1', '\0' }, { '4', '\0' }, { '-', '1', '\0' }, { '0', '.', '5', '\0' }, { 'z', '\0' } };
   SQLRETURN   XpctdRc[]=       {SQL_SUCCESS,    SQL_SUCCESS, SQL_ERROR, SQL_ERROR, SQL_ERROR, SQL_ERROR};
   SQLCHAR     XpctdState[][6]= { "",            "",          "22003",   "22003",   "22001",   "22018" };
@@ -1216,7 +1195,7 @@ ODBC_TEST(odbc212)
   SQLHDESC Ipd;
 #pragma warning(disable: 4996)
 #pragma warning(push)
-  CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_SHORT, SQL_SMALLINT, 0, 0, &a, SQL_SETPARAM_VALUE_MAX, NULL));
+  CHECK_STMT_RC(Stmt, SQLBindParam(Stmt, 1, SQL_C_SHORT, SQL_SMALLINT, 0, 0, &a, NULL));
 #pragma warning(pop)
   CHECK_STMT_RC(Stmt, SQLGetStmtAttr(Stmt, SQL_ATTR_IMP_PARAM_DESC, &Ipd, SQL_IS_POINTER, NULL));
   CHECK_DESC_RC(Ipd, SQLGetDescField(Ipd, 1, SQL_DESC_PARAMETER_TYPE, &a, SQL_IS_SMALLINT, NULL));
@@ -1328,28 +1307,28 @@ ODBC_TEST(odbc279)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {unbuffered_result, "unbuffered_result"},
-  {my_init_table, "my_init_table"},
-  {my_param_insert, "my_param_insert"},
-  {my_param_update, "my_param_update"},
-  {my_param_delete, "my_param_delete"},
-  {tmysql_fix, "tmysql_fix"},
-  {t_param_offset, "t_param_offset"},
-  {paramarray_by_row, "paramarray_by_row"},
-  {paramarray_by_column, "paramarray_by_column"},
-  {paramarray_ignore_paramset, "paramarray_ignore_paramset"},
-  {paramarray_select, "paramarray_select"},
-  {t_bug49029, "t_bug49029"},
-  {t_bug56804, "t_bug56804"},
-  {t_bug59772, "t_bug59772"},
-  {insert_fetched_null, "insert_fetched_null"},
-  {odbc45, "odbc-45-binding2bit"},
-  {odbc151, "odbc-151-buffer_length"},
-  {odbc182, "odbc-182-timestamp2time"},
-  {odbc212, "odbc-212-sqlbindparam_inout_type"},
-  {timestruct_param, "timestruct_param-seconds"},
-  {consequent_direxec, "consequent_direxec"},
-  {odbc279, "odbc-279-timestruct"},
+  {unbuffered_result, "unbuffered_result", NORMAL},
+  {my_init_table, "my_init_table", NORMAL},
+  {my_param_insert, "my_param_insert", NORMAL},
+  {my_param_update, "my_param_update", NORMAL},
+  {my_param_delete, "my_param_delete", NORMAL},
+  {tmysql_fix, "tmysql_fix", NORMAL},
+  {t_param_offset, "t_param_offset", NORMAL},
+  {paramarray_by_row, "paramarray_by_row", NORMAL},
+  {paramarray_by_column, "paramarray_by_column", NORMAL},
+  {paramarray_ignore_paramset, "paramarray_ignore_paramset", NORMAL},
+  {paramarray_select, "paramarray_select", CSPS_OK | SSPS_TO_FIX},
+  {t_bug49029, "t_bug49029", NORMAL},
+  {t_bug56804, "t_bug56804", NORMAL},
+  {t_bug59772, "t_bug59772", NORMAL},
+  {insert_fetched_null, "insert_fetched_null", NORMAL},
+  {odbc45, "odbc-45-binding2bit", NORMAL},
+  {odbc151, "odbc-151-buffer_length", NORMAL},
+  {odbc182, "odbc-182-timestamp2time", NORMAL},
+  {odbc212, "odbc-212-sqlbindparam_inout_type", NORMAL},
+  {timestruct_param, "timestruct_param-seconds", NORMAL},
+  {consequent_direxec, "consequent_direxec", NORMAL},
+  {odbc279, "odbc-279-timestruct", NORMAL},
   {NULL, NULL}
 };
 
@@ -1358,6 +1337,5 @@ int main(int argc, char **argv)
   int tests= sizeof(my_tests)/sizeof(MA_ODBC_TESTS) - 1;
   get_options(argc, argv);
   plan(tests);
-  mark_all_tests_normal(my_tests);
   return run_tests(my_tests);
 }

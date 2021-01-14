@@ -22,7 +22,7 @@ SET (ODBC_TESTS
      "use_result" "scroll" "bulk" "prepare" "datetime" "keys"
      "curext" "relative" "unicode" "cursor" "dyn_cursor"
      "error" "escape_sequences" "param" "result1" "result2" "multistatement"
-     "sqlcolumns" "sql_procedure_columns" "sql_special_columns")
+     "sqlcolumns" "sql_procedure_columns" "sql_special_columns" "client_side")
 SET(COMMON_TEST_SOURCES tap.h)
 
 # Interactive makes sense on WIN32 only atm
@@ -47,23 +47,29 @@ FOREACH (ODBC_TEST ${ODBC_TESTS})
     TARGET_LINK_LIBRARIES(odbc_${ODBC_TEST} maodbc ${PLATFORM_DEPENDENCIES})
   ELSE()
     TARGET_LINK_LIBRARIES(odbc_${ODBC_TEST} ${ODBC_LIBS} ${PLATFORM_DEPENDENCIES})
+    ADD_DEPENDENCIES(odbc_${ODBC_TEST} maodbc)
   ENDIF()
   IF (NOT ${ODBC_TEST} STREQUAL "interactive" OR USE_INTERACTIVE_TESTS)
     ADD_TEST(odbc_${ODBC_TEST} ${EXECUTABLE_OUTPUT_PATH}/odbc_${ODBC_TEST})
-    SET_TESTS_PROPERTIES(odbc_${ODBC_TEST} PROPERTIES TIMEOUT 120)
-    SET_PROPERTY(TEST odbc_${ODBC_TEST} APPEND PROPERTY
-            ENVIRONMENT ODBCINI=${CMAKE_BINARY_DIR}/test/odbc.ini)
-    SET_PROPERTY(TEST odbc_${ODBC_TEST} APPEND PROPERTY
-            ENVIRONMENT ODBCSYSINI=${CMAKE_BINARY_DIR}/test)
+    SET_TESTS_PROPERTIES(odbc_${ODBC_TEST} PROPERTIES TIMEOUT 240)
+    IF(NOT WIN32)
+      SET_PROPERTY(TEST odbc_${ODBC_TEST} APPEND PROPERTY
+              ENVIRONMENT ODBCINI=${CMAKE_BINARY_DIR}/test/odbc.ini)
+      SET_PROPERTY(TEST odbc_${ODBC_TEST} APPEND PROPERTY
+              ENVIRONMENT ODBCSYSINI=${CMAKE_BINARY_DIR}/test)
+    ENDIF()
   ENDIF()
   SET_TARGET_PROPERTIES(odbc_${ODBC_TEST} PROPERTIES C_STANDARD 90)
 ENDFOREACH()
 
 ADD_EXECUTABLE(odbc_connstring connstring.c ${CMAKE_SOURCE_DIR}/ma_dsn.c ${COMMON_TEST_SOURCES})
 TARGET_LINK_LIBRARIES(odbc_connstring ${ODBC_LIBS} ${ODBC_INSTLIBS} mariadbclient ${PLATFORM_DEPENDENCIES})
+ADD_DEPENDENCIES(odbc_connstring maodbc)
 ADD_TEST(odbc_connstring ${EXECUTABLE_OUTPUT_PATH}/odbc_connstring)
-SET_TESTS_PROPERTIES(odbc_connstring PROPERTIES TIMEOUT 120)
-SET_PROPERTY(TEST odbc_connstring APPEND PROPERTY
-        ENVIRONMENT ODBCINI=${CMAKE_BINARY_DIR}/test/odbc.ini)
-SET_PROPERTY(TEST odbc_connstring APPEND PROPERTY
-        ENVIRONMENT ODBCSYSINI=${CMAKE_BINARY_DIR}/test)
+SET_TESTS_PROPERTIES(odbc_connstring PROPERTIES TIMEOUT 240)
+IF(NOT WIN32)
+  SET_PROPERTY(TEST odbc_connstring APPEND PROPERTY
+          ENVIRONMENT ODBCINI=${CMAKE_BINARY_DIR}/test/odbc.ini)
+  SET_PROPERTY(TEST odbc_connstring APPEND PROPERTY
+          ENVIRONMENT ODBCSYSINI=${CMAKE_BINARY_DIR}/test)
+ENDIF()

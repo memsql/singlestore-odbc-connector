@@ -275,13 +275,6 @@ typedef struct
 
 } MADB_ShortTypeInfo;
 
-typedef struct
-{
-  unsigned int  ArraySize;
-  my_bool       HasRowsToSkip;
-
-} MADB_BulkOperationInfo;
-
 /* Stmt struct needs definitions from my_parse.h */
 #include <ma_parse.h>
 
@@ -311,6 +304,13 @@ struct st_ma_odbc_stmt
   enum MADB_StmtState       State;
   MYSQL_STMT                **MultiStmts;
   unsigned int              MultiStmtNr;
+  // CspsResult and CspsMultiStmtResult fields are only storing the result sets for the client-side prepared statements.
+  // They're convenient to work with because we can fully release the memory via C driver API.
+  // That's pretty much the only reason for keeping those.
+  // NOTE: no cursor logic, fetching, update, insert or delete operations, etc. should happen on these fields,
+  // the corresponding MYSQL_STMT object is responsible for that.
+  MYSQL_RES                 *CspsResult;
+  MYSQL_RES                 **CspsMultiStmtResult;
   unsigned int              MultiStmtMaxParam;
   SQLLEN                    LastRowFetched;
   MYSQL_BIND                *result;
@@ -324,7 +324,6 @@ struct st_ma_odbc_stmt
   char                      *TableName;
   char                      *CatalogName;
   MADB_ShortTypeInfo        *ColsTypeFixArr;
-  MADB_BulkOperationInfo    Bulk;
   /* Application Descriptors */
   MADB_Desc *Apd;
   MADB_Desc *Ard;
@@ -437,6 +436,27 @@ void            CloseClientCharset(Client_Charset *cc);
 
 #define iOdbc() (sizeof(SQLWCHAR)==4)
 
+/* Couple defined to make "switch"s look at least shorter, if not nicer */
+#define CHAR_BINARY_TYPES SQL_C_CHAR:\
+case SQL_C_BINARY:\
+case SQL_LONGVARBINARY:\
+case SQL_VARBINARY:\
+case SQL_VARCHAR:\
+case SQL_LONGVARCHAR
+
+#define WCHAR_TYPES SQL_C_WCHAR:\
+case SQL_WVARCHAR:\
+case SQL_WLONGVARCHAR
+
+#define DATETIME_TYPES SQL_C_TIMESTAMP:\
+case SQL_TYPE_TIMESTAMP:\
+case SQL_C_TIME:\
+case SQL_TYPE_TIME:\
+case SQL_C_INTERVAL_HOUR_TO_MINUTE:\
+case SQL_C_INTERVAL_HOUR_TO_SECOND:\
+case SQL_C_DATE:\
+case SQL_TYPE_DATE
+
 #include <ma_error.h>
 #include <ma_info.h>
 #include <ma_environment.h>
@@ -448,9 +468,7 @@ void            CloseClientCharset(Client_Charset *cc);
 #include <ma_result.h>
 #include <ma_driver.h>
 #include <ma_helper.h>
-#include <ma_server.h>
 #include <ma_typeconv.h>
-#include <ma_bulk.h>
 
 /* SQLFunction calls inside MariaDB Connector/ODBC needs to be mapped,
  * on non Windows platforms these function calls will call the driver

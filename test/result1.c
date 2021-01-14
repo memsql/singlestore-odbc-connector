@@ -502,64 +502,6 @@ ODBC_TEST(t_max_rows)
   rc = SQLFreeStmt(Stmt,SQL_CLOSE);
   CHECK_STMT_RC(Stmt,rc);
 
-  /* Testing max_rows with PREFETCH feature(client side cursor) enabled */
-  {
-    HDBC  hdbc1;
-    HSTMT hstmt1;
-    SQLCHAR conn[512];
-
-    sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;PREFETCH=5",
-          my_dsn, my_uid, my_pwd);
-    
-    CHECK_ENV_RC(Env, SQLAllocHandle(SQL_HANDLE_DBC, Env, &hdbc1));
-
-    CHECK_DBC_RC(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), NULL,
-                                   0, NULL,
-                                   SQL_DRIVER_NOPROMPT));
-    CHECK_DBC_RC(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
-
-    /* max_rows IS bigger than a prefetch, and IS not divided evenly by it */
-    CHECK_STMT_RC(hstmt1, SQLSetStmtAttr(hstmt1,SQL_ATTR_MAX_ROWS,(SQLPOINTER)7,0));
-
-    /* May fail if test dsn does not specify database to use */
-    OK_SIMPLE_STMT(hstmt1, "select * from t_max_rows");
-
-    is_num(7, myrowcount(hstmt1));
-
-    SQLFreeStmt(hstmt1,SQL_CLOSE);
-
-    /* max_rows IS bigger than prefetch, and than total mumber of rows in the
-       table */
-    CHECK_STMT_RC(hstmt1, SQLSetStmtAttr(hstmt1,SQL_ATTR_MAX_ROWS,(SQLPOINTER)12,0));
-
-    OK_SIMPLE_STMT(hstmt1, "select * from t_max_rows");
-  
-    is_num(10, myrowcount(hstmt1));
-
-    SQLFreeStmt(hstmt1,SQL_CLOSE);
-
-    /* max_rows IS bigger than prefetch, and equal to total mumber of rows in
-       the table, and IS divided evenly by prefetch number */
-    CHECK_STMT_RC(hstmt1, SQLSetStmtAttr(hstmt1,SQL_ATTR_MAX_ROWS,(SQLPOINTER)10,0));
-
-    OK_SIMPLE_STMT(hstmt1,"select * from t_max_rows");
-  
-    is_num(10, myrowcount(hstmt1));
-
-    SQLFreeStmt(hstmt1,SQL_CLOSE);
-
-    /* max_rows IS less than a prefetch number */
-    CHECK_STMT_RC(hstmt1, SQLSetStmtAttr(hstmt1,SQL_ATTR_MAX_ROWS,(SQLPOINTER)3,0));
-
-    OK_SIMPLE_STMT(hstmt1, "select * from t_max_rows");
-
-    is_num(3, myrowcount(hstmt1));
-
-    CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1,SQL_DROP));
-    CHECK_DBC_RC(hdbc1, SQLDisconnect(hdbc1));
-    CHECK_DBC_RC(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
-  }
-
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_max_rows");
 
   return OK;
@@ -856,8 +798,8 @@ ODBC_TEST(t_cache_bug)
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_cache (id INT)");
   OK_SIMPLE_STMT(Stmt, "INSERT INTO t_cache VALUES (1),(2),(3),(4),(5)");
 
-  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;DATABASE=%s;OPTION=1048579",
-          my_dsn, my_uid, my_pwd, my_schema);
+  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;PORT=%d;DATABASE=%s;SERVER=%s;OPTION=1048579",
+          my_dsn, my_uid, my_pwd, my_port, my_schema, my_servername);
   
   IS(mydrvconnect(&henv1, &hdbc1, &hstmt1, conn) == OK);
 
@@ -1581,9 +1523,10 @@ ODBC_TEST(tmysql_rowstatus)
   rc = SQLSetPos(Stmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
   CHECK_STMT_RC(Stmt,rc);
 
-  OK_SIMPLE_STMT(hstmt1,
-          "UPDATE tmysql_rowstatus SET col1 = 999,"
-          "col2 = 'pos-update' WHERE CURRENT OF venu_cur");
+  EXPECT_STMT(hstmt1,
+          SQLExecDirect(hstmt1, (SQLCHAR*)"UPDATE tmysql_rowstatus SET col1 = 999,"
+          "col2 = 'pos-update' WHERE CURRENT OF venu_cur", SQL_NTS), SQL_ERROR);
+  CHECK_SQLSTATE(hstmt1, "HYC00");
 
   rc = SQLExtendedFetch(Stmt,SQL_FETCH_LAST,1,NULL,NULL);
   CHECK_STMT_RC(Stmt,rc);
@@ -1776,27 +1719,12 @@ ODBC_TEST(t_binary_collation)
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_binary_collation (id INT)");
   OK_SIMPLE_STMT(Stmt, "SHOW CREATE TABLE t_binary_collation");
 
-  CHECK_DBC_RC(Connection, SQLGetInfo(Connection, SQL_DBMS_VER, server_version,
-                          MYSQL_NAME_LEN, NULL));
-
   CHECK_STMT_RC(Stmt, SQLDescribeCol(Stmt, 1, column_name, sizeof(column_name),
                                 &name_length, &data_type, &column_size,
                                 &decimal_digits, &nullable));
 
-  if (ServerNotOlderThan(Connection, 5, 2, 0) ||
-      /* 5.0.46 or later in 5.0 series */
-      (!strncmp("5.0", (char *)server_version, 3) &&
-        ServerNotOlderThan(Connection, 5, 0, 46)) ||
-      /* 5.1.22 or later in 5.1 series */
-      (!strncmp("5.1", (char *)server_version, 3) &&
-        ServerNotOlderThan(Connection, 5, 1, 22)))
-  {
-    is_num(data_type, iOdbc() ? SQL_WVARCHAR : SQL_VARCHAR);
-  }
-  else
-  {
-    is_num(data_type, SQL_VARBINARY);
-  }
+  is_num(data_type, SQL_CHAR);
+
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_binary_collation");
   return OK;
 }
@@ -2291,7 +2219,7 @@ MA_ODBC_TESTS my_tests[]=
   {t_bug13776_auto, "t_bug13776_auto",     NORMAL},
   {t_bug28617, "t_bug28617",     NORMAL},
   {t_bug34429, "t_bug34429",     NORMAL},
-  {t_binary_collation, "t_binary_collation", NORMAL},
+  {t_binary_collation, "t_binary_collation", CSPS_OK | SSPS_FAIL},
   {NULL, NULL}
 };
 

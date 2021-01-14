@@ -238,6 +238,7 @@ void MADB_DeleteQuery(MADB_QUERY *Query)
   MADB_FREE(Query->allocated);
   MADB_FREE(Query->Original);
   MADB_DeleteDynamic(&Query->Tokens);
+  MADB_DeleteDynamic(&Query->ParamPositions);
 
   MADB_DeleteSubqueries(Query);
 
@@ -501,6 +502,7 @@ int ParseQuery(MADB_QUERY *Query)
 
   MADB_InitDynamicArray(&Query->Tokens, (unsigned int)sizeof(unsigned int), (unsigned int)MAX(Length/32, 20), (unsigned int)MAX(Length/20, 40));
   MADB_InitDynamicArray(&Query->SubQuery, (unsigned int)sizeof(SINGLE_QUERY), (unsigned int)MAX(Length/64, 20), (unsigned int)MAX(Length/64, 40));
+  MADB_InitDynamicArray(&Query->ParamPositions, sizeof(long), 0 /*init_alloc*/, 1 /*alloc_increment*/);
 
   Query->PoorManParsing= ShouldWeTryPoorManParsing(Query);
 
@@ -573,7 +575,9 @@ int ParseQuery(MADB_QUERY *Query)
       }
       case '?': /* This can break token(w/out space char), and be beginning of a token.
                    Thus we need it in both places */
-        Query->HasParameters= 1;
+        Query->HasParameters= TRUE;
+        long paramPosition = p - Query->RefinedText;
+        MADB_InsertDynamic(&Query->ParamPositions, &paramPosition);
         /* Parameter placeholder is a complete token. And next one may begin right after it*/
         ReadingToken= FALSE;
         break;

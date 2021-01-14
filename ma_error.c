@@ -61,6 +61,7 @@ MADB_ERROR MADB_ErrorList[] =
   { "22015", "", "Interval field overflow", SQL_ERROR},
   { "22018", "22005", "Invalid character value for cast specification", SQL_ERROR},
   { "22019", "", "Invalid escape character", SQL_ERROR},
+  { "22023", "", "Invalid parameter value", SQL_ERROR},
   { "22025", "", "Invalid escape sequence", SQL_ERROR},
   { "22026", "", "String data, length mismatch", SQL_ERROR},
   { "23000", "", "Integrity constraint violation", SQL_ERROR},
@@ -159,7 +160,8 @@ char* MADB_PutErrorPrefix(MADB_Dbc *dbc, MADB_Error *error)
     if (dbc != NULL && dbc->mariadb != NULL)
     {
       error->PrefixLen += _snprintf(error->SqlErrorMsg + error->PrefixLen,
-        SQL_MAX_MESSAGE_LENGTH + 1 - error->PrefixLen, "[%s]", mysql_get_server_info(dbc->mariadb)); 
+        SQL_MAX_MESSAGE_LENGTH + 1 - error->PrefixLen, "[%s]",
+        dbc->Dsn->CompatMode ? mysql_get_server_info(dbc->mariadb) : ss_get_server_info(dbc->mariadb));
     }
   }
   return error->SqlErrorMsg + error->PrefixLen;

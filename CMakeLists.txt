@@ -24,7 +24,6 @@ SET(MARIADB_ODBC_VERSION_MAJOR 3)
 SET(MARIADB_ODBC_VERSION_MINOR 1)
 SET(MARIADB_ODBC_VERSION_PATCH 10)
 SET(MARIADB_ODBC_VERSION_QUALITY "ga")
-SET(DIRECT_LINK_TESTS ON)
 
 SET(MARIADB_ODBC_VERSION "03.01.0010")
 
@@ -49,11 +48,9 @@ SET (MARIADB_ODBC_SOURCES odbc_3_api.c
                           ma_string.c
                           ma_result.c
                           ma_common.c
-                          ma_server.c
                           ma_legacy_helpers.c
                           ma_typeconv.c
-                          ma_bulk.c
-                          escape_sequences/ast.c
+        escape_sequences/ast.c
                           escape_sequences/parser.c
                           escape_sequences/lexical_analyzer.c)
 
@@ -242,10 +239,9 @@ IF(WIN32)
                           ma_odbc.h
                           ma_odbc_version.h
                           ma_result.h
-                          ma_server.h
                           ma_legacy_helpers.h
                           ma_typeconv.h
-                          ma_bulk.h)
+          )
 
 			SET(PLATFORM_DEPENDENCIES ws2_32 Shlwapi Pathcch)
   IF (MSVC)
@@ -421,7 +417,7 @@ IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
     ADD_SUBDIRECTORY(test)
     IF(NOT WIN32)
       # Configuring ini files for testing with UnixODBC
-      SET_VALUE(TEST_DRIVER "maodbc_test")
+      SET_VALUE(TEST_DRIVER "MariaDB ODBC 3.1 Driver")
       SET_VALUE(TEST_DSN "maodbc_test")
       SET_VALUE(TEST_PORT "5506")
       SET_VALUE(TEST_SERVER "127.0.0.1")

@@ -1358,35 +1358,35 @@ ODBC_TEST(t_bug39957)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {my_columns_null, "my_columns_null"},
-  {my_drop_table, "my_drop_table"},
-  {my_table_dbs, "my_table_dbs"},
-  {my_colpriv, "my_colpriv"},
-  {t_sqlprocedures, "t_sqlprocedures"},
-  {t_catalog, "t_catalog"},
-  {tmysql_specialcols, "tmysql_specialcols"},
-  {t_columns, "t_columns"},
-  {t_tables_bug,"t_tables_bug"},
-  {t_current_catalog_unicode, "t_current_catalog_unicode"},
-  {t_current_catalog_ansi, "t_current_catalog_ansi"},
-  {tmysql_showkeys, "tmysql_showkeys"},
-  {t_sqltables, "t_sqltables"},
-  {my_information_schema, "my_information_schema"},
-  {empty_set, "empty_set"},
-  {t_bug23031, "t_bug23031"},
-  {bug15713, "bug15713"},
-  {t_bug28316, "t_bug28316"},
-  {bug8860, "bug8860"},
-  {t_bug26934, "t_bug26934"},
-  {t_bug29888, "t_bug29888"},
-  {t_bug14407, "t_bug14407"},
-  {t_bug32864, "t_bug32864"},
-  {t_bug32989, "t_bug32989"},
-  {t_bug33298, "t_bug33298"},
-  {t_bug12805, "t_bug12805"},
-  {t_bug30770,"t_bug30770"},
-  {t_bug36275, "t_bug36275"},
-  {t_bug39957, "t_bug39957"},
+  {my_columns_null, "my_columns_null", NORMAL},
+  {my_drop_table, "my_drop_table", NORMAL},
+  {my_table_dbs, "my_table_dbs", NORMAL},
+  {my_colpriv, "my_colpriv", NORMAL},
+  {t_sqlprocedures, "t_sqlprocedures", NORMAL},
+  {t_catalog, "t_catalog", NORMAL},
+  {tmysql_specialcols, "tmysql_specialcols", NORMAL},
+  {t_columns, "t_columns", NORMAL},
+  {t_tables_bug,"t_tables_bug", NORMAL},
+  {t_current_catalog_unicode, "t_current_catalog_unicode", NORMAL},
+  {t_current_catalog_ansi, "t_current_catalog_ansi", NORMAL},
+  {tmysql_showkeys, "tmysql_showkeys", CSPS_OK | SSPS_FAIL},
+  {t_sqltables, "t_sqltables", NORMAL},
+  {my_information_schema, "my_information_schema", NORMAL},
+  {empty_set, "empty_set", NORMAL},
+  {t_bug23031, "t_bug23031", NORMAL},
+  {bug15713, "bug15713", NORMAL},
+  {t_bug28316, "t_bug28316", NORMAL},
+  {bug8860, "bug8860", NORMAL},
+  {t_bug26934, "t_bug26934", NORMAL},
+  {t_bug29888, "t_bug29888", NORMAL},
+  {t_bug14407, "t_bug14407", NORMAL},
+  {t_bug32864, "t_bug32864", NORMAL},
+  {t_bug32989, "t_bug32989", NORMAL},
+  {t_bug33298, "t_bug33298", NORMAL},
+  {t_bug12805, "t_bug12805", NORMAL},
+  {t_bug30770,"t_bug30770", NORMAL},
+  {t_bug36275, "t_bug36275", NORMAL},
+  {t_bug39957, "t_bug39957", NORMAL},
   {NULL, NULL}
 };
 
@@ -1395,6 +1395,5 @@ int main(int argc, char **argv)
   int tests= sizeof(my_tests)/sizeof(MA_ODBC_TESTS) - 1;
   get_options(argc, argv);
   plan(tests);
-  mark_all_tests_normal(my_tests);
   return run_tests(my_tests);
 }

@@ -269,7 +269,7 @@ ODBC_TEST(t_putdata1)
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_putdata (c1 INT, c2 LONG VARCHAR)");
   OK_SIMPLE_STMT(Stmt, "INSERT INTO t_putdata VALUES (10,'venu')");
 
-  CHECK_STMT_RC(Stmt, 
+  CHECK_STMT_RC(Stmt,
           SQLPrepare(Stmt,
                      (SQLCHAR *)"UPDATE t_putdata SET c2= ? WHERE c1 = ?",
                      SQL_NTS));
@@ -478,10 +478,7 @@ ODBC_TEST(t_putdata3)
         len+= partsize;
       }
 
-      if (SQLParamData(Stmt, &parameter) == SQL_ERROR)
-      {
-        return FAIL;
-      }
+      CHECK_STMT_RC(Stmt, SQLParamData(Stmt, &parameter));
     }
   } /* end if (rc == SQL_NEED_DATA) */
 
@@ -867,7 +864,7 @@ ODBC_TEST(t_odbc_26)
   CHECK_STMT_RC(Stmt, SQLPutData(Stmt, buffer, 2*sizeof(SQLWCHAR)));
   CHECK_STMT_RC(Stmt, SQLParamData(Stmt, &parameter));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT value FROM bug_odbc26");
+  OK_SIMPLE_STMT(Stmt, "SELECT value FROM bug_odbc26 ORDER BY id");
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 1, SQL_CHAR, value, sizeof(value), &valueLen));
@@ -935,19 +932,19 @@ ODBC_TEST(t_blob_reading_in_chunks)
 
 MA_ODBC_TESTS my_tests[]=
 {
-//  {t_blob, "t_blob"}, TODO: should be fixed in PLAT-4940
-  {t_1piecewrite2, "t_1piecewrite2"},
-//  {t_putdata1, "t_putdata1"}, TODO: should be fixed in PLAT-4940
-//  {t_putdata2, "t_putdata2"}, TODO: should be fixed in PLAT-4940
-//  {t_putdata3, "t_putdata3"}, TODO: should be fixed in PLAT-4940
-  {t_blob_bug, "t_blob_bug"},
-  {t_text_fetch, "t_text_fetch"},
-  {getdata_lenonly, "getdata_lenonly"},
-  {t_bug9781, "t_bug9781"},
-  {t_bug10562, "t_bug10562"},
-  {t_bug_11746572, "t_bug_11746572"},
-//  {t_odbc_26, "t_odbc_26"}, TODO: should be fixed in PLAT-4940
-  {t_blob_reading_in_chunks, "t_blob_reading_in_chunks"},
+  {t_blob, "t_blob", CSPS_OK | SSPS_FAIL},
+  {t_1piecewrite2, "t_1piecewrite2", NORMAL},
+  {t_putdata1, "t_putdata1", CSPS_OK | SSPS_FAIL},
+  {t_putdata2, "t_putdata2", CSPS_OK | SSPS_FAIL},
+  {t_putdata3, "t_putdata3", CSPS_OK | SSPS_FAIL},
+  {t_blob_bug, "t_blob_bug", NORMAL},
+  {t_text_fetch, "t_text_fetch", NORMAL},
+  {getdata_lenonly, "getdata_lenonly", NORMAL},
+  {t_bug9781, "t_bug9781", NORMAL},
+  {t_bug10562, "t_bug10562", TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {t_bug_11746572, "t_bug_11746572", NORMAL},
+  {t_odbc_26, "t_odbc_26", CSPS_OK | SSPS_FAIL},
+  {t_blob_reading_in_chunks, "t_blob_reading_in_chunks", NORMAL},
   {NULL, NULL}
 };
 
@@ -956,6 +953,5 @@ int main(int argc, char **argv)
   int tests= sizeof(my_tests)/sizeof(MA_ODBC_TESTS) - 1;
   get_options(argc, argv);
   plan(tests);
-  mark_all_tests_normal(my_tests);
   return run_tests(my_tests);
 }

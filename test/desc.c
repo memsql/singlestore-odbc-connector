@@ -44,8 +44,8 @@ ODBC_TEST(t_desc_paramset)
 
   parop[0]= SQL_PARAM_PROCEED;
   parop[1]= SQL_PARAM_IGNORE;
-  parop[2]= SQL_PARAM_IGNORE;
-  parop[3]= SQL_PARAM_PROCEED;
+  parop[2]= SQL_PARAM_PROCEED;
+  parop[3]= SQL_PARAM_IGNORE;
   params1[0]= 0;
   params1[1]= 1;
   params1[2]= 2;
@@ -54,6 +54,9 @@ ODBC_TEST(t_desc_paramset)
   params2[1]= 101;
   params2[2]= 102;
   params2[3]= 103;
+
+  SQLINTEGER    val1;
+  SQLINTEGER    val2;
 
   /* get the descriptors */
   CHECK_STMT_RC(Stmt, SQLGetStmtAttr(Stmt, SQL_ATTR_APP_PARAM_DESC,
@@ -103,10 +106,20 @@ ODBC_TEST(t_desc_paramset)
   CHECK_STMT_RC(Stmt,
           SQLBindParameter(Stmt, 2, SQL_PARAM_INPUT, SQL_INTEGER, SQL_C_LONG,
                            0, 0, params2, sizeof(SQLINTEGER), NULL));
-  /*
+
   CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
-  */
-  /* TODO, finish test and implement */
+
+  CHECK_STMT_RC(Stmt, SQLExecDirect(Stmt, "select x, y from t_paramset order by x", SQL_NTS));
+  CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_INTEGER, &val1, sizeof(SQLINTEGER), NULL));
+  CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_INTEGER, &val2, sizeof(SQLINTEGER), NULL));
+
+  int rc;
+  int cnt = 0;
+  while ((rc = SQLFetch(Stmt)) == SQL_SUCCESS) {
+      FAIL_IF(val1 != params1[cnt ? 2 : 0], "Expected a different value!");
+      FAIL_IF(val2 != params2[cnt ? 2 : 0], "Expected a different value!");
+      cnt++;
+  }
 
   return OK;
 }

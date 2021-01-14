@@ -50,7 +50,7 @@ ODBC_TEST(my_positioned_cursor)
   CHECK_STMT_RC(Stmt, SQLSetCursorName(Stmt, (SQLCHAR*)"mysqlcur", SQL_NTS));
 
   /* Open the resultset of table 'my_demo_cursor' */
-  OK_SIMPLE_STMT(Stmt,"SELECT * FROM my_demo_cursor WHERE 1");
+  OK_SIMPLE_STMT(Stmt,"SELECT * FROM my_demo_cursor WHERE 1 ORDER BY id");
 
   /* goto the last row */
   CHECK_STMT_RC(Stmt, SQLFetchScroll(Stmt, SQL_FETCH_LAST, 1L));
@@ -58,18 +58,16 @@ ODBC_TEST(my_positioned_cursor)
   /* create new statement handle */
   CHECK_DBC_RC(Connection, SQLAllocHandle(SQL_HANDLE_STMT, Connection, &hstmt_pos));
 
-  /* now update the name field to 'updated' using positioned cursor */
-  OK_SIMPLE_STMT(hstmt_pos, "UPDATE my_demo_cursor SET name='updated' "
-         "WHERE CURRENT OF mysqlcur");
-
-  CHECK_STMT_RC(Stmt, SQLRowCount(hstmt_pos, &nRowCount));
-  is_num(nRowCount, 1);
+  /* now try to update the name field to 'updated' using the positioned cursor and get the appropriate error */
+  EXPECT_STMT(hstmt_pos, SQLExecDirect(hstmt_pos, (SQLCHAR*)"UPDATE my_demo_cursor SET name='updated' "
+                                                  "WHERE CURRENT OF mysqlcur", SQL_NTS), SQL_ERROR);
+  CHECK_SQLSTATE(hstmt_pos, "HYC00");
 
   CHECK_STMT_RC(hstmt_pos, SQLFreeStmt(hstmt_pos, SQL_CLOSE));
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   /* Now delete 2nd row */
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_demo_cursor");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_demo_cursor ORDER BY id");
 
   /* goto the second row */
   CHECK_STMT_RC(Stmt, SQLFetchScroll(Stmt, SQL_FETCH_ABSOLUTE, 2L));
@@ -87,7 +85,7 @@ ODBC_TEST(my_positioned_cursor)
   CHECK_STMT_RC(hstmt_pos, SQLFreeHandle(SQL_HANDLE_STMT, hstmt_pos));
 
   /* Now fetch and verify the data */
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_demo_cursor");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_demo_cursor ORDER BY id");
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 0);
@@ -103,7 +101,7 @@ ODBC_TEST(my_positioned_cursor)
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 4);
-  IS_STR(my_fetch_str(Stmt, data, 2), "updated", 7);
+  IS_STR(my_fetch_str(Stmt, data, 2), "MySQL4", 6);
 
   FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "eof expected");
 
@@ -131,7 +129,7 @@ ODBC_TEST(my_setpos_cursor)
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
                                 (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_demo_cursor");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_demo_cursor ORDER BY id");
 
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, &id, 0, NULL));
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_CHAR, name, sizeof(name),NULL));
@@ -140,11 +138,9 @@ ODBC_TEST(my_setpos_cursor)
 
   strcpy((char *)name, "first-row");
 
-  /* now update the name field to 'first-row' using SQLSetPos */
-  CHECK_STMT_RC(Stmt, SQLSetPos(Stmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
-
-  CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &nRowCount));
-  is_num(nRowCount, 1);
+  /* now try to update the name field to 'first-row' using SQLSetPos and get the appropriate error */
+  EXPECT_STMT(Stmt, SQLSetPos(Stmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "HYC00");
 
   /* position to second row and delete it ..*/
   CHECK_STMT_RC(Stmt, SQLFetchScroll(Stmt, SQL_FETCH_ABSOLUTE, 2L));
@@ -159,11 +155,11 @@ ODBC_TEST(my_setpos_cursor)
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   /* Now fetch and verify the data */
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_demo_cursor");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_demo_cursor ORDER BY id");
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 0);
-  IS_STR(my_fetch_str(Stmt, name, 2), "first-row", 9);
+  IS_STR(my_fetch_str(Stmt, name, 2), "MySQL0", 6);
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 2);
@@ -386,7 +382,7 @@ ODBC_TEST(t_setpos_position)
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
                                 (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_setpos_position");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_setpos_position ORDER BY a");
 
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, &nData, 0, NULL));
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_CHAR, szData, sizeof(szData),
@@ -418,7 +414,7 @@ ODBC_TEST(t_setpos_position)
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_setpos_position");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_setpos_position ORDER BY a");
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 1000);
@@ -583,13 +579,13 @@ ODBC_TEST(t_pos_datetime_delete)
 
   CHECK_STMT_RC(Stmt, SQLSetCursorName(Stmt, (SQLCHAR *)"venu_cur", 8));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_pos_datetime_delete");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_pos_datetime_delete ORDER BY a");
 
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, &int_data, 0, NULL));
 
   CHECK_STMT_RC(Stmt, SQLExtendedFetch(Stmt, SQL_FETCH_NEXT, 1, NULL,
                                   &rgfRowStatus));
-  is_num(int_data, 1);
+  is_num(int_data, 0);
 
   CHECK_STMT_RC(Stmt, SQLSetPos(Stmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
 
@@ -606,7 +602,7 @@ ODBC_TEST(t_pos_datetime_delete)
 
   CHECK_STMT_RC(Stmt, SQLExtendedFetch(Stmt, SQL_FETCH_NEXT, 1, NULL,
                                   &rgfRowStatus));
-  is_num(int_data, 0);
+  is_num(int_data, 1);
 
   CHECK_STMT_RC(Stmt, SQLExtendedFetch(Stmt, SQL_FETCH_NEXT, 1, NULL, NULL));
   is_num(int_data, 2);
@@ -624,10 +620,10 @@ ODBC_TEST(t_pos_datetime_delete)
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_pos_datetime_delete");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_pos_datetime_delete ORDER BY a");
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  is_num(my_fetch_int(Stmt, 1), 0);
+  is_num(my_fetch_int(Stmt, 1), 1);
 
   FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "eof expected");
 
@@ -689,7 +685,7 @@ ODBC_TEST(t_pos_datetime_delete1)
   rc = SQLGetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE, &cur_type, 0, NULL);
   CHECK_STMT_RC(Stmt,rc);
 
-  OK_SIMPLE_STMT(Stmt, "select * from t_pos_delete");
+  OK_SIMPLE_STMT(Stmt, "select * from t_pos_delete ORDER BY id");
 
   rc = SQLBindCol(Stmt,1,SQL_C_LONG,&int_data,0,NULL);
   CHECK_STMT_RC(Stmt,rc);
@@ -867,7 +863,7 @@ ODBC_TEST(t_acc_crash)
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_DATE, &ts, 0, &ind_strlen));
 
   CHECK_STMT_RC(Stmt, SQLFetchScroll(Stmt, SQL_FETCH_FIRST, 1));
-  
+
   id= 9;
   strcpy((char *)name, "updated");
   ts.year= 2010;
@@ -1042,11 +1038,11 @@ ODBC_TEST(tmysql_setpos_upd)
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS tmysql_setpos");
   OK_SIMPLE_STMT(Stmt, "create table tmysql_setpos(col1 int, col2 varchar(30))");
   OK_SIMPLE_STMT(Stmt, "insert into tmysql_setpos values(100,'MySQL1')");
-  OK_SIMPLE_STMT(Stmt, "insert into tmysql_setpos values(300,'MySQL3')");
   OK_SIMPLE_STMT(Stmt, "insert into tmysql_setpos values(200,'MySQL2')");
   OK_SIMPLE_STMT(Stmt, "insert into tmysql_setpos values(300,'MySQL3')");
   OK_SIMPLE_STMT(Stmt, "insert into tmysql_setpos values(400,'MySQL4')");
-  OK_SIMPLE_STMT(Stmt, "insert into tmysql_setpos values(300,'MySQL3')");
+  OK_SIMPLE_STMT(Stmt, "insert into tmysql_setpos values(500,'MySQL5')");
+  OK_SIMPLE_STMT(Stmt, "insert into tmysql_setpos values(600,'MySQL6')");
 
   rc = SQLTransact(NULL, Connection, SQL_COMMIT);
   CHECK_DBC_RC(Connection,rc);
@@ -1057,7 +1053,7 @@ ODBC_TEST(tmysql_setpos_upd)
 
   rc = SQLSetCursorName(Stmt, (SQLCHAR *)"venu",SQL_NTS);
 
-  OK_SIMPLE_STMT(Stmt, "select * from tmysql_setpos");
+  OK_SIMPLE_STMT(Stmt, "select * from tmysql_setpos ORDER BY col1");
 
   rc = SQLBindCol(Stmt,1,SQL_C_LONG,&nData,100,NULL);
   CHECK_STMT_RC(Stmt,rc);
@@ -1234,7 +1230,7 @@ ODBC_TEST(tmysql_pos_delete)
 
   CHECK_STMT_RC(Stmt, SQLSetCursorName(Stmt, (SQLCHAR *)"venu_cur", SQL_NTS));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM tmysql_pos_delete");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM tmysql_pos_delete ORDER BY a");
 
   CHECK_STMT_RC(Stmt, SQLExtendedFetch(Stmt, SQL_FETCH_NEXT, 1, NULL, NULL));
 
@@ -1255,7 +1251,7 @@ ODBC_TEST(tmysql_pos_delete)
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM tmysql_pos_delete");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM tmysql_pos_delete ORDER BY a");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
 
   is_num(my_fetch_int(Stmt, 1), 2);
@@ -1286,7 +1282,7 @@ ODBC_TEST(t_pos_update)
 
   CHECK_STMT_RC(Stmt, SQLSetCursorName(Stmt, (SQLCHAR *)"venu_cur", SQL_NTS));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_pos_update");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_pos_update ORDER BY col1");
 
   CHECK_STMT_RC(Stmt, SQLExtendedFetch(Stmt, SQL_FETCH_ABSOLUTE, 2, NULL, NULL));
 
@@ -1301,24 +1297,28 @@ ODBC_TEST(t_pos_update)
    (SQLCHAR*)"  UPDATE t_pos_update SET col1 = 999, col2 = 'update' "
              "WHERE CURRENT OF", SQL_NTS) != SQL_ERROR, "Error expected");
 
-  OK_SIMPLE_STMT(hstmt1,
-    (SQLCHAR*)"  UPDATE t_pos_update SET col1 = 999, col2 = 'update' "
-         "WHERE CURRENT OF venu_cur");
+  FAIL_IF(SQLExecDirect(hstmt1,
+   (SQLCHAR*)"  UPDATE t_pos_update SET col1 = 999, col2 = 'update' "
+             "WHERE CURRENT OF venu_cur", SQL_NTS) != SQL_ERROR, "Error expected");
+
+  FAIL_IF(SQLExecDirect(hstmt1,
+   (SQLCHAR*)"  UPDATE t_pos_update SET col1 = 200, col2 = 'update' "
+        "WHERE CURRENT OF venu_cur", SQL_NTS) != SQL_ERROR, "Error expected");
 
   CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
   CHECK_STMT_RC(hstmt1, SQLFreeHandle(SQL_HANDLE_STMT, hstmt1));
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_pos_update");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_pos_update ORDER BY col1");
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 100);
   IS_STR(my_fetch_str(Stmt, szData, 2), "venu", 4);
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  is_num(my_fetch_int(Stmt, 1), 999);
-  IS_STR(my_fetch_str(Stmt, szData, 2), "update", 5);
+  is_num(my_fetch_int(Stmt, 1), 200);
+  IS_STR(my_fetch_str(Stmt, szData, 2), "MySQL", 5);
 
   FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "eof expected");
 
@@ -1346,7 +1346,7 @@ ODBC_TEST(tmysql_pos_update_ex)
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
                                 (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_pos_updex");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_pos_updex ORDER BY a");
 
   CHECK_STMT_RC(Stmt, SQLExtendedFetch(Stmt, SQL_FETCH_ABSOLUTE, 2,
                                   &pcrow, &rgfRowStatus));
@@ -1361,27 +1361,25 @@ ODBC_TEST(tmysql_pos_update_ex)
                                    SQL_CHAR, 0, 0, data, sizeof(data), NULL));
 
   sprintf((char *)sql,
-          "UPDATE t_pos_updex SET a = 999, b = ? WHERE CURRENT OF %s",
+          "UPDATE t_pos_updex SET a = 200, b = ? WHERE CURRENT OF %s",
           cursor);
 
-  CHECK_STMT_RC(hstmt1, SQLExecDirect(hstmt1, sql, SQL_NTS));
-
-  CHECK_STMT_RC(hstmt1, SQLRowCount(hstmt1, &rows));
-  is_num(rows, 1);
+  EXPECT_STMT(hstmt1, SQLExecDirect(hstmt1, sql, SQL_NTS), SQL_ERROR);
+  CHECK_SQLSTATE(hstmt1, "HYC00");
 
   CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_pos_updex");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_pos_updex ORDER BY a");
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 100);
   IS_STR(my_fetch_str(Stmt, sql, 2), "venu", 4);
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  is_num(my_fetch_int(Stmt, 1), 999);
-  IS_STR(my_fetch_str(Stmt, sql, 2), "tmysql_pos_update_ex", 20);
+  is_num(my_fetch_int(Stmt, 1), 200);
+  IS_STR(my_fetch_str(Stmt, sql, 2), "MySQL", 5);
 
   FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "eof expected");
 
@@ -1409,7 +1407,7 @@ ODBC_TEST(tmysql_pos_update_ex1)
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
                                 (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_pos_updex1");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_pos_updex1 ORDER BY a");
 
   CHECK_STMT_RC(Stmt, SQLExtendedFetch(Stmt, SQL_FETCH_ABSOLUTE, 2, &pcrow,
                                   &rgfRowStatus));
@@ -1423,26 +1421,24 @@ ODBC_TEST(tmysql_pos_update_ex1)
                                    SQL_CHAR, 0, 0, data, sizeof(data), NULL));
 
   sprintf((char *)sql,
-          "UPDATE t_pos_updex1 SET a = 999, b = ? WHERE CURRENT OF %s", cursor);
+          "UPDATE t_pos_updex1 SET a = 200, b = ? WHERE CURRENT OF %s", cursor);
 
-  CHECK_STMT_RC(hstmt1, SQLExecDirect(hstmt1, sql, SQL_NTS));
-
-  CHECK_STMT_RC(hstmt1, SQLRowCount(hstmt1, &rows));
-  is_num(rows, 1);
+  EXPECT_STMT(hstmt1, SQLExecDirect(hstmt1, sql, SQL_NTS), SQL_ERROR);
+  CHECK_SQLSTATE(hstmt1, "HYC00");
 
   CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_pos_updex1");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_pos_updex1 ORDER BY a");
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 100);
   IS_STR(my_fetch_str(Stmt, sql, 2), "venu", 4);
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  is_num(my_fetch_int(Stmt, 1), 999);
-  IS_STR(my_fetch_str(Stmt, sql, 2), "tmysql_pos_update_ex1", 21);
+  is_num(my_fetch_int(Stmt, 1), 200);
+  IS_STR(my_fetch_str(Stmt, sql, 2), "MySQL", 5);
 
   FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "eof expected");
 
@@ -1562,7 +1558,7 @@ ODBC_TEST(tmysql_pos_dyncursor)
 
   CHECK_STMT_RC(Stmt, SQLSetCursorName(Stmt, (SQLCHAR *)"venu_cur", SQL_NTS));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM tmysql_pos_dyncursor");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM tmysql_pos_dyncursor ORDER BY a");
 
   CHECK_STMT_RC(Stmt, SQLExtendedFetch(Stmt, SQL_FETCH_ABSOLUTE, 2, &pcrow,
                                   &rgfRowStatus));
@@ -1571,25 +1567,23 @@ ODBC_TEST(tmysql_pos_dyncursor)
 
   CHECK_DBC_RC(Connection, SQLAllocStmt(Connection, &hstmt1));
 
-  OK_SIMPLE_STMT(hstmt1, "UPDATE tmysql_pos_dyncursor SET a = 9, b = 'update' "
-         "WHERE CURRENT OF venu_cur");
-
-  CHECK_STMT_RC(hstmt1, SQLRowCount(hstmt1, &rows));
-  is_num(rows, 1);
+  EXPECT_STMT(hstmt1, SQLExecDirect(hstmt1, "UPDATE tmysql_pos_dyncursor SET a = 2, b = 'update' "
+         "WHERE CURRENT OF venu_cur", SQL_NTS), SQL_ERROR);
+  CHECK_SQLSTATE(hstmt1, "HYC00");
 
   CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM tmysql_pos_dyncursor");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM tmysql_pos_dyncursor ORDER BY a");
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 1);
   IS_STR(my_fetch_str(Stmt, buff, 2), "foo", 3);
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  is_num(my_fetch_int(Stmt, 1), 9);
-  IS_STR(my_fetch_str(Stmt, buff, 2), "update", 6);
+  is_num(my_fetch_int(Stmt, 1), 2);
+  IS_STR(my_fetch_str(Stmt, buff, 2), "bar", 3);
 
   FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "eof expected");
 
@@ -2061,7 +2055,7 @@ ODBC_TEST(my_setpos_upd_pk_order)
   rc = SQLSetCursorName(Stmt, (SQLCHAR *)"venu",SQL_NTS);
   CHECK_STMT_RC(Stmt,rc);
 
-  OK_SIMPLE_STMT(Stmt, "select * from my_setpos_upd_pk_order");
+  OK_SIMPLE_STMT(Stmt, "select * from my_setpos_upd_pk_order order by col1");
 
   rc = SQLBindCol(Stmt,1,SQL_C_LONG,&nData,0,NULL);
   CHECK_STMT_RC(Stmt,rc);
@@ -2137,7 +2131,7 @@ ODBC_TEST(my_setpos_upd_pk_order1)
 
   CHECK_STMT_RC(Stmt, SQLSetCursorName(Stmt, (SQLCHAR *)"venu", SQL_NTS));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_setpos_upd_pk_order1");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_setpos_upd_pk_order1 ORDER BY c");
 
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, &nData, 0, NULL));
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_CHAR, szData, sizeof(szData),
@@ -2158,7 +2152,7 @@ ODBC_TEST(my_setpos_upd_pk_order1)
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-  OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_setpos_upd_pk_order1");
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM my_setpos_upd_pk_order1 ORDER BY c");
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 100);
@@ -2387,7 +2381,7 @@ ODBC_TEST(bug10563)
   SQLLEN nlen;
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_bug10563");
-  OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_bug10563 (a INT, b INT, PRIMARY KEY (a,b), UNIQUE (b))");
+  OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_bug10563 (a INT, b INT, PRIMARY KEY (b), UNIQUE (b))");
   OK_SIMPLE_STMT(Stmt, "INSERT INTO t_bug10563 VALUES (1,3),(1,4)");
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
@@ -2633,7 +2627,8 @@ ODBC_TEST(t_bug6157)
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
 
   data= 6157;
-  CHECK_STMT_RC(Stmt, SQLSetPos(Stmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
+  EXPECT_STMT(Stmt, SQLSetPos(Stmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "HYC00");
 
   data= 9999;
   CHECK_STMT_RC(Stmt, SQLSetPos(Stmt, 1, SQL_ADD, SQL_LOCK_NO_CHANGE));
@@ -2645,7 +2640,7 @@ ODBC_TEST(t_bug6157)
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, &data, 0, NULL));
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  is_num(data, 6157);
+  is_num(data, 1);
 
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(data, 9999);
@@ -2927,7 +2922,8 @@ int t_cursor_pos(SQLHANDLE Stmt)
   is_num(x[0], 1);
 
   y[0]++;
-  CHECK_STMT_RC(Stmt, SQLSetPos(Stmt, 0, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
+  EXPECT_STMT(Stmt, SQLSetPos(Stmt, 0, SQL_UPDATE, SQL_LOCK_NO_CHANGE), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "HYC00");
 
   CHECK_STMT_RC(Stmt, SQLFetchScroll(Stmt, SQL_FETCH_NEXT, 0));
   is_num(x[0], 2);
@@ -2954,7 +2950,8 @@ int t_cursor_pos(SQLHANDLE Stmt)
   }
 
   /* update 5,6,7 */
-  CHECK_STMT_RC(Stmt, SQLSetPos(Stmt, 0, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
+  EXPECT_STMT(Stmt, SQLSetPos(Stmt, 0, SQL_UPDATE, SQL_LOCK_NO_CHANGE), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "HYC00");
 
   /* set rowset_size back to 1 */
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE,
@@ -2963,7 +2960,8 @@ int t_cursor_pos(SQLHANDLE Stmt)
   CHECK_STMT_RC(Stmt, SQLFetchScroll(Stmt, SQL_FETCH_NEXT, 0));
   is_num(x[0], 8);
   y[0]++;
-  CHECK_STMT_RC(Stmt, SQLSetPos(Stmt, 0, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
+  EXPECT_STMT(Stmt, SQLSetPos(Stmt, 0, SQL_UPDATE, SQL_LOCK_NO_CHANGE), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "HYC00");
 
   /* check all rows were updated correctly */
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
@@ -2972,7 +2970,7 @@ int t_cursor_pos(SQLHANDLE Stmt)
   {
     CHECK_STMT_RC(Stmt, SQLFetchScroll(Stmt, SQL_FETCH_NEXT, 0));
     is_num(x[0], remaining_rows[i]);
-    is_num(y[0], x[0] + 1);
+    is_num(y[0], x[0]);
   }
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
@@ -3185,7 +3183,8 @@ ODBC_TEST(t_bug39961)
   num.val[0]= 10;
   num.val[1]= 0;
   num.val[2]= 0;
-  CHECK_STMT_RC(Stmt, SQLSetPos(Stmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
+  EXPECT_STMT(Stmt, SQLSetPos(Stmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "HYC00");
 
   /* add a new row */
   id++;
@@ -3193,11 +3192,11 @@ ODBC_TEST(t_bug39961)
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   /* fetch both rows, they should have the same decimal value */
-  OK_SIMPLE_STMT(Stmt, "select m1 from t_bug39961");
+  OK_SIMPLE_STMT(Stmt, "select m1 from t_bug39961 order by m1");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   IS_STR(my_fetch_str(Stmt, buf, 1), "0.1000", 4);
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  IS_STR(my_fetch_str(Stmt, buf, 1), "0.1000", 4);
+  IS_STR(my_fetch_str(Stmt, buf, 1), "987.1000", 4);
   FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "eof expected");
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
   
@@ -3303,7 +3302,6 @@ ODBC_TEST(odbc276)
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS tmysql_setpos_bin");
   OK_SIMPLE_STMT(Stmt, "create table tmysql_setpos_bin(col1 int, col2 binary(6))");
   OK_SIMPLE_STMT(Stmt, "insert into tmysql_setpos_bin values(100,'MySQL1')");
-  OK_SIMPLE_STMT(Stmt, "insert into tmysql_setpos_bin values(300,'MySQL3')");
   OK_SIMPLE_STMT(Stmt, "insert into tmysql_setpos_bin values(200,'My\\0QL2')");
   OK_SIMPLE_STMT(Stmt, "insert into tmysql_setpos_bin values(300,'MySQL3')");
   OK_SIMPLE_STMT(Stmt, "insert into tmysql_setpos_bin values(400,'MySQL4')");
@@ -3363,9 +3361,6 @@ ODBC_TEST(odbc276)
 
   OK_SIMPLE_STMT(Stmt, "select * from tmysql_setpos_bin order by col1");
 
-  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  is_num(my_fetch_int(Stmt, 1), 100);
-  IS_STR(my_fetch_str(Stmt, szData, 2), "MySQL1", sizeof("MySQL1"));
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 300);
   IS_STR(my_fetch_str(Stmt, szData, 2), "MySQL3", sizeof("MySQL3"));
@@ -3458,54 +3453,54 @@ MA_ODBC_TESTS my_tests[]=
 {
   {my_positioned_cursor, "my_positioned_cursor",     NORMAL},
   {my_setpos_cursor, "my_setpos_cursor",     NORMAL},
-  {t_bug5853, "t_bug5853",     NORMAL},
+  {t_bug5853, "t_bug5853",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
   {t_setpos_del_all, "t_setpos_del_all",     NORMAL},
   {t_setpos_upd_decimal, "t_setpos_upd_decimal",     NORMAL},
-  {t_setpos_position, "t_setpos_position",     NORMAL},
-  {t_pos_column_ignore, "t_pos_column_ignore",     NORMAL},
+  {t_setpos_position, "t_setpos_position",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {t_pos_column_ignore, "t_pos_column_ignore",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
   {t_pos_datetime_delete, "t_pos_datetime_delete",     NORMAL},
   {t_pos_datetime_delete1, "t_pos_datetime_delete1",     NORMAL},
   {t_getcursor, "t_getcursor",     NORMAL},
   {t_getcursor1, "t_getcursor1",     NORMAL},
-  {t_acc_crash, "t_acc_crash",     NORMAL},
+  {t_acc_crash, "t_acc_crash",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
   {tmysql_setpos_del, "tmysql_setpos_del",     NORMAL},
   {tmysql_setpos_del1, "tmysql_setpos_del1",     NORMAL},
-  {tmysql_setpos_upd, "tmysql_setpos_upd",     NORMAL},
+  {tmysql_setpos_upd, "tmysql_setpos_upd",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
   {tmysql_setpos_add, "tmysql_setpos_add",     NORMAL},
   {tmysql_pos_delete, "tmysql_pos_delete",     NORMAL},
   {t_pos_update, "t_pos_update",     NORMAL},
   {tmysql_pos_update_ex, "tmysql_pos_update_ex",     NORMAL},
   {tmysql_pos_update_ex1, "tmysql_pos_update_ex1",     NORMAL},
   {tmysql_pos_update_ex3, "tmysql_pos_update_ex3",     NORMAL},
-  {tmysql_pos_update_ex4, "tmysql_pos_update_ex4",     NORMAL},
+  {tmysql_pos_update_ex4, "tmysql_pos_update_ex4",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
   {tmysql_pos_dyncursor, "tmysql_pos_dyncursor",     NORMAL},
   {tmysql_mtab_setpos_del, "tmysql_mtab_setpos_del",     NORMAL},
   {tmysql_setpos_pkdel, "tmysql_setpos_pkdel",     NORMAL},
   {t_alias_setpos_pkdel, "t_alias_setpos_pkdel",     NORMAL},
   {t_alias_setpos_del, "t_alias_setpos_del",     NORMAL},
   {tmysql_setpos_pkdel2, "tmysql_setpos_pkdel2",     NORMAL},
-  {t_setpos_upd_bug1, "t_setpos_upd_bug1",     NORMAL},
-  {my_setpos_upd_pk_order, "my_setpos_upd_pk_order",     NORMAL},
-  {my_setpos_upd_pk_order1, "my_setpos_upd_pk_order1",     NORMAL},
+  {t_setpos_upd_bug1, "t_setpos_upd_bug1",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {my_setpos_upd_pk_order, "my_setpos_upd_pk_order",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {my_setpos_upd_pk_order1, "my_setpos_upd_pk_order1",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
   {tmy_cursor1, "tmy_cursor1",     NORMAL},
   {tmy_cursor2, "tmy_cursor2",     NORMAL},
-  {tmysql_pcbvalue, "tmysql_pcbvalue",     NORMAL},
+  {tmysql_pcbvalue, "tmysql_pcbvalue",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
   {t_bug28255, "t_bug28255",     NORMAL},
   {bug10563, "bug10563",     NORMAL},
   {bug6741, "bug6741",     NORMAL},
-  {t_update_type, "t_update_type",     NORMAL},
-  {t_update_offsets, "t_update_offsets",     NORMAL},
+  {t_update_type, "t_update_type",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {t_update_offsets, "t_update_offsets",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
   {t_bug6157, "t_bug6157",     NORMAL},
   {t_bug32420, "t_bug32420",     NORMAL},
   {t_cursor_pos_static, "t_cursor_pos_static",     NORMAL},
   {t_cursor_pos_dynamic, "t_cursor_pos_dynamic",     NORMAL},
   {t_bug11846, "t_bug11846",     NORMAL},
-  //{t_dae_setpos_insert, "t_dae_setpos_insert", NORMAL}, TODO: should be fixed in PLAT-4940
-  //{t_dae_setpos_update, "t_dae_setpos_update", NORMAL}, TODO: should be fixed in PLAT-4940
+  {t_dae_setpos_insert, "t_dae_setpos_insert", CSPS_OK | SSPS_FAIL},
+  {t_dae_setpos_update, "t_dae_setpos_update", TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
   {t_bug39961, "t_bug39961",        NORMAL},
   {t_bug41946, "t_bug41946",        NORMAL},
-  {odbc251, "odbc251-mblob_update", TO_FIX},
-  {odbc276, "odbc276-bin_update", NORMAL},
+  {odbc251, "odbc251-mblob_update", TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {odbc276, "odbc276-bin_update", TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
   {odbc289, "odbc289-fetch_after_close", NORMAL},
   {NULL, NULL}
 };

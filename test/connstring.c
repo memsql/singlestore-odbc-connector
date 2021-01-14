@@ -27,7 +27,7 @@
 #include "ma_dsn.h"
 
 MADB_Dsn   *Dsn;
-char        CreatedDSN[4][32];
+char        CreatedDSN[16][32];
 int         CreatedDsnCount=  0;
 const char *DsnName=          "madb_connstring_test";
 const char *DsnConnStr=       "DSN=madb_connstring_test";
@@ -237,91 +237,6 @@ unsigned int CharsSum(const char *str)
     res+= *str++;
   }
   return res;
-}
-
-ODBC_TEST(all_other_fields_test)
-{
-  char connstr4dsn[512], *opt_value, IntValue[20], *BoolValue= "1";
-  int i= 5; /* After Options. Assuming that fields before Options are tested in other test(s) */
-
-  if (Travis)
-  {
-    /* As already said - ini cache is buggy in UnixODBC, and it fails with UnixODBC version we have availabe in Travis tests.
-       It's possible to change the test to pass in similar way as we did in some other tests - by either writing and reading
-       the (new) DSN only once, or by creating new DSN for each keyword. */
-    skip("Skipping with test in Travis")
-  }
-  FAIL_IF(!MADB_DSN_Exists(DsnName), "Something went wrong - DSN does not exsist");
-
-  while(DsnKeys[i].DsnKey != NULL)
-  {
-    if (DsnKeys[i].IsAlias)
-    {
-      ++i;
-      continue;
-    }
-    opt_value= DsnKeys[i].DsnKey;
-    if (DsnKeys[i].Type == DSN_TYPE_BOOL || DsnKeys[i].Type == DSN_TYPE_OPTION)
-    {
-      opt_value= BoolValue;
-    }
-    else if (DsnKeys[i].Type == DSN_TYPE_INT)
-    {
-      _snprintf(IntValue, sizeof(IntValue), "%u", CharsSum(DsnKeys[i].DsnKey));
-      opt_value= IntValue;
-    }
-
-    _snprintf(connstr4dsn, sizeof(connstr4dsn), "%s;%s=%s", DsnConnStr, DsnKeys[i].DsnKey, opt_value);
-
-    IS(MADB_ReadConnString(Dsn, connstr4dsn, SQL_NTS, ';'));
-    IS(MADB_SaveDSN(Dsn));
-    ++i;
-  }
-
-  /* This fields were out of the loop */
-  _snprintf(connstr4dsn, sizeof(connstr4dsn), "%s;DESCRIPTION=DESCRIPTION;DRIVER=%s", DsnConnStr, my_drivername);
-  IS(MADB_ReadConnString(Dsn, connstr4dsn, SQL_NTS, ';'));
-  IS(MADB_SaveDSN(Dsn));
-
-  /* We saved all posible options. If DsnKeys contains erroneous info, some of values would have got corrupted */
-  RESET_DSN(Dsn);
-  IS(MADB_ReadDSN(Dsn, DsnConnStr, TRUE));
-  /* 2 special fields */
-  IS_STR(Dsn->Driver, (const char*)my_drivername, strlen((const char*)my_drivername) + 1);
-  IS_STR(Dsn->Description, "DESCRIPTION", sizeof("DESCRIPTION"));
-  i= 5;
-  while(DsnKeys[i].DsnKey != NULL)
-  {
-    if (DsnKeys[i].IsAlias)
-    {
-      ++i;
-      continue;
-    }
-
-    switch (DsnKeys[i].Type)
-    {
-    case DSN_TYPE_COMBO:
-    case DSN_TYPE_STRING:
-      IS_STR(*(char**)((char*)Dsn + DsnKeys[i].DsnOffset), DsnKeys[i].DsnKey, strlen(DsnKeys[i].DsnKey) + 1);
-      break;
-    case DSN_TYPE_INT:
-      is_num(*(unsigned int*)((char*)Dsn + DsnKeys[i].DsnOffset), CharsSum(DsnKeys[i].DsnKey));
-      break;
-    case DSN_TYPE_BOOL:
-    case DSN_TYPE_OPTION:
-      /* IsNamedPipe is switched off when TcpIp is switched on(since TcpIp goes after NamedPipe in the DsnKeys.
-         Do detect IsNamedPipe, comparing its offset in the MADB_Dsn with offset recorded in the DsnKeys */
-      is_num(*(my_bool*)((char*)Dsn + DsnKeys[i].DsnOffset), DsnKeys[i].DsnOffset == (size_t)&((MADB_Dsn*)NULL)->IsNamedPipe ? 0 : 1);
-    case DSN_TYPE_CBOXGROUP:
-      break;
-    }
-
-    ++i;
-  }
-
-  RESET_DSN(Dsn);
-
-  return OK;
 }
 
 
@@ -662,7 +577,6 @@ MA_ODBC_TESTS my_tests[]=
 {
   {connstring_test,       "connstring_parsing_test", NORMAL},
   {options_test,          "options_test",            NORMAL},
-  {all_other_fields_test, "all_other_fields_test",   NORMAL},
   {aliases_tests,         "aliases_tests",           NORMAL},
   {dependent_fields,      "dependent_fields_tests",  NORMAL},
   {driver_vs_dsn,         "driver_vs_dsn",           NORMAL},

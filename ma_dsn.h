@@ -119,6 +119,7 @@ typedef struct st_madb_dsn
   my_bool ConnectPrompt;
   char *Socket;
   char *ConnCPluginsDir;
+  my_bool NoSsps;
   /* SSL Settings */
   char *SslKey;
   char *SslCert;

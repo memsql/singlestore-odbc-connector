@@ -333,9 +333,13 @@ ODBC_TEST(bind_notenoughparam2)
   SQLSMALLINT cols= 0;
   CHECK_STMT_RC(Stmt, SQLPrepare(Stmt, (SQLCHAR *)"select ?, ?", SQL_NTS));
 
-  /* trigger pre-execute */
-  CHECK_STMT_RC(Stmt, SQLNumResultCols(Stmt, &cols));
-  is_num(cols, 2);
+  // We know the column metadata only in the SSPS case.
+  if (NoSsps == FALSE)
+  {
+      /* trigger pre-execute */
+      CHECK_STMT_RC(Stmt, SQLNumResultCols(Stmt, &cols));
+      is_num(cols, 2);
+  }
 
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 2, SQL_PARAM_INPUT, SQL_C_LONG,
                                   SQL_INTEGER, 0, 0, &i, 0, NULL));
@@ -638,10 +642,6 @@ ODBC_TEST(t_odbc94)
   SQLINTEGER  error;
   SQLSMALLINT len;
 
-  if (ServerNotOlderThan(Connection, 5, 7, 0) == FALSE)
-  {
-    skip("The test doesn't make sense in pre-10.0 servers, as the target query won't cause in 5.5(or pre-MySQL-5.7 the error it tests");
-  }
   sprintf((char *)conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s",
     my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr);
 

@@ -60,10 +60,10 @@ SQLRETURN MoveNext(MADB_Stmt *Stmt, unsigned long long Offset)
 
     while (Offset--)
     {
-      if (mysql_stmt_fetch(Stmt->stmt) == 1)
+      if (MADB_SSPS_DISABLED(Stmt) ? !SQL_SUCCEEDED(MADB_FetchCsps(Stmt)) : mysql_stmt_fetch(Stmt->stmt) == 1)
       {
-        result= SQL_ERROR;
-        break;
+          result= SQL_ERROR;
+          break;
       }
     }
 
@@ -140,6 +140,11 @@ SQLRETURN MADB_StmtMoreResults(MADB_Stmt *Stmt)
 
     MADB_InstallStmt(Stmt, Stmt->MultiStmts[Stmt->MultiStmtNr]);
 
+    if (MADB_SSPS_DISABLED(Stmt))
+    {
+        Stmt->CspsResult = Stmt->CspsMultiStmtResult[Stmt->MultiStmtNr];
+    }
+
     return SQL_SUCCESS;
   }
 
@@ -175,6 +180,50 @@ SQLRETURN MADB_StmtMoreResults(MADB_Stmt *Stmt)
       UNLOCK_MARIADB(Stmt->Connection);
     }
     return ret;
+  }
+
+  if (MADB_SSPS_DISABLED(Stmt))
+  {
+      if (!mysql_more_results(Stmt->stmt->mysql))
+      {
+          return SQL_NO_DATA;
+      }
+
+      LOCK_MARIADB(Stmt->Connection);
+      if (mysql_next_result(Stmt->stmt->mysql))
+      {
+          ret= MADB_SetError(&Stmt->Error, MADB_ERR_HY000, mysql_error(Stmt->stmt->mysql), 0);
+      } else
+      {
+          // We have gotten a new result from the multiresult query.
+          // Release the previous result and reset all the fields, so they can be filled by the new result.
+          Stmt->stmt->result.data = NULL;
+          Stmt->stmt->result_cursor = NULL;
+          Stmt->stmt->field_count = 0;
+          Stmt->stmt->fields = NULL;
+          mysql_free_result(Stmt->CspsResult);
+          Stmt->CspsResult = NULL;
+
+          // If this is a result set, load it and set the field metadata.
+          // Otherwise, the scalar is returned, so we just need to update the number of affected rows.
+          if (mysql_field_count(Stmt->stmt->mysql) > 0)
+          {
+              Stmt->CspsResult = mysql_store_result(Stmt->stmt->mysql);
+              MADB_CspsCopyResult(Stmt, Stmt->CspsResult, Stmt->stmt);
+
+              MADB_DescSetIrdMetadata(Stmt, mysql_fetch_fields(FetchMetadata(Stmt)), mysql_stmt_field_count(Stmt->stmt));
+              Stmt->AffectedRows= 0;
+          }
+          else
+          {
+              MADB_DescFree(Stmt->Ird, TRUE);
+              Stmt->AffectedRows= mysql_affected_rows(Stmt->stmt->mysql);
+          }
+      }
+      UNLOCK_MARIADB(Stmt->Connection);
+
+      MADB_StmtResetResultStructures(Stmt);
+      return ret;
   }
 
   if (mysql_stmt_more_results(Stmt->stmt))

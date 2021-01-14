@@ -379,11 +379,11 @@ ODBC_TEST(t_fetch_array)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {my_pcbvalue,     "my_pcbvalue"},
-  {my_pcbvalue_add, "my_pcbvalue_add"},
-  {my_columnspace,  "my_columnspace"},
-  {my_empty_string, "my_empty_string"},
-  {t_fetch_array,   "t_fetch_array"},
+  {my_pcbvalue,     "my_pcbvalue", TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {my_pcbvalue_add, "my_pcbvalue_add", NORMAL},
+  {my_columnspace,  "my_columnspace", NORMAL},
+  {my_empty_string, "my_empty_string", NORMAL},
+  {t_fetch_array,   "t_fetch_array", NORMAL},
   {NULL, NULL}
 };
 
@@ -392,6 +392,5 @@ int main(int argc, char **argv)
   int tests= sizeof(my_tests)/sizeof(MA_ODBC_TESTS) - 1;
   get_options(argc, argv);
   plan(tests);
-  mark_all_tests_normal(my_tests);
   return run_tests(my_tests);
 }

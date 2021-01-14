@@ -60,16 +60,15 @@ ODBC_TEST(test_multi_on_off)
   my_options= 0;
   ODBC_Connect(&myEnv, &myDbc, &myStmt);
 
-  rc= SQLPrepare(myStmt, (SQLCHAR*)"DROP TABLE IF EXISTS t1; CREATE TABLE t1(a int)", SQL_NTS);
-  FAIL_IF(SQL_SUCCEEDED(rc), "Error expected"); 
+  FAIL_IF(SQL_SUCCEEDED(SQLExecDirect(myStmt, (SQLCHAR*)"DROP TABLE IF EXISTS t1; CREATE TABLE t1(a int)", SQL_NTS)),
+                        "Error expected when client multi statements are disabled!");
 
   ODBC_Disconnect(myEnv, myDbc, myStmt);
 
   my_options= 67108866;
   ODBC_Connect(&myEnv, &myDbc, &myStmt);
 
-  rc= SQLPrepare(myStmt, (SQLCHAR*)"DROP TABLE IF EXISTS t1; CREATE TABLE t1(a int)", SQL_NTS);
-  FAIL_IF(!SQL_SUCCEEDED(rc), "Success expected");
+  OK_SIMPLE_STMT(myStmt, (SQLCHAR*)"DROP TABLE IF EXISTS t1; CREATE TABLE t1(a int)");
 
   ODBC_Disconnect(myEnv, myDbc, myStmt);
   return OK;
@@ -257,7 +256,16 @@ ODBC_TEST(t_odbc74)
 
 ODBC_TEST(t_odbc95)
 {
-  EXPECT_STMT(Stmt, SQLPrepare(Stmt, (SQLCHAR*)"SELECT 1;INSERT INTO non_existing VALUES(2)", SQL_NTS), SQL_ERROR);
+  SQLRETURN ExpectedReturnCode;
+  int major, minor, patch;
+  SQLCHAR server_version[64];
+  CHECK_DBC_RC(Connection, SQLGetInfo(Connection, SQL_DBMS_VER, server_version, sizeof(server_version), NULL));
+  sscanf((char*)server_version, "%02d.%02d.%06d", &major, &minor, &patch);
+
+  // SQL_SUCCESS is expected for the CSPS and for servers older than 7.1
+  ExpectedReturnCode = NoSsps || major * 10000 + minor * 100 < 70100 ? SQL_SUCCESS : SQL_ERROR;
+
+  EXPECT_STMT(Stmt, SQLPrepare(Stmt, (SQLCHAR*)"SELECT 1;INSERT INTO non_existing VALUES(2)", SQL_NTS), ExpectedReturnCode);
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_DROP));
   Stmt= NULL;
 
@@ -628,20 +636,23 @@ ODBC_TEST(t_odbc219)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {test_multi_statements, "test_multi_statements"},
-  {test_multi_on_off, "test_multi_on_off"},
-  {test_params, "test_params"},
-  {test_params_last_count_smaller, "test_params_last_count_smaller"},
-  {t_odbc_16, "test_odbc_16"},
-  {test_semicolon, "test_semicolon_in_string"},
-  {t_odbc74, "t_odbc74and_odbc97"},
-  {t_odbc95, "t_odbc95"},
-  {t_odbc126, "t_odbc126"},
-  {diff_column_binding, "diff_column_binding"},
-  {t_odbc159, "t_odbc159"},
-  {t_odbc177, "t_odbc177"},
-  {t_odbc169, "t_odbc169"},
-  {t_odbc219, "t_odbc219"},
+  {test_multi_statements, "test_multi_statements", NORMAL},
+  {test_multi_on_off, "test_multi_on_off", NORMAL},
+  {test_params, "test_params", NORMAL},
+  {test_params_last_count_smaller, "test_params_last_count_smaller", NORMAL},
+  {t_odbc_16, "test_odbc_16", CSPS_OK | SSPS_FAIL},
+  {test_semicolon, "test_semicolon_in_string", NORMAL},
+  {t_odbc74, "t_odbc74and_odbc97", NORMAL},
+  {t_odbc95, "t_odbc95", NORMAL},
+  {t_odbc126, "t_odbc126", NORMAL},
+  {diff_column_binding, "diff_column_binding", NORMAL},
+  {t_odbc159, "t_odbc159", NORMAL},
+  // Currently, our engine does not report the sum of affected rows in the stored procedure, so the following test breaks.
+  // Leaving it for the future because we may forget otherwise.
+  // TODO(PLAT-5027): file a task to report the sum of affected rows in a stored procedure.
+  {t_odbc177, "t_odbc177", KNOWN_FAILURE},
+  {t_odbc169, "t_odbc169", NORMAL},
+  {t_odbc219, "t_odbc219", NORMAL},
   {NULL, NULL}
 };
 
@@ -651,7 +662,6 @@ int main(int argc, char **argv)
   my_options= 67108866;
   get_options(argc, argv);
   plan(tests);
-  mark_all_tests_normal(my_tests);
 
   return run_tests(my_tests);
 }
