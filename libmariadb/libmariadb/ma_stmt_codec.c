@@ -507,7 +507,7 @@ error:
 }
 
 
-static void convert_froma_string(MYSQL_BIND *r_param, char *buffer, size_t len)
+void convert_froma_string(MYSQL_BIND *r_param, char *buffer, size_t len)
 {
   int error= 0;
   switch (r_param->buffer_type)

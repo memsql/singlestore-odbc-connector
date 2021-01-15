@@ -98,6 +98,7 @@ struct st_ma_stmt_methods
 };
 
 SQLRETURN    MADB_StmtInit          (MADB_Dbc *Connection, SQLHANDLE *pHStmt);
+void         MADB_StmtReset         (MADB_Stmt *Stmt);
 SQLUSMALLINT MapColAttributeDescType(SQLUSMALLINT FieldIdentifier);
 MYSQL_RES*   FetchMetadata          (MADB_Stmt *Stmt);
 SQLRETURN    MADB_DoExecute(MADB_Stmt *Stmt);

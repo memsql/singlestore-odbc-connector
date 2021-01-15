@@ -689,6 +689,19 @@ do {\
 #define CHECK_ENV_RC(env,rc) CHECK_HANDLE_RC(SQL_HANDLE_ENV,env,rc)
 #define CHECK_DESC_RC(desc,rc) CHECK_HANDLE_RC(SQL_HANDLE_DESC,desc,rc)
 
+#define FAIL_IF_NE_INT(exp,got, message)\
+  if ((exp) != (got))\
+    {\
+        fprintf(stdout, "%s(exp: %d, got: %d) (File: %s Line: %d)\n", message, exp, got, __FILE__, __LINE__);\
+        return FAIL;\
+    }
+
+#define FAIL_IF_NE_STR(exp,got,message)\
+  if (_stricmp((exp), (got)) != 0)\
+    {\
+        fprintf(stdout, "%s(exp: %s, got: %s) (File: %s Line: %d)\n", message, exp, got, __FILE__, __LINE__);\
+        return FAIL;\
+    }
 
 #define FAIL_IF(expr,message)\
   if (expr)\
@@ -1507,4 +1520,11 @@ BOOL WindowsDM(HDBC hdbc)
 {
   return using_dm(hdbc) && UnixOdbc() == FALSE && iOdbc() == FALSE;
 }
+
+#ifdef WIN32
+#define my_alloca(SZ) _alloca((size_t) (SZ))
+#else
+#define my_alloca(SZ) alloca((size_t) (SZ))
+#endif
+
 #endif      /* #ifndef _tap_h_ */

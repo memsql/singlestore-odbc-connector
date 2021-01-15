@@ -50,7 +50,8 @@ SET (MARIADB_ODBC_SOURCES odbc_3_api.c
                           ma_common.c
                           ma_legacy_helpers.c
                           ma_typeconv.c
-        escape_sequences/ast.c
+                          ma_fake_request.c
+                          escape_sequences/ast.c
                           escape_sequences/parser.c
                           escape_sequences/lexical_analyzer.c)
 
@@ -241,7 +242,7 @@ IF(WIN32)
                           ma_result.h
                           ma_legacy_helpers.h
                           ma_typeconv.h
-          )
+                          ma_fake_request.h)
 
 			SET(PLATFORM_DEPENDENCIES ws2_32 Shlwapi Pathcch)
   IF (MSVC)

@@ -633,7 +633,8 @@ ODBC_TEST(odbc84_62)
   SQLHANDLE Connection1;
   SQLHANDLE Stmt1;
   SQLCHAR conn[512], params[64];
-  SQLLEN ind;
+  SQLLEN ind, resNum;
+  int i;
   /* odbc 3 */
   CHECK_STMT_RC(Stmt, SQLGetTypeInfo(Stmt, SQL_WCHAR));
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
@@ -642,7 +643,14 @@ ODBC_TEST(odbc84_62)
 
   CHECK_STMT_RC(Stmt, SQLGetTypeInfo(Stmt, SQL_WVARCHAR));
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  IS_STR(my_fetch_str(Stmt, params, 6), "length", sizeof("length"));
+  SQLRowCount(Stmt, &resNum);
+  for(i = 0; i < resNum; i++) {
+    if (!strcmp(my_fetch_str(Stmt, params, 1), "varchar")) {
+      IS_STR(my_fetch_str(Stmt, params, 6), "length", sizeof("length"));
+    } else {
+      IS_STR(my_fetch_str(Stmt, params, 6), "(Null)", sizeof("(Null)"));
+    }
+  }
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   CHECK_STMT_RC(Stmt, SQLGetTypeInfo(Stmt, SQL_WLONGVARCHAR));
@@ -664,7 +672,14 @@ ODBC_TEST(odbc84_62)
 
   CHECK_STMT_RC(Stmt, SQLGetTypeInfo(Stmt, SQL_VARCHAR));
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  IS_STR(my_fetch_str(Stmt, params, 6), "length", sizeof("length"));
+  SQLRowCount(Stmt, &resNum);
+  for(i = 0; i < resNum; i++) {
+    if (!strcmp(my_fetch_str(Stmt, params, 1), "varchar")) {
+      IS_STR(my_fetch_str(Stmt, params, 6), "length", sizeof("length"));
+    } else {
+      IS_STR(my_fetch_str(Stmt, params, 6), "(Null)", sizeof("(Null)"));
+    }
+  }
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   CHECK_STMT_RC(Stmt, SQLGetTypeInfo(Stmt, SQL_LONGVARCHAR));
@@ -707,7 +722,14 @@ ODBC_TEST(odbc84_62)
 
   CHECK_STMT_RC(Stmt1, SQLGetTypeInfo(Stmt1, SQL_WVARCHAR));
   CHECK_STMT_RC(Stmt1, SQLFetch(Stmt1));
-  IS_STR(my_fetch_str(Stmt1, params, 6), "length", sizeof("length"));
+  SQLRowCount(Stmt, &resNum);
+  for(i = 0; i < resNum; i++) {
+    if (!strcmp(my_fetch_str(Stmt, params, 1), "varchar")) {
+      IS_STR(my_fetch_str(Stmt, params, 6), "length", sizeof("length"));
+    } else {
+      IS_STR(my_fetch_str(Stmt, params, 6), "(Null)", sizeof("(Null)"));
+    }
+  }
   CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
 
   CHECK_STMT_RC(Stmt1, SQLGetTypeInfo(Stmt1, SQL_WLONGVARCHAR));
@@ -729,7 +751,14 @@ ODBC_TEST(odbc84_62)
 
   CHECK_STMT_RC(Stmt1, SQLGetTypeInfo(Stmt1, SQL_VARCHAR));
   CHECK_STMT_RC(Stmt1, SQLFetch(Stmt1));
-  IS_STR(my_fetch_str(Stmt1, params, 6), "length", sizeof("length"));
+  SQLRowCount(Stmt, &resNum);
+  for(i = 0; i < resNum; i++) {
+    if (!strcmp(my_fetch_str(Stmt, params, 1), "varchar")) {
+      IS_STR(my_fetch_str(Stmt, params, 6), "length", sizeof("length"));
+    } else {
+      IS_STR(my_fetch_str(Stmt, params, 6), "(Null)", sizeof("(Null)"));
+    }
+  }
   CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
 
   CHECK_STMT_RC(Stmt1, SQLGetTypeInfo(Stmt1, SQL_LONGVARCHAR));
