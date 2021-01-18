@@ -172,6 +172,7 @@ workflows:
             tags:
               only: /^v.*/
       - build-macos:
+          requires: build-windows
           matrix:
             parameters:
               build_type:
@@ -205,19 +206,42 @@ workflows:
                 - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
                 - memsql/cluster-in-a-box:centos-7.1.13-11ddea2a3a-3.0.0-1.9.3
       - build-docker:
+          requires: build-macos
           matrix:
             parameters:
               os_version:
                 - debian:8
+              build_type:
+                - RelWithDebInfo
+      - build-docker:
+          requires: build-docker-RelWithDebInfo-debian:8
+          matrix:
+            parameters:
+              os_version:
                 - debian:9
+              build_type:
+                - RelWithDebInfo
+      - build-docker:
+          requires: build-docker-RelWithDebInfo-debian:9
+          matrix:
+            parameters:
+              os_version:
                 - debian:10
               build_type:
                 - RelWithDebInfo
       - build-docker:
+          requires: build-docker-RelWithDebInfo-debian:10
           matrix:
             parameters:
               os_version:
                 - centos:centos7
+              build_type:
+                - RelWithDebInfo
+      - build-docker:
+          requires: build-docker-RelWithDebInfo-centos:7
+          matrix:
+            parameters:
+              os_version:
                 - centos:centos8
               build_type:
                 - RelWithDebInfo
