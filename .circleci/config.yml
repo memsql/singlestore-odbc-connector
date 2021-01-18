@@ -161,28 +161,6 @@ jobs:
 workflows:
   test:
     jobs:
-      - build-windows:
-          matrix:
-            parameters:
-              build_type:
-                - RelWithDebInfo
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v.*/
-      - build-macos:
-          requires:
-            - build-windows
-          matrix:
-            parameters:
-              build_type:
-                - RelWithDebInfo
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v.*/
       - build-linux:
           matrix:
             parameters:
@@ -249,3 +227,27 @@ workflows:
                 - centos:centos8
               build_type:
                 - RelWithDebInfo
+      - build-windows:
+          requires:
+            - build-docker-RelWithDebInfo-centos:centos8
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
+      - build-macos:
+          requires:
+            - build-windows
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
