@@ -905,7 +905,7 @@ ODBC_TEST(odbc143)
 ODBC_TEST(t_scalarfunctions)
 {
     SQLUINTEGER ExpConvertFunctions = SQL_FN_CVT_CONVERT;
-    SQLUINTEGER ExpNumericFunctions = 16777199; // Currently ATAN2 is missing.
+    SQLUINTEGER ExpNumericFunctions = 16777215;
     SQLUINTEGER ExpStringFunctions = 16613375; // Currently DIFFERENCE and SOUNDEX are missing.
     SQLUINTEGER ExpTimedateAddIntervals = 511;
     SQLUINTEGER ExpTimedateDiffIntervals = 511;
