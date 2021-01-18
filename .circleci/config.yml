@@ -196,6 +196,7 @@ workflows:
                 - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
       - build-linux:
           matrix:
+            alias: matrix
             parameters:
               machine_class:
                 - large
@@ -209,7 +210,7 @@ workflows:
       - build-docker:
           requires:
             - build-macos
-            - build-linux-*
+            - build-linux-matrix
           matrix:
             parameters:
               os_version:
