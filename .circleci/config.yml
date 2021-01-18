@@ -209,6 +209,7 @@ workflows:
       - build-docker:
           requires:
             - build-macos
+            - build-linux
           matrix:
             parameters:
               os_version:
