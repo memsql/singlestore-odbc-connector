@@ -127,6 +127,7 @@ jobs:
           name: Run tests
           command: ./.circleci/build-linux.sh
   build-docker:
+#    We need docker based jobs because CircleCI has only ubuntu Linux executor and we need to test our connector on Debian and CentOS too
     parameters:
       os_version:
         type: string
