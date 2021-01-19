@@ -7,7 +7,6 @@ set -eo pipefail
 ###################################################################################################################
 
 echo 127.0.0.1 singlestore.test.com | sudo tee -a /etc/hosts
-export MEMSQL_HOST=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' memsql-integration)
 export PROJ_PATH=`pwd`
 mkdir tmp
 .circleci/gen-ssl.sh singlestore.test.com tmp

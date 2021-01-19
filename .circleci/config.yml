@@ -85,7 +85,7 @@ jobs:
           name: Run tests
           command: |
             ./.circleci/build-osx.sh
-  build-linux:
+  build-ubuntu:
     parameters:
       memsql_password:
         type: string
@@ -125,32 +125,44 @@ jobs:
           command: ./.circleci/create-database.sh
       - run:
           name: Run tests
-          command: ./.circleci/build-linux.sh
+          command: ./.circleci/build-ubuntu.sh
+  build-linux-in-docker:
+#    We need docker based jobs because CircleCI has only ubuntu Linux executor and we need to test our connector on Debian and CentOS too
+    parameters:
+      os_version:
+        type: string
+      build_type:
+        type: string
+    docker:
+      - image: << parameters.os_version >>
+    environment:
+      IMAGE_NAME: << parameters.os_version >>
+      BUILD_TYPE: << parameters.build_type >>
+      TEST_DRIVER: "MariaDB ODBC 3.1 Driver"
+      TEST_DSN: singlestore_test
+      TEST_SCHEMA: odbc_test
+      CONTINUOUS_INTEGRATION: true
+    steps:
+      - run:
+          name: Define Environment Variables
+          command: |
+            echo 'export TEST_SERVER=$MEMSQL_HOST' >> $BASH_ENV
+            echo 'export TEST_UID=$MEMSQL_USER' >> $BASH_ENV
+            echo 'export TEST_PORT=$MEMSQL_PORT' >> $BASH_ENV
+            echo 'export TEST_PASSWORD=$MEMSQL_PASSWORD' >> $BASH_ENV
+            source $BASH_ENV
+      - checkout
+      - run:
+          name: Setup Environment
+          command: ./.circleci/setup-environment-docker.sh
+      - run:
+          name: Run tests
+          command: ./.circleci/build-linux-in-docker.sh
 
 workflows:
   test:
     jobs:
-      - build-windows:
-          matrix:
-            parameters:
-              build_type:
-                - RelWithDebInfo
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v.*/
-      - build-macos:
-          matrix:
-            parameters:
-              build_type:
-                - RelWithDebInfo
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v.*/
-      - build-linux:
+      - build-ubuntu:
           matrix:
             parameters:
               machine_class:
@@ -161,7 +173,7 @@ workflows:
                 - RelWithDebInfo
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
-      - build-linux:
+      - build-ubuntu:
           matrix:
             parameters:
               machine_class:
@@ -173,3 +185,70 @@ workflows:
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
                 - memsql/cluster-in-a-box:centos-7.1.13-11ddea2a3a-3.0.0-1.9.3
+      - build-linux-in-docker:
+          matrix:
+            parameters:
+              os_version:
+                - debian:8
+              build_type:
+                - RelWithDebInfo
+      - build-linux-in-docker:
+          requires:
+            - build-linux-in-docker-RelWithDebInfo-debian:8
+          matrix:
+            parameters:
+              os_version:
+                - debian:9
+              build_type:
+                - RelWithDebInfo
+      - build-linux-in-docker:
+          requires:
+            - build-linux-in-docker-RelWithDebInfo-debian:9
+          matrix:
+            parameters:
+              os_version:
+                - debian:10
+              build_type:
+                - RelWithDebInfo
+      - build-linux-in-docker:
+          requires:
+            - build-linux-in-docker-RelWithDebInfo-debian:10
+          matrix:
+            parameters:
+              os_version:
+                - centos:centos7
+              build_type:
+                - RelWithDebInfo
+      - build-linux-in-docker:
+          requires:
+            - build-linux-in-docker-RelWithDebInfo-centos:centos7
+          matrix:
+            parameters:
+              os_version:
+                - centos:centos8
+              build_type:
+                - RelWithDebInfo
+      - build-windows:
+          requires:
+            - build-linux-in-docker-RelWithDebInfo-centos:centos8
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
+      - build-macos:
+          requires:
+            - build-windows
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
