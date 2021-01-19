@@ -69,6 +69,9 @@ int run_sql_columns(SQLHANDLE Stmt, const SQLSMALLINT *ExpDataType, const SQLSMA
         ExpColName[0] = numOfRowsFetched >= 26 ? (numOfRowsFetched - 26) / 26 + 'a' : (numOfRowsFetched % 26) + 'a';
         ExpColName[1] = numOfRowsFetched >= 26 ? (numOfRowsFetched % 26) + 'a' : '\0';
         FAIL_IF(_stricmp(colName, ExpColName) != 0, "Wrong COLUMN_NAME returned!");
+        if (dataType != ExpDataType[numOfRowsFetched]) {
+            printf("%hd : %hd", dataType, ExpDataType[numOfRowsFetched]);
+        }
         FAIL_IF(dataType != ExpDataType[numOfRowsFetched], "Wrong DATA_TYPE returned!");
         FAIL_IF(_stricmp(typeName, ExpTypeName[numOfRowsFetched]) != 0, "Wrong TYPE_NAME returned!");
 
@@ -165,6 +168,7 @@ ODBC_TEST(t_columns3A) {
     SQLHANDLE Connection1;
     SQLHANDLE Stmt1;
     SQLCHAR conn[512];
+    SQLWCHAR *connw, conn_out[512];
 
     sprintf((char *) conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s",
             my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr);
@@ -173,10 +177,10 @@ ODBC_TEST(t_columns3A) {
     CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
                                       (SQLPOINTER) SQL_OV_ODBC3, SQL_IS_INTEGER));
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &Connection1));
+    connw= CW(conn);
     CHECK_DBC_RC(Connection1,
-                 SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
-                                  NULL, SQL_DRIVER_NOPROMPT));
-    CHECK_DBC_RC(Connection1, SQLSetConnectAttr(Connection1, SQL_ATTR_ANSI_APP, (SQLPOINTER) 1, 0));
+                 SQLDriverConnectW(Connection1, NULL, connw, SQL_NTS, conn_out, sizeof(conn_out)/sizeof(SQLWCHAR), NULL, SQL_DRIVER_NOPROMPT));
+//    CHECK_DBC_RC(Connection1, SQLSetConnectAttr(Connection1, SQL_ATTR_ANSI_APP, (SQLPOINTER) 1, 0));
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
     FAIL_IF(run_sql_columns(Stmt1, ExpDataType, ExpSqlDataType) != OK, "error running SQLColumns");

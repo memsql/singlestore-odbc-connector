@@ -85,7 +85,7 @@ jobs:
           name: Run tests
           command: |
             ./.circleci/build-osx.sh
-  build-linux:
+  build-ubuntu:
     parameters:
       memsql_password:
         type: string
@@ -125,8 +125,8 @@ jobs:
           command: ./.circleci/create-database.sh
       - run:
           name: Run tests
-          command: ./.circleci/build-linux.sh
-  build-docker:
+          command: ./.circleci/build-ubuntu.sh
+  build-linux-in-docker:
 #    We need docker based jobs because CircleCI has only ubuntu Linux executor and we need to test our connector on Debian and CentOS too
     parameters:
       os_version:
@@ -157,12 +157,12 @@ jobs:
           command: ./.circleci/setup-environment-docker.sh
       - run:
           name: Run tests
-          command: ./.circleci/build-docker.sh
+          command: ./.circleci/build-linux-in-docker.sh
 
 workflows:
   test:
     jobs:
-      - build-linux:
+      - build-ubuntu:
           matrix:
             parameters:
               machine_class:
@@ -173,7 +173,7 @@ workflows:
                 - RelWithDebInfo
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
-      - build-linux:
+      - build-ubuntu:
           matrix:
             parameters:
               machine_class:
@@ -185,43 +185,43 @@ workflows:
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
                 - memsql/cluster-in-a-box:centos-7.1.13-11ddea2a3a-3.0.0-1.9.3
-      - build-docker:
+      - build-linux-in-docker:
           matrix:
             parameters:
               os_version:
                 - debian:8
               build_type:
                 - RelWithDebInfo
-      - build-docker:
+      - build-linux-in-docker:
           requires:
-            - build-docker-RelWithDebInfo-debian:8
+            - build-linux-in-docker-RelWithDebInfo-debian:8
           matrix:
             parameters:
               os_version:
                 - debian:9
               build_type:
                 - RelWithDebInfo
-      - build-docker:
+      - build-linux-in-docker:
           requires:
-            - build-docker-RelWithDebInfo-debian:9
+            - build-linux-in-docker-RelWithDebInfo-debian:9
           matrix:
             parameters:
               os_version:
                 - debian:10
               build_type:
                 - RelWithDebInfo
-      - build-docker:
+      - build-linux-in-docker:
           requires:
-            - build-docker-RelWithDebInfo-debian:10
+            - build-linux-in-docker-RelWithDebInfo-debian:10
           matrix:
             parameters:
               os_version:
                 - centos:centos7
               build_type:
                 - RelWithDebInfo
-      - build-docker:
+      - build-linux-in-docker:
           requires:
-            - build-docker-RelWithDebInfo-centos:centos7
+            - build-linux-in-docker-RelWithDebInfo-centos:centos7
           matrix:
             parameters:
               os_version:
@@ -230,7 +230,7 @@ workflows:
                 - RelWithDebInfo
       - build-windows:
           requires:
-            - build-docker-RelWithDebInfo-centos:centos8
+            - build-linux-in-docker-RelWithDebInfo-centos:centos8
           matrix:
             parameters:
               build_type:
