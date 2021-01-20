@@ -235,11 +235,6 @@ workflows:
             parameters:
               build_type:
                 - RelWithDebInfo
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v.*/
       - build-macos:
           requires:
             - build-windows
@@ -247,8 +242,3 @@ workflows:
             parameters:
               build_type:
                 - RelWithDebInfo
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v.*/
