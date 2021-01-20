@@ -109,6 +109,6 @@
       <File Id="TlsLibFile8" Name="libwinpthread-1.dll"  DiskId="1"  Source="@LIB_GNUTLS_LOCATION@/libwinpthread-1.dll" />
       <File Id="TlsLibFile9" Name="libffi-6.dll"  DiskId="1"  Source="@LIB_GNUTLS_LOCATION@/libffi-6.dll" />
     </Component@TLS_LIB_END@>
-    <!--  </ComponentGroup> -->
+  <!--  </ComponentGroup> -->
 </Fragment>
-        </Wix>
+</Wix>
