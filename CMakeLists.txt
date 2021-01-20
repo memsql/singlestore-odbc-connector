@@ -418,7 +418,7 @@ IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
     ADD_SUBDIRECTORY(test)
     IF(NOT WIN32)
       # Configuring ini files for testing with UnixODBC
-      SET_VALUE(TEST_DRIVER "MariaDB ODBC 3.1 Driver")
+      SET_VALUE(TEST_DRIVER "SingleStore ODBC 0.1-beta Driver")
       SET_VALUE(TEST_DSN "maodbc_test")
       SET_VALUE(TEST_PORT "5506")
       SET_VALUE(TEST_SERVER "127.0.0.1")
