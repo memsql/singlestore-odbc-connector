@@ -73,14 +73,14 @@
 #include <stdarg.h>
 #include "ma_odbc.h"
 #include "escape_sequences/ast.h"
-void yyerror (void *scanner, MADB_Stmt *Stmt, MADB_DynString *res, char *s)
+void yyerror (void *scanner, MADB_Error *error, MADB_DynString *res, char *s)
 {
 	if (strcmp(s, "syntax error") == 0)
 	{
-		MADB_SetError(&Stmt->Error,  MADB_ERR_42000, "Incorrect syntax for the escape sequence", 0);
+		MADB_SetError(error,  MADB_ERR_42000, "Incorrect syntax for the escape sequence", 0);
 	} else
 	{
-		MADB_SetError(&Stmt->Error,  MADB_ERR_42000, s, 0);
+		MADB_SetError(error,  MADB_ERR_42000, s, 0);
 	}
 }
 
@@ -224,7 +224,7 @@ struct ASTNode* allocateNode(int childrenCount, ...);
 
 #define YYALOCATION_ERROR do \
 { \
-	yyerror(scanner, Stmt, res, "Failed to allocate memory for escape sequence parsing");\
+	yyerror(scanner, error, res, "Failed to allocate memory for escape sequence parsing");\
 	YYABORT;\
 } while(0)
 
@@ -316,7 +316,7 @@ typedef union YYSTYPE YYSTYPE;
 
 
 
-int yyparse (void *scanner, MADB_Stmt *Stmt, MADB_DynString *res);
+int yyparse (void *scanner, MADB_Error *error, MADB_DynString *res);
 
 #endif /* !YY_YY_HOME_AMAKAROVYCH_UA_SINGLESTORE_ODBC_CONNECTOR_ESCAPE_SEQUENCES_PARSER_H_INCLUDED  */
 
@@ -812,7 +812,7 @@ static const yytype_uint8 yyr2[] =
       }                                                           \
     else                                                          \
       {                                                           \
-        yyerror (scanner, Stmt, res, YY_("syntax error: cannot back up")); \
+        yyerror (scanner, error, res, YY_("syntax error: cannot back up")); \
         YYERROR;                                                  \
       }                                                           \
   while (0)
@@ -849,7 +849,7 @@ do {                                                                      \
     {                                                                     \
       YYFPRINTF (stderr, "%s ", Title);                                   \
       yy_symbol_print (stderr,                                            \
-                  Type, Value, scanner, Stmt, res); \
+                  Type, Value, scanner, error, res); \
       YYFPRINTF (stderr, "\n");                                           \
     }                                                                     \
 } while (0)
@@ -860,12 +860,12 @@ do {                                                                      \
 `-----------------------------------*/
 
 static void
-yy_symbol_value_print (FILE *yyo, int yytype, YYSTYPE const * const yyvaluep, void *scanner, MADB_Stmt *Stmt, MADB_DynString *res)
+yy_symbol_value_print (FILE *yyo, int yytype, YYSTYPE const * const yyvaluep, void *scanner, MADB_Error *error, MADB_DynString *res)
 {
   FILE *yyoutput = yyo;
   YYUSE (yyoutput);
   YYUSE (scanner);
-  YYUSE (Stmt);
+  YYUSE (error);
   YYUSE (res);
   if (!yyvaluep)
     return;
@@ -882,12 +882,12 @@ yy_symbol_value_print (FILE *yyo, int yytype, YYSTYPE const * const yyvaluep, vo
 `---------------------------*/
 
 static void
-yy_symbol_print (FILE *yyo, int yytype, YYSTYPE const * const yyvaluep, void *scanner, MADB_Stmt *Stmt, MADB_DynString *res)
+yy_symbol_print (FILE *yyo, int yytype, YYSTYPE const * const yyvaluep, void *scanner, MADB_Error *error, MADB_DynString *res)
 {
   YYFPRINTF (yyo, "%s %s (",
              yytype < YYNTOKENS ? "token" : "nterm", yytname[yytype]);
 
-  yy_symbol_value_print (yyo, yytype, yyvaluep, scanner, Stmt, res);
+  yy_symbol_value_print (yyo, yytype, yyvaluep, scanner, error, res);
   YYFPRINTF (yyo, ")");
 }
 
@@ -920,7 +920,7 @@ do {                                                            \
 `------------------------------------------------*/
 
 static void
-yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule, void *scanner, MADB_Stmt *Stmt, MADB_DynString *res)
+yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule, void *scanner, MADB_Error *error, MADB_DynString *res)
 {
   unsigned long yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
@@ -934,7 +934,7 @@ yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule, void *scanner,
       yy_symbol_print (stderr,
                        yystos[yyssp[yyi + 1 - yynrhs]],
                        &yyvsp[(yyi + 1) - (yynrhs)]
-                                              , scanner, Stmt, res);
+                                              , scanner, error, res);
       YYFPRINTF (stderr, "\n");
     }
 }
@@ -942,7 +942,7 @@ yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule, void *scanner,
 # define YY_REDUCE_PRINT(Rule)          \
 do {                                    \
   if (yydebug)                          \
-    yy_reduce_print (yyssp, yyvsp, Rule, scanner, Stmt, res); \
+    yy_reduce_print (yyssp, yyvsp, Rule, scanner, error, res); \
 } while (0)
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
@@ -1205,11 +1205,11 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
 `-----------------------------------------------*/
 
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, void *scanner, MADB_Stmt *Stmt, MADB_DynString *res)
+yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, void *scanner, MADB_Error *error, MADB_DynString *res)
 {
   YYUSE (yyvaluep);
   YYUSE (scanner);
-  YYUSE (Stmt);
+  YYUSE (error);
   YYUSE (res);
   if (!yymsg)
     yymsg = "Deleting";
@@ -1262,7 +1262,7 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, void *scanner, MAD
 `----------*/
 
 int
-yyparse (void *scanner, MADB_Stmt *Stmt, MADB_DynString *res)
+yyparse (void *scanner, MADB_Error *error, MADB_DynString *res)
 {
 /* The lookahead symbol.  */
 int yychar;
@@ -1435,7 +1435,7 @@ yybackup:
   if (yychar == YYEMPTY)
     {
       YYDPRINTF ((stderr, "Reading a token: "));
-      yychar = yylex (&yylval, scanner, Stmt);
+      yychar = yylex (&yylval, scanner, error);
     }
 
   if (yychar <= YYEOF)
@@ -1953,7 +1953,7 @@ yyerrlab:
     {
       ++yynerrs;
 #if ! YYERROR_VERBOSE
-      yyerror (scanner, Stmt, res, YY_("syntax error"));
+      yyerror (scanner, error, res, YY_("syntax error"));
 #else
 # define YYSYNTAX_ERROR yysyntax_error (&yymsg_alloc, &yymsg, \
                                         yyssp, yytoken)
@@ -1980,7 +1980,7 @@ yyerrlab:
                 yymsgp = yymsg;
               }
           }
-        yyerror (scanner, Stmt, res, yymsgp);
+        yyerror (scanner, error, res, yymsgp);
         if (yysyntax_error_status == 2)
           goto yyexhaustedlab;
       }
@@ -2004,7 +2004,7 @@ yyerrlab:
       else
         {
           yydestruct ("Error: discarding",
-                      yytoken, &yylval, scanner, Stmt, res);
+                      yytoken, &yylval, scanner, error, res);
           yychar = YYEMPTY;
         }
     }
@@ -2058,7 +2058,7 @@ yyerrlab1:
 
 
       yydestruct ("Error: popping",
-                  yystos[yystate], yyvsp, scanner, Stmt, res);
+                  yystos[yystate], yyvsp, scanner, error, res);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -2097,7 +2097,7 @@ yyabortlab:
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
 yyexhaustedlab:
-  yyerror (scanner, Stmt, res, YY_("memory exhausted"));
+  yyerror (scanner, error, res, YY_("memory exhausted"));
   yyresult = 2;
   /* Fall through.  */
 #endif
@@ -2113,7 +2113,7 @@ yyreturn:
          user semantic actions for why this is necessary.  */
       yytoken = YYTRANSLATE (yychar);
       yydestruct ("Cleanup: discarding lookahead",
-                  yytoken, &yylval, scanner, Stmt, res);
+                  yytoken, &yylval, scanner, error, res);
     }
   /* Do not reclaim the symbols of the rule whose action triggered
      this YYABORT or YYACCEPT.  */
@@ -2122,7 +2122,7 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-                  yystos[*yyssp], yyvsp, scanner, Stmt, res);
+                  yystos[*yyssp], yyvsp, scanner, error, res);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow

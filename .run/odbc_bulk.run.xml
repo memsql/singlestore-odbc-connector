@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="odbc_bulk" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" WORKING_DIR="file://$CMakeCurrentGenerationDir$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="mariadb_connector_odbc" TARGET_NAME="odbc_bulk" CONFIG_NAME="RelWithDebInfo" RUN_TARGET_PROJECT_NAME="mariadb_connector_odbc" RUN_TARGET_NAME="odbc_bulk">
+  <configuration default="false" name="odbc_bulk" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" WORKING_DIR="file://$CMakeCurrentGenerationDir$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="mariadb_connector_odbc" TARGET_NAME="odbc_bulk" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="mariadb_connector_odbc" RUN_TARGET_NAME="odbc_bulk">
     <envs>
       <env name="ODBCINI" value="./test/odbc.ini" />
       <env name="ODBCSYSINI" value="./test" />

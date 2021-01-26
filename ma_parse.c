@@ -74,11 +74,20 @@ char* SkipQuotedString_Noescapes(char **CurPtr, const char *End, char Quote)
   return *CurPtr;
 }
 
-SQLRETURN unescapeQuery(MADB_Stmt *Stmt, MADB_DynString *res, char **src, char **srcEnd, int openCurlyBrackets)
+// MADB_UnescapeQuery replaces all escaped sequences in the SQL query
+// https://docs.microsoft.com/en-us/sql/odbc/reference/develop-app/escape-sequences-in-odbc?view=sql-server-ver15
+// error is a pointer to the MADB_Error object where the error will be saved if it will occur.
+// This function recursively iterates over the source string.
+// res is a dynamic string where the resulting query is saved.
+// src is an iterator over the source string.
+// srcEnd is a pointer to the end of the source string.
+// openCurlyBrackets is a number of currently opened curly brackets from the start of the source string to the src.
+//
+SQLRETURN MADB_UnescapeQuery(MADB_Error *error, MADB_DynString *res, char **src, char **srcEnd, int openCurlyBrackets)
 {
   if (MADB_InitDynamicString(res, "", *srcEnd - *src, 256))
   {
-    return MADB_SetError(&Stmt->Error,  MADB_ERR_HY001, "Failed to allocate memory for the query string", 0);
+    return MADB_SetError(error,  MADB_ERR_HY001, "Failed to allocate memory for the query string", 0);
   }
 
   while (*src < *srcEnd)
@@ -92,16 +101,16 @@ SQLRETURN unescapeQuery(MADB_Stmt *Stmt, MADB_DynString *res, char **src, char *
     {
       case '{':
         (*src)++;
-        if (unescapeQuery(Stmt, &subquery, src, srcEnd, openCurlyBrackets + 1))
+        if (MADB_UnescapeQuery(error, &subquery, src, srcEnd, openCurlyBrackets + 1))
         {
           MADB_DynstrFree(res);
-          return Stmt->Error.ReturnValue;
+          return error->ReturnValue;
         }
         if (MADB_DynstrAppend(res, subquery.str))
         {
           MADB_DynstrFree(res);
           MADB_DynstrFree(&subquery);
-          return MADB_SetError(&Stmt->Error,  MADB_ERR_HY001, "Failed to allocate memory for the query string", 0);
+          return MADB_SetError(error,  MADB_ERR_HY001, "Failed to allocate memory for the query string", 0);
         }
         MADB_DynstrFree(&subquery);
         break;
@@ -109,28 +118,28 @@ SQLRETURN unescapeQuery(MADB_Stmt *Stmt, MADB_DynString *res, char **src, char *
         if (openCurlyBrackets == 0)
         {
           MADB_DynstrFree(res);
-          return MADB_SetError(&Stmt->Error, MADB_ERR_42000, "Failed to find a pair for a closing curly bracket", 0);
+          return MADB_SetError(error, MADB_ERR_42000, "Failed to find a pair for a closing curly bracket", 0);
         }
 
         (*src)++;
         if (yylex_init(&scanner) != 0)
         {
           MADB_DynstrFree(res);
-          return MADB_SetError(&Stmt->Error,  MADB_ERR_HY001, "Failed to allocate memory for the query string", 0);
+          return MADB_SetError(error,  MADB_ERR_HY001, "Failed to allocate memory for the query string", 0);
         }
         YY_BUFFER_STATE buf = yy_scan_string(res->str, scanner);
         MADB_DynstrFree(res);
         if (buf == NULL)
         {
           yylex_destroy(scanner);
-          return MADB_SetError(&Stmt->Error,  MADB_ERR_HY001, "Failed to allocate memory for the query string", 0);
+          return MADB_SetError(error,  MADB_ERR_HY001, "Failed to allocate memory for the query string", 0);
         }
 
-        if (yyparse(scanner, Stmt, res) != 0)
+        if (yyparse(scanner, error, res) != 0)
         {
           yy_delete_buffer(buf, scanner);
           yylex_destroy(scanner);
-          return Stmt->Error.ReturnValue;
+          return error->ReturnValue;
         } else
         {
           yy_delete_buffer(buf, scanner);
@@ -162,7 +171,7 @@ SQLRETURN unescapeQuery(MADB_Stmt *Stmt, MADB_DynString *res, char **src, char *
         if (MADB_DynstrAppendMem(res, *src, stringLength))
         {
           MADB_DynstrFree(res);
-          return MADB_SetError(&Stmt->Error,  MADB_ERR_HY001, "Failed to allocate memory for the query string", 0);
+          return MADB_SetError(error,  MADB_ERR_HY001, "Failed to allocate memory for the query string", 0);
         }
         (*src) += stringLength;
         break;
@@ -170,7 +179,7 @@ SQLRETURN unescapeQuery(MADB_Stmt *Stmt, MADB_DynString *res, char **src, char *
         if (MADB_DynstrAppendMem(res, *src, 1))
         {
           MADB_DynstrFree(res);
-          return MADB_SetError(&Stmt->Error,  MADB_ERR_HY001, "Failed to allocate memory for the query string", 0);
+          return MADB_SetError(error,  MADB_ERR_HY001, "Failed to allocate memory for the query string", 0);
         }
         (*src)++;
         break;
@@ -180,7 +189,7 @@ SQLRETURN unescapeQuery(MADB_Stmt *Stmt, MADB_DynString *res, char **src, char *
   if (openCurlyBrackets != 0)
   {
     MADB_DynstrFree(res);
-    return MADB_SetError(&Stmt->Error, MADB_ERR_42000, "Failed to find a pair for an opening curly bracket", 0);
+    return MADB_SetError(error, MADB_ERR_42000, "Failed to find a pair for an opening curly bracket", 0);
   }
 
   return 0;
@@ -197,7 +206,7 @@ int MADB_ResetParser(MADB_Stmt *Stmt, char *OriginalQuery, SQLINTEGER OriginalLe
     char **OriginalQueryIterator = &OriginalQuery;
     char *OriginalQueryEnd = OriginalQuery + OriginalLength;
     MADB_DynString res;
-    if (unescapeQuery(Stmt, &res, OriginalQueryIterator, &OriginalQueryEnd, 0)) {
+    if (MADB_UnescapeQuery(&Stmt->Error, &res, OriginalQueryIterator, &OriginalQueryEnd, 0)) {
       return Stmt->Error.ReturnValue;
     }
 
