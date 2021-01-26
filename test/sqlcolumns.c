@@ -363,10 +363,10 @@ ODBC_TEST(sqlcolumns2)
 
 MA_ODBC_TESTS my_tests[] =
 {
-//    {t_columns3U, "t_columns3U", NORMAL},
-//    {t_columns3A, "t_columns3A", NORMAL},
-//    {t_columns2U, "t_columns2U", NORMAL},
-//    {t_columns2A, "t_columns2A", NORMAL},
+    {t_columns3U, "t_columns3U", NORMAL},
+    {t_columns3A, "t_columns3A", NORMAL},
+    {t_columns2U, "t_columns2U", NORMAL},
+    {t_columns2A, "t_columns2A", NORMAL},
     {sqlcolumns, "sqlcolumns", NORMAL},
     {sqlcolumns2, "sqlcolumns2", NORMAL},
     {NULL, NULL, NORMAL}
