@@ -154,6 +154,7 @@ SQLRETURN MADB_DbcSetAttr(MADB_Dbc *Dbc, SQLINTEGER Attribute, SQLPOINTER ValueP
     break;
 #if (ODBCVER >= 0x0351)
   case SQL_ATTR_ANSI_APP:
+    printf("SOMETHING:\n");
     if (ValuePtr != NULL)
     {
       Dbc->IsAnsi= 1;
