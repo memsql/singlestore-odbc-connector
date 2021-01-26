@@ -1442,21 +1442,17 @@ BOOL UnixOdbc()
 
 int GetDefaultCharType(int WType, BOOL isAnsiConnection)
 {
-#ifdef _WIN32
-  if (isAnsiConnection != FALSE)
-  {
-    switch (WType) {
-    case SQL_WCHAR:
-      return SQL_CHAR;
-    case SQL_WVARCHAR:
-      return SQL_VARCHAR;
-    case SQL_WLONGVARCHAR:
-      return SQL_LONGVARCHAR;
+    if (isAnsiConnection != FALSE)
+    {
+        switch (WType) {
+            case SQL_WCHAR:
+                return SQL_CHAR;
+            case SQL_WVARCHAR:
+                return SQL_VARCHAR;
+            case SQL_WLONGVARCHAR:
+                return SQL_LONGVARCHAR;
+        }
     }
-  }
-#endif
-
-  return WType;
 }
 
 /* Looks like same version of iOdbc behaves differently on os x and linux, thus for some tests we need to be able to tell there is iOdbc run */

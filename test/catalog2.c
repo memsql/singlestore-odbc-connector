@@ -1266,16 +1266,9 @@ ODBC_TEST(odbc185)
 
     CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
     my_fetch_str(Stmt, buff, COLUMN_NAME);
-    if (iOdbc() || UnixOdbc())
-    {
-      is_num(my_fetch_int(Stmt, DATA_TYPE), expectedw[i]);
-      is_num(my_fetch_int(Stmt, SQL_DATA_TYPE), expectedw[i]);
-    }
-    else
-    {
-      is_num(my_fetch_int(Stmt, DATA_TYPE), expecteda[i]);
-      is_num(my_fetch_int(Stmt, SQL_DATA_TYPE), expecteda[i]);
-    }
+
+    is_num(my_fetch_int(Stmt, DATA_TYPE), expecteda[i]);
+    is_num(my_fetch_int(Stmt, SQL_DATA_TYPE), expecteda[i]);
   }
   
   EXPECT_STMT(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
