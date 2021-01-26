@@ -69,10 +69,6 @@ int run_sql_columns(SQLHANDLE Stmt, const SQLSMALLINT *ExpDataType, const SQLSMA
         ExpColName[0] = numOfRowsFetched >= 26 ? (numOfRowsFetched - 26) / 26 + 'a' : (numOfRowsFetched % 26) + 'a';
         ExpColName[1] = numOfRowsFetched >= 26 ? (numOfRowsFetched % 26) + 'a' : '\0';
         FAIL_IF(_stricmp(colName, ExpColName) != 0, "Wrong COLUMN_NAME returned!");
-        if (dataType != ExpDataType[numOfRowsFetched]) {
-            printf("ROW: %d\n", numOfRowsFetched);
-            printf("Data types: real (%hd), expected (%hd)\n", dataType, ExpDataType[numOfRowsFetched]);
-        }
         FAIL_IF(dataType != ExpDataType[numOfRowsFetched], "Wrong DATA_TYPE returned!");
         FAIL_IF(_stricmp(typeName, ExpTypeName[numOfRowsFetched]) != 0, "Wrong TYPE_NAME returned!");
 
@@ -121,6 +117,8 @@ ODBC_TEST(t_columns3U) {
 
     SQLHANDLE henv1;
     SQLHANDLE Connection1;
+    SQLWCHAR    *connw, connw_out[1024];
+    SQLSMALLINT conn_out_len;
     SQLHANDLE Stmt1;
     SQLCHAR conn[512];
 
@@ -131,10 +129,11 @@ ODBC_TEST(t_columns3U) {
     CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
                                       (SQLPOINTER) SQL_OV_ODBC3, SQL_IS_INTEGER));
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &Connection1));
-    CHECK_DBC_RC(Connection1,
-                 SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
-                                  NULL, SQL_DRIVER_NOPROMPT));
-//    CHECK_DBC_RC(Connection1, SQLSetConnectAttr(Connection1, SQL_ATTR_ANSI_APP, NULL, 0));
+
+    connw= CW(conn);
+    CHECK_DBC_RC(Connection1, SQLDriverConnectW(Connection1, NULL, connw, SQL_NTS, connw_out,
+                                                sizeof(connw_out)/sizeof(SQLWCHAR), &conn_out_len,
+                                                SQL_DRIVER_NOPROMPT));
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
     FAIL_IF(run_sql_columns(Stmt1, ExpDataType, ExpSqlDataType) != OK, "error running SQLColumns");
@@ -213,6 +212,8 @@ ODBC_TEST(t_columns2U) {
 
     SQLHANDLE henv1;
     SQLHANDLE Connection1;
+    SQLWCHAR    *connw, connw_out[1024];
+    SQLSMALLINT conn_out_len;
     SQLHANDLE Stmt1;
     SQLCHAR conn[512];
 
@@ -223,10 +224,11 @@ ODBC_TEST(t_columns2U) {
     CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
                                       (SQLPOINTER) SQL_OV_ODBC2, SQL_IS_INTEGER));
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &Connection1));
-    CHECK_DBC_RC(Connection1,
-                 SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
-                                  NULL, SQL_DRIVER_NOPROMPT));
-//    CHECK_DBC_RC(Connection1, SQLSetConnectAttr(Connection1, SQL_ATTR_ANSI_APP, NULL, 0));
+
+    connw= CW(conn);
+    CHECK_DBC_RC(Connection1, SQLDriverConnectW(Connection1, NULL, connw, SQL_NTS, connw_out,
+                                                sizeof(connw_out)/sizeof(SQLWCHAR), &conn_out_len,
+                                                SQL_DRIVER_NOPROMPT));
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
     FAIL_IF(run_sql_columns(Stmt1, ExpDataType, ExpSqlDataType) != OK, "error running SQLColumns");
@@ -272,7 +274,6 @@ ODBC_TEST(t_columns2A) {
     CHECK_DBC_RC(Connection1,
                  SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
                                   NULL, SQL_DRIVER_NOPROMPT));
-    CHECK_DBC_RC(Connection1, SQLSetConnectAttr(Connection1, SQL_ATTR_ANSI_APP, (SQLPOINTER) 1, 0));
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
     FAIL_IF(run_sql_columns(Stmt1, ExpDataType, ExpSqlDataType) != OK, "error running SQLColumns");
@@ -285,90 +286,12 @@ ODBC_TEST(t_columns2A) {
     return OK;
 }
 
-ODBC_TEST(sqlcolumns)
-{
-    HDBC hdbc1;
-    HSTMT hstmt1;
-    SQLWCHAR wbuff[MAX_ROW_DATA_LEN+1];
-
-    CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc1));
-    CHECK_DBC_RC(hdbc1, SQLConnectW(hdbc1, wdsn, SQL_NTS, wuid, SQL_NTS,
-                                    wpwd, SQL_NTS));
-
-    CHECK_DBC_RC(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
-
-    OK_SIMPLE_STMT(hstmt1, "DROP TABLE IF EXISTS t_columns");
-    CHECK_STMT_RC(hstmt1, SQLExecDirectW(hstmt1,
-                                         W(L"CREATE TABLE t_columns (a\x00e3g INT)"),
-                                         SQL_NTS));
-
-    CHECK_STMT_RC(hstmt1, SQLColumnsW(hstmt1, wschema, SQL_NTS, NULL, 0,
-                                      CW("t_columns"), SQL_NTS,
-                                      W(L"a\x00e3g"), SQL_NTS));
-
-    CHECK_STMT_RC(hstmt1, SQLFetch(hstmt1));
-
-    IS_WSTR(my_fetch_wstr(hstmt1, wbuff, 4, MAX_ROW_DATA_LEN+1), W(L"a\x00e3g"), 4);
-
-    FAIL_IF(SQLFetch(hstmt1)!= SQL_NO_DATA_FOUND, "eof expected");
-
-    CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
-
-    OK_SIMPLE_STMT(hstmt1, "DROP TABLE IF EXISTS t_columns");
-
-    CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
-    CHECK_DBC_RC(hdbc1, SQLDisconnect(hdbc1));
-    CHECK_DBC_RC(hdbc1, SQLFreeConnect(hdbc1));
-
-    return OK;
-}
-
-ODBC_TEST(sqlcolumns2)
-{
-    HDBC hdbc1;
-    HSTMT hstmt1;
-    SQLWCHAR wbuff[MAX_ROW_DATA_LEN+1];
-
-    CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc1));
-    CHECK_DBC_RC(hdbc1, SQLConnect(hdbc1, my_dsn, SQL_NTS, my_uid, SQL_NTS,
-                                    my_pwd, SQL_NTS));
-
-    CHECK_DBC_RC(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
-
-    OK_SIMPLE_STMT(hstmt1, "DROP TABLE IF EXISTS t_columns");
-    CHECK_STMT_RC(hstmt1, SQLExecDirectW(hstmt1,
-                                         W(L"CREATE TABLE t_columns (a\x00e3g INT)"),
-                                         SQL_NTS));
-
-    CHECK_STMT_RC(hstmt1, SQLColumnsW(hstmt1, wschema, SQL_NTS, NULL, 0,
-                                      CW("t_columns"), SQL_NTS,
-                                      W(L"a\x00e3g"), SQL_NTS));
-
-    CHECK_STMT_RC(hstmt1, SQLFetch(hstmt1));
-
-    IS_WSTR(my_fetch_wstr(hstmt1, wbuff, 4, MAX_ROW_DATA_LEN+1), W(L"a\x00e3g"), 4);
-
-    FAIL_IF(SQLFetch(hstmt1)!= SQL_NO_DATA_FOUND, "eof expected");
-
-    CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
-
-    OK_SIMPLE_STMT(hstmt1, "DROP TABLE IF EXISTS t_columns");
-
-    CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
-    CHECK_DBC_RC(hdbc1, SQLDisconnect(hdbc1));
-    CHECK_DBC_RC(hdbc1, SQLFreeConnect(hdbc1));
-
-    return OK;
-}
-
 MA_ODBC_TESTS my_tests[] =
 {
     {t_columns3U, "t_columns3U", NORMAL},
     {t_columns3A, "t_columns3A", NORMAL},
     {t_columns2U, "t_columns2U", NORMAL},
     {t_columns2A, "t_columns2A", NORMAL},
-    {sqlcolumns, "sqlcolumns", NORMAL},
-    {sqlcolumns2, "sqlcolumns2", NORMAL},
     {NULL, NULL, NORMAL}
 };
 

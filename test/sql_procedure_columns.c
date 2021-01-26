@@ -153,6 +153,8 @@ ODBC_TEST(t_procedurecolumns3U) {
 
     SQLHANDLE henv1;
     SQLHANDLE Connection1;
+    SQLWCHAR    *connw, connw_out[1024];
+    SQLSMALLINT conn_out_len;
     SQLHANDLE Stmt1;
     SQLCHAR conn[512];
 
@@ -163,10 +165,11 @@ ODBC_TEST(t_procedurecolumns3U) {
     CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
                                       (SQLPOINTER) SQL_OV_ODBC3, SQL_IS_INTEGER));
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &Connection1));
-    CHECK_DBC_RC(Connection1,
-                 SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
-                                  NULL, SQL_DRIVER_NOPROMPT));
-    CHECK_DBC_RC(Connection1, SQLSetConnectAttr(Connection1, SQL_ATTR_ANSI_APP, NULL, 0));
+
+    connw= CW(conn);
+    CHECK_DBC_RC(Connection1, SQLDriverConnectW(Connection1, NULL, connw, SQL_NTS, connw_out,
+                                                sizeof(connw_out)/sizeof(SQLWCHAR), &conn_out_len,
+                                                SQL_DRIVER_NOPROMPT));
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
     FAIL_IF(run_sql_procedurecolumns(Stmt1, ExpDataType, ExpSqlDataType) != OK, "error running SQLProcedureColumns");
@@ -212,7 +215,6 @@ ODBC_TEST(t_procedurecolumns3A) {
     CHECK_DBC_RC(Connection1,
                  SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
                                   NULL, SQL_DRIVER_NOPROMPT));
-    CHECK_DBC_RC(Connection1, SQLSetConnectAttr(Connection1, SQL_ATTR_ANSI_APP, (SQLPOINTER) 1, 0));
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
     FAIL_IF(run_sql_procedurecolumns(Stmt1, ExpDataType, ExpSqlDataType) != OK, "error running SQLProcedureColumns");
@@ -245,6 +247,8 @@ ODBC_TEST(t_procedurecolumns2U) {
 
     SQLHANDLE henv1;
     SQLHANDLE Connection1;
+    SQLWCHAR    *connw, connw_out[1024];
+    SQLSMALLINT conn_out_len;
     SQLHANDLE Stmt1;
     SQLCHAR conn[512];
 
@@ -255,10 +259,11 @@ ODBC_TEST(t_procedurecolumns2U) {
     CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
                                       (SQLPOINTER) SQL_OV_ODBC2, SQL_IS_INTEGER));
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &Connection1));
-    CHECK_DBC_RC(Connection1,
-                 SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
-                                  NULL, SQL_DRIVER_NOPROMPT));
-    CHECK_DBC_RC(Connection1, SQLSetConnectAttr(Connection1, SQL_ATTR_ANSI_APP, NULL, 0));
+
+    connw= CW(conn);
+    CHECK_DBC_RC(Connection1, SQLDriverConnectW(Connection1, NULL, connw, SQL_NTS, connw_out,
+                                                sizeof(connw_out)/sizeof(SQLWCHAR), &conn_out_len,
+                                                SQL_DRIVER_NOPROMPT));
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
     FAIL_IF(run_sql_procedurecolumns(Stmt1, ExpDataType, ExpSqlDataType) != OK, "error running SQLProcedureColumns");
@@ -304,7 +309,6 @@ ODBC_TEST(t_procedurecolumns2A) {
     CHECK_DBC_RC(Connection1,
                  SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
                                   NULL, SQL_DRIVER_NOPROMPT));
-    CHECK_DBC_RC(Connection1, SQLSetConnectAttr(Connection1, SQL_ATTR_ANSI_APP, (SQLPOINTER) 1, 0));
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
     FAIL_IF(run_sql_procedurecolumns(Stmt1, ExpDataType, ExpSqlDataType) != OK, "error running SQLProcedureColumns");
