@@ -733,6 +733,13 @@ SQLRETURN SQL_API SQLConnect(SQLHDBC ConnectionHandle,
     SQLCHAR *Authentication,
     SQLSMALLINT NameLength3)
 {
+  MADB_Dbc *Dbc= (MADB_Dbc*)ConnectionHandle;
+
+  if (!Dbc)
+    return SQL_INVALID_HANDLE;
+
+  Dbc->IsAnsi = 1;
+
   return SQLConnectCommon(ConnectionHandle, ServerName, NameLength1,
                           UserName, NameLength2, Authentication, NameLength3);
 }
@@ -965,6 +972,8 @@ SQLRETURN SQL_API SQLDriverConnect(SQLHDBC ConnectionHandle,
     return SQL_INVALID_HANDLE;
 
   MADB_CLEAR_ERROR(&Dbc->Error);
+
+  Dbc->IsAnsi = 1;
 
   MDBUG_C_ENTER(Dbc, "SQLDriverConnect");
   MDBUG_C_DUMP(Dbc, Dbc, 0x);
