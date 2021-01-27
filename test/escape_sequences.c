@@ -1,4 +1,5 @@
 #include "tap.h"
+#define BUFFER_SIZE 1024
 
 ODBC_TEST(date_literal)
 {
@@ -19,7 +20,7 @@ ODBC_TEST(timestamp_literal)
 }
 
 ODBC_TEST(scalar_function) {
-  char buffer[128];
+  char buffer[BUFFER_SIZE];
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS scalar_function");
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE scalar_function(col TEXT)");
 
@@ -225,7 +226,7 @@ ODBC_TEST(strings_with_escape_sequences) {
   char **end = escapeSequences + n;
   for (escapeSequence = escapeSequences; escapeSequence < end; escapeSequence++) {
     // build "SELECT "..."" query
-    char query[128];
+    char query[BUFFER_SIZE];
     char *queryIterator = query;
     strcpy(queryIterator, "SELECT \"");
     queryIterator += 8;
@@ -244,7 +245,7 @@ ODBC_TEST(strings_with_escape_sequences) {
     CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
 
     // check that we get correct string
-    char buffer[128];
+    char buffer[BUFFER_SIZE];
     IS_STR(my_fetch_str(Stmt, (SQLCHAR*)buffer, 1), *escapeSequence,strlen(*escapeSequence));
     CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
   }
@@ -352,7 +353,7 @@ ODBC_TEST(bit_length) {
 }
 
 ODBC_TEST(insert) {
-  char buffer[128];
+  char buffer[BUFFER_SIZE];
   OK_SIMPLE_STMT(Stmt, "SELECT {fn INSERT('abcde', 2, 2, 'eee')}");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   IS_STR(my_fetch_str(Stmt, (SQLCHAR*)buffer, 1), "aeeede", 7);
@@ -377,7 +378,7 @@ ODBC_TEST(insert) {
 }
 
 ODBC_TEST(repeat) {
-  char buffer[128];
+  char buffer[BUFFER_SIZE];
   OK_SIMPLE_STMT(Stmt, "SELECT {fn REPEAT('abc', 3)}");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   IS_STR(my_fetch_str(Stmt, (SQLCHAR*)buffer, 1), "abcabcabc", 10);
@@ -402,7 +403,7 @@ ODBC_TEST(repeat) {
 }
 
 ODBC_TEST(space) {
-  char buffer[128];
+  char buffer[BUFFER_SIZE];
   OK_SIMPLE_STMT(Stmt, "SELECT {fn SPACE(3)}");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   IS_STR(my_fetch_str(Stmt, (SQLCHAR*)buffer, 1), "   ", 4);
@@ -417,7 +418,7 @@ ODBC_TEST(space) {
 }
 
 ODBC_TEST(timestamp_add) {
-  char buffer[128];
+  char buffer[BUFFER_SIZE];
   OK_SIMPLE_STMT(Stmt, "SELECT {fn TIMESTAMPADD(SQL_TSI_FRAC_SECOND, 2000, '1998-01-01 01:01:01.001222')}");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   IS_STR(my_fetch_str(Stmt, (SQLCHAR*)buffer, 1), "1998-01-01 01:01:01.001224", 27);
@@ -445,7 +446,6 @@ ODBC_TEST(timestamp_add) {
 }
 
 ODBC_TEST(timestamp_diff) {
-  char buffer[128];
   OK_SIMPLE_STMT(Stmt, "SELECT {fn TIMESTAMPDIFF(SQL_TSI_FRAC_SECOND, '1998-01-01 01:01:01.001222', '1998-01-01 01:01:01.001225')}");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 3000);
@@ -473,7 +473,7 @@ ODBC_TEST(timestamp_diff) {
 }
 
 ODBC_TEST(quotes) {
-  char buffer[128];
+  char buffer[BUFFER_SIZE];
   // This query should be successfully sent to SingleStore and validated there
   //
   EXPECT_STMT(Stmt, SQLExecDirect(Stmt, (SQLCHAR*)("SELECT {fn \"COS\"(1)}"), SQL_NTS), SQL_ERROR);
@@ -522,9 +522,9 @@ ODBC_TEST(ansi_quotes_to_fix) {
 // works correctly with them
 //
 ODBC_TEST(sql_native_sql) {
-  int i, n, buffer_size = 1024;
-  SQLCHAR buffer[buffer_size];
-  char * queries[] = {
+  int i, n;
+  SQLCHAR buffer[BUFFER_SIZE];
+  char * queries[197] = {
     "SELECT {d '2001-10-1' }",
     "SELECT {t '01:10:10' }",
     "SELECT {ts '2001-10-1 01:10:10'  }",
@@ -724,7 +724,7 @@ ODBC_TEST(sql_native_sql) {
     "SELECT {fn CONCAT('\\'''', 'a') }",
   };
 
-  char * expected_results[] = {
+  char * expected_results[197] = {
     "SELECT ('2001-10-1' :> DATE)",
     "SELECT ('01:10:10' :> TIME)",
     "SELECT ('2001-10-1 01:10:10' :> TIMESTAMP(6))",
@@ -928,7 +928,7 @@ ODBC_TEST(sql_native_sql) {
   for (i = 0; i < n; i++)
   {
     SQLINTEGER len;
-    CHECK_STMT_RC(Stmt, SQLNativeSql(Connection, (SQLCHAR*)queries[i], SQL_NTS, buffer, buffer_size, &len));
+    CHECK_STMT_RC(Stmt, SQLNativeSql(Connection, (SQLCHAR*)queries[i], SQL_NTS, buffer, BUFFER_SIZE, &len));
     is_num(strlen(expected_results[i]), len);
     IS_STR(buffer, expected_results[i], len);
   }
@@ -939,18 +939,18 @@ ODBC_TEST(sql_native_sql) {
 // sql_native_sql_buffers checks that SQLNativeSql handle input and output buffers correctly
 //
 ODBC_TEST(sql_native_sql_buffers) {
-  int len, buffer_size = 1024;
-  SQLCHAR buffer[buffer_size];
+  int len;
+  SQLCHAR buffer[BUFFER_SIZE];
 
   // Terminate the input statement by the number of bytes
   //
-  CHECK_STMT_RC(Stmt, SQLNativeSql(Connection, (SQLCHAR*)"SELECT 1 some incorrect query suffix", 8, buffer, buffer_size, &len));
+  CHECK_STMT_RC(Stmt, SQLNativeSql(Connection, (SQLCHAR*)"SELECT 1 some incorrect query suffix", 8, buffer, BUFFER_SIZE, &len));
   is_num(len, 8);
   IS_STR(buffer, "SELECT 1", 9);
 
   // Terminate the input statement by null character
   //
-  CHECK_STMT_RC(Stmt, SQLNativeSql(Connection, (SQLCHAR*)"SELECT 1", SQL_NTS, buffer, buffer_size, &len));
+  CHECK_STMT_RC(Stmt, SQLNativeSql(Connection, (SQLCHAR*)"SELECT 1", SQL_NTS, buffer, BUFFER_SIZE, &len));
   is_num(len, 8);
   IS_STR(buffer, "SELECT 1", 9);
 
@@ -975,9 +975,9 @@ ODBC_TEST(sql_native_sql_buffers) {
 // sql_native_sql_errors checks that SQLNativeSql returns appropriate errors for invalid statements
 //
 ODBC_TEST(sql_native_sql_errors) {
-  int i, n, buffer_size = 1024;
-  SQLCHAR buffer[buffer_size];
-  char * queries[] = {
+  int i, n;
+  SQLCHAR buffer[BUFFER_SIZE];
+  char * queries[24] = {
     "{",
     "SELECT {fn \"USER\"()}",
     "SELECT {fn 'USER'()}",
@@ -1007,7 +1007,7 @@ ODBC_TEST(sql_native_sql_errors) {
   n = sizeof(queries)/sizeof(queries[0]);
   for (i = 0; i < n; i++) {
     int len;
-    EXPECT_DBC(Stmt, SQLNativeSql(Connection, (SQLCHAR *)queries[i], SQL_NTS, buffer, buffer_size, &len), SQL_ERROR);
+    EXPECT_DBC(Stmt, SQLNativeSql(Connection, (SQLCHAR *)queries[i], SQL_NTS, buffer, BUFFER_SIZE, &len), SQL_ERROR);
   }
 
   return OK;
@@ -1050,3 +1050,4 @@ int main(int argc, char **argv)
   plan(tests);
   return run_tests(my_tests);
 }
+#undef BUFFER_SIZE
