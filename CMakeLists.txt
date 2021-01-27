@@ -319,14 +319,6 @@ IF (DIRECT_LINK_TESTS)
   ADD_DEFINITIONS(-DHAVE_UNICODE)
 ENDIF()
 
-#IF(WIN32)
-#  SET(UNICODE "W")
-#ELSE()
-#  IF (DIRECT_LINK_TESTS)
-#    ADD_DEFINITIONS(-DHAVE_UNICODE)
-#  ENDIF()
-#ENDIF()
-
 SET(LIBRARY_NAME "maodbc")
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/mariadb-odbc-driver.def.in
                ${CMAKE_SOURCE_DIR}/mariadb-odbc-driver-uni.def)
