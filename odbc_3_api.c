@@ -19,6 +19,7 @@
 #undef MA_ODBC_DEBUG_ALL
 
 #include <ma_odbc.h>
+#include <ma_parse.h>
 
 extern Client_Charset utf8;
 
@@ -2199,6 +2200,10 @@ SQLRETURN SQL_API SQLNativeSql(SQLHDBC ConnectionHandle,
 {
   MADB_Dbc *Dbc= (MADB_Dbc *)ConnectionHandle;
   SQLINTEGER Length;
+  char *InStatementStart, *InStatementEnd;
+  char **InStatementIterator;
+  MADB_DynString res;
+
   if (!Dbc)
     return SQL_INVALID_HANDLE;
   MADB_CLEAR_ERROR(&Dbc->Error);
@@ -2208,9 +2213,20 @@ SQLRETURN SQL_API SQLNativeSql(SQLHDBC ConnectionHandle,
     MADB_SetError(&Dbc->Error, MADB_ERR_01004, NULL, 0);
     return Dbc->Error.ReturnValue;
   }
-  Length= (SQLINTEGER)MADB_SetString(0, OutStatementText, BufferLength, (char *)InStatementText, TextLength1, &Dbc->Error);
+
+  InStatementStart = (char *)InStatementText;
+  ADJUST_LENGTH(InStatementStart, TextLength1);
+  InStatementEnd = InStatementStart + TextLength1;
+  InStatementIterator = &InStatementStart;
+  if (MADB_UnescapeQuery(&Dbc->Error, &res, InStatementIterator, &InStatementEnd, 0)) {
+    return Dbc->Error.ReturnValue;
+  }
+
+  Length= (SQLINTEGER)MADB_SetString(0, OutStatementText, BufferLength, (char *)res.str, res.length, &Dbc->Error);
+  MADB_DynstrFree(&res);
   if (TextLength2Ptr)
     *TextLength2Ptr= Length;
+
   return Dbc->Error.ReturnValue;
 }
 /* }}} */

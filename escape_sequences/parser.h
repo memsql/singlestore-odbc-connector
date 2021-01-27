@@ -98,6 +98,6 @@ typedef union YYSTYPE YYSTYPE;
 
 
 
-int yyparse (void *scanner, MADB_Stmt *Stmt, MADB_DynString *res);
+int yyparse (void *scanner, MADB_Error *error, MADB_DynString *res);
 
 #endif /* !YY_YY_HOME_AMAKAROVYCH_UA_SINGLESTORE_ODBC_CONNECTOR_ESCAPE_SEQUENCES_PARSER_H_INCLUDED  */

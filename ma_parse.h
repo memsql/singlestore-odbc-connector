@@ -89,5 +89,6 @@ const char * MADB_FindParamPlaceholder(MADB_Stmt *Stmt);
 char *       FixIsoFormat(char * StmtString, size_t *Length);
 int          ParseQuery(MADB_QUERY *Query);
 char *       StripLeadingComments(char *s, size_t *Length, BOOL OverWrite);
+SQLRETURN    MADB_UnescapeQuery(MADB_Error *error, MADB_DynString *res, char **src, char **srcEnd, int openCurlyBrackets);
 
 #endif /* _ma_parse_h_ */

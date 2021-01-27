@@ -9,14 +9,14 @@
 #include <stdarg.h>
 #include "ma_odbc.h"
 #include "escape_sequences/ast.h"
-void yyerror (void *scanner, MADB_Stmt *Stmt, MADB_DynString *res, char *s)
+void yyerror (void *scanner, MADB_Error *error, MADB_DynString *res, char *s)
 {
 	if (strcmp(s, "syntax error") == 0)
 	{
-		MADB_SetError(&Stmt->Error,  MADB_ERR_42000, "Incorrect syntax for the escape sequence", 0);
+		MADB_SetError(error,  MADB_ERR_42000, "Incorrect syntax for the escape sequence", 0);
 	} else
 	{
-		MADB_SetError(&Stmt->Error,  MADB_ERR_42000, s, 0);
+		MADB_SetError(error,  MADB_ERR_42000, s, 0);
 	}
 }
 
@@ -160,7 +160,7 @@ struct ASTNode* allocateNode(int childrenCount, ...);
 
 #define YYALOCATION_ERROR do \
 { \
-	yyerror(scanner, Stmt, res, "Failed to allocate memory for escape sequence parsing");\
+	yyerror(scanner, error, res, "Failed to allocate memory for escape sequence parsing");\
 	YYABORT;\
 } while(0)
 
@@ -169,9 +169,9 @@ struct ASTNode* allocateNode(int childrenCount, ...);
 
 %pure-parser
 %lex-param {void *scanner}
-%lex-param {MADB_Stmt *Stmt}
+%lex-param {MADB_Error *error}
 %parse-param {void *scanner}
-%parse-param {MADB_Stmt *Stmt}
+%parse-param {MADB_Error *error}
 %parse-param {MADB_DynString *res}
 
 %union

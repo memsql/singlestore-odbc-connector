@@ -1,6 +1,6 @@
 %{
 #include "escape_sequences/parser.h"
-#define YY_DECL int yylex(YYSTYPE * yylval_param, yyscan_t yyscanner, MADB_Stmt *Stmt)
+#define YY_DECL int yylex(YYSTYPE * yylval_param, yyscan_t yyscanner, MADB_Error *error)
 int yylex();
 %}
 

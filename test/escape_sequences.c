@@ -1,4 +1,5 @@
 #include "tap.h"
+#define BUFFER_SIZE 1024
 
 ODBC_TEST(date_literal)
 {
@@ -19,7 +20,7 @@ ODBC_TEST(timestamp_literal)
 }
 
 ODBC_TEST(scalar_function) {
-  char buffer[128];
+  char buffer[BUFFER_SIZE];
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS scalar_function");
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE scalar_function(col TEXT)");
 
@@ -225,7 +226,7 @@ ODBC_TEST(strings_with_escape_sequences) {
   char **end = escapeSequences + n;
   for (escapeSequence = escapeSequences; escapeSequence < end; escapeSequence++) {
     // build "SELECT "..."" query
-    char query[128];
+    char query[BUFFER_SIZE];
     char *queryIterator = query;
     strcpy(queryIterator, "SELECT \"");
     queryIterator += 8;
@@ -244,7 +245,7 @@ ODBC_TEST(strings_with_escape_sequences) {
     CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
 
     // check that we get correct string
-    char buffer[128];
+    char buffer[BUFFER_SIZE];
     IS_STR(my_fetch_str(Stmt, (SQLCHAR*)buffer, 1), *escapeSequence,strlen(*escapeSequence));
     CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
   }
@@ -352,7 +353,7 @@ ODBC_TEST(bit_length) {
 }
 
 ODBC_TEST(insert) {
-  char buffer[128];
+  char buffer[BUFFER_SIZE];
   OK_SIMPLE_STMT(Stmt, "SELECT {fn INSERT('abcde', 2, 2, 'eee')}");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   IS_STR(my_fetch_str(Stmt, (SQLCHAR*)buffer, 1), "aeeede", 7);
@@ -377,7 +378,7 @@ ODBC_TEST(insert) {
 }
 
 ODBC_TEST(repeat) {
-  char buffer[128];
+  char buffer[BUFFER_SIZE];
   OK_SIMPLE_STMT(Stmt, "SELECT {fn REPEAT('abc', 3)}");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   IS_STR(my_fetch_str(Stmt, (SQLCHAR*)buffer, 1), "abcabcabc", 10);
@@ -402,7 +403,7 @@ ODBC_TEST(repeat) {
 }
 
 ODBC_TEST(space) {
-  char buffer[128];
+  char buffer[BUFFER_SIZE];
   OK_SIMPLE_STMT(Stmt, "SELECT {fn SPACE(3)}");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   IS_STR(my_fetch_str(Stmt, (SQLCHAR*)buffer, 1), "   ", 4);
@@ -417,7 +418,7 @@ ODBC_TEST(space) {
 }
 
 ODBC_TEST(timestamp_add) {
-  char buffer[128];
+  char buffer[BUFFER_SIZE];
   OK_SIMPLE_STMT(Stmt, "SELECT {fn TIMESTAMPADD(SQL_TSI_FRAC_SECOND, 2000, '1998-01-01 01:01:01.001222')}");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   IS_STR(my_fetch_str(Stmt, (SQLCHAR*)buffer, 1), "1998-01-01 01:01:01.001224", 27);
@@ -445,7 +446,6 @@ ODBC_TEST(timestamp_add) {
 }
 
 ODBC_TEST(timestamp_diff) {
-  char buffer[128];
   OK_SIMPLE_STMT(Stmt, "SELECT {fn TIMESTAMPDIFF(SQL_TSI_FRAC_SECOND, '1998-01-01 01:01:01.001222', '1998-01-01 01:01:01.001225')}");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 3000);
@@ -473,7 +473,7 @@ ODBC_TEST(timestamp_diff) {
 }
 
 ODBC_TEST(quotes) {
-  char buffer[128];
+  char buffer[BUFFER_SIZE];
   // This query should be successfully sent to SingleStore and validated there
   //
   EXPECT_STMT(Stmt, SQLExecDirect(Stmt, (SQLCHAR*)("SELECT {fn \"COS\"(1)}"), SQL_NTS), SQL_ERROR);
@@ -518,6 +518,501 @@ ODBC_TEST(ansi_quotes_to_fix) {
   return OK;
 }
 
+// sql_native_sql executes SQLNativeSql a lot of times with different valid queries and checks that it
+// works correctly with them
+//
+ODBC_TEST(sql_native_sql) {
+  int i, n;
+  SQLCHAR buffer[BUFFER_SIZE];
+  char * queries[197] = {
+    "SELECT {d '2001-10-1' }",
+    "SELECT {t '01:10:10' }",
+    "SELECT {ts '2001-10-1 01:10:10'  }",
+    "DROP TABLE IF EXISTS scalar_function",
+    "CREATE TABLE scalar_function(col TEXT)",
+    "INSERT INTO scalar_function VALUES('a'), ('abc'), ('asasasas   asdads\n\r ;? asd')",
+    "SELECT {fn CONCAT({fn UCASE((col))}, RTRIM((LTRIM('  !  ')))) } FROM scalar_function ORDER BY col",
+    "DROP TABLE scalar_function",
+    "SELECT {fn ASCII('abc')}",
+    "SELECT {fn CHAR(10)}",
+    "SELECT {fn CHAR_LENGTH('abc')}",
+    "SELECT {fn CHARACTER_LENGTH('abc')}",
+    "SELECT {fn CONCAT('abc', 'def')}",
+    "SELECT {fn LCASE('AbC')}",
+    "SELECT {fn LEFT('AbC', 1)}",
+    "SELECT {fn LOCATE('abcabcd', (('abc')))}",
+    "SELECT {fn LOCATE('abcabcd', ('abc'), (2))}",
+    "SELECT {fn LTRIM('    abc')}",
+    "SELECT {fn OCTET_LENGTH('abc')}",
+    "SELECT {fn POSITION('bbabcbb' in 'abc')}",
+    "SELECT {fn REPLACE('abcabc', 'b', 'cc')}",
+    "SELECT {fn RIGHT('abcabc', 3)}",
+    "SELECT {fn RTRIM('abc   ')}",
+    "SELECT {fn SUBSTRING('abcabc', 3, 5)}",
+    "SELECT {fn UCASE('AbC')}",
+    "SELECT {fn BIT_LENGTH('AbC')}",
+    "SELECT {fn INSERT('AbCabc', 2, 2, 'qwe')}",
+    "SELECT {fn REPEAT('abc', 4)}",
+    "SELECT {fn SPACE(4)}",
+    "SELECT {fn ABS(-10)}",
+    "SELECT {fn ACOS(0.5)}",
+    "SELECT {fn ASIN(0.5)}",
+    "SELECT {fn ATAN(0.5)}",
+    "SELECT {fn ATAN2(0.5, -0.5)}",
+    "SELECT {fn CEILING(0.5)}",
+    "SELECT {fn COS(2)}",
+    "SELECT {fn COT(2)}",
+    "SELECT {fn DEGREES(2)}",
+    "SELECT {fn EXP(2)}",
+    "SELECT {fn FLOOR(2.6)}",
+    "SELECT {fn LOG(2.6)}",
+    "SELECT {fn LOG10(2.6)}",
+    "SELECT {fn MOD(13, 3)}",
+    "SELECT {fn PI()}",
+    "SELECT {fn POWER(3, 4.5)}",
+    "SELECT {fn RADIANS(4.5)}",
+    "SELECT {fn RAND()}",
+    "SELECT {fn RAND(10)}",
+    "SELECT {fn ROUND(2.5)}",
+    "SELECT {fn SIGN(-4)}",
+    "SELECT {fn SIN(-4)}",
+    "SELECT {fn SQRT(5)}",
+    "SELECT {fn TAN(5)}",
+    "SELECT {fn TRUNCATE(2.5555, 1)}",
+    "SELECT {fn CURRENT_DATE()}",
+    "SELECT {fn CURRENT_TIME(0)}",
+    "SELECT {fn CURRENT_TIME(6)}",
+    "SELECT {fn CURRENT_TIME}",
+    "SELECT {fn CURRENT_TIMESTAMP(0)}",
+    "SELECT {fn CURRENT_TIMESTAMP(6)}",
+    "SELECT {fn CURRENT_TIMESTAMP}",
+    "SELECT {fn CURDATE()}",
+    "SELECT {fn CURTIME()}",
+    "SELECT {fn DAYNAME('1998-01-01')}",
+    "SELECT {fn DAYNAME('1998-01-01')}",
+    "SELECT {fn DAYOFMONTH('1998-01-01')}",
+    "SELECT {fn DAYOFWEEK('1998-01-01')}",
+    "SELECT {fn DAYOFYEAR('1998-01-01')}",
+    "SELECT {fn EXTRACT(SECOND FROM '1998-01-01')}",
+    "SELECT {fn EXTRACT(MINUTE FROM '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn EXTRACT(HOUR FROM '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn EXTRACT(DAY FROM '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn EXTRACT(MONTH FROM '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn EXTRACT(YEAR FROM '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn HOUR('838:54:59')}",
+    "SELECT {fn MINUTE('838:54:59')}",
+    "SELECT {fn MONTH('1998-01-01')}",
+    "SELECT {fn MONTHNAME('1998-01-01')}",
+    "SELECT {fn NOW()}",
+    "SELECT {fn QUARTER('1998-01-01')}",
+    "SELECT {fn SECOND('838:54:59')}",
+    "SELECT {fn WEEK('1998-01-01')}",
+    "SELECT {fn YEAR('1998-01-01')}",
+    "SELECT {fn TIMESTAMPADD(SQL_TSI_SECOND, 2, '1981-01-01 00:00:01')}",
+    "SELECT {fn TIMESTAMPDIFF(SQL_TSI_SECOND, 2, '1981-01-01 00:00:01')}",
+    "SELECT {fn DATABASE()}",
+    "SELECT {fn IFNULL(NULL, 1)}",
+    "SELECT {fn USER()}",
+    "SELECT {fn CONVERT(23, SQL_BIGINT)}",
+    "SELECT {fn `USER`()}",
+    "DROP TABLE IF EXISTS l",
+    "DROP TABLE IF EXISTS r",
+    "CREATE TABLE l(a INT)",
+    "CREATE TABLE r(b INT)",
+    "INSERT INTO l VALUES(1), (2)",
+    "INSERT INTO r VALUES(2), (3)",
+    "SELECT * FROM {oj l LEFT OUTER JOIN r ON l.a=r.b  }",
+    "SELECT * FROM {oj l RIGHT OUTER JOIN r ON l.a=r.b }",
+    "SELECT * FROM {oj l FULL OUTER JOIN r ON l.a=r.b  }",
+    "DROP TABLE l",
+    "DROP TABLE r",
+    "DROP TABLE IF EXISTS procedure_call_data",
+    "CREATE TABLE procedure_call_data(col INT)",
+    "CREATE OR REPLACE PROCEDURE ins (a INT) AS\nBEGIN\nINSERT INTO procedure_call_data VALUES (a,\nEND",
+    "CREATE OR REPLACE PROCEDURE ins100 () AS\nBEGIN\nINSERT INTO procedure_call_data VALUES (100,\nEND",
+    "{call ins(1)   }",
+    "{?=call ins(2) }",
+    "{?=call ins100  }",
+    "SELECT * FROM procedure_call_data ORDER BY col",
+    "DROP TABLE procedure_call_data",
+    "SELECT \"{}\"",
+    "SELECT \"{d \\'2001-10-1\\' }\"",
+    "SELECT \"{ts \\'2001-10-1 01:10:10\\'  }\"",
+    "SELECT \"{fn CONCAT({fn UCASE(col)}, RTRIM(LTRIM(\\'  !  \\'))) }\"",
+    "SELECT \"{oj l LEFT OUTER JOIN r ON l.a=r.b  }\"",
+    "SELECT \"{?=call ins(2) }\"",
+    "SELECT \"{{\\\\}}\"",
+    "SELECT \"{\\\"{}\\\"}\"",
+    "SELECT {D '2001-10-1' }",
+    "SELECT {T '01:10:10' }",
+    "SELECT {TS '2001-10-1 01:10:10'  }",
+    "SELECT {tS '2001-10-1 01:10:10'  }",
+    "SELECT {Ts '2001-10-1 01:10:10'  }",
+    "SELECT { fn CONVERT (  123 , SQL_BIGINT  ) } , 123",
+    "SELECT {fn CONVERT(123,SQL_BINARY)},123",
+    "SELECT {fn CONVERT(123   ,SQL_BIT)},123",
+    "SELECT {fn CONVERT(123   ,SQL_CHAR )},123",
+    "SELECT {fn CONVERT(123   ,SQL_CHAR )},123",
+    "SELECT {fn CONVERT(123   , SQL_DATE )}  ,123",
+    "SELECT {fn ConVErT(123   , SQL_decIMAL )   }  ,123",
+    "SELECT { fn CONVERT (  123 , SQL_DOUBLE  ) } , 123",
+    "SELECT { fn CONVERT (  123 , SQL_FLOAT  ) } , 123",
+    "SELECT { fn CONVERT (  123 , SQL_INTEGER  ) } , 123",
+    "SELECT { fn CONVERT (  123 , SQL_LONGVARBINARY  ) } , 123",
+    "SELECT { fn CONVERT (  123 , SQL_LONGVARCHAR  ) } , 123",
+    "SELECT { fn CONVERT (  123 , SQL_NUMERIC  ) } , 123",
+    "SELECT { fn CONVERT (  123 , SQL_REAL  ) } , 123",
+    "SELECT { fn CONVERT (  123 , SQL_SMALLINT  ) } , 123",
+    "SELECT { fn CONVERT (  123 , SQL_TIME  ) } , 123",
+    "SELECT { fn CONVERT (  123 , SQL_TIMESTAMP  ) } , 123",
+    "SELECT { fn CONVERT (  123 , SQL_TINYINT  ) } , 123",
+    "SELECT { fn CONVERT (  123 , SQL_VARBINARY  ) } , 123",
+    "SELECT { fn CONVERT (  123 , SQL_VARCHAR  ) } , 123",
+    "SELECT { fn CONVERT (  123 , SQL_WCHAR  ) } , 123",
+    "SELECT { fn CONVERT (  123 , SQL_WLONGVARCHAR  ) } , 123",
+    "SELECT { fn CONVERT (  123 , SQL_WVARCHAR  ) } , 123",
+    "SELECT { fn CONVERT (  123 , BIGINT  ) } , 123",
+    "SELECT {fn BIT_LENGTH('')}, {fn BIT_LENGTH('asd')}",
+    "SELECT {fn INSERT('abcde', 2, 2, 'eee')}",
+    "SELECT {fn INSERT('abcde', 3, 10, 'eee')}",
+    "SELECT {fn INSERT('abcde', -1, 4, 'eee')}",
+    "SELECT {fn INSERT('ßßßßß', 2, 2, 'ééé')}",
+    "SELECT {fn REPEAT('abc', 3)}",
+    "SELECT {fn REPEAT('abc', 0)}",
+    "SELECT {fn REPEAT('', 10)}",
+    "SELECT {fn REPEAT('ßß', 3)}",
+    "SELECT {fn SPACE(3)}",
+    "SELECT {fn SPACE(0)}",
+    "SELECT {fn TIMESTAMPADD(SQL_TSI_FRAC_SECOND, 2000, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPADD(SQL_TSI_SECOND, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPADD(SQL_TSI_MINUTE, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPADD(SQL_TSI_HOUR, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPADD(SQL_TSI_DAY, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPADD(SQL_TSI_WEEK, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPADD(SQL_TSI_MONTH, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPADD(SQL_TSI_QUARTER, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPADD(SQL_TSI_YEAR, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPADD(MICROSECOND, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPADD(SECOND, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPADD(MINUTE, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPADD(HOUR, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPADD(DAY, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPADD(WEEK, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPADD(MONTH, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPADD(QUARTER, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPADD(YEAR, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPDIFF(SQL_TSI_FRAC_SECOND, '1998-01-01 01:01:01.001222', '1998-01-01 01:01:01.001225')}",
+    "SELECT {fn TIMESTAMPDIFF(SQL_TSI_SECOND, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPDIFF(SQL_TSI_MINUTE, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPDIFF(SQL_TSI_HOUR, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPDIFF(SQL_TSI_DAY, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPDIFF(SQL_TSI_WEEK, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPDIFF(SQL_TSI_MONTH, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPDIFF(SQL_TSI_QUARTER, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPDIFF(SQL_TSI_YEAR, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPDIFF(MICROSECOND, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPDIFF(SECOND, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPDIFF(MINUTE, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPDIFF(HOUR, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPDIFF(DAY, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPDIFF(WEEK, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPDIFF(MONTH, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPDIFF(QUARTER, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn TIMESTAMPDIFF(YEAR, 2, '1998-01-01 01:01:01.001222')}",
+    "SELECT {fn CONCAT(\"asd\"\"asd\", \"a\") }",
+    "SELECT {fn CONCAT('asd''asd', 'a') }",
+    "SELECT {fn CONCAT('\\'''', 'a') }",
+  };
+
+  char * expected_results[197] = {
+    "SELECT ('2001-10-1' :> DATE)",
+    "SELECT ('01:10:10' :> TIME)",
+    "SELECT ('2001-10-1 01:10:10' :> TIMESTAMP(6))",
+    "DROP TABLE IF EXISTS scalar_function",
+    "CREATE TABLE scalar_function(col TEXT)",
+    "INSERT INTO scalar_function VALUES('a'), ('abc'), ('asasasas   asdads\n\r ;? asd')",
+    "SELECT CONCAT(UCASE((col)), RTRIM((LTRIM('  !  ')))) FROM scalar_function ORDER BY col",
+    "DROP TABLE scalar_function",
+    "SELECT ASCII('abc')",
+    "SELECT CHAR(10)",
+    "SELECT CHAR_LENGTH('abc')",
+    "SELECT CHARACTER_LENGTH('abc')",
+    "SELECT CONCAT('abc', 'def')",
+    "SELECT LCASE('AbC')",
+    "SELECT LEFT('AbC', 1)",
+    "SELECT LOCATE('abcabcd', (('abc')))",
+    "SELECT LOCATE('abcabcd', ('abc'), (2))",
+    "SELECT LTRIM('    abc')",
+    "SELECT OCTET_LENGTH('abc')",
+    "SELECT POSITION('bbabcbb' in 'abc')",
+    "SELECT REPLACE('abcabc', 'b', 'cc')",
+    "SELECT RIGHT('abcabc', 3)",
+    "SELECT RTRIM('abc   ')",
+    "SELECT SUBSTRING('abcabc', 3, 5)",
+    "SELECT UCASE('AbC')",
+    "SELECT LENGTH('AbC')*8",
+    "SELECT CONCAT(CONCAT(LEFT('AbCabc', 2 - 1), 'qwe'), RIGHT('AbCabc', CHAR_LENGTH('AbCabc') - 2 - 2 + 1))",
+    "SELECT LPAD('', CHAR_LENGTH('abc')*4, 'abc')",
+    "SELECT LPAD('', 4, ' ')",
+    "SELECT ABS(-10)",
+    "SELECT ACOS(0.5)",
+    "SELECT ASIN(0.5)",
+    "SELECT ATAN(0.5)",
+    "SELECT ATAN2(0.5, -0.5)",
+    "SELECT CEILING(0.5)",
+    "SELECT COS(2)",
+    "SELECT COT(2)",
+    "SELECT DEGREES(2)",
+    "SELECT EXP(2)",
+    "SELECT FLOOR(2.6)",
+    "SELECT LOG(2.6)",
+    "SELECT LOG10(2.6)",
+    "SELECT MOD(13, 3)",
+    "SELECT PI()",
+    "SELECT POWER(3, 4.5)",
+    "SELECT RADIANS(4.5)",
+    "SELECT RAND()",
+    "SELECT RAND(10)",
+    "SELECT ROUND(2.5)",
+    "SELECT SIGN(-4)",
+    "SELECT SIN(-4)",
+    "SELECT SQRT(5)",
+    "SELECT TAN(5)",
+    "SELECT TRUNCATE(2.5555, 1)",
+    "SELECT CURRENT_DATE()",
+    "SELECT CURRENT_TIME(0)",
+    "SELECT CURRENT_TIME(6)",
+    "SELECT CURRENT_TIME()",
+    "SELECT CURRENT_TIMESTAMP(0)",
+    "SELECT CURRENT_TIMESTAMP(6)",
+    "SELECT CURRENT_TIMESTAMP()",
+    "SELECT CURDATE()",
+    "SELECT CURTIME()",
+    "SELECT DAYNAME('1998-01-01')",
+    "SELECT DAYNAME('1998-01-01')",
+    "SELECT DAYOFMONTH('1998-01-01')",
+    "SELECT DAYOFWEEK('1998-01-01')",
+    "SELECT DAYOFYEAR('1998-01-01')",
+    "SELECT EXTRACT(SECOND FROM '1998-01-01')",
+    "SELECT EXTRACT(MINUTE FROM '1998-01-01 01:01:01.001222')",
+    "SELECT EXTRACT(HOUR FROM '1998-01-01 01:01:01.001222')",
+    "SELECT EXTRACT(DAY FROM '1998-01-01 01:01:01.001222')",
+    "SELECT EXTRACT(MONTH FROM '1998-01-01 01:01:01.001222')",
+    "SELECT EXTRACT(YEAR FROM '1998-01-01 01:01:01.001222')",
+    "SELECT HOUR('838:54:59')",
+    "SELECT MINUTE('838:54:59')",
+    "SELECT MONTH('1998-01-01')",
+    "SELECT MONTHNAME('1998-01-01')",
+    "SELECT NOW()",
+    "SELECT QUARTER('1998-01-01')",
+    "SELECT SECOND('838:54:59')",
+    "SELECT WEEK('1998-01-01')",
+    "SELECT YEAR('1998-01-01')",
+    "SELECT TIMESTAMPADD(SECOND, 2, '1981-01-01 00:00:01')",
+    "SELECT TIMESTAMPDIFF(SECOND, 2, '1981-01-01 00:00:01')",
+    "SELECT DATABASE()",
+    "SELECT IFNULL(NULL, 1)",
+    "SELECT USER()",
+    "SELECT 23 :> BIGINT",
+    "SELECT `USER`()",
+    "DROP TABLE IF EXISTS l",
+    "DROP TABLE IF EXISTS r",
+    "CREATE TABLE l(a INT)",
+    "CREATE TABLE r(b INT)",
+    "INSERT INTO l VALUES(1), (2)",
+    "INSERT INTO r VALUES(2), (3)",
+    "SELECT * FROM l LEFT OUTER JOIN r ON l.a=r.b",
+    "SELECT * FROM l RIGHT OUTER JOIN r ON l.a=r.b",
+    "SELECT * FROM l FULL OUTER JOIN r ON l.a=r.b",
+    "DROP TABLE l",
+    "DROP TABLE r",
+    "DROP TABLE IF EXISTS procedure_call_data",
+    "CREATE TABLE procedure_call_data(col INT)",
+    "CREATE OR REPLACE PROCEDURE ins (a INT) AS\nBEGIN\nINSERT INTO procedure_call_data VALUES (a,\nEND",
+    "CREATE OR REPLACE PROCEDURE ins100 () AS\nBEGIN\nINSERT INTO procedure_call_data VALUES (100,\nEND",
+    "CALL ins(1)",
+    "CALL ins(2)",
+    "CALL ins100()",
+    "SELECT * FROM procedure_call_data ORDER BY col",
+    "DROP TABLE procedure_call_data",
+    "SELECT \"{}\"",
+    "SELECT \"{d \\'2001-10-1\\' }\"",
+    "SELECT \"{ts \\'2001-10-1 01:10:10\\'  }\"",
+    "SELECT \"{fn CONCAT({fn UCASE(col)}, RTRIM(LTRIM(\\'  !  \\'))) }\"",
+    "SELECT \"{oj l LEFT OUTER JOIN r ON l.a=r.b  }\"",
+    "SELECT \"{?=call ins(2) }\"",
+    "SELECT \"{{\\\\}}\"",
+    "SELECT \"{\\\"{}\\\"}\"",
+    "SELECT ('2001-10-1' :> DATE)",
+    "SELECT ('01:10:10' :> TIME)",
+    "SELECT ('2001-10-1 01:10:10' :> TIMESTAMP(6))",
+    "SELECT ('2001-10-1 01:10:10' :> TIMESTAMP(6))",
+    "SELECT ('2001-10-1 01:10:10' :> TIMESTAMP(6))",
+    "SELECT 123 :> BIGINT , 123",
+    "SELECT 123 :> BINARY,123",
+    "SELECT 123 :> BIT,123",
+    "SELECT 123 :> CHAR,123",
+    "SELECT 123 :> CHAR,123",
+    "SELECT 123 :> DATE  ,123",
+    "SELECT 123 :> DECIMAL  ,123",
+    "SELECT 123 :> DOUBLE , 123",
+    "SELECT 123 :> FLOAT , 123",
+    "SELECT 123 :> INTEGER , 123",
+    "SELECT 123 :> LONGBLOB , 123",
+    "SELECT 123 :> LONGTEXT , 123",
+    "SELECT 123 :> NUMERIC , 123",
+    "SELECT 123 :> DOUBLE , 123",
+    "SELECT 123 :> SMALLINT , 123",
+    "SELECT 123 :> TIME , 123",
+    "SELECT 123 :> TIMESTAMP(6) , 123",
+    "SELECT 123 :> TINYINT , 123",
+    "SELECT 123 :> BLOB , 123",
+    "SELECT 123 :> TEXT , 123",
+    "SELECT 123 :> CHAR , 123",
+    "SELECT 123 :> LONGTEXT , 123",
+    "SELECT 123 :> TEXT , 123",
+    "SELECT 123 :> BIGINT , 123",
+    "SELECT LENGTH('')*8, LENGTH('asd')*8",
+    "SELECT CONCAT(CONCAT(LEFT('abcde', 2 - 1), 'eee'), RIGHT('abcde', CHAR_LENGTH('abcde') - 2 - 2 + 1))",
+    "SELECT CONCAT(CONCAT(LEFT('abcde', 3 - 1), 'eee'), RIGHT('abcde', CHAR_LENGTH('abcde') - 10 - 3 + 1))",
+    "SELECT CONCAT(CONCAT(LEFT('abcde', -1 - 1), 'eee'), RIGHT('abcde', CHAR_LENGTH('abcde') - 4 - -1 + 1))",
+    "SELECT CONCAT(CONCAT(LEFT('ßßßßß', 2 - 1), 'ééé'), RIGHT('ßßßßß', CHAR_LENGTH('ßßßßß') - 2 - 2 + 1))",
+    "SELECT LPAD('', CHAR_LENGTH('abc')*3, 'abc')",
+    "SELECT LPAD('', CHAR_LENGTH('abc')*0, 'abc')",
+    "SELECT LPAD('', CHAR_LENGTH('')*10, '')",
+    "SELECT LPAD('', CHAR_LENGTH('ßß')*3, 'ßß')",
+    "SELECT LPAD('', 3, ' ')",
+    "SELECT LPAD('', 0, ' ')",
+    "SELECT TIMESTAMPADD(MICROSECOND, 2000/1000, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPADD(SECOND, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPADD(MINUTE, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPADD(HOUR, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPADD(DAY, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPADD(WEEK, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPADD(MONTH, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPADD(QUARTER, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPADD(YEAR, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPADD(MICROSECOND, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPADD(SECOND, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPADD(MINUTE, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPADD(HOUR, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPADD(DAY, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPADD(WEEK, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPADD(MONTH, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPADD(QUARTER, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPADD(YEAR, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPDIFF(MICROSECOND, '1998-01-01 01:01:01.001222', '1998-01-01 01:01:01.001225')*1000",
+    "SELECT TIMESTAMPDIFF(SECOND, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPDIFF(MINUTE, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPDIFF(HOUR, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPDIFF(DAY, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPDIFF(WEEK, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPDIFF(MONTH, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPDIFF(QUARTER, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPDIFF(YEAR, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPDIFF(MICROSECOND, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPDIFF(SECOND, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPDIFF(MINUTE, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPDIFF(HOUR, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPDIFF(DAY, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPDIFF(WEEK, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPDIFF(MONTH, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPDIFF(QUARTER, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT TIMESTAMPDIFF(YEAR, 2, '1998-01-01 01:01:01.001222')",
+    "SELECT CONCAT(\"asd\"\"asd\", \"a\")",
+    "SELECT CONCAT('asd''asd', 'a')",
+    "SELECT CONCAT('\\'''', 'a')",
+  };
+
+  n = sizeof(queries)/sizeof(queries[0]);
+  for (i = 0; i < n; i++)
+  {
+    SQLINTEGER len;
+    CHECK_STMT_RC(Stmt, SQLNativeSql(Connection, (SQLCHAR*)queries[i], SQL_NTS, buffer, BUFFER_SIZE, &len));
+    is_num(strlen(expected_results[i]), len);
+    IS_STR(buffer, expected_results[i], len);
+  }
+
+  return OK;
+}
+
+// sql_native_sql_buffers checks that SQLNativeSql handle input and output buffers correctly
+//
+ODBC_TEST(sql_native_sql_buffers) {
+  int len;
+  SQLCHAR buffer[BUFFER_SIZE];
+
+  // Terminate the input statement by the number of bytes
+  //
+  CHECK_STMT_RC(Stmt, SQLNativeSql(Connection, (SQLCHAR*)"SELECT 1 some incorrect query suffix", 8, buffer, BUFFER_SIZE, &len));
+  is_num(len, 8);
+  IS_STR(buffer, "SELECT 1", 9);
+
+  // Terminate the input statement by null character
+  //
+  CHECK_STMT_RC(Stmt, SQLNativeSql(Connection, (SQLCHAR*)"SELECT 1", SQL_NTS, buffer, BUFFER_SIZE, &len));
+  is_num(len, 8);
+  IS_STR(buffer, "SELECT 1", 9);
+
+  // Should return the correct length even if output buffer is null
+  //
+  CHECK_STMT_RC(Stmt, SQLNativeSql(Connection, (SQLCHAR*)"SELECT 1", SQL_NTS, NULL, 0, &len));
+  is_num(len, 8);
+
+  // Should terminate the output buffer with null character and correctly truncate it
+  //
+  CHECK_STMT_RC(Stmt, SQLNativeSql(Connection, (SQLCHAR*)"SELECT 1", SQL_NTS, buffer, 8, &len));
+  is_num(len, 8);
+  IS_STR(buffer, "SELECT ", 8);
+
+  CHECK_STMT_RC(Stmt, SQLNativeSql(Connection, (SQLCHAR*)"SELECT 1", SQL_NTS, buffer, 3, &len));
+  is_num(len, 8);
+  IS_STR(buffer, "SE", 3);
+
+  return OK;
+}
+
+// sql_native_sql_errors checks that SQLNativeSql returns appropriate errors for invalid statements
+//
+ODBC_TEST(sql_native_sql_errors) {
+  int i, n;
+  SQLCHAR buffer[BUFFER_SIZE];
+  char * queries[24] = {
+    "{",
+    "SELECT {fn \"USER\"()}",
+    "SELECT {fn 'USER'()}",
+    "{call    }",
+    "SELECT {d '2001-04-11'",
+    "SELECT '2001-04-11'}",
+    "SELECT {d {d }}} {",
+    "SELECT {d } {d } {d } }{",
+    "SELECT {d {d {d {d } } } {d }",
+    "SELECT } } {d {d {d {d } } } {d }",
+    "SELECT }",
+    "SELECT {{d} {d}} }",
+    "SELECT 'Name' LIKE '\\%AAA%' {escape '\\'}",
+    "SELECT {guid 'nnnnnnnn-nnnn-nnnn-nnnn-nnnnnnnnnnnn'}",
+    "SELECT {INTERVAL 1 day}",
+    "SELECT {fn CONVERT(123 SQL_BIGINT) }",
+    "SELECT {fn CONVERT(123, SQL_BIGINT }",
+    "SELECT {fn CONVERT(1,   ) }",
+    "SELECT {fn CONVERT 123, SQL_BIGINT) }",
+    "SELECT {fn CONVERT 123, SQL_BIGINT }",
+    "SELECT {fn CONVERT 123 }",
+    "SELECT {fn CONVERT(, SQL_BIGINT) }",
+    "SELECT {fn CONVERT(  ,   ) }",
+    "SELECT {fn CONVERT(  ,  SQL_BIGINT ) }",
+  };
+
+  n = sizeof(queries)/sizeof(queries[0]);
+  for (i = 0; i < n; i++) {
+    int len;
+    EXPECT_DBC(Stmt, SQLNativeSql(Connection, (SQLCHAR *)queries[i], SQL_NTS, buffer, BUFFER_SIZE, &len), SQL_ERROR);
+  }
+
+  return OK;
+}
+
 
 MA_ODBC_TESTS my_tests[]=
 {
@@ -542,6 +1037,9 @@ MA_ODBC_TESTS my_tests[]=
   {quotes, "quotes", NORMAL},
   {ansi_quotes, "ansi_quotes", NORMAL},
   {ansi_quotes_to_fix, "ansi_quotes_to_fix", TO_FIX},
+  {sql_native_sql, "sql_native_sql", NORMAL},
+  {sql_native_sql_buffers, "sql_native_sql_buffers", NORMAL},
+  {sql_native_sql_errors, "sql_native_sql_errors", NORMAL},
   {NULL, NULL}
 };
 
@@ -552,3 +1050,4 @@ int main(int argc, char **argv)
   plan(tests);
   return run_tests(my_tests);
 }
+#undef BUFFER_SIZE

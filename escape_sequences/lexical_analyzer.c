@@ -522,7 +522,7 @@ static const flex_int16_t yy_chk[282] =
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 #include "escape_sequences/parser.h"
-#define YY_DECL int yylex(YYSTYPE * yylval_param, yyscan_t yyscanner, MADB_Stmt *Stmt)
+#define YY_DECL int yylex(YYSTYPE * yylval_param, yyscan_t yyscanner, MADB_Error *error)
 int yylex();
 
 #define INITIAL 0
@@ -921,16 +921,16 @@ YY_RULE_SETUP
                                                 }
                                                 // When ANSI_QUOTES is disabled, it should be a STRING_LITERAL.
                                                 // To check it before running each query,
-                                                // we need SingleStore to support SERVER_SESSION_STATE_CHANGED.
+                                                // we need SingleStore to support server trackers.
                                                 // This feature is not implemented now.
-                                                // See discussion on PLAT-4916
+                                                // See discussion on PLAT-4916.
                                                 // With current behaviour,
-                                                // it can send to the SingleStore a query,
+                                                // it is possible, that we will send to the SingleStore a query,
                                                 // where ANSI_QUOTES mode is disabled and string literal is used as
                                                 // function call.
                                                 // In this case SingleStore will return an appropriate error.
-                                                // When ANSI_QUOTES is enabled,
-                                                // it will parse incorrectly queries with backslash at the and of identifier.
+                                                // Also, it is possible, that when ANSI_QUOTES is enabled,
+                                                // it will parse incorrectly queries with backslash at the end of identifier.
                                                 //
                                                 return LEXEME;
                                           }
