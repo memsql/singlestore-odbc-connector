@@ -1442,25 +1442,19 @@ BOOL UnixOdbc()
 
 int GetDefaultCharType(int WType, BOOL isAnsiConnection)
 {
-    printf("BeforeASDASD: %d", WType);
     if (isAnsiConnection != FALSE)
     {
         switch (WType) {
             case SQL_WCHAR:
-                printf("After ASDASD1: %d", SQL_CHAR);
                 return SQL_CHAR;
             case SQL_WVARCHAR:
-                printf("After ASDASD2: %d", SQL_VARCHAR);
                 return SQL_VARCHAR;
             case SQL_WLONGVARCHAR:
-                printf("After ASDASD3: %d", SQL_LONGVARCHAR);
                 return SQL_LONGVARCHAR;
             default:
-                printf("After ASDASD4: %d", WType);
                 return WType;
         }
     }
-    printf("After ASDASD5: %d", WType);
     return WType;
 }
 

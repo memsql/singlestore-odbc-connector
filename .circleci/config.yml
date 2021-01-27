@@ -190,3 +190,8 @@ workflows:
             parameters:
               build_type:
                 - RelWithDebInfo
+      - build-macos:
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
