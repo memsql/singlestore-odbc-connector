@@ -239,15 +239,11 @@ workflows:
               build_type:
                 - RelWithDebInfo
       - build-windows:
-          requires:
-            - build-linux-in-docker-RelWithDebInfo-centos:centos8
           matrix:
             parameters:
               build_type:
                 - RelWithDebInfo
       - build-macos:
-          requires:
-            - build-windows
           matrix:
             parameters:
               build_type:
