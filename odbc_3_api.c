@@ -756,13 +756,14 @@ SQLRETURN SQL_API SQLConnectW(SQLHDBC ConnectionHandle,
 
   MADB_CLEAR_ERROR(&Dbc->Error);
 
+  Dbc->IsAnsi = 0;
    /* Convert parameters to Cp */
   if (ServerName)
-    MBServerName= MADB_ConvertFromWChar(ServerName, NameLength1, 0, Dbc->IsAnsi ? Dbc->ConnOrSrcCharset : &utf8, NULL);
+    MBServerName= MADB_ConvertFromWChar(ServerName, NameLength1, 0, &utf8, NULL);
   if (UserName)
-    MBUserName= MADB_ConvertFromWChar(UserName, NameLength2, 0, Dbc->IsAnsi ? Dbc->ConnOrSrcCharset : &utf8, NULL);
+    MBUserName= MADB_ConvertFromWChar(UserName, NameLength2, 0, &utf8, NULL);
   if (Authentication)
-    MBAuthentication= MADB_ConvertFromWChar(Authentication, NameLength3, 0, Dbc->IsAnsi ? Dbc->ConnOrSrcCharset : &utf8, NULL);
+    MBAuthentication= MADB_ConvertFromWChar(Authentication, NameLength3, 0, &utf8, NULL);
   
   ret= SQLConnectCommon(ConnectionHandle, (SQLCHAR *)MBServerName, SQL_NTS, (SQLCHAR *)MBUserName, SQL_NTS, 
                    (SQLCHAR *)MBAuthentication, SQL_NTS);
@@ -1006,7 +1007,9 @@ SQLRETURN SQL_API SQLDriverConnectW(SQLHDBC      ConnectionHandle,
 
   MADB_CLEAR_ERROR(&Dbc->Error);
 
-  InConnStrA= MADB_ConvertFromWChar(InConnectionString, StringLength1, &InStrAOctLen, Dbc->IsAnsi ? Dbc->ConnOrSrcCharset : &utf8, NULL);
+    Dbc->IsAnsi = 0;
+
+    InConnStrA= MADB_ConvertFromWChar(InConnectionString, StringLength1, &InStrAOctLen, &utf8, NULL);
   MDBUG_C_DUMP(Dbc, Dbc, 0x);
   MDBUG_C_DUMP(Dbc, InConnStrA, s);
   MDBUG_C_DUMP(Dbc, StringLength1, d);
