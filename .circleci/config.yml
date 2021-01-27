@@ -185,6 +185,16 @@ workflows:
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
                 - memsql/cluster-in-a-box:centos-7.1.13-11ddea2a3a-3.0.0-1.9.3
+      - build-windows:
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+      - build-macos:
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
 
   daily:
     triggers:
@@ -238,13 +248,4 @@ workflows:
                 - centos:centos8
               build_type:
                 - RelWithDebInfo
-      - build-windows:
-          matrix:
-            parameters:
-              build_type:
-                - RelWithDebInfo
-      - build-macos:
-          matrix:
-            parameters:
-              build_type:
-                - RelWithDebInfo
+
