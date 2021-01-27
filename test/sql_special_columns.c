@@ -42,6 +42,9 @@ int run_sql_special_columns(SQLHANDLE Stmt, const SQLSMALLINT *ExpDataType) {
 
         SQLCHAR ExpColName[2] = { numOfRowsFetched + 'a', '\0'};
         FAIL_IF(_strnicmp(colName, ExpColName, cnSize) != 0, "Wrong COLUMN_NAME returned!");
+        if (dataType != ExpDataType[numOfRowsFetched]) {
+            printf("Real: %d, Expected: %hd", dataType, ExpDataType[numOfRowsFetched]);
+        }
         FAIL_IF(dataType != ExpDataType[numOfRowsFetched], "Wrong DATA_TYPE returned!");
         FAIL_IF(_strnicmp(typeName, ExpTypeName[numOfRowsFetched], tnSize) != 0, "Wrong TYPE_NAME returned!");
         FAIL_IF(columnSize != ExpColSize[numOfRowsFetched], "Wrong COLUMN_SIZE returned!");
