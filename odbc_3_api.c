@@ -738,6 +738,7 @@ SQLRETURN SQL_API SQLConnect(SQLHDBC ConnectionHandle,
   if (!Dbc)
     return SQL_INVALID_HANDLE;
 
+  printf("ISANSI4");
   Dbc->IsAnsi = 1;
 
   return SQLConnectCommon(ConnectionHandle, ServerName, NameLength1,
@@ -763,6 +764,7 @@ SQLRETURN SQL_API SQLConnectW(SQLHDBC ConnectionHandle,
 
   MADB_CLEAR_ERROR(&Dbc->Error);
 
+  printf("ISANSI5");
   Dbc->IsAnsi = 0;
    /* Convert parameters to Cp */
   if (ServerName)
@@ -973,6 +975,7 @@ SQLRETURN SQL_API SQLDriverConnect(SQLHDBC ConnectionHandle,
 
   MADB_CLEAR_ERROR(&Dbc->Error);
 
+  printf("ISANSI6");
   Dbc->IsAnsi = 1;
 
   MDBUG_C_ENTER(Dbc, "SQLDriverConnect");
@@ -1016,6 +1019,7 @@ SQLRETURN SQL_API SQLDriverConnectW(SQLHDBC      ConnectionHandle,
 
   MADB_CLEAR_ERROR(&Dbc->Error);
 
+    printf("ISANSI7");
     Dbc->IsAnsi = 0;
 
     InConnStrA= MADB_ConvertFromWChar(InConnectionString, StringLength1, &InStrAOctLen, &utf8, NULL);
