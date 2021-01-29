@@ -376,6 +376,8 @@ SQLRETURN MADB_DbcGetAttr(MADB_Dbc *Dbc, SQLINTEGER Attribute, SQLPOINTER ValueP
     break;
   case SQL_ATTR_TRACEFILE:
     break;
+  case SQL_ATTR_ANSI_APP:
+    break;
   case SQL_ATTR_TRANSLATE_LIB:
     break;
   case SQL_ATTR_TRANSLATE_OPTION:
