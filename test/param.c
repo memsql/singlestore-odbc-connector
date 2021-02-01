@@ -1274,6 +1274,9 @@ ODBC_TEST(odbc279)
   char buffer[128];
   SQL_TIME_STRUCT ts= { 12/*hour*/, 34, 56 };
 
+  CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
+                                     (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_odbc279");
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_odbc279(col1 time)");
 

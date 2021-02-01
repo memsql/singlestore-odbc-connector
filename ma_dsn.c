@@ -57,7 +57,8 @@ MADB_DsnKey DsnKeys[]=
   {"CHARSET",        offsetof(MADB_Dsn, CharacterSet),      DSN_TYPE_COMBO,  0, 0},
   {"TRACE",          offsetof(MADB_Dsn, TraceFile),         DSN_TYPE_STRING, 0, 0},
   {"PLUGIN_DIR",     offsetof(MADB_Dsn, ConnCPluginsDir),   DSN_TYPE_STRING, 0, 0},
-  {"NO_SSPS",        offsetof(MADB_Dsn, NoSsps),            DSN_TYPE_BOOL,   1, 0},
+  {"NO_SSPS",        offsetof(MADB_Dsn, NoSsps),            DSN_TYPE_BOOL,   0, 0},
+  {"NO_CACHE",       offsetof(MADB_Dsn, NoCache),           DSN_TYPE_BOOL,   MADB_OPT_FLAG_NO_CACHE, 0},
   /* SSL */
   {"SSLKEY",         offsetof(MADB_Dsn, SslKey),            DSN_TYPE_STRING, 0, 0},
   {"SSLCERT",        offsetof(MADB_Dsn, SslCert),           DSN_TYPE_STRING, 0, 0}, /* 20 */
@@ -116,6 +117,8 @@ const char TlsVersionBits[]=    {MADB_TLSV11, MADB_TLSV12, MADB_TLSV13};
 void MADB_DSN_SetDefaults(MADB_Dsn *Dsn)
 {
   Dsn->IsTcpIp= 1;
+  Dsn->NoSsps = 1;
+  Dsn->NoCache = 1;
 }
 /* }}} */
 

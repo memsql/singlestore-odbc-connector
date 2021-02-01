@@ -442,6 +442,9 @@ ODBC_TEST(client_side_multirow)
     SQLLEN len[5] = {SQL_NTS, SQL_NTS, SQL_NTS, SQL_NTS, SQL_NTS};
     SQLINTEGER bParam[5] = {10, 20, 30, 40, 50};
 
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
+                                     (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+
     OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS cs_cursor");
     OK_SIMPLE_STMT(Stmt, "CREATE TABLE cs_cursor(a char(10), b int)");
     CHECK_STMT_RC(Stmt, SQLPrepare(Stmt, (SQLCHAR *) "INSERT INTO cs_cursor VALUES(?, ?)", SQL_NTS));
@@ -522,6 +525,8 @@ ODBC_TEST(client_side_multirow_columnwise)
     SQLLEN len[5] = {SQL_NTS, SQL_NTS, SQL_NTS, SQL_NTS, SQL_NTS};
     SQLINTEGER bParam[5] = {10, 20, 30, 40, 50};
 
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
+                                     (SQLPOINTER)SQL_CURSOR_STATIC, 0));
     OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS cs_cursor");
     OK_SIMPLE_STMT(Stmt, "CREATE TABLE cs_cursor(a char(10), b int)");
     CHECK_STMT_RC(Stmt, SQLPrepare(Stmt, (SQLCHAR *) "INSERT INTO cs_cursor VALUES(?, ?)", SQL_NTS));
@@ -1010,6 +1015,8 @@ ODBC_TEST(client_side_set_pos_del) {
     SQLLEN len[5] = {SQL_NTS, SQL_NTS, SQL_NTS, SQL_NTS, SQL_NTS};
     SQLINTEGER bParam[5] = {10, 20, 30, 40, 50};
 
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
+                                     (SQLPOINTER)SQL_CURSOR_STATIC, 0));
     OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS cs_set_pos");
     OK_SIMPLE_STMT(Stmt, "CREATE TABLE cs_set_pos(a char(10), b int)");
     CHECK_STMT_RC(Stmt, SQLPrepare(Stmt, (SQLCHAR *) "INSERT INTO cs_set_pos VALUES(?, ?)", SQL_NTS));

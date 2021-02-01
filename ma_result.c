@@ -265,7 +265,7 @@ SQLRETURN MADB_StmtMoreResults(MADB_Stmt *Stmt)
     }
     else
     {
-      if (Stmt->Options.CursorType != SQL_CURSOR_FORWARD_ONLY)
+      if (!NO_CACHE(Stmt))
       {
         mysql_stmt_store_result(Stmt->stmt);
         mysql_stmt_data_seek(Stmt->stmt, 0);
@@ -279,16 +279,14 @@ SQLRETURN MADB_StmtMoreResults(MADB_Stmt *Stmt)
 /* }}} */
 
 /* {{{ MADB_RecordsToFetch */
-SQLULEN MADB_RowsToFetch(MADB_Cursor *Cursor, SQLULEN ArraySize, unsigned long long RowsInResultst)
+SQLULEN MADB_RowsToFetch(MADB_Cursor *Cursor, unsigned long long RowsInResultst)
 {
   SQLULEN  Position= Cursor->Position >= 0 ? Cursor->Position : 0;
-  SQLULEN result= ArraySize;
+  SQLULEN result= Cursor->RowsetSize;
 
-  Cursor->RowsetSize= ArraySize;
-
-  if (Position + ArraySize > RowsInResultst)
+  if (Position + Cursor->RowsetSize > RowsInResultst)
   {
-    if (Position >= 0 && RowsInResultst > Position)
+    if (RowsInResultst > Position)
     {
       result= (SQLULEN)(RowsInResultst - Position);
     }
