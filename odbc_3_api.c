@@ -993,6 +993,40 @@ SQLRETURN SQL_API SQLDriverConnect(SQLHDBC ConnectionHandle,
 }
 /* }}} */
 
+SQLRETURN SQL_API SQLDriverConnectA(
+        SQLHDBC ConnectionHandle,
+        SQLHWND WindowHandle,
+        SQLCHAR *InConnectionString,
+        SQLSMALLINT StringLength1,
+        SQLCHAR *OutConnectionString,
+        SQLSMALLINT BufferLength,
+        SQLSMALLINT *StringLength2Ptr,
+        SQLUSMALLINT DriverCompletion)
+{
+    MADB_Dbc *Dbc= (MADB_Dbc *)ConnectionHandle;
+    SQLRETURN ret;
+    if (!Dbc)
+        return SQL_INVALID_HANDLE;
+
+    MADB_CLEAR_ERROR(&Dbc->Error);
+
+    printf("ISANSI6");
+    Dbc->IsAnsi = 1;
+
+    MDBUG_C_ENTER(Dbc, "SQLDriverConnect");
+    MDBUG_C_DUMP(Dbc, Dbc, 0x);
+    MDBUG_C_DUMP(Dbc, InConnectionString, s);
+    MDBUG_C_DUMP(Dbc, StringLength1, d);
+    MDBUG_C_DUMP(Dbc, OutConnectionString, 0x);
+    MDBUG_C_DUMP(Dbc, BufferLength, d);
+    MDBUG_C_DUMP(Dbc, StringLength2Ptr, 0x);
+    MDBUG_C_DUMP(Dbc, DriverCompletion, d);
+    ret= Dbc->Methods->DriverConnect(Dbc, WindowHandle, InConnectionString, StringLength1, OutConnectionString,
+                                     BufferLength, StringLength2Ptr, DriverCompletion);
+
+    MDBUG_C_RETURN(Dbc, ret, &Dbc->Error);
+}
+
 /* {{{ SQLDriverConnectW */
 SQLRETURN SQL_API SQLDriverConnectW(SQLHDBC      ConnectionHandle,
                                     SQLHWND      WindowHandle,
