@@ -747,40 +747,40 @@ SQLRETURN SQL_API SQLConnect(SQLHDBC ConnectionHandle,
 /* }}} */
 
 /* {{{ SQLConnectW */
-SQLRETURN SQL_API SQLConnectW(SQLHDBC ConnectionHandle,
-    SQLWCHAR *ServerName,
-    SQLSMALLINT NameLength1,
-    SQLWCHAR *UserName,
-    SQLSMALLINT NameLength2,
-    SQLWCHAR *Authentication,
-    SQLSMALLINT NameLength3)
-{
-  char *MBServerName= NULL, *MBUserName= NULL, *MBAuthentication= NULL;
-  SQLRETURN ret;
-  MADB_Dbc *Dbc= (MADB_Dbc*)ConnectionHandle;
-  
-  if (!Dbc)
-    return SQL_INVALID_HANDLE;
-
-  MADB_CLEAR_ERROR(&Dbc->Error);
-
-  printf("ISANSI5");
-  Dbc->IsAnsi = 0;
-   /* Convert parameters to Cp */
-  if (ServerName)
-    MBServerName= MADB_ConvertFromWChar(ServerName, NameLength1, 0, &utf8, NULL);
-  if (UserName)
-    MBUserName= MADB_ConvertFromWChar(UserName, NameLength2, 0, &utf8, NULL);
-  if (Authentication)
-    MBAuthentication= MADB_ConvertFromWChar(Authentication, NameLength3, 0, &utf8, NULL);
-  
-  ret= SQLConnectCommon(ConnectionHandle, (SQLCHAR *)MBServerName, SQL_NTS, (SQLCHAR *)MBUserName, SQL_NTS, 
-                   (SQLCHAR *)MBAuthentication, SQL_NTS);
-  MADB_FREE(MBServerName);
-  MADB_FREE(MBUserName);
-  MADB_FREE(MBAuthentication);
-  return ret;
-}
+//SQLRETURN SQL_API SQLConnectW(SQLHDBC ConnectionHandle,
+//    SQLWCHAR *ServerName,
+//    SQLSMALLINT NameLength1,
+//    SQLWCHAR *UserName,
+//    SQLSMALLINT NameLength2,
+//    SQLWCHAR *Authentication,
+//    SQLSMALLINT NameLength3)
+//{
+//  char *MBServerName= NULL, *MBUserName= NULL, *MBAuthentication= NULL;
+//  SQLRETURN ret;
+//  MADB_Dbc *Dbc= (MADB_Dbc*)ConnectionHandle;
+//
+//  if (!Dbc)
+//    return SQL_INVALID_HANDLE;
+//
+//  MADB_CLEAR_ERROR(&Dbc->Error);
+//
+//  printf("ISANSI5");
+//  Dbc->IsAnsi = 0;
+//   /* Convert parameters to Cp */
+//  if (ServerName)
+//    MBServerName= MADB_ConvertFromWChar(ServerName, NameLength1, 0, &utf8, NULL);
+//  if (UserName)
+//    MBUserName= MADB_ConvertFromWChar(UserName, NameLength2, 0, &utf8, NULL);
+//  if (Authentication)
+//    MBAuthentication= MADB_ConvertFromWChar(Authentication, NameLength3, 0, &utf8, NULL);
+//
+//  ret= SQLConnectCommon(ConnectionHandle, (SQLCHAR *)MBServerName, SQL_NTS, (SQLCHAR *)MBUserName, SQL_NTS,
+//                   (SQLCHAR *)MBAuthentication, SQL_NTS);
+//  MADB_FREE(MBServerName);
+//  MADB_FREE(MBUserName);
+//  MADB_FREE(MBAuthentication);
+//  return ret;
+//}
 /* }}} */
 
 /* {{{ SQLCopyDesc */
@@ -1028,75 +1028,75 @@ SQLRETURN SQL_API SQLDriverConnectA(
 }
 
 /* {{{ SQLDriverConnectW */
-SQLRETURN SQL_API SQLDriverConnectW(SQLHDBC      ConnectionHandle,
-                                    SQLHWND      WindowHandle,
-                                    SQLWCHAR    *InConnectionString,
-                                    SQLSMALLINT  StringLength1,
-                                    SQLWCHAR    *OutConnectionString,
-                                    SQLSMALLINT  BufferLength,
-                                    SQLSMALLINT *StringLength2Ptr,
-                                    SQLUSMALLINT DriverCompletion)
-{
-  SQLRETURN   ret=          SQL_ERROR;
-  SQLULEN     Length=       0; /* Since we need bigger(in bytes) buffer for utf8 string, the length may be > max SQLSMALLINT */
-  char        *InConnStrA=  NULL;
-  SQLULEN     InStrAOctLen= 0;
-  char        *OutConnStrA= NULL;
-  MADB_Dbc    *Dbc=         (MADB_Dbc *)ConnectionHandle;
-   
-  if (!ConnectionHandle)
-  {
-    return SQL_INVALID_HANDLE;
-  }
-
-  MDBUG_C_ENTER(Dbc, "SQLDriverConnectW");
-
-  MADB_CLEAR_ERROR(&Dbc->Error);
-
-    printf("ISANSI7");
-    Dbc->IsAnsi = 0;
-
-    InConnStrA= MADB_ConvertFromWChar(InConnectionString, StringLength1, &InStrAOctLen, &utf8, NULL);
-  MDBUG_C_DUMP(Dbc, Dbc, 0x);
-  MDBUG_C_DUMP(Dbc, InConnStrA, s);
-  MDBUG_C_DUMP(Dbc, StringLength1, d);
-  MDBUG_C_DUMP(Dbc, OutConnectionString, 0x);
-  MDBUG_C_DUMP(Dbc, BufferLength, d);
-  MDBUG_C_DUMP(Dbc, StringLength2Ptr, 0x);
-  MDBUG_C_DUMP(Dbc, DriverCompletion, d);
-
-  /* Allocate buffer for Asc OutConnectionString */
-  if (OutConnectionString && BufferLength)
-  {
-    Length= BufferLength*4 /*Max bytes per utf8 character */;
-    OutConnStrA= (char *)MADB_CALLOC(Length);
-
-    if (OutConnStrA == NULL)
-    {
-      ret= MADB_SetError(&Dbc->Error, MADB_ERR_HY001, NULL, 0);
-      goto end;
-    }
-  }
-
-  ret= Dbc->Methods->DriverConnect(Dbc, WindowHandle, (SQLCHAR *)InConnStrA, InStrAOctLen, (SQLCHAR *)OutConnStrA,
-                                     Length, StringLength2Ptr, DriverCompletion); 
-  MDBUG_C_DUMP(Dbc, ret, d);
-  if (!SQL_SUCCEEDED(ret))
-    goto end;
-
-  if (OutConnectionString)
-  {
-    Length= MADB_SetString(&utf8, OutConnectionString, BufferLength,
-                                        OutConnStrA, SQL_NTS, &((MADB_Dbc *)ConnectionHandle)->Error);
-    if (StringLength2Ptr)
-      *StringLength2Ptr= (SQLSMALLINT)Length;
-  }
-  
-end:
-  MADB_FREE(OutConnStrA);
-  MADB_FREE(InConnStrA);
-  MDBUG_C_RETURN(Dbc, ret, &Dbc->Error);
-}
+//SQLRETURN SQL_API SQLDriverConnectW(SQLHDBC      ConnectionHandle,
+//                                    SQLHWND      WindowHandle,
+//                                    SQLWCHAR    *InConnectionString,
+//                                    SQLSMALLINT  StringLength1,
+//                                    SQLWCHAR    *OutConnectionString,
+//                                    SQLSMALLINT  BufferLength,
+//                                    SQLSMALLINT *StringLength2Ptr,
+//                                    SQLUSMALLINT DriverCompletion)
+//{
+//  SQLRETURN   ret=          SQL_ERROR;
+//  SQLULEN     Length=       0; /* Since we need bigger(in bytes) buffer for utf8 string, the length may be > max SQLSMALLINT */
+//  char        *InConnStrA=  NULL;
+//  SQLULEN     InStrAOctLen= 0;
+//  char        *OutConnStrA= NULL;
+//  MADB_Dbc    *Dbc=         (MADB_Dbc *)ConnectionHandle;
+//
+//  if (!ConnectionHandle)
+//  {
+//    return SQL_INVALID_HANDLE;
+//  }
+//
+//  MDBUG_C_ENTER(Dbc, "SQLDriverConnectW");
+//
+//  MADB_CLEAR_ERROR(&Dbc->Error);
+//
+//    printf("ISANSI7");
+//    Dbc->IsAnsi = 0;
+//
+//    InConnStrA= MADB_ConvertFromWChar(InConnectionString, StringLength1, &InStrAOctLen, &utf8, NULL);
+//  MDBUG_C_DUMP(Dbc, Dbc, 0x);
+//  MDBUG_C_DUMP(Dbc, InConnStrA, s);
+//  MDBUG_C_DUMP(Dbc, StringLength1, d);
+//  MDBUG_C_DUMP(Dbc, OutConnectionString, 0x);
+//  MDBUG_C_DUMP(Dbc, BufferLength, d);
+//  MDBUG_C_DUMP(Dbc, StringLength2Ptr, 0x);
+//  MDBUG_C_DUMP(Dbc, DriverCompletion, d);
+//
+//  /* Allocate buffer for Asc OutConnectionString */
+//  if (OutConnectionString && BufferLength)
+//  {
+//    Length= BufferLength*4 /*Max bytes per utf8 character */;
+//    OutConnStrA= (char *)MADB_CALLOC(Length);
+//
+//    if (OutConnStrA == NULL)
+//    {
+//      ret= MADB_SetError(&Dbc->Error, MADB_ERR_HY001, NULL, 0);
+//      goto end;
+//    }
+//  }
+//
+//  ret= Dbc->Methods->DriverConnect(Dbc, WindowHandle, (SQLCHAR *)InConnStrA, InStrAOctLen, (SQLCHAR *)OutConnStrA,
+//                                     Length, StringLength2Ptr, DriverCompletion);
+//  MDBUG_C_DUMP(Dbc, ret, d);
+//  if (!SQL_SUCCEEDED(ret))
+//    goto end;
+//
+//  if (OutConnectionString)
+//  {
+//    Length= MADB_SetString(&utf8, OutConnectionString, BufferLength,
+//                                        OutConnStrA, SQL_NTS, &((MADB_Dbc *)ConnectionHandle)->Error);
+//    if (StringLength2Ptr)
+//      *StringLength2Ptr= (SQLSMALLINT)Length;
+//  }
+//
+//end:
+//  MADB_FREE(OutConnStrA);
+//  MADB_FREE(InConnStrA);
+//  MDBUG_C_RETURN(Dbc, ret, &Dbc->Error);
+//}
 /* }}} */
 
 /* {{{ SQLDrivers */
