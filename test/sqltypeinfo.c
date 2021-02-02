@@ -224,6 +224,7 @@ ODBC_TEST(t_sqlgettypeinfo_sequential) {
     CHECK_STMT_RC(Stmt1, run_sql_get_type_info(Stmt1, TypeInfoV3));
 
     SQLCHAR *sql = "SELECT 1";
+    CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
     CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_UNBIND));
     CHECK_STMT_RC(Stmt1, SQLExecDirect(Stmt1, sql, strlen(sql)));
     CHECK_STMT_RC(Stmt1, SQLFetch(Stmt1));
