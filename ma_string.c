@@ -23,7 +23,7 @@ extern MARIADB_CHARSET_INFO*  DmUnicodeCs;
 char *MADB_GetTableName(MADB_Stmt *Stmt)
 {
   char *TableName= NULL;
- unsigned  int i= 0;
+  unsigned  int i;
   if (Stmt->TableName && Stmt->TableName[0])
     return Stmt->TableName;
   if (!mysql_stmt_field_count(Stmt->stmt))
@@ -44,7 +44,8 @@ char *MADB_GetTableName(MADB_Stmt *Stmt)
   }
   if (TableName)
     Stmt->TableName= _strdup(TableName);
-  return TableName;
+
+  return Stmt->TableName;
 }
 
 char *MADB_GetCatalogName(MADB_Stmt *Stmt)
@@ -71,7 +72,8 @@ char *MADB_GetCatalogName(MADB_Stmt *Stmt)
   }
   if (CatalogName)
     Stmt->CatalogName= _strdup(CatalogName);
-  return CatalogName;
+
+  return Stmt->CatalogName;
 }
 
 my_bool MADB_DynStrAppendQuoted(MADB_DynString *DynString, char *String)
