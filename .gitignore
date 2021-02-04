@@ -122,7 +122,9 @@ CTestTestfile.cmake
 ma_odbc_version.h
 wininstall/mariadb_odbc.xml
 mariadb-odbc-driver-uni.def
+mariadb-odbc-driver-asc.def
 maodbcu.rc
+maodbca.rc
 
 *.vcxproj
 *.vcxproj.*
