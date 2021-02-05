@@ -423,113 +423,112 @@ WHILE(${DRIVER_INDEX} LESS ${DRIVERS_COUNT})
             COMMAND ${CMAKE_SOURCE_DIR}/osxpostbuild.sh ARGS $<TARGET_FILE:${LIBRARY_NAME}>
             )
   ENDIF()
-
-  SET(CPACK_PACKAGE_NAME "mariadb-connector-odbc")
-  IF(WIN32)
-    ADD_SUBDIRECTORY(wininstall)
-    ADD_EXECUTABLE(install_driver osxinstall/install_driver.c)
-    TARGET_LINK_LIBRARIES(install_driver ${PLATFORM_DEPENDENCIES} ${ODBC_INSTLIBS})
-  ELSE()
-    IF(APPLE)
-      MESSAGE(STATUS "Configuring to generate PKG package")
-      ADD_SUBDIRECTORY(osxinstall)
-    ENDIF()
-    INSTALL(TARGETS
-            ${LIBRARY_NAME}
-            LIBRARY DESTINATION ${INSTALL_LIBDIR}
-            COMPONENT ODBCLibs)
-
-    INSTALL(FILES
-            ${CMAKE_SOURCE_DIR}/README
-            DESTINATION
-            "${INSTALL_DOCDIR}"
-            COMPONENT Documentation)
-    INSTALL(FILES
-            ${CMAKE_SOURCE_DIR}/COPYING
-            DESTINATION
-            "${INSTALL_LICENSEDIR}"
-            COMPONENT Documentation)
-  ENDIF()
-
-  # Packaging
-  SET(CPACK_PACKAGE_VENDOR "MariaDB Corporation Ab")
-  SET(CPACK_PACKAGE_DESCRIPTION "MariaDB Connector/ODBC. ODBC driver library for connecting to MariaDB and MySQL servers")
-  IF(NOT SYSTEM_NAME)
-    STRING(TOLOWER ${CMAKE_SYSTEM_NAME} system_name)
-  ENDIF()
-  IF(PACKAGE_PLATFORM_SUFFIX)
-    SET(CPACK_PACKAGE_FILE_NAME "mariadb-connector-odbc-${CPACK_PACKAGE_VERSION}-${PACKAGE_PLATFORM_SUFFIX}")
-  ELSE()
-    SET(CPACK_PACKAGE_FILE_NAME "mariadb-connector-odbc-${CPACK_PACKAGE_VERSION}-${MARIADB_ODBC_VERSION_QUALITY}-${system_name}-${CMAKE_SYSTEM_PROCESSOR}")
-  ENDIF()
-  MESSAGE(STATUS "Package Name: ${CPACK_PACKAGE_FILE_NAME}")
-  SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING")
-  SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README")
-  SET(CPACK_SOURCE_PACKAGE_FILE_NAME "mariadb-connector-odbc-${CPACK_PACKAGE_VERSION}-${MARIADB_ODBC_VERSION_QUALITY}-src")
-  SET(CPACK_PACKAGE_CONTACT "info@mariadb.com")
-  SET(CPACK_PACKAGE_VENDOR "MariaDB Corporation AB")
-  SET(CPACK_SOURCE_IGNORE_FILES
-          /test/
-          /.git/
-          .gitignore
-          .gitmodules
-          .gitattributes
-          CMakeCache.txt
-          cmake_dist.cmake
-          CPackSourceConfig.cmake
-          CPackConfig.cmake
-          /.build/
-          cmake_install.cmake
-          CTestTestfile.cmake
-          /CMakeFiles/
-          /version_resources/
-          .*vcxproj
-          .*gz$
-          .*zip$
-          .*so$
-          .*so.2
-          .*so.3
-          .*dll$
-          .*a$
-          .*pdb$
-          .*sln$
-          .*sdf$
-          Makefile$
-          /autom4te.cache/
-          /libmariadb/
-          /_CPack_Packages/
-          )
-
-  # Build source packages
-  IF(GIT_BUILD_SRCPKG OR ODBC_GIT_BUILD_SRCPKG)
-    IF(WIN32)
-      EXECUTE_PROCESS(COMMAND git archive --format=zip --prefix=${CPACK_SOURCE_PACKAGE_FILE_NAME}/ --output=${CPACK_SOURCE_PACKAGE_FILE_NAME}.zip --worktree-attributes -v HEAD)
-    ELSE()
-      EXECUTE_PROCESS(COMMAND git archive ${GIT_BRANCH} --format=zip --prefix=${CPACK_SOURCE_PACKAGE_FILE_NAME}/ --output=${CPACK_SOURCE_PACKAGE_FILE_NAME}.zip -v HEAD)
-      EXECUTE_PROCESS(COMMAND git archive ${GIT_BRANCH} --format=tar --prefix=${CPACK_SOURCE_PACKAGE_FILE_NAME}/ --output=${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar -v HEAD)
-      EXECUTE_PROCESS(COMMAND gzip -9 -f ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar)
-    ENDIF()
-  ENDIF()
-
-  IF(WIN32)
-    SET(DEFAULT_GENERATOR "ZIP")
-  ELSE()
-    SET(DEFAULT_GENERATOR "TGZ")
-  ENDIF()
-
-  IF(NOT CPACK_GENERATOR)
-    SET(CPACK_GENERATOR "${DEFAULT_GENERATOR}")
-  ENDIF()
-  IF(NOT CPACK_SOURCE_GENERATOR)
-    SET(CPACK_SOURCE_GENERATOR "${DEFAULT_GENERATOR}")
-  ENDIF()
-
-  MESSAGE(STATUS "License File: ${CPACK_RESOURCE_FILE_LICENSE}")
-  MESSAGE(STATUS "ReadMe File: ${CPACK_PACKAGE_DESCRIPTION_FILE}")
-  MESSAGE(STATUS "Source Package Filename: ${CPACK_SOURCE_PACKAGE_FILE_NAME}.${CPACK_SOURCE_GENERATOR}")
-
   MATH(EXPR DRIVER_INDEX "${DRIVER_INDEX} + 1")
 ENDWHILE(${DRIVER_INDEX} LESS ${DRIVERS_COUNT})
+
+SET(CPACK_PACKAGE_NAME "mariadb-connector-odbc")
+IF(WIN32)
+  ADD_SUBDIRECTORY(wininstall)
+  ADD_EXECUTABLE(install_driver osxinstall/install_driver.c)
+  TARGET_LINK_LIBRARIES(install_driver ${PLATFORM_DEPENDENCIES} ${ODBC_INSTLIBS})
+ELSE()
+  IF(APPLE)
+    MESSAGE(STATUS "Configuring to generate PKG package")
+    ADD_SUBDIRECTORY(osxinstall)
+  ENDIF()
+  INSTALL(TARGETS
+          ${LIBRARY_NAME}
+          LIBRARY DESTINATION ${INSTALL_LIBDIR}
+          COMPONENT ODBCLibs)
+
+  INSTALL(FILES
+          ${CMAKE_SOURCE_DIR}/README
+          DESTINATION
+          "${INSTALL_DOCDIR}"
+          COMPONENT Documentation)
+  INSTALL(FILES
+          ${CMAKE_SOURCE_DIR}/COPYING
+          DESTINATION
+          "${INSTALL_LICENSEDIR}"
+          COMPONENT Documentation)
+ENDIF()
+
+# Packaging
+SET(CPACK_PACKAGE_VENDOR "MariaDB Corporation Ab")
+SET(CPACK_PACKAGE_DESCRIPTION "MariaDB Connector/ODBC. ODBC driver library for connecting to MariaDB and MySQL servers")
+IF(NOT SYSTEM_NAME)
+  STRING(TOLOWER ${CMAKE_SYSTEM_NAME} system_name)
+ENDIF()
+IF(PACKAGE_PLATFORM_SUFFIX)
+  SET(CPACK_PACKAGE_FILE_NAME "mariadb-connector-odbc-${CPACK_PACKAGE_VERSION}-${PACKAGE_PLATFORM_SUFFIX}")
+ELSE()
+  SET(CPACK_PACKAGE_FILE_NAME "mariadb-connector-odbc-${CPACK_PACKAGE_VERSION}-${MARIADB_ODBC_VERSION_QUALITY}-${system_name}-${CMAKE_SYSTEM_PROCESSOR}")
+ENDIF()
+MESSAGE(STATUS "Package Name: ${CPACK_PACKAGE_FILE_NAME}")
+SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING")
+SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README")
+SET(CPACK_SOURCE_PACKAGE_FILE_NAME "mariadb-connector-odbc-${CPACK_PACKAGE_VERSION}-${MARIADB_ODBC_VERSION_QUALITY}-src")
+SET(CPACK_PACKAGE_CONTACT "info@mariadb.com")
+SET(CPACK_PACKAGE_VENDOR "MariaDB Corporation AB")
+SET(CPACK_SOURCE_IGNORE_FILES
+        /test/
+        /.git/
+        .gitignore
+        .gitmodules
+        .gitattributes
+        CMakeCache.txt
+        cmake_dist.cmake
+        CPackSourceConfig.cmake
+        CPackConfig.cmake
+        /.build/
+        cmake_install.cmake
+        CTestTestfile.cmake
+        /CMakeFiles/
+        /version_resources/
+        .*vcxproj
+        .*gz$
+        .*zip$
+        .*so$
+        .*so.2
+        .*so.3
+        .*dll$
+        .*a$
+        .*pdb$
+        .*sln$
+        .*sdf$
+        Makefile$
+        /autom4te.cache/
+        /libmariadb/
+        /_CPack_Packages/
+        )
+
+# Build source packages
+IF(GIT_BUILD_SRCPKG OR ODBC_GIT_BUILD_SRCPKG)
+  IF(WIN32)
+    EXECUTE_PROCESS(COMMAND git archive --format=zip --prefix=${CPACK_SOURCE_PACKAGE_FILE_NAME}/ --output=${CPACK_SOURCE_PACKAGE_FILE_NAME}.zip --worktree-attributes -v HEAD)
+  ELSE()
+    EXECUTE_PROCESS(COMMAND git archive ${GIT_BRANCH} --format=zip --prefix=${CPACK_SOURCE_PACKAGE_FILE_NAME}/ --output=${CPACK_SOURCE_PACKAGE_FILE_NAME}.zip -v HEAD)
+    EXECUTE_PROCESS(COMMAND git archive ${GIT_BRANCH} --format=tar --prefix=${CPACK_SOURCE_PACKAGE_FILE_NAME}/ --output=${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar -v HEAD)
+    EXECUTE_PROCESS(COMMAND gzip -9 -f ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar)
+  ENDIF()
+ENDIF()
+
+IF(WIN32)
+  SET(DEFAULT_GENERATOR "ZIP")
+ELSE()
+  SET(DEFAULT_GENERATOR "TGZ")
+ENDIF()
+
+IF(NOT CPACK_GENERATOR)
+  SET(CPACK_GENERATOR "${DEFAULT_GENERATOR}")
+ENDIF()
+IF(NOT CPACK_SOURCE_GENERATOR)
+  SET(CPACK_SOURCE_GENERATOR "${DEFAULT_GENERATOR}")
+ENDIF()
+
+MESSAGE(STATUS "License File: ${CPACK_RESOURCE_FILE_LICENSE}")
+MESSAGE(STATUS "ReadMe File: ${CPACK_PACKAGE_DESCRIPTION_FILE}")
+MESSAGE(STATUS "Source Package Filename: ${CPACK_SOURCE_PACKAGE_FILE_NAME}.${CPACK_SOURCE_GENERATOR}")
 
 # Tests. Checking if we have them. May be not the case if we are building from source package
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
