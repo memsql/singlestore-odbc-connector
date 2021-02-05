@@ -4569,7 +4569,6 @@ SQLRETURN MADB_StmtColumns(MADB_Stmt *Stmt,
   MADB_InitDynamicString(&StmtStr, "", 8192, 1024);
  
   MADB_CLEAR_ERROR(&Stmt->Error);
-  printf("SQL_COLUMNS_ANSI %hhd", Stmt->Connection->IsAnsi);
   if (MADB_DynstrAppend(&StmtStr, MADB_COLUMNS(Stmt)))
   {
       ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);

@@ -147,7 +147,6 @@ SQLRETURN SQL_API SQLConnect(SQLHDBC ConnectionHandle,
     if (!Dbc)
         return SQL_INVALID_HANDLE;
 
-    printf("ISANSI4");
     Dbc->IsAnsi = 1;
 
     return SQLConnectCommon(ConnectionHandle, ServerName, NameLength1,
@@ -218,7 +217,6 @@ SQLRETURN SQL_API SQLDriverConnect(SQLHDBC ConnectionHandle,
 
     MADB_CLEAR_ERROR(&Dbc->Error);
 
-    printf("ISANSI6");
     Dbc->IsAnsi = 1;
 
     MDBUG_C_ENTER(Dbc, "SQLDriverConnect");

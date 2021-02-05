@@ -156,14 +156,12 @@ SQLRETURN MADB_DbcSetAttr(MADB_Dbc *Dbc, SQLINTEGER Attribute, SQLPOINTER ValueP
   case SQL_ATTR_ANSI_APP:
     if (ValuePtr != NULL)
     {
-      printf("ISANSI1");
       Dbc->IsAnsi= 1;
       Dbc->ConnOrSrcCharset= &SourceAnsiCs;
       CopyClientCharset(&SourceAnsiCs, &Dbc->Charset);
     }
     else
     {
-      printf("ISANSI2");
       Dbc->IsAnsi= 0;
     }
     break;
@@ -441,7 +439,6 @@ MADB_Dbc *MADB_DbcInit(MADB_Env *Env)
   if (!(Connection = (MADB_Dbc *)MADB_CALLOC(sizeof(MADB_Dbc))))
     goto cleanup;
 
-    printf("ISANSI3");
   Connection->IsAnsi = 1;
   Connection->AutoCommit= 4;
   Connection->Environment= Env;

@@ -191,7 +191,6 @@ SQLRETURN SQL_API SQLConnectW(SQLHDBC ConnectionHandle,
 
     MADB_CLEAR_ERROR(&Dbc->Error);
 
-    printf("ISANSI5");
     Dbc->IsAnsi = 0;
     /* Convert parameters to Cp */
     if (ServerName)
@@ -283,7 +282,6 @@ SQLRETURN SQL_API SQLDriverConnectW(SQLHDBC      ConnectionHandle,
 
     MADB_CLEAR_ERROR(&Dbc->Error);
 
-    printf("ISANSI7");
     Dbc->IsAnsi = 0;
 
     InConnStrA= MADB_ConvertFromWChar(InConnectionString, StringLength1, &InStrAOctLen, &utf8, NULL);
