@@ -101,7 +101,7 @@ jobs:
       BUILD_TYPE: << parameters.build_type >>
       MEMSQL_IMAGE: << parameters.memsql_image >>
       MEMSQL_PASSWORD: << parameters.memsql_password >>
-      TEST_DRIVER: "MariaDB ODBC 3.1 Driver"
+      TEST_DRIVER: "SingleStore ODBC 0.1-beta Driver"
       TEST_DSN: singlestore_test
       TEST_SERVER: singlestore.test.com
       TEST_SCHEMA: odbc_test
@@ -138,7 +138,7 @@ jobs:
     environment:
       IMAGE_NAME: << parameters.os_version >>
       BUILD_TYPE: << parameters.build_type >>
-      TEST_DRIVER: "MariaDB ODBC 3.1 Driver"
+      TEST_DRIVER: "SingleStore ODBC 0.1-beta Driver"
       TEST_DSN: singlestore_test
       TEST_SCHEMA: odbc_test
       CONTINUOUS_INTEGRATION: true
