@@ -24,7 +24,8 @@ set -e
 rm -rf ./ROOT
 
 mkdir -p ./ROOT/${LibPath}/bin
-cp $1/libmaodbc.dylib ./ROOT/${LibPath}/
+cp $1/libmaodbcw.dylib ./ROOT/${LibPath}/
+cp $1/libmaodbca.dylib ./ROOT/${LibPath}/
 cp ./install_driver ./ROOT/${LibPath}/bin
 
 if [ $2 ]; then
