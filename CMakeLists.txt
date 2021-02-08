@@ -539,6 +539,7 @@ IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
     ADD_SUBDIRECTORY(test)
     IF(NOT WIN32)
       SET(drivers_options)
+      SET(dsn_name "maodbc_test")
       SET_VALUE(TEST_DSN "maodbc_test")
       SET_VALUE(TEST_PORT "5506")
       SET_VALUE(TEST_SERVER "127.0.0.1")
@@ -558,13 +559,13 @@ IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
         SET(TEST_DRIVER "MariaDB ODBC 3.1 ${DRIVER_TYPE} Driver")
         SET(TEST_DESCRIPTION "MariaDB ODBC ${DRIVER_TYPE} Connector")
 
-        MESSAGE(STATUS "Configuring Test Driver: ${TEST_DRIVER}, Test DSN: ${TEST_DSN}_${CONNECTOR_DRIVER_TYPE_SHORT}, tcp://${TEST_UID}@${TEST_SERVER}:${TEST_PORT}/${TEST_SCHEMA} socket: ${TEST_SOCKET}")
+        MESSAGE(STATUS "Configuring Test Driver: ${TEST_DRIVER}, Test DSN: ${dsn_name}_${CONNECTOR_DRIVER_TYPE_SHORT}, tcp://${TEST_UID}@${TEST_SERVER}:${TEST_PORT}/${TEST_SCHEMA} socket: ${TEST_SOCKET}")
 
         list(APPEND drivers_options
                 -DTEST_DRIVER${DRIVERS_COUNT}=${TEST_DRIVER}
                 -DDRIVER_LIB_LOCATION${DRIVERS_COUNT}=$<TARGET_FILE:maodbc${CONNECTOR_DRIVER_TYPE_SHORT}>
                 -DDRIVER_LIB_DESCRIPTION${DRIVERS_COUNT}=${TEST_DESCRIPTION}
-                -DTEST_DSN${DRIVERS_COUNT}=${TEST_DSN}_${CONNECTOR_DRIVER_TYPE_SHORT}
+                -DTEST_DSN${DRIVERS_COUNT}=${dsn_name}_${CONNECTOR_DRIVER_TYPE_SHORT}
         )
 
       endforeach()
