@@ -91,6 +91,10 @@ jobs:
         type: string
       machine_class:
         type: string
+      test_dsn:
+        type: string
+      test_driver:
+        type: string
       memsql_image:
         type: string
       build_type:
@@ -101,8 +105,8 @@ jobs:
       BUILD_TYPE: << parameters.build_type >>
       MEMSQL_IMAGE: << parameters.memsql_image >>
       MEMSQL_PASSWORD: << parameters.memsql_password >>
-      TEST_DRIVER: "MariaDB ODBC 3.1 Driver"
-      TEST_DSN: singlestore_test
+      TEST_DRIVER: << parameters.test_driver >>
+      TEST_DSN: << parameters.test_dsn >>
       TEST_SERVER: singlestore.test.com
       TEST_SCHEMA: odbc_test
       TEST_UID: root
@@ -162,17 +166,36 @@ jobs:
 workflows:
   test:
     jobs:
-#      - build-ubuntu:
-#          matrix:
-#            parameters:
-#              machine_class:
-#                - medium
-#              memsql_password:
-#                - ""
-#              build_type:
-#                - RelWithDebInfo
-#              memsql_image:
-#                - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
+      - build-ubuntu:
+          matrix:
+            parameters:
+              machine_class:
+                - medium
+              memsql_password:
+                - ""
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_a
+              test_driver:
+                - MariaDB ODBC 3.1 ANSI Driver
+              memsql_image:
+                - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
+      - build-ubuntu:
+          matrix:
+            parameters:
+              machine_class:
+                - medium
+              memsql_password:
+                - ""
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_w
+              test_driver:
+                - MariaDB ODBC 3.1 Unicode Driver
+              memsql_image:
+                - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
 #      - build-ubuntu:
 #          matrix:
 #            parameters:
