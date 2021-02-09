@@ -205,7 +205,13 @@ typedef struct st_ma_odbc_test {
   int   (*my_test)();
   char  *title;
   int   test_type;
+  int   required_driver_type;
 } MA_ODBC_TESTS;
+
+#define ADD_TEST_NAMED(test, name)  { test, name, NORMAL  , -1 },
+#define ADD_TEST(name)              { name, #name, NORMAL  , -1 },
+#define ADD_TEST_UNICODE(name)      { name, #name, NORMAL  ,  1 },
+#define ADD_TEST_ANSI(name)         { name, #name, NORMAL  ,  0 },
 
 #define ODBC_TEST(a)\
 int a()

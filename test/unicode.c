@@ -1534,34 +1534,34 @@ ODBC_TEST(t_odbc253)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {test_CONO1,        "test_CONO1",         NORMAL},
-  {test_count,        "test_count",         NORMAL},
-  {sqlconnect,        "sqlconnect",         NORMAL},
-  {sqlprepare,        "sqlprepare",         NORMAL},
-  {sqlprepare_ansi,   "sqlprepare_ansi",    NORMAL},
-  {sqlchar,           "sqlchar",            NORMAL},
-  {sqldriverconnect,  "sqldriverconnect",   NORMAL},
-  {sqlnativesql,      "sqlnativesql",       NORMAL},
-  {sqlsetcursorname,  "sqlsetcursorname",   NORMAL},
-  {sqlgetcursorname,  "sqlgetcursorname",   NORMAL},
-  {sqlcolattribute,   "sqlcolattribute",    NORMAL},
-  {sqldescribecol,    "sqldescribecol",     NORMAL},
-  {sqlgetconnectattr, "sqlgetconnectattr",  NORMAL},
-  {sqlgetdiagrec,     "sqlgetdiagrec",      NORMAL},
-  {sqlgetdiagfield,   "sqlgetdiagfield",    NORMAL},
-  {sqlcolumns,        "sqlcolumns",         NORMAL},
-  {sqltables,         "sqltables",          NORMAL},
-  {sqlspecialcolumns, "sqlspecialcolumns",  NORMAL},
-  {sqlprimarykeys,    "sqlprimarykeys",     NORMAL},
-  {sqlstatistics,     "sqlstatistics",      NORMAL},
-  {t_bug32161,        "t_bug32161",         NORMAL},
-  {t_bug34672,        "t_bug34672",         NORMAL},
-  {t_bug28168,        "t_bug28168",         NORMAL},
-  {t_bug14363601,     "t_bug14363601",      NORMAL},
-  {t_odbc19,          "test_issue_odbc19",  NORMAL},
-  {t_odbc72,          "odbc72_surrogate_pairs",  NORMAL},
-  {t_odbc203,         "t_odbc203",          NORMAL},
-  {t_odbc253,         "t_odbc253_empty_str_crash", NORMAL},
+    ADD_TEST(test_CONO1)
+    ADD_TEST(test_count)
+    ADD_TEST(sqlconnect)
+    ADD_TEST(sqlprepare)
+    ADD_TEST(sqlprepare_ansi)
+    ADD_TEST(sqlchar)
+    ADD_TEST(sqldriverconnect)
+    ADD_TEST(sqlnativesql)
+    ADD_TEST(sqlsetcursorname)
+    ADD_TEST(sqlgetcursorname)
+    ADD_TEST(sqlcolattribute)
+    ADD_TEST(sqldescribecol)
+    ADD_TEST(sqlgetconnectattr)
+    ADD_TEST(sqlgetdiagrec)
+    ADD_TEST(sqlgetdiagfield)
+    ADD_TEST(sqlcolumns)
+    ADD_TEST(sqltables)
+    ADD_TEST(sqlspecialcolumns)
+    ADD_TEST(sqlprimarykeys)
+    ADD_TEST(sqlstatistics)
+    ADD_TEST_UNICODE(t_bug32161)
+    ADD_TEST(t_bug34672)
+    ADD_TEST(t_bug28168)
+    ADD_TEST(t_bug14363601)
+    ADD_TEST_NAMED(t_odbc19, "test_issue_odbc19")
+    ADD_TEST_NAMED(t_odbc72, "odbc72_surrogate_pairs")
+    ADD_TEST(t_odbc203)
+    ADD_TEST_NAMED(t_odbc253, "t_odbc253_empty_str_crash")
   {NULL, NULL}
 };
 
