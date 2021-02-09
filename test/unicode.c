@@ -1534,35 +1534,35 @@ ODBC_TEST(t_odbc253)
 
 MA_ODBC_TESTS my_tests[]=
 {
-    ADD_TEST(test_CONO1)
-    ADD_TEST(test_count)
-    ADD_TEST(sqlconnect)
-    ADD_TEST(sqlprepare)
-    ADD_TEST(sqlprepare_ansi)
-    ADD_TEST(sqlchar)
-    ADD_TEST(sqldriverconnect)
-    ADD_TEST(sqlnativesql)
-    ADD_TEST(sqlsetcursorname)
-    ADD_TEST(sqlgetcursorname)
-    ADD_TEST(sqlcolattribute)
-    ADD_TEST(sqldescribecol)
-    ADD_TEST(sqlgetconnectattr)
-    ADD_TEST(sqlgetdiagrec)
-    ADD_TEST(sqlgetdiagfield)
-    ADD_TEST(sqlcolumns)
-    ADD_TEST(sqltables)
-    ADD_TEST(sqlspecialcolumns)
-    ADD_TEST(sqlprimarykeys)
-    ADD_TEST(sqlstatistics)
-    ADD_TEST_UNICODE(t_bug32161)
-    ADD_TEST(t_bug34672)
-    ADD_TEST(t_bug28168)
-    ADD_TEST(t_bug14363601)
-    ADD_TEST_NAMED(t_odbc19, "test_issue_odbc19")
-    ADD_TEST_NAMED(t_odbc72, "odbc72_surrogate_pairs")
-    ADD_TEST(t_odbc203)
-    ADD_TEST_NAMED(t_odbc253, "t_odbc253_empty_str_crash")
-  {NULL, NULL}
+    {test_CONO1,        "test_CONO1",         NORMAL, ALL_DRIVERS},
+    {test_count,        "test_count",         NORMAL, ALL_DRIVERS},
+    {sqlconnect,        "sqlconnect",         NORMAL, ALL_DRIVERS},
+    {sqlprepare,        "sqlprepare",         NORMAL, ALL_DRIVERS},
+    {sqlprepare_ansi,   "sqlprepare_ansi",    NORMAL, ALL_DRIVERS},
+    {sqlchar,           "sqlchar",            NORMAL, ALL_DRIVERS},
+    {sqldriverconnect,  "sqldriverconnect",   NORMAL, ALL_DRIVERS},
+    {sqlnativesql,      "sqlnativesql",       NORMAL, ALL_DRIVERS},
+    {sqlsetcursorname,  "sqlsetcursorname",   NORMAL, ALL_DRIVERS},
+    {sqlgetcursorname,  "sqlgetcursorname",   NORMAL, ALL_DRIVERS},
+    {sqlcolattribute,   "sqlcolattribute",    NORMAL, ALL_DRIVERS},
+    {sqldescribecol,    "sqldescribecol",     NORMAL, ALL_DRIVERS},
+    {sqlgetconnectattr, "sqlgetconnectattr",  NORMAL, ALL_DRIVERS},
+    {sqlgetdiagrec,     "sqlgetdiagrec",      NORMAL, ALL_DRIVERS},
+    {sqlgetdiagfield,   "sqlgetdiagfield",    NORMAL, ALL_DRIVERS},
+    {sqlcolumns,        "sqlcolumns",         NORMAL, ALL_DRIVERS},
+    {sqltables,         "sqltables",          NORMAL, ALL_DRIVERS},
+    {sqlspecialcolumns, "sqlspecialcolumns",  NORMAL, ALL_DRIVERS},
+    {sqlprimarykeys,    "sqlprimarykeys",     NORMAL, ALL_DRIVERS},
+    {sqlstatistics,     "sqlstatistics",      NORMAL, ALL_DRIVERS},
+    {t_bug32161,        "t_bug32161",         NORMAL, UNICODE_DRIVER},
+    {t_bug34672,        "t_bug34672",         NORMAL, ALL_DRIVERS},
+    {t_bug28168,        "t_bug28168",         NORMAL, ALL_DRIVERS},
+    {t_bug14363601,     "t_bug14363601",      NORMAL, ALL_DRIVERS},
+    {t_odbc19,          "test_issue_odbc19",  NORMAL, ALL_DRIVERS},
+    {t_odbc72,          "odbc72_surrogate_pairs",  NORMAL, ALL_DRIVERS},
+    {t_odbc203,         "t_odbc203",          NORMAL, ALL_DRIVERS},
+    {t_odbc253,         "t_odbc253_empty_str_crash", NORMAL, ALL_DRIVERS},
+    {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
 

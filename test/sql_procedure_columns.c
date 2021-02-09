@@ -327,11 +327,11 @@ ODBC_TEST(t_procedurecolumns2A) {
 
 MA_ODBC_TESTS my_tests[] =
         {
-                {t_procedurecolumns3U, "t_procedurecolumns3U", NORMAL},
-                {t_procedurecolumns3A, "t_procedurecolumns3A", NORMAL},
-                {t_procedurecolumns2U, "t_procedurecolumns2U", NORMAL},
-                {t_procedurecolumns2A, "t_procedurecolumns2A", NORMAL},
-                {NULL, NULL, NORMAL}
+                {t_procedurecolumns3U, "t_procedurecolumns3U", NORMAL, UNICODE_DRIVER},
+                {t_procedurecolumns3A, "t_procedurecolumns3A", NORMAL, ANSI_DRIVER},
+                {t_procedurecolumns2U, "t_procedurecolumns2U", NORMAL, UNICODE_DRIVER},
+                {t_procedurecolumns2A, "t_procedurecolumns2A", NORMAL, ANSI_DRIVER},
+                {NULL, NULL, NORMAL, ALL_DRIVERS}
         };
 
 

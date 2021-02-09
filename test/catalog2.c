@@ -1364,27 +1364,27 @@ ODBC_TEST(odbc231)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {t_bug37621, "t_bug37621", NORMAL},
-  {t_bug34272, "t_bug34272", NORMAL},
-  {t_bug36441, "t_bug36441", NORMAL},
-  {t_bug53235, "t_bug53235", NORMAL},
-  {t_bug50195, "t_bug50195", NORMAL},
-  {t_sqlprocedurecolumns, "t_sqlprocedurecolumns", NORMAL},
-  {t_bug57182, "t_bug57182", NORMAL},
-  {t_bug55870, "t_bug55870", NORMAL},
-  {t_bug31067, "t_bug31067", NORMAL},
-  {bug12824839,               "bug12824839",               NORMAL},
-  {sqlcolumns_nodbselected,   "sqlcolumns_nodbselected",   NORMAL},
-  {t_bug14085211_part1,       "t_bug14085211_part1",       NORMAL},
-  {t_sqlcolumns_after_select, "t_sqlcolumns_after_select", NORMAL},
-  {odbc38,  "odbc32_odbc2_odbc3_data_types", NORMAL},
-  {odbc51,  "odbc51_wchar_emptystring",      NORMAL},
-  {odbc131, "odbc131_columns_data_len",      NORMAL},
-  {odbc119, "odbc119_sqlstats_orderby",      NORMAL},
-  {odbc185, "odbc185_sqlcolumns_wtypes",     NORMAL},
-  {odbc152, "odbc152_sqlcolumns_sql_data_type",   NORMAL},
-  {odbc231, "odbc231_sqlcolumns_longtext",   NORMAL},
-  {NULL, NULL}
+  {t_bug37621, "t_bug37621", NORMAL, ALL_DRIVERS},
+  {t_bug34272, "t_bug34272", NORMAL, ALL_DRIVERS},
+  {t_bug36441, "t_bug36441", NORMAL, ALL_DRIVERS},
+  {t_bug53235, "t_bug53235", NORMAL, ALL_DRIVERS},
+  {t_bug50195, "t_bug50195", NORMAL, ALL_DRIVERS},
+  {t_sqlprocedurecolumns, "t_sqlprocedurecolumns", NORMAL, ALL_DRIVERS},
+  {t_bug57182, "t_bug57182", NORMAL, ALL_DRIVERS},
+  {t_bug55870, "t_bug55870", NORMAL, ALL_DRIVERS},
+  {t_bug31067, "t_bug31067", NORMAL, ALL_DRIVERS},
+  {bug12824839,               "bug12824839",               NORMAL, ALL_DRIVERS},
+  {sqlcolumns_nodbselected,   "sqlcolumns_nodbselected",   NORMAL, ALL_DRIVERS},
+  {t_bug14085211_part1,       "t_bug14085211_part1",       NORMAL, ALL_DRIVERS},
+  {t_sqlcolumns_after_select, "t_sqlcolumns_after_select", NORMAL, ALL_DRIVERS},
+  {odbc38,  "odbc32_odbc2_odbc3_data_types", NORMAL, ALL_DRIVERS},
+  {odbc51,  "odbc51_wchar_emptystring",      NORMAL, ALL_DRIVERS},
+  {odbc131, "odbc131_columns_data_len",      NORMAL, ALL_DRIVERS},
+  {odbc119, "odbc119_sqlstats_orderby",      NORMAL, ALL_DRIVERS},
+  {odbc185, "odbc185_sqlcolumns_wtypes",     NORMAL, ALL_DRIVERS},
+  {odbc152, "odbc152_sqlcolumns_sql_data_type",   NORMAL, ALL_DRIVERS},
+  {odbc231, "odbc231_sqlcolumns_longtext",   NORMAL, ALL_DRIVERS},
+  {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
 

@@ -208,11 +208,11 @@ typedef struct st_ma_odbc_test {
   int   required_driver_type;
 } MA_ODBC_TESTS;
 
-#define ADD_TEST_NAMED(test, name)  { test, name, NORMAL  , -1 },
-#define ADD_TEST(name)              { name, #name, NORMAL  , -1 },
-#define ADD_TEST_UNICODE(name)      { name, #name, NORMAL  ,  1 },
-#define ADD_TEST_ANSI(name)         { name, #name, NORMAL  ,  0 },
+#define ALL_DRIVERS -1
+#define ANSI_DRIVER 0
+#define UNICODE_DRIVER 1
 
+int unicode_driver = -1;
 #define ODBC_TEST(a)\
 int a()
 
@@ -901,6 +901,8 @@ SQLHANDLE DoConnect(SQLHANDLE Connection, BOOL DoWConnect,
   char        DSNString[1024];
   char        DSNOut[1024];
   SQLSMALLINT Length;
+  SQLRETURN   rc;
+  SQLCHAR     driver_name[128];
 
   /* my_options |= 4; */ /* To enable debug */
   if (UseDsnOnly != FALSE)
@@ -943,6 +945,17 @@ SQLHANDLE DoConnect(SQLHANDLE Connection, BOOL DoWConnect,
     diag("Could not create Stmt handle. Connection: %x", Connection);
     return NULL;
   }
+
+    if (unicode_driver < 0)
+    {
+        rc= SQLGetInfo(Connection, SQL_DRIVER_NAME, driver_name, sizeof(driver_name), NULL);
+
+        if (SQL_SUCCEEDED(rc))
+        {
+            /* ANSI driver file name contains 5a.{dll|so} */
+            unicode_driver= strstr((char*)driver_name, "a.") == NULL ? 1 : 0;
+        }
+    }
 
   return stmt;
 }
@@ -1077,7 +1090,15 @@ int connect_and_run_tests(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
         buff_before_test= buff_pos;
 
         all_tests++;
-        rc= tests->my_test();
+        if (tests->required_driver_type > -1 && tests->required_driver_type != unicode_driver) \
+        { \
+            printf("ok %d # SKIP This testcase is designed for %s drivers only\n", i+1, \
+                unicode_driver == 0 ? "Unicode" : "ANSI" ); \
+            rc = 1;
+        } \
+        else {
+            rc= tests->my_test();
+        }
         comment[0] = '\0';
         if (rc!= SKIP && !test_expected_to_succeed(tests->test_type, NoSsps))
         {

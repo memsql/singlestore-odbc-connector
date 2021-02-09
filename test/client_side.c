@@ -1341,26 +1341,26 @@ ODBC_TEST(client_side_ipd)
 
 MA_ODBC_TESTS my_tests[] =
 {
-    {client_side_show,                      "client_side_show", CSPS_OK | SSPS_FAIL},
-    {client_side_prepare,                   "client_side_prepare", NORMAL},
-    {client_side_static_cursor,             "client_side_static_cursor", NORMAL},
-    {client_side_dynamic_cursor,            "client_side_dynamic_cursor", NORMAL},
-    {client_side_forward_only_cursor,       "client_side_forward_only_cursor", NORMAL},
-    {client_side_multiparam,                "client_side_multiparam", CSPS_OK | SSPS_FAIL},
-    {client_side_multirow,                  "client_side_multirow", NORMAL},
-    {client_side_multirow_columnwise,       "client_side_multirow_columnwise", NORMAL},
-    {client_side_get_data,                  "client_side_get_data", NORMAL},
-    {client_side_get_data_buffered,         "client_side_get_data_buffered", NORMAL},
-    {client_side_get_data_many_types,       "client_side_get_data_many_types", NORMAL},
-    {client_side_put_data,                  "client_side_put_data", CSPS_OK | SSPS_FAIL},
-    {client_side_put_data_non_char,         "client_side_put_data_non_char", CSPS_OK | SSPS_FAIL},
-    {client_side_put_data_multiple,         "client_side_put_data_multiple", NORMAL}, // not yet supported
-    {client_side_bulk_add,                  "client_side_bulk_add", NORMAL},
-    {client_side_set_pos_del,               "client_side_set_pos_del", NORMAL},
-    {client_side_set_pos_del_multiple_rows, "client_side_set_pos_del_multiple_rows", NORMAL},
-    {client_side_multistatements,           "client_side_multistatements", NORMAL},
-    {client_side_ipd, "client_side_ipd", NORMAL},
-    {NULL, NULL}
+    {client_side_show,                      "client_side_show", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
+    {client_side_prepare,                   "client_side_prepare", NORMAL, ALL_DRIVERS},
+    {client_side_static_cursor,             "client_side_static_cursor", NORMAL, ALL_DRIVERS},
+    {client_side_dynamic_cursor,            "client_side_dynamic_cursor", NORMAL, ALL_DRIVERS},
+    {client_side_forward_only_cursor,       "client_side_forward_only_cursor", NORMAL, ALL_DRIVERS},
+    {client_side_multiparam,                "client_side_multiparam", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
+    {client_side_multirow,                  "client_side_multirow", NORMAL, ALL_DRIVERS},
+    {client_side_multirow_columnwise,       "client_side_multirow_columnwise", NORMAL, ALL_DRIVERS},
+    {client_side_get_data,                  "client_side_get_data", NORMAL, ALL_DRIVERS},
+    {client_side_get_data_buffered,         "client_side_get_data_buffered", NORMAL, ALL_DRIVERS},
+    {client_side_get_data_many_types,       "client_side_get_data_many_types", NORMAL, ALL_DRIVERS},
+    {client_side_put_data,                  "client_side_put_data", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
+    {client_side_put_data_non_char,         "client_side_put_data_non_char", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
+    {client_side_put_data_multiple,         "client_side_put_data_multiple", NORMAL, ALL_DRIVERS}, // not yet supported
+    {client_side_bulk_add,                  "client_side_bulk_add", NORMAL, ALL_DRIVERS},
+    {client_side_set_pos_del,               "client_side_set_pos_del", NORMAL, ALL_DRIVERS},
+    {client_side_set_pos_del_multiple_rows, "client_side_set_pos_del_multiple_rows", NORMAL, ALL_DRIVERS},
+    {client_side_multistatements,           "client_side_multistatements", NORMAL, ALL_DRIVERS},
+    {client_side_ipd, "client_side_ipd", NORMAL, ALL_DRIVERS},
+    {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
 int main(int argc, char **argv)

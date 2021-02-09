@@ -196,10 +196,10 @@ ODBC_TEST(t_bug39878)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {t_use_result, "t_use_result"},
-  {t_bug4657, "t_bug4657"},
-  {t_bug39878, "t_bug39878"},
-  {NULL, NULL}
+  {t_use_result, "t_use_result", ALL_DRIVERS},
+  {t_bug4657, "t_bug4657", ALL_DRIVERS},
+  {t_bug39878, "t_bug39878", ALL_DRIVERS},
+  {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
 int main(int argc, char **argv)

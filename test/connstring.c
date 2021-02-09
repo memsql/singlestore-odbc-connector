@@ -575,17 +575,17 @@ ODBC_TEST(odbc_290)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {connstring_test,       "connstring_parsing_test", NORMAL},
-  {options_test,          "options_test",            NORMAL},
-  {aliases_tests,         "aliases_tests",           NORMAL},
-  {dependent_fields,      "dependent_fields_tests",  NORMAL},
-  {driver_vs_dsn,         "driver_vs_dsn",           NORMAL},
-  {odbc_188,              "odbc188_nt_pairs",        NORMAL},
-  {odbc_229,              "odbc229_usecnf",          NORMAL},
-  {odbc_228,              "odbc228_tlsversion",      NORMAL},
-  {odbc_284,              "odbc284_escapebrace",     NORMAL},
-  {odbc_290,              "odbc290_forwardonly",     NORMAL},
-  {NULL, NULL, 0}
+  {connstring_test,       "connstring_parsing_test", NORMAL, ALL_DRIVERS},
+  {options_test,          "options_test",            NORMAL, ALL_DRIVERS},
+  {aliases_tests,         "aliases_tests",           NORMAL, ALL_DRIVERS},
+  {dependent_fields,      "dependent_fields_tests",  NORMAL, ALL_DRIVERS},
+  {driver_vs_dsn,         "driver_vs_dsn",           NORMAL, ALL_DRIVERS},
+  {odbc_188,              "odbc188_nt_pairs",        NORMAL, ALL_DRIVERS},
+  {odbc_229,              "odbc229_usecnf",          NORMAL, ALL_DRIVERS},
+  {odbc_228,              "odbc228_tlsversion",      NORMAL, ALL_DRIVERS},
+  {odbc_284,              "odbc284_escapebrace",     NORMAL, ALL_DRIVERS},
+  {odbc_290,              "odbc290_forwardonly",     NORMAL, ALL_DRIVERS},
+  {NULL, NULL, 0, ALL_DRIVERS}
 };
 
 

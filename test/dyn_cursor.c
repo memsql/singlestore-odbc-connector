@@ -714,14 +714,14 @@ ODBC_TEST(my_dynamic_cursor)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {my_dynamic_pos_cursor, "my_dynamic_pos_cursor",   NORMAL},
-  {my_dynamic_pos_cursor1, "my_dynamic_pos_cursor1", NORMAL},
-  {my_position, "my_position",                       TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
-  { my_position1, "my_position1",                    TO_FIX }, // TODO(PLAT-5080): positioned updates are not yet supported.
-  { my_zero_irow_update, "my_zero_irow_update",      TO_FIX }, // TODO(PLAT-5080): positioned updates are not yet supported.
-  {my_zero_irow_delete, "my_zero_irow_delete",       NORMAL},
-  {my_dynamic_cursor, "my_dynamic_cursor",           NORMAL},
-  {NULL, NULL}
+  {my_dynamic_pos_cursor, "my_dynamic_pos_cursor",   NORMAL, ALL_DRIVERS},
+  {my_dynamic_pos_cursor1, "my_dynamic_pos_cursor1", NORMAL, ALL_DRIVERS},
+  {my_position, "my_position",                       TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  { my_position1, "my_position1",                    TO_FIX , ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  { my_zero_irow_update, "my_zero_irow_update",      TO_FIX , ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {my_zero_irow_delete, "my_zero_irow_delete",       NORMAL, ALL_DRIVERS},
+  {my_dynamic_cursor, "my_dynamic_cursor",           NORMAL, ALL_DRIVERS},
+  {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
 int main(int argc, char **argv)

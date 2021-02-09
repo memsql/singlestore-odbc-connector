@@ -288,11 +288,11 @@ ODBC_TEST(t_columns2A) {
 
 MA_ODBC_TESTS my_tests[] =
 {
-    {t_columns3U, "t_columns3U", NORMAL},
-    {t_columns3A, "t_columns3A", NORMAL},
-    {t_columns2U, "t_columns2U", NORMAL},
-    {t_columns2A, "t_columns2A", NORMAL},
-    {NULL, NULL, NORMAL}
+    {t_columns3U, "t_columns3U", NORMAL, UNICODE_DRIVER},
+    {t_columns3A, "t_columns3A", NORMAL, ANSI_DRIVER},
+    {t_columns2U, "t_columns2U", NORMAL, UNICODE_DRIVER},
+    {t_columns2A, "t_columns2A", NORMAL, ANSI_DRIVER},
+    {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
 

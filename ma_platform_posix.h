@@ -42,7 +42,20 @@
 
 //#define HAVE_UNICODE
 
-#define MADB_DRIVER_NAME "libmaodbc.so"
+#ifdef MYODBC_UNICODEDRIVER
+    # ifdef WIN32
+        #define MADB_DRIVER_NAME "maodbcw.dll"
+    # else
+        #define MADB_DRIVER_NAME "libmaodbc8w.so"
+    # endif
+#else
+    # ifdef WIN32
+        #define MADB_DRIVER_NAME "maodbca.dll"
+    # else
+        #define MADB_DRIVER_NAME "libmaodbca.so"
+    # endif
+#endif
+
 #define CP_UTF8          65001
 
 #define _strdup strdup

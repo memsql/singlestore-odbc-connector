@@ -157,11 +157,11 @@ ODBC_TEST(t_odbc161)
 MA_ODBC_TESTS my_tests[]=
 {
 #ifdef WE_HAVE_SETUPLIB
-  {ti_bug30840, "bug30840_interactive", NORMAL},
-  {ti_dialogs,  "ti_dialogs",           NORMAL},
-  {t_odbc161,  "t_odbc161_file_dsn",           NORMAL},
+  {ti_bug30840, "bug30840_interactive", NORMAL, ALL_DRIVERS},
+  {ti_dialogs,  "ti_dialogs",           NORMAL, ALL_DRIVERS},
+  {t_odbc161,  "t_odbc161_file_dsn",           NORMAL, ALL_DRIVERS},
 #endif
-  {NULL, NULL, 0}
+  {NULL, NULL, 0, ALL_DRIVERS}
 };
 
 int main(int argc, char **argv)

@@ -636,23 +636,23 @@ ODBC_TEST(t_odbc219)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {test_multi_statements, "test_multi_statements", NORMAL},
-  {test_multi_on_off, "test_multi_on_off", NORMAL},
-  {test_params, "test_params", NORMAL},
-  {test_params_last_count_smaller, "test_params_last_count_smaller", NORMAL},
-  {t_odbc_16, "test_odbc_16", CSPS_OK | SSPS_FAIL},
-  {test_semicolon, "test_semicolon_in_string", NORMAL},
-  {t_odbc74, "t_odbc74and_odbc97", NORMAL},
-  {t_odbc95, "t_odbc95", NORMAL},
-  {t_odbc126, "t_odbc126", NORMAL},
-  {diff_column_binding, "diff_column_binding", NORMAL},
-  {t_odbc159, "t_odbc159", NORMAL},
+  {test_multi_statements, "test_multi_statements", NORMAL, ALL_DRIVERS},
+  {test_multi_on_off, "test_multi_on_off", NORMAL, ALL_DRIVERS},
+  {test_params, "test_params", NORMAL, ALL_DRIVERS},
+  {test_params_last_count_smaller, "test_params_last_count_smaller", NORMAL, ALL_DRIVERS},
+  {t_odbc_16, "test_odbc_16", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
+  {test_semicolon, "test_semicolon_in_string", NORMAL, ALL_DRIVERS},
+  {t_odbc74, "t_odbc74and_odbc97", NORMAL, ALL_DRIVERS},
+  {t_odbc95, "t_odbc95", NORMAL, ALL_DRIVERS},
+  {t_odbc126, "t_odbc126", NORMAL, ALL_DRIVERS},
+  {diff_column_binding, "diff_column_binding", NORMAL, ALL_DRIVERS},
+  {t_odbc159, "t_odbc159", NORMAL, ALL_DRIVERS},
   // Currently, our engine does not report the sum of affected rows in the stored procedure, so the following test breaks.
   // Leaving it for the future because we may forget otherwise.
   // TODO(PLAT-5027): file a task to report the sum of affected rows in a stored procedure.
-  {t_odbc177, "t_odbc177", KNOWN_FAILURE},
-  {t_odbc169, "t_odbc169", NORMAL},
-  {t_odbc219, "t_odbc219", NORMAL},
+  {t_odbc177, "t_odbc177", KNOWN_FAILURE, ALL_DRIVERS},
+  {t_odbc169, "t_odbc169", NORMAL, ALL_DRIVERS},
+  {t_odbc219, "t_odbc219", NORMAL, ALL_DRIVERS},
   {NULL, NULL}
 };
 

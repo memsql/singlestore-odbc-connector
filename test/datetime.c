@@ -1524,32 +1524,32 @@ ODBC_TEST(t_odbc199_time2timestamp)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {my_ts,         "my_ts",       NORMAL},
-  {t_tstotime,    "t_tstotime",  NORMAL},
-  {t_tstotime1,   "t_tstotime1", NORMAL},
-  {t_bug25846,    "t_bug25846",  NORMAL},
-  {t_time,        "t_time",      NORMAL},
-  {t_time1,       "t_time1",     NORMAL},
-  {t_bug12520,    "t_bug12520",  NORMAL},
-  {t_bug15773,    "t_bug15773",  NORMAL},
-  {t_bug9927,     "t_bug9927",   NORMAL},
-  {t_bug30081,    "t_bug30081",  NORMAL},
-  {t_datecolumns, "t_datecolumns", NORMAL},
-  {t_bug14414,    "t_bug14414",  NORMAL},
-  {t_bug30939,    "t_bug30939",  NORMAL},
-  {t_bug31009,    "t_bug31009",  NORMAL},
-  {t_bug37342,    "t_bug37342",  NORMAL},
-  {t_bug60646,    "t_bug60646",  NORMAL},
-  {t_bug60648,    "t_bug60648",  NORMAL},
-  {t_b13975271,   "t_b13975271", NORMAL},
-  {t_odbc82,      "t_odbc82_zero_time_vals", NORMAL},
-  {t_odbc70,      "t_odbc70_zero_datetime_vals", NORMAL},
-  {t_17613161,    "t_17613161",  CSPS_FAIL | SSPS_OK}, // TODO(PLAT-5085): interval data type is not supported
-  {t_bug67793,    "t_bug67793",  NORMAL},
-  {t_odbc138,     "t_odbc138_dateadd_negative", NORMAL},
-  {t_odbc148,     "t_odbc148_datatypes_values_len", NORMAL},
-  { t_odbc199_time2timestamp, "t_odbc199_time2timestamp", NORMAL},
-  {NULL, NULL}
+  {my_ts,         "my_ts",       NORMAL, ALL_DRIVERS},
+  {t_tstotime,    "t_tstotime",  NORMAL, ALL_DRIVERS},
+  {t_tstotime1,   "t_tstotime1", NORMAL, ALL_DRIVERS},
+  {t_bug25846,    "t_bug25846",  NORMAL, ALL_DRIVERS},
+  {t_time,        "t_time",      NORMAL, ALL_DRIVERS},
+  {t_time1,       "t_time1",     NORMAL, ALL_DRIVERS},
+  {t_bug12520,    "t_bug12520",  NORMAL, ALL_DRIVERS},
+  {t_bug15773,    "t_bug15773",  NORMAL, ALL_DRIVERS},
+  {t_bug9927,     "t_bug9927",   NORMAL, ALL_DRIVERS},
+  {t_bug30081,    "t_bug30081",  NORMAL, ALL_DRIVERS},
+  {t_datecolumns, "t_datecolumns", NORMAL, ALL_DRIVERS},
+  {t_bug14414,    "t_bug14414",  NORMAL, ALL_DRIVERS},
+  {t_bug30939,    "t_bug30939",  NORMAL, ALL_DRIVERS},
+  {t_bug31009,    "t_bug31009",  NORMAL, ALL_DRIVERS},
+  {t_bug37342,    "t_bug37342",  NORMAL, ALL_DRIVERS},
+  {t_bug60646,    "t_bug60646",  NORMAL, ALL_DRIVERS},
+  {t_bug60648,    "t_bug60648",  NORMAL, ALL_DRIVERS},
+  {t_b13975271,   "t_b13975271", NORMAL, ALL_DRIVERS},
+  {t_odbc82,      "t_odbc82_zero_time_vals", NORMAL, ALL_DRIVERS},
+  {t_odbc70,      "t_odbc70_zero_datetime_vals", NORMAL, ALL_DRIVERS},
+  {t_17613161,    "t_17613161",  CSPS_FAIL | SSPS_OK, ALL_DRIVERS}, // TODO(PLAT-5085): interval data type is not supported
+  {t_bug67793,    "t_bug67793",  NORMAL, ALL_DRIVERS},
+  {t_odbc138,     "t_odbc138_dateadd_negative", NORMAL, ALL_DRIVERS},
+  {t_odbc148,     "t_odbc148_datatypes_values_len", NORMAL, ALL_DRIVERS},
+  { t_odbc199_time2timestamp, "t_odbc199_time2timestamp", NORMAL, ALL_DRIVERS},
+  {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
 int main(int argc, char **argv)
