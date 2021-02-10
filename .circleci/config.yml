@@ -225,9 +225,9 @@ workflows:
               build_type:
                 - RelWithDebInfo
               test_dsn:
-                - maodbc_test_w
+                - maodbc_test_a
               test_driver:
-                - MariaDB ODBC 3.1 Unicode Driver
+                - MariaDB ODBC 3.1 ANSI Driver
       - build-macos:
           matrix:
             parameters:
