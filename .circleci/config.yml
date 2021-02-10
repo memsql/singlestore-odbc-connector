@@ -36,9 +36,15 @@ jobs:
     parameters:
       build_type:
         type: string
+      test_dsn:
+        type: string
+      test_driver:
+        type: string
     executor: win/default
     environment:
       BUILD_TYPE: << parameters.build_type >>
+      TEST_DRIVER: << parameters.test_driver >>
+      TEST_DSN: << parameters.test_dsn >>
     steps:
       - checkout
       - run:
@@ -218,6 +224,10 @@ workflows:
             parameters:
               build_type:
                 - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_w
+              test_driver:
+                - MariaDB ODBC 3.1 Unicode Driver
       - build-macos:
           matrix:
             parameters:
