@@ -44,10 +44,10 @@
           <ComponentRef Id="InstallerTools" />
           <@TLS_LIB_BEGIN@ComponentRef Id="TlsLib" /@TLS_LIB_END@>
         </Feature>
-        <Feature Id="DebugFeature" Title="Debug Information" Level="2">
+        <Feature Id="DebugFeature2" Title="Debug Information" Level="2">
           <ComponentRef Id="DebugW" />
         </Feature>
-        <Feature Id="PluginsFeature" Title="Authentification Plugins" Level="2">
+        <Feature Id="PluginsFeature2" Title="Authentification Plugins" Level="2">
           <ComponentRef Id="CcPlugins" />
           <ComponentRef Id="PluginsDebug" />
         </Feature>
