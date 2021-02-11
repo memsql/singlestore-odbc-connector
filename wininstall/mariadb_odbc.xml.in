@@ -81,13 +81,13 @@
       </Component>  
       <Component Id="Driver" Guid="@GUID_DRIVER@" SharedDllRefCount="yes" Directory="INSTALLFOLDER" Win64="@IS_WIN64@">
         <File Id="mariadb_odbc_dll" Name="maodbca.dll" KeyPath="yes" DiskId="1" Source="$(var.binaries_dir)/maodbca.dll">
-          <ODBCDriver Id="madb_odbc_driver" Name="MariaDB ODBC @MARIADB_ODBC_VERSION_MAJOR@.@MARIADB_ODBC_VERSION_MINOR@ ANSI Driver" SetupFile="mariadb_odbc_setup" />
+          <ODBCDriver Id="madb_odbc_driver_a" Name="MariaDB ODBC @MARIADB_ODBC_VERSION_MAJOR@.@MARIADB_ODBC_VERSION_MINOR@ ANSI Driver" SetupFile="mariadb_odbc_setup" />
         </File>
         <File Id="mariadb_odbc_lib" Name="maodbca.lib" DiskId="1" Source="$(var.binaries_dir)/maodbca.lib" />
       </Component>
       <Component Id="DriverW" Guid="@GUID_DRIVER2@" SharedDllRefCount="yes" Directory="INSTALLFOLDER" Win64="@IS_WIN64@">
         <File Id="mariadb_odbc_w_dll" Name="maodbcw.dll" KeyPath="yes" DiskId="1" Source="$(var.binaries_dir)/maodbcw.dll">
-          <ODBCDriver Id="madb_odbc_driver" Name="MariaDB ODBC @MARIADB_ODBC_VERSION_MAJOR@.@MARIADB_ODBC_VERSION_MINOR@ ANSI Driver" SetupFile="mariadb_odbc_setup" />
+          <ODBCDriver Id="madb_odbc_driver_w" Name="MariaDB ODBC @MARIADB_ODBC_VERSION_MAJOR@.@MARIADB_ODBC_VERSION_MINOR@ Unicode Driver" SetupFile="mariadb_odbc_setup" />
         </File>
         <File Id="mariadb_w_odbc_lib" Name="maodbcw.lib" DiskId="1" Source="$(var.binaries_dir)/maodbcw.lib" />
       </Component>
