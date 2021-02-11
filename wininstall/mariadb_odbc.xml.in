@@ -98,7 +98,6 @@
     </Component>
     <Component Id="DebugW" Guid="@GUID_DEBUG2@" Directory="INSTALLFOLDER" DiskId="1" Win64="@IS_WIN64@">
       <File Id="mariadb_odbc_w_dll_pdb" Name="maodbcw.pdb" KeyPath="yes" DiskId="1" Source="$(var.binaries_dir)/maodbcw.pdb" />
-      <File Id="mariadb_odbc_w_setup_pdb" Name="maodbcs.pdb"  DiskId="1"  Source="$(var.binaries_dir)/maodbcs.pdb" />
       <CreateFolder />
     </Component>
     <Component Id="CcPlugins" Guid="@GUID_PLUGINS@" Directory="PLUGINSFOLDER" DiskId="1" Win64="@IS_WIN64@">
