@@ -375,7 +375,6 @@ SQLRETURN MADB_DbcGetAttr(MADB_Dbc *Dbc, SQLINTEGER Attribute, SQLPOINTER ValueP
   case SQL_ATTR_TRACEFILE:
     break;
   case SQL_ATTR_ANSI_APP:
-      printf("GET_SQL_ATTR_ANSI_APP");
     *(SQLUINTEGER *)ValuePtr= SQL_SUCCESS;
     break;
   case SQL_ATTR_TRANSLATE_LIB:

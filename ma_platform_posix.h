@@ -46,7 +46,7 @@
     # ifdef WIN32
         #define MADB_DRIVER_NAME "maodbcw.dll"
     # else
-        #define MADB_DRIVER_NAME "libmaodbc8w.so"
+        #define MADB_DRIVER_NAME "libmaodbcw.so"
     # endif
 #else
     # ifdef WIN32

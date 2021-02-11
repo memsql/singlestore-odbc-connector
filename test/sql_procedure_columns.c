@@ -88,9 +88,6 @@ int run_sql_procedurecolumns_routine_type(SQLHANDLE Stmt, const SQLSMALLINT *Exp
         FAIL_IF(_stricmp(colName, ExpColName) != 0, "Wrong COLUMN_NAME returned!");
         FAIL_IF(colType != SQL_PARAM_INPUT, "Wrong PARAMETER_MODE returned!");
         FAIL_IF(dataType != ExpDataType[numOfRowsFetched], "Wrong DATA_TYPE returned!");
-        if (_stricmp(typeName, ExpTypeName[numOfRowsFetched]) != 0) {
-            printf("RealName: %s, ExpectedName: %s", typeName, ExpTypeName[numOfRowsFetched]);
-        }
         FAIL_IF(_stricmp(typeName, ExpTypeName[numOfRowsFetched]) != 0, "Wrong TYPE_NAME returned!");
 
         FAIL_IF(nullable != ExpNullable[numOfRowsFetched], "Wrong NULLABLE returned!");

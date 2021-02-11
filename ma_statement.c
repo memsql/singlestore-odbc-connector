@@ -4670,7 +4670,6 @@ SQLRETURN MADB_StmtProcedureColumns(MADB_Stmt *Stmt, char *CatalogName, SQLSMALL
 
   p= StmtStr;
 
-  printf("PROCEDURE_COLUMNS_ANSI: %hhd", Stmt->Connection->IsAnsi);
   p+= _snprintf(p, Length, MADB_PROCEDURE_COLUMNS(Stmt));
   
   if (CatalogName)
@@ -4763,7 +4762,6 @@ SQLRETURN MADB_StmtSpecialColumns(MADB_Stmt *Stmt, SQLUSMALLINT IdentifierType,
   MADB_InitDynamicString(&StmtStr, "", 2048, 1024);
 
   MADB_CLEAR_ERROR(&Stmt->Error);
-  printf("SPECIAL_COLUMNS_IS_ANSI: %hhd", Stmt->Connection->IsAnsi);
   if (MADB_DynstrAppend(&StmtStr, MADB_SPECIAL_COLUMNS(Stmt)))
   {
       ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);

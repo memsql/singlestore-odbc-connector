@@ -228,6 +228,15 @@ workflows:
                 - maodbc_test_a
               test_driver:
                 - MariaDB ODBC 3.1 ANSI Driver
+      - build-windows:
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_w
+              test_driver:
+                - MariaDB ODBC 3.1 Unicode Driver
       - build-macos:
           matrix:
             parameters:
