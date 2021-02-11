@@ -101,7 +101,7 @@
       <File Id="mariadb_odbc_w_dll_pdb" Name="maodbcw.pdb" KeyPath="yes" DiskId="1" Source="$(var.binaries_dir)/maodbcw.pdb" />
       <CreateFolder />
     </Component>
-    <Component Id="DebugS" Guid="@GUID_DEBUG_A@" Directory="INSTALLFOLDER" DiskId="1" Win64="@IS_WIN64@">
+    <Component Id="DebugS" Directory="INSTALLFOLDER" DiskId="1" Win64="@IS_WIN64@">
       <File Id="mariadb_odbc_setup_pdb" Name="maodbcs.pdb"  DiskId="1"  Source="$(var.binaries_dir)/maodbcs.pdb" />
       <CreateFolder />
     </Component>
