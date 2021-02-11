@@ -21,36 +21,38 @@
       <WixVariable Id="WixUIDialogBmp" Value="@ODBC_SOURCE_WIX_DIR@/mdb-dialog-popup.png" />
       <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Make User DSN's for older Connnector versions to use this version" />
 
-    <Feature Id="ProductFeature" Title="@PRODUCT_NAME@ @PRODUCT_VERSION@ ANSI" Level="1">
+    <Feature Id="ProductFeatureA" Title="@PRODUCT_NAME@ @PRODUCT_VERSION@ ANSI" Level="1">
       <ComponentRef Id="RegistryKeys" />
       <ComponentRef Id="Setup" />
-      <ComponentRef Id="Driver" />
+      <ComponentRef Id="DriverA" />
       <ComponentRef Id="CcPlugins" />
       <ComponentRef Id="InstallerTools" />
       <@TLS_LIB_BEGIN@ComponentRef Id="TlsLib" /@TLS_LIB_END@>
     </Feature>
-    <Feature Id="DebugFeature" Title="Debug Information" Level="2">
-      <ComponentRef Id="Debug" />
+    <Feature Id="DebugFeatureA" Title="Debug Information" Level="2">
+      <ComponentRef Id="DebugS" />
+      <ComponentRef Id="DebugA" />
     </Feature>
-    <Feature Id="PluginsFeature" Title="Authentification Plugins" Level="2">
+    <Feature Id="PluginsFeatureA" Title="Authentication Plugins" Level="2">
       <ComponentRef Id="CcPlugins" />
       <ComponentRef Id="PluginsDebug" />
     </Feature>
-    <Feature Id="ProductFeature2" Title="@PRODUCT_NAME@ @PRODUCT_VERSION@ Unicode" Level="1">
-          <ComponentRef Id="RegistryKeys" />
-          <ComponentRef Id="Setup" />
-          <ComponentRef Id="DriverW" />
-          <ComponentRef Id="CcPlugins" />
-          <ComponentRef Id="InstallerTools" />
-          <@TLS_LIB_BEGIN@ComponentRef Id="TlsLib" /@TLS_LIB_END@>
-        </Feature>
-        <Feature Id="DebugFeature2" Title="Debug Information" Level="2">
-          <ComponentRef Id="DebugW" />
-        </Feature>
-        <Feature Id="PluginsFeature2" Title="Authentification Plugins" Level="2">
-          <ComponentRef Id="CcPlugins" />
-          <ComponentRef Id="PluginsDebug" />
-        </Feature>
+    <Feature Id="ProductFeatureW" Title="@PRODUCT_NAME@ @PRODUCT_VERSION@ Unicode" Level="1">
+      <ComponentRef Id="RegistryKeys" />
+      <ComponentRef Id="Setup" />
+      <ComponentRef Id="DriverW" />
+      <ComponentRef Id="CcPlugins" />
+      <ComponentRef Id="InstallerTools" />
+      <@TLS_LIB_BEGIN@ComponentRef Id="TlsLib" /@TLS_LIB_END@>
+    </Feature>
+    <Feature Id="DebugFeatureW" Title="Debug Information" Level="2">
+      <ComponentRef Id="DebugS" />
+      <ComponentRef Id="DebugW" />
+    </Feature>
+    <Feature Id="PluginsFeatureW" Title="Authentication Plugins" Level="2">
+      <ComponentRef Id="CcPlugins" />
+      <ComponentRef Id="PluginsDebug" />
+    </Feature>
     <Property Id="WixQuietExec@IS64@CmdLine" Value='"[INSTALLFOLDER]change_dsns_driver.exe" --reg-direct --quiet' />
     <CustomAction Id="MoveExistingDsnsToNewDriver" BinaryKey="WixCA" DllEntry="WixQuietExec@IS64@" Impersonate="yes" />
   </Product>
@@ -79,25 +81,28 @@
         <File Id="mariadb_odbc_setup" Name="maodbcs.dll"  DiskId="1"  Source="$(var.binaries_dir)/maodbcs.dll" />
         <File Id="mariadb_odbc_setup_lib" Name="maodbcs.lib" DiskId="1" Source="$(var.binaries_dir)/maodbcs.lib" />
       </Component>  
-      <Component Id="Driver" Guid="@GUID_DRIVER@" SharedDllRefCount="yes" Directory="INSTALLFOLDER" Win64="@IS_WIN64@">
+      <Component Id="DriverA" Guid="@GUID_DRIVER_A@" SharedDllRefCount="yes" Directory="INSTALLFOLDER" Win64="@IS_WIN64@">
         <File Id="mariadb_odbc_dll" Name="maodbca.dll" KeyPath="yes" DiskId="1" Source="$(var.binaries_dir)/maodbca.dll">
           <ODBCDriver Id="madb_odbc_driver_a" Name="MariaDB ODBC @MARIADB_ODBC_VERSION_MAJOR@.@MARIADB_ODBC_VERSION_MINOR@ ANSI Driver" SetupFile="mariadb_odbc_setup" />
         </File>
         <File Id="mariadb_odbc_lib" Name="maodbca.lib" DiskId="1" Source="$(var.binaries_dir)/maodbca.lib" />
       </Component>
-      <Component Id="DriverW" Guid="@GUID_DRIVER2@" SharedDllRefCount="yes" Directory="INSTALLFOLDER" Win64="@IS_WIN64@">
+      <Component Id="DriverW" Guid="@GUID_DRIVER_W@" SharedDllRefCount="yes" Directory="INSTALLFOLDER" Win64="@IS_WIN64@">
         <File Id="mariadb_odbc_w_dll" Name="maodbcw.dll" KeyPath="yes" DiskId="1" Source="$(var.binaries_dir)/maodbcw.dll">
           <ODBCDriver Id="madb_odbc_driver_w" Name="MariaDB ODBC @MARIADB_ODBC_VERSION_MAJOR@.@MARIADB_ODBC_VERSION_MINOR@ Unicode Driver" SetupFile="mariadb_odbc_setup" />
         </File>
         <File Id="mariadb_w_odbc_lib" Name="maodbcw.lib" DiskId="1" Source="$(var.binaries_dir)/maodbcw.lib" />
       </Component>
-    <Component Id="Debug" Guid="@GUID_DEBUG@" Directory="INSTALLFOLDER" DiskId="1" Win64="@IS_WIN64@">
+    <Component Id="DebugA" Guid="@GUID_DEBUG_A@" Directory="INSTALLFOLDER" DiskId="1" Win64="@IS_WIN64@">
       <File Id="mariadb_odbc_a_dll_pdb" Name="maodbca.pdb" KeyPath="yes" DiskId="1" Source="$(var.binaries_dir)/maodbca.pdb" />
-      <File Id="mariadb_odbc_a_setup_pdb" Name="maodbcs.pdb"  DiskId="1"  Source="$(var.binaries_dir)/maodbcs.pdb" />
       <CreateFolder />
     </Component>
-    <Component Id="DebugW" Guid="@GUID_DEBUG2@" Directory="INSTALLFOLDER" DiskId="1" Win64="@IS_WIN64@">
+    <Component Id="DebugW" Guid="@GUID_DEBUG_W@" Directory="INSTALLFOLDER" DiskId="1" Win64="@IS_WIN64@">
       <File Id="mariadb_odbc_w_dll_pdb" Name="maodbcw.pdb" KeyPath="yes" DiskId="1" Source="$(var.binaries_dir)/maodbcw.pdb" />
+      <CreateFolder />
+    </Component>
+    <Component Id="DebugS" Guid="@GUID_DEBUG_A@" Directory="INSTALLFOLDER" DiskId="1" Win64="@IS_WIN64@">
+      <File Id="mariadb_odbc_setup_pdb" Name="maodbcs.pdb"  DiskId="1"  Source="$(var.binaries_dir)/maodbcs.pdb" />
       <CreateFolder />
     </Component>
     <Component Id="CcPlugins" Guid="@GUID_PLUGINS@" Directory="PLUGINSFOLDER" DiskId="1" Win64="@IS_WIN64@">
