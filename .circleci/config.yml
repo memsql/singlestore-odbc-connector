@@ -179,7 +179,7 @@ workflows:
   test:
     jobs:
       - build-ubuntu:
-          name: build-ubuntu-ansi-7.0.15
+          name: build-ubuntu-ansi-7.0.15-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
@@ -195,7 +195,7 @@ workflows:
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
       - build-ubuntu:
-          name: build-ubuntu-unicode-7.0.15
+          name: build-ubuntu-unicode-7.0.15-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
