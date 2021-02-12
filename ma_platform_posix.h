@@ -42,7 +42,7 @@
 
 //#define HAVE_UNICODE
 
-#ifdef MYODBC_UNICODEDRIVER
+#ifdef MAODBC_UNICODEDRIVER
     # ifdef WIN32
         #define MADB_DRIVER_NAME "maodbcw.dll"
     # else
