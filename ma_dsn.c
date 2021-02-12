@@ -57,8 +57,6 @@ MADB_DsnKey DsnKeys[]=
   {"CHARSET",        offsetof(MADB_Dsn, CharacterSet),      DSN_TYPE_COMBO,  0, 0},
   {"TRACE",          offsetof(MADB_Dsn, TraceFile),         DSN_TYPE_STRING, 0, 0},
   {"PLUGIN_DIR",     offsetof(MADB_Dsn, ConnCPluginsDir),   DSN_TYPE_STRING, 0, 0},
-  {"NO_SSPS",        offsetof(MADB_Dsn, NoSsps),            DSN_TYPE_BOOL,   0, 0},
-  {"NO_CACHE",       offsetof(MADB_Dsn, NoCache),           DSN_TYPE_BOOL,   MADB_OPT_FLAG_NO_CACHE, 0},
   /* SSL */
   {"SSLKEY",         offsetof(MADB_Dsn, SslKey),            DSN_TYPE_STRING, 0, 0},
   {"SSLCERT",        offsetof(MADB_Dsn, SslCert),           DSN_TYPE_STRING, 0, 0}, /* 20 */
@@ -80,6 +78,8 @@ MADB_DsnKey DsnKeys[]=
   {"INTERACTIVE",    offsetof(MADB_Dsn, InteractiveClient), DSN_TYPE_BOOL,   0, 0},
   {"FORWARDONLY",    offsetof(MADB_Dsn, ForceForwardOnly),  DSN_TYPE_OPTION, MADB_OPT_FLAG_FORWARD_CURSOR, 0},
   {"COMPAT_MODE",    offsetof(MADB_Dsn, CompatMode),        DSN_TYPE_BOOL,   0, 0}, /* MYSQL_COMPATIBILITY_MODE */
+  {"NO_SSPS",        offsetof(MADB_Dsn, NoSsps),            DSN_TYPE_BOOL,   0, 0},
+  {"NO_CACHE",       offsetof(MADB_Dsn, NoCache),           DSN_TYPE_BOOL,   MADB_OPT_FLAG_NO_CACHE, 0},
   /* Aliases. Here offset is index of aliased key */
   {"SERVERNAME",     DSNKEY_SERVER_INDEX,                   DSN_TYPE_STRING, 0, 1},
   {"USER",           DSNKEY_UID_INDEX,                      DSN_TYPE_STRING, 0, 1},
@@ -117,6 +117,7 @@ const char TlsVersionBits[]=    {MADB_TLSV11, MADB_TLSV12, MADB_TLSV13};
 void MADB_DSN_SetDefaults(MADB_Dsn *Dsn)
 {
   Dsn->IsTcpIp= 1;
+  Dsn->Options = MADB_OPT_FLAG_NO_CACHE;
   Dsn->NoSsps = 1;
   Dsn->NoCache = 1;
 }
