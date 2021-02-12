@@ -51,7 +51,7 @@ SQLRETURN MADB_StmtInit(MADB_Dbc *Connection, SQLHANDLE *pHStmt)
   Stmt->PutParam= -1;
   Stmt->Methods= &MADB_StmtMethods;
   /* default behaviour is SQL_CURSOR_STATIC. But should be SQL_CURSOR_FORWARD_ONLY according to specs(see bug ODBC-290) */
-  Stmt->Options.CursorType= MA_ODBC_CURSOR_FORWARD_ONLY(Connection) ? SQL_CURSOR_FORWARD_ONLY : SQL_CURSOR_STATIC;
+  Stmt->Options.CursorType= SQL_CURSOR_FORWARD_ONLY;
   Stmt->Options.UseBookmarks= SQL_UB_OFF;
   Stmt->Options.MetadataId= Connection->MetadataId;
 
@@ -1827,10 +1827,17 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
               // the statement. Scrolling to any position is allowed.
               // 2. For a DYNAMIC cursor we also use mysql_store_result, re-execute the statement on every fetch and
               // allow scrolling to any position.
-              // 3. For a FORWARD-ONLY cursor we use mysql_store_result, don't update the result set, and allow only
+              // 3. For a FORWARD-ONLY cursor we use mysql_use_result when NO_CACHE option is set and
+              // mysql_store_result when it is not, don't update the result set, and allow only
               // SQL_FETCH_NEXT direction.
-              // TODO(PLAT-5058): support streaming results.
-              MYSQL_RES *cspsResult = mysql_store_result(Stmt->stmt->mysql);
+              MYSQL_RES *cspsResult;
+              if (NO_CACHE(Stmt))
+              {
+                cspsResult = mysql_use_result(Stmt->stmt->mysql);
+              } else
+              {
+                cspsResult = mysql_store_result(Stmt->stmt->mysql);
+              }
               if (cspsResult != NULL)
               {
                   MADB_CspsCopyResult(Stmt, cspsResult, Stmt->stmt);
@@ -2048,7 +2055,7 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
       /* MADB_CleanBulkOperData(Stmt, ParamOffset); */
       ParamOffset+= MADB_STMT_PARAM_COUNT(Stmt);
 
-      if (mysql_stmt_field_count(Stmt->stmt))
+      if (!NO_CACHE(Stmt) && mysql_stmt_field_count(Stmt->stmt))
       {
         mysql_stmt_store_result(Stmt->stmt);
       }
@@ -2067,10 +2074,9 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
   {
     MADB_StmtResetResultStructures(Stmt);
 
-    /* Todo: for SQL_CURSOR_FORWARD_ONLY we should use cursor and prefetch rows */
     /*************************** mysql_stmt_store_result ******************************/
     /*If we did OUT params already, we should not store */
-    if (Stmt->State == MADB_SS_EXECUTED && mysql_stmt_store_result(Stmt->stmt) != 0)
+    if (Stmt->State == MADB_SS_EXECUTED && !NO_CACHE(Stmt) && mysql_stmt_store_result(Stmt->stmt) != 0)
     {
       UNLOCK_MARIADB(Stmt->Connection);
       if (DefaultResult)
@@ -2833,26 +2839,40 @@ SQLRETURN MADB_FetchColumnCsps(MADB_Stmt* Stmt, MYSQL_BIND *bind, unsigned int c
  Always fetches the row the cursor is currently pointing to and moves the cursor to the next row. */
 MYSQL_ROW FetchRowCsps(MADB_Stmt* Stmt, unsigned long **field_lengths)
 {
-    MYSQL_ROW row;
-
-    // For the STATIC and DYNAMIC cursors we already have all the data on the client side.
-    if (!Stmt->stmt->result_cursor)
+  MYSQL_ROW row;
+  if (NO_CACHE(Stmt))
+  {
+    row = mysql_fetch_row(Stmt->CspsResult);
+    if (row == NULL)
     {
-        Stmt->stmt->state= MYSQL_STMT_FETCH_DONE;
-        return NULL;
+      Stmt->stmt->state= MYSQL_STMT_FETCH_DONE;
+    } else
+    {
+      Stmt->stmt->state= MYSQL_STMT_USER_FETCHING;
     }
-    Stmt->stmt->state= MYSQL_STMT_USER_FETCHING;
 
-    // Set the current_row because it is needed to fetch the fields' lengths.
-    // Reset the current_row when done.
-    Stmt->CspsResult->current_row = Stmt->stmt->result_cursor->data;
     *field_lengths = mysql_fetch_lengths(Stmt->CspsResult);
-    Stmt->CspsResult->current_row = NULL;
-
-    row= Stmt->stmt->result_cursor->data;
-    Stmt->stmt->result_cursor= Stmt->stmt->result_cursor->next;
-
     return row;
+  }
+
+  // For the STATIC and DYNAMIC cursors we already have all the data on the client side.
+  if (!Stmt->stmt->result_cursor)
+  {
+    Stmt->stmt->state= MYSQL_STMT_FETCH_DONE;
+    return NULL;
+  }
+  Stmt->stmt->state= MYSQL_STMT_USER_FETCHING;
+
+  // Set the current_row because it is needed to fetch the fields' lengths.
+  // Reset the current_row when done.
+  Stmt->CspsResult->current_row = Stmt->stmt->result_cursor->data;
+  *field_lengths = mysql_fetch_lengths(Stmt->CspsResult);
+  Stmt->CspsResult->current_row = NULL;
+
+  row= Stmt->stmt->result_cursor->data;
+  Stmt->stmt->result_cursor= Stmt->stmt->result_cursor->next;
+
+  return row;
 }
 /* }}} */
 
@@ -2962,7 +2982,13 @@ SQLRETURN MADB_StmtFetch(MADB_Stmt *Stmt)
   }
 
   Stmt->LastRowFetched= 0;
-  Rows2Fetch= MADB_RowsToFetch(&Stmt->Cursor, Stmt->Ard->Header.ArraySize, mysql_stmt_num_rows(Stmt->stmt));
+  Stmt->Cursor.RowsetSize = Stmt->Ard->Header.ArraySize;
+  Rows2Fetch= NO_CACHE(Stmt)?
+                              // If we don't cache the result, we don't know
+                              // the number of rows in resultset
+                              //
+                              Stmt->Cursor.RowsetSize:
+                              MADB_RowsToFetch(&Stmt->Cursor, mysql_stmt_num_rows(Stmt->stmt));
   if (Rows2Fetch == 0)
   {
       return SQL_NO_DATA;
@@ -4042,7 +4068,12 @@ SQLRETURN MADB_StmtRowCount(MADB_Stmt *Stmt, SQLLEN *RowCountPtr)
 {
   if (Stmt->AffectedRows != -1)
     *RowCountPtr= (SQLLEN)Stmt->AffectedRows;
-  else if (Stmt->stmt && Stmt->stmt->result.rows && mysql_stmt_field_count(Stmt->stmt))
+  else if (NO_CACHE(Stmt))
+    // If we don't cache the result, we don't know
+    // the number of rows in resultset
+    //
+    *RowCountPtr= -1;
+  else if(Stmt->stmt && Stmt->stmt->result.rows && mysql_stmt_field_count(Stmt->stmt))
     *RowCountPtr= (SQLLEN)mysql_stmt_num_rows(Stmt->stmt);
   else
     *RowCountPtr= 0;
@@ -4248,14 +4279,12 @@ SQLRETURN MADB_StmtColAttr(MADB_Stmt *Stmt, SQLUSMALLINT ColumnNumber, SQLUSMALL
     MADB_SetError(&Stmt->Error, MADB_ERR_HYC00, NULL, 0);
     return Stmt->Error.ReturnValue;
   }
-  /* We need to return the number of bytes, not characters! */
-  if (StringLength)
-  {
-    if (StringLengthPtr)
-      *StringLengthPtr= (SQLSMALLINT)StringLength;
-    if (!BufferLength && CharacterAttributePtr)
-      MADB_SetError(&Stmt->Error, MADB_ERR_01004, NULL, 0);
-  }
+
+  if (StringLengthPtr)
+    *StringLengthPtr= (SQLSMALLINT)StringLength;
+  if (StringLength && !BufferLength && CharacterAttributePtr)
+    MADB_SetError(&Stmt->Error, MADB_ERR_01004, NULL, 0);
+
   /* We shouldn't touch application memory without purpose, writing garbage there. Thus IsNumericAttr.
      Besides .Net was quite disappointed about that */
   if (NumericAttributePtr && IsNumericAttr == TRUE)
@@ -5182,13 +5211,18 @@ SQLRETURN MADB_StmtSetPos(MADB_Stmt *Stmt, SQLSETPOSIROW RowNumber, SQLUSMALLINT
     MADB_SetError(&Stmt->Error, MADB_ERR_24000, NULL, 0);
     return Stmt->Error.ReturnValue;
   }
-  /* skip this for now, since we don't use unbuffered result sets 
-  if (Stmt->Options.CursorType == SQL_CURSOR_FORWARD_ONLY)
+
+
+  // When we don't load all result we can't set the cursor position
+  //
+  if (NO_CACHE(Stmt))
   {
-    MADB_SetError(&Stmt->Error, MADB_ERR_24000, NULL, 0);
+    MADB_SetError(&Stmt->Error, MADB_ERR_HY109, "SQL_FORWARD_ONLY cursor is used with NO_CACHE option. "
+                                                "Cursor with this options can't be positioned within the rowset. "
+                                                "Use other cursor type or set NO_CACHE connection option to 0 to set the cursor position.", 0);
     return Stmt->Error.ReturnValue;
   }
-  */
+
   if (LockType != SQL_LOCK_NO_CHANGE)
   {
     MADB_SetError(&Stmt->Error, MADB_ERR_HYC00, NULL, 0);
@@ -5479,11 +5513,15 @@ SQLRETURN MADB_StmtFetchScroll(MADB_Stmt *Stmt, SQLSMALLINT FetchOrientation,
   {
     MADB_STMT_RESET_CURSOR(Stmt);
   }
-  else
+  else if (!NO_CACHE(Stmt))
+  // If we don't load all the result set
+  // mysql_stmt_num_rows returns incorrect number of rows
+  //
   {
     Stmt->Cursor.Position= (SQLLEN)MIN((my_ulonglong)Position, mysql_stmt_num_rows(Stmt->stmt));
   }
-  if (Position < 0 || (my_ulonglong)Position > mysql_stmt_num_rows(Stmt->stmt) - 1)
+
+  if (Position < 0 || (!NO_CACHE(Stmt) && (my_ulonglong)Position > mysql_stmt_num_rows(Stmt->stmt) - 1))
   {
     /* We need to put cursor before RS start, not only return error */
     if (Position < 0)

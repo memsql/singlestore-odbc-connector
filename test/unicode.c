@@ -67,7 +67,10 @@ ODBC_TEST(test_count)
   SQLSMALLINT columnlength, datatype, digits, nullable;
   SQLULEN columnsize;
   SQLRETURN rc;
- 
+
+  CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
+                                     (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+
   rc= SQLExecDirectW(Stmt, CW("DROP TABLE IF EXISTS test_count"), SQL_NTS);
   rc= SQLExecDirectW(Stmt, CW("CREATE TABLE test_count (a int)"), SQL_NTS);
   rc= SQLExecDirectW(Stmt, CW("INSERT INTO test_count VALUES (1),(2)"), SQL_NTS);

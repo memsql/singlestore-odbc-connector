@@ -32,6 +32,7 @@ New-ItemProperty -Path $regPath -Name "CONN_TIMEOUT" -Value "0"
 New-ItemProperty -Path $regPath -Name "DATABASE" -Value "odbc_test"
 New-ItemProperty -Path $regPath -Name "DESCRIPTION" -Value "MariaDB ODBC test"
 New-ItemProperty -Path $regPath -Name "DRIVER" -Value $ENV:TEST_DRIVER
+#New-ItemProperty -Path $regPath -Name "DRIVER" -Value "SingleStore ODBC 0.1-beta Driver"
 New-ItemProperty -Path $regPath -Name "OPTIONS" -Value "0"
 New-ItemProperty -Path $regPath -Name "PORT" -Value $ENV:MEMSQL_PORT
 New-ItemProperty -Path $regPath -Name "PWD" -Value $ENV:MEMSQL_PASSWORD
@@ -41,6 +42,7 @@ New-ItemProperty -Path $regPath -Name "TCPIP" -Value "1"
 New-ItemProperty -Path $regPath -Name "UID" -Value $ENV:MEMSQL_USER
 New-Item -Path "HKCU:\Software\ODBC\ODBC.INI\ODBC Data Sources"
 New-ItemProperty -Path "HKCU:\Software\ODBC\ODBC.INI\ODBC Data Sources" -Name $ENV:TEST_DSN -Value $ENV:TEST_DRIVER
+#New-ItemProperty -Path "HKCU:\Software\ODBC\ODBC.INI\ODBC Data Sources" -Name "maodbc_test" -Value "SingleStore ODBC 0.1-beta Driver"
 
 refreshenv
 

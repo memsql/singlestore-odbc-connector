@@ -81,13 +81,13 @@ ODBC_TEST(t_decimal)
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_decimal");
   OK_SIMPLE_STMT(Stmt,"create table t_decimal(d1 decimal(10,6))");
-    
+
   rc = SQLTransact(NULL,Connection,SQL_COMMIT);
   CHECK_HANDLE_RC(SQL_HANDLE_DBC, Connection, rc);
-  
+
   rc = SQLPrepare(Stmt, (SQLCHAR *)"insert into t_decimal values (?),(?),(?),(?)",SQL_NTS);
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, rc);
-    
+
   rc = SQLBindParameter( Stmt, 1, SQL_PARAM_INPUT, SQL_C_DOUBLE,
                            SQL_DECIMAL, 10, 4, &d_data, 0, NULL );
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, rc);
@@ -99,7 +99,7 @@ ODBC_TEST(t_decimal)
   rc = SQLBindParameter( Stmt, 3, SQL_PARAM_INPUT, SQL_C_CHAR,
                            SQL_DECIMAL, 10, 4, &s_data, 9, NULL );
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, rc);
-    
+
   rc = SQLBindParameter( Stmt, 4, SQL_PARAM_INPUT, SQL_C_LONG,
                            SQL_DECIMAL, 10, 4, &l_data, 0, NULL );
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, rc);
@@ -112,7 +112,7 @@ ODBC_TEST(t_decimal)
 
   rc = SQLFreeStmt(Stmt,SQL_CLOSE);
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, rc);
-  
+
   rc = SQLTransact(NULL,Connection,SQL_COMMIT);
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, rc);
 
@@ -141,7 +141,7 @@ ODBC_TEST(t_decimal)
 
   rc = SQLGetData(Stmt,1,SQL_C_CHAR,&str,19,NULL);
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, rc);
-  
+
   fprintf(stdout,"decimal(SQL_C_DOUBLE) : %s\n",str);
   FAIL_IF(strcmp((const char*)str, "189.456700") != 0, "expected str=189.456700");
 
@@ -301,7 +301,7 @@ ODBC_TEST(t_enumset)
     CHECK_HANDLE_RC(SQL_HANDLE_DBC, Connection,rc);
 
     OK_SIMPLE_STMT(Stmt,"create table t_enumset(col1 enum('MYSQL_E1','MYSQL_E2'),col2 set('ONE','TWO','THREE'))");
-   
+
     rc = SQLTransact(NULL,Connection,SQL_COMMIT);
     CHECK_HANDLE_RC(SQL_HANDLE_DBC, Connection,rc);
 
@@ -335,7 +335,7 @@ ODBC_TEST(t_enumset)
     CHECK_HANDLE_RC(SQL_HANDLE_DBC, Connection,rc);
 
     OK_SIMPLE_STMT(Stmt,"select * from t_enumset");
-  
+
     FAIL_IF( 2 != myrowcount(Stmt), "expected 2 rows");
 
     rc = SQLFreeStmt(Stmt,SQL_UNBIND);
@@ -547,6 +547,7 @@ ODBC_TEST(binary_suffix)
 
   OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_binarysuffix");
 
+  len = 10; // set len to some random number and check that it will be reset to the correct value by SQLColAttribute
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLColAttribute(Stmt, 1, SQL_DESC_LITERAL_SUFFIX,
                                  suffix, 10, &len, NULL));
 
@@ -714,7 +715,7 @@ ODBC_TEST(sqlwchar)
 
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLFetch(Stmt));
   IS_STR(my_fetch_str(Stmt, buff, 1), "53C3A36F205061756C6F", 20);
-  
+
   FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "expected EOF");
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
@@ -737,7 +738,7 @@ ODBC_TEST(sqlwchar)
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLFetch(Stmt));
   IS_WSTR(my_fetch_wstr(Stmt, wbuff, 1, 30), wcdata, 9);
 
-  FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "expected EOF"); 
+  FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "expected EOF");
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_sqlwchar");
@@ -766,7 +767,7 @@ ODBC_TEST(t_sqlnum_msdn)
   CHECK_HANDLE_RC(SQL_HANDLE_DESC, ard, SQLSetDescField(ard, 1, SQL_DESC_SCALE,
                                (SQLPOINTER) 3, SQL_IS_INTEGER));
   CHECK_HANDLE_RC(SQL_HANDLE_DESC, ard, SQLSetDescField(ard, 1, SQL_DESC_DATA_PTR,
-                               sqlnum, SQL_IS_POINTER));  
+                               sqlnum, SQL_IS_POINTER));
 
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLFetch(Stmt));
 
@@ -843,7 +844,7 @@ int sqlnum_test_from_str(SQLHANDLE Stmt,
     numval= 0;
     for (i= 0; i < 8; ++i)
       numval += sqlnum->val[7 - i] << (8 * (7 - i));
-    
+
     if (numval != expnum)
       diag("compare %d %d", numval, expnum);
     is_num(numval, expnum);
@@ -1126,7 +1127,7 @@ ODBC_TEST(t_bug31220)
   FAIL_IF(SQLFetch(Stmt) != SQL_ERROR, "SQL_ERROR expected");
   CHECK_SQLSTATE(Stmt, "07006");
   is_num(outlen, 999);
-  return OK;  
+  return OK;
 }
 
 
@@ -1205,7 +1206,7 @@ ODBC_TEST(t_bug29402)
    different to the requested scale.
    NB: We now always return numeric with requested scale. Thus the testcase is rather redundant.
        But I am leaving it in place, with according changes.
- */ 
+ */
 ODBC_TEST(t_sqlnum_truncate)
 {
   SQLHANDLE ard;

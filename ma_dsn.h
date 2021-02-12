@@ -120,6 +120,7 @@ typedef struct st_madb_dsn
   char *Socket;
   char *ConnCPluginsDir;
   my_bool NoSsps;
+  my_bool NoCache;
   /* SSL Settings */
   char *SslKey;
   char *SslCert;

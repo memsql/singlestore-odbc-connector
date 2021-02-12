@@ -1340,7 +1340,9 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_FILE_NOT_SUPPORTED, StringLengthPtr);
     break;
   case SQL_FORWARD_ONLY_CURSOR_ATTRIBUTES1:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_CA1_ABSOLUTE |
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, Dbc->Dsn && Dbc->Dsn->NoCache ?
+                                                SQL_CA1_NEXT:
+                                                (SQL_CA1_ABSOLUTE |
                                                 SQL_CA1_BULK_ADD |
                                                 SQL_CA1_LOCK_NO_CHANGE |
                                                 SQL_CA1_NEXT |
@@ -1350,10 +1352,11 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                                                 SQL_CA1_POS_POSITION |
                                                 SQL_CA1_POS_REFRESH |
                                                 SQL_CA1_POS_UPDATE |
-                                                SQL_CA1_RELATIVE, StringLengthPtr);
+                                                SQL_CA1_RELATIVE), StringLengthPtr);
     break;
   case SQL_FORWARD_ONLY_CURSOR_ATTRIBUTES2:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_CA2_CRC_EXACT |
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr,
+                                                (Dbc->Dsn && Dbc->Dsn->NoCache ? 0: SQL_CA2_CRC_EXACT) |
                                                 SQL_CA2_MAX_ROWS_DELETE |
                                                 SQL_CA2_MAX_ROWS_INSERT |
                                                 SQL_CA2_MAX_ROWS_SELECT |

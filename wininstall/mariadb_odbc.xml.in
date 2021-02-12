@@ -14,19 +14,21 @@
     <MediaTemplate EmbedCab="yes"/>
       <UIRef Id="WixUI_Mondo" />
       <UI>
-        <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="MoveExistingDsnsToNewDriver">WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed</Publish>
+        <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="SetupTypeDlg">1</Publish>
+        <Publish Dialog="SetupTypeDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg">1</Publish>
+<!--        <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="MoveExistingDsnsToNewDriver">WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed</Publish>-->
       </UI>
-      <WixVariable Id="WixUILicenseRtf" Value="@ODBC_SOURCE_WIX_DIR@/license.rtf" />
-      <WixVariable Id="WixUIBannerBmp" Value="@ODBC_SOURCE_WIX_DIR@/mdb-connector-odbc.png" />
-      <WixVariable Id="WixUIDialogBmp" Value="@ODBC_SOURCE_WIX_DIR@/mdb-dialog-popup.png" />
-      <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Make User DSN's for older Connnector versions to use this version" />
+<!--      <WixVariable Id="WixUILicenseRtf" Value="@ODBC_SOURCE_WIX_DIR@/license.rtf" />-->
+<!--      <WixVariable Id="WixUIBannerBmp" Value="@ODBC_SOURCE_WIX_DIR@/mdb-connector-odbc.png" />-->
+<!--      <WixVariable Id="WixUIDialogBmp" Value="@ODBC_SOURCE_WIX_DIR@/mdb-dialog-popup.png" />-->
+<!--      <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Make User DSN's for older Connnector versions to use this version" />-->
 
     <Feature Id="ProductFeatureA" Title="@PRODUCT_NAME@ @PRODUCT_VERSION@ ANSI" Level="1">
       <ComponentRef Id="RegistryKeys" />
       <ComponentRef Id="Setup" />
       <ComponentRef Id="DriverA" />
       <ComponentRef Id="CcPlugins" />
-      <ComponentRef Id="InstallerTools" />
+<!--      <ComponentRef Id="InstallerTools" />-->
       <@TLS_LIB_BEGIN@ComponentRef Id="TlsLib" /@TLS_LIB_END@>
     </Feature>
     <Feature Id="DebugFeatureA" Title="Debug Information" Level="2">
@@ -53,14 +55,14 @@
       <ComponentRef Id="CcPlugins" />
       <ComponentRef Id="PluginsDebug" />
     </Feature>
-    <Property Id="WixQuietExec@IS64@CmdLine" Value='"[INSTALLFOLDER]change_dsns_driver.exe" --reg-direct --quiet' />
-    <CustomAction Id="MoveExistingDsnsToNewDriver" BinaryKey="WixCA" DllEntry="WixQuietExec@IS64@" Impersonate="yes" />
+<!--    <Property Id="WixQuietExec@IS64@CmdLine" Value='"[INSTALLFOLDER]change_dsns_driver.exe" &#45;&#45;reg-direct &#45;&#45;quiet' />-->
+<!--    <CustomAction Id="MoveExistingDsnsToNewDriver" BinaryKey="WixCA" DllEntry="WixQuietExec@IS64@" Impersonate="yes" />-->
   </Product>
 
   <Fragment>
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="@FOLDER@">
-        <Directory Id="MariaDB" Name="@PRODUCT_MANUFACTURER@">
+        <Directory Id="SingleStore" Name="@PRODUCT_MANUFACTURER@">
           <Directory Id="INSTALLFOLDER" Name="@PRODUCT_NAME@">
             <Directory Id="PLUGINSFOLDER" Name="$(var.plugins_subdir_name)">
             </Directory>
@@ -72,6 +74,7 @@
 
   <Fragment>
     <!--<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">-->
+<<<<<<< HEAD
       <Component Id="RegistryKeys" Guid="@GUID_REGISTRY@" DiskId="1" Directory="INSTALLFOLDER" Win64="@IS_WIN64@">
         <RegistryKey Id="Version" Root="HKLM" Key="SOFTWARE\@PRODUCT_MANUFACTURER@\@PRODUCT_NAME@" ForceCreateOnInstall="yes" ForceDeleteOnUninstall="yes">
             <RegistryValue Name="Version" Type="string" Value="@PRODUCT_VERSION@"/>
@@ -80,16 +83,20 @@
       <Component Id="Setup" Guid="@GUID_SETUP@" DiskId="1" Directory="INSTALLFOLDER" Win64="@IS_WIN64@">
         <File Id="mariadb_odbc_setup" Name="maodbcs.dll"  DiskId="1"  Source="$(var.binaries_dir)/maodbcs.dll" />
         <File Id="mariadb_odbc_setup_lib" Name="maodbcs.lib" DiskId="1" Source="$(var.binaries_dir)/maodbcs.lib" />
-      </Component>  
+      </Component>
       <Component Id="DriverA" Guid="@GUID_DRIVER_A@" SharedDllRefCount="yes" Directory="INSTALLFOLDER" Win64="@IS_WIN64@">
         <File Id="mariadb_odbc_dll" Name="maodbca.dll" KeyPath="yes" DiskId="1" Source="$(var.binaries_dir)/maodbca.dll">
-          <ODBCDriver Id="madb_odbc_driver_a" Name="MariaDB ODBC @MARIADB_ODBC_VERSION_MAJOR@.@MARIADB_ODBC_VERSION_MINOR@ ANSI Driver" SetupFile="mariadb_odbc_setup" />
+        //TODO add proper Version
+          <ODBCDriver Id="madb_odbc_driver_a" Name="SingleStore ODBC 0.1-beta ANSI Driver" SetupFile="mariadb_odbc_setup" />
+          <!--<ODBCDriver Id="madb_odbc_driver_a" Name="SingleStore ODBC @MARIADB_ODBC_VERSION_MAJOR@.@MARIADB_ODBC_VERSION_MINOR@ ANSI Driver" SetupFile="mariadb_odbc_setup" />-->
         </File>
         <File Id="mariadb_odbc_lib" Name="maodbca.lib" DiskId="1" Source="$(var.binaries_dir)/maodbca.lib" />
       </Component>
       <Component Id="DriverW" Guid="@GUID_DRIVER_W@" SharedDllRefCount="yes" Directory="INSTALLFOLDER" Win64="@IS_WIN64@">
         <File Id="mariadb_odbc_w_dll" Name="maodbcw.dll" KeyPath="yes" DiskId="1" Source="$(var.binaries_dir)/maodbcw.dll">
-          <ODBCDriver Id="madb_odbc_driver_w" Name="MariaDB ODBC @MARIADB_ODBC_VERSION_MAJOR@.@MARIADB_ODBC_VERSION_MINOR@ Unicode Driver" SetupFile="mariadb_odbc_setup" />
+        //TODO add proper Version
+          <ODBCDriver Id="madb_odbc_driver_w" Name="SingleStore ODBC 0.1-beta Unicode Driver" SetupFile="mariadb_odbc_setup" />
+          <!--<ODBCDriver Id="madb_odbc_driver_w" Name="SingleStore ODBC @MARIADB_ODBC_VERSION_MAJOR@.@MARIADB_ODBC_VERSION_MINOR@ Unicode Driver" SetupFile="mariadb_odbc_setup" />-->
         </File>
         <File Id="mariadb_w_odbc_lib" Name="maodbcw.lib" DiskId="1" Source="$(var.binaries_dir)/maodbcw.lib" />
       </Component>
@@ -122,9 +129,9 @@
       <File Id="client_ed25519_pdb" Name="client_ed25519.pdb" DiskId="1" Source="$(var.plugins_source_dir)/client_ed25519.pdb" />
       <CreateFolder />
     </Component>
-    <Component Id="InstallerTools" Guid="@GUID_INSTALLER_TOOLS@" Directory="INSTALLFOLDER" DiskId="1" Win64="@IS_WIN64@">
-        <File Id="change_dsns_driver" Name="change_dsns_driver.exe"  DiskId="1"  Source="$(var.installer_tools_dir)/change_dsns_driver.exe" />
-    </Component>
+<!--    <Component Id="InstallerTools" Guid="@GUID_INSTALLER_TOOLS@" Directory="INSTALLFOLDER" DiskId="1" Win64="@IS_WIN64@">-->
+<!--        <File Id="change_dsns_driver" Name="change_dsns_driver.exe"  DiskId="1"  Source="$(var.installer_tools_dir)/change_dsns_driver.exe" />-->
+<!--    </Component>-->
     <@TLS_LIB_BEGIN@Component Id="TlsLib" Guid="@GUID_TLS_LIB@" Directory="INSTALLFOLDER" DiskId="1" Win64="@IS_WIN64@">
       <File Id="TlsLibFile1" Name="libgnutls-30.dll"  DiskId="1"  Source="@LIB_GNUTLS_LOCATION@/libgnutls-30.dll" />
       <File Id="TlsLibFile2" Name="libgcc_s_seh-1.dll"  DiskId="1"  Source="@LIB_GNUTLS_LOCATION@/libgcc_s_seh-1.dll" />
@@ -137,5 +144,5 @@
       <File Id="TlsLibFile9" Name="libffi-6.dll"  DiskId="1"  Source="@LIB_GNUTLS_LOCATION@/libffi-6.dll" />
     </Component@TLS_LIB_END@>
   <!--  </ComponentGroup> -->
-  </Fragment>
+</Fragment>
 </Wix>

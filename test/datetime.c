@@ -1020,6 +1020,9 @@ ODBC_TEST(t_bug60646)
   SQLLEN len;
   const char *expected= "2012-01-01 01:01:01.000001";
 
+  CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
+                                     (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+
   OK_SIMPLE_STMT(Stmt,
         "SELECT timestamp('2012-01-01 01:01:01.000001')"  /*1*/
         " ,timestamp('2012-01-01 01:01:01.100002')"       /*2*/
@@ -1271,6 +1274,9 @@ ODBC_TEST(t_17613161)
   h2s.intval.day_second.minute= ts.minute= 20;
   h2s.intval.day_second.second= ts.second= 45;
 
+  CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
+                                     (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_17613161");
 
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_17613161(col1 time)");
@@ -1347,6 +1353,9 @@ ODBC_TEST(t_bug67793)
 {
   SQL_INTERVAL_STRUCT h2s;
   SQLLEN outlen= 0;
+
+  CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
+                                     (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
   /* check situations with sec and min overflow */
   OK_SIMPLE_STMT(Stmt, "SELECT '123456789:45:07', '99999:42:09', CAST('-800:12:17' AS TIME)");
