@@ -953,7 +953,7 @@ SQLHANDLE DoConnect(SQLHANDLE Connection, BOOL DoWConnect,
         if (SQL_SUCCEEDED(rc))
         {
             /* ANSI driver file name contains 5a.{dll|so} */
-            unicode_driver= strstr((char*)driver_name, "a.") == NULL ? 1 : 0;
+            unicode_driver= strstr((char*)driver_name, "a.") == NULL ? ANSI_DRIVER : UNICODE_DRIVER;
         }
     }
 
