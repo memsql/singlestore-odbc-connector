@@ -1739,7 +1739,7 @@ MA_ODBC_TESTS my_tests[]=
   {select1000,     "select1000",     NORMAL, ALL_DRIVERS},
   {simple_2,       "simple_2",       NORMAL, ALL_DRIVERS},
   {test_reconnect, "test_reconnect", NORMAL, ALL_DRIVERS},
-  {bug19823,       "bug19823",       NORMAL, ALL_DRIVERS},
+  {bug19823,       "bug19823",       NORMAL, ANSI_DRIVER},
   {t_basic,        "t_basic",        NORMAL, ALL_DRIVERS},
   {t_reconnect,    "t_reconnect",    NORMAL, ALL_DRIVERS},
   {charset_utf8,   "charset_utf8",   NORMAL, ALL_DRIVERS},
@@ -1767,7 +1767,7 @@ MA_ODBC_TESTS my_tests[]=
   {t_odbc48,      "odbc48_iso_call_format",   NORMAL, ALL_DRIVERS},
   {t_odbc69,      "odbc69_ci_connstring",     NORMAL, ALL_DRIVERS},
   {t_odbc91,      "odbc91_hdbc_reuse",        NORMAL, ALL_DRIVERS},
-  {t_odbc137,     "odbc137_ansi",             NORMAL, ALL_DRIVERS},
+  {t_odbc137,     "odbc137_ansi",             NORMAL, ANSI_DRIVER},
 #ifdef _WIN32
   {t_odbc139,     "odbc139_compression",       NORMAL, ALL_DRIVERS},
 #endif

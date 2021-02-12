@@ -940,7 +940,7 @@ MA_ODBC_TESTS my_tests[]=
   { t_gettypeinfo, "t_gettypeinfo", KNOWN_FAILURE, ALL_DRIVERS},
   { sqlgetinfo, "sqlgetinfo", NORMAL , ALL_DRIVERS},
   { t_stmt_attr_status, "t_stmt_attr_status", NORMAL , ALL_DRIVERS},
-  { t_msdev_bug, "t_msdev_bug", NORMAL , ALL_DRIVERS},
+  { t_msdev_bug, "t_msdev_bug", NORMAL , ANSI_DRIVER},
   { t_bug14639, "t_bug14639", NORMAL , ALL_DRIVERS},
   { t_bug31055, "t_bug31055", NORMAL , ALL_DRIVERS},
   { t_bug3780, "t_bug3780", NORMAL , ALL_DRIVERS},

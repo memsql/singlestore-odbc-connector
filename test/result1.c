@@ -2192,7 +2192,7 @@ MA_ODBC_TESTS my_tests[]=
 {
   {my_resultset, "my_resultset",     NORMAL, ALL_DRIVERS},
   {t_convert_type, "t_convert_type",     NORMAL, ALL_DRIVERS},
-  {t_desc_col, "t_desc_col",     NORMAL, ALL_DRIVERS},
+  {t_desc_col, "t_desc_col",     NORMAL, ANSI_DRIVER},
   {t_convert, "t_convert",     NORMAL, ALL_DRIVERS},
   {t_max_rows, "t_max_rows",     NORMAL, ALL_DRIVERS},
   {t_multistep, "t_multistep",     NORMAL, ALL_DRIVERS},
@@ -2219,7 +2219,7 @@ MA_ODBC_TESTS my_tests[]=
   {t_bug13776_auto, "t_bug13776_auto",     NORMAL, ALL_DRIVERS},
   {t_bug28617, "t_bug28617",     NORMAL, ALL_DRIVERS},
   {t_bug34429, "t_bug34429",     NORMAL, ALL_DRIVERS},
-  {t_binary_collation, "t_binary_collation", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
+  {t_binary_collation, "t_binary_collation", CSPS_OK | SSPS_FAIL, ANSI_DRIVER},
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
