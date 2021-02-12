@@ -84,7 +84,7 @@
         <File Id="mariadb_odbc_setup_lib" Name="maodbcs.lib" DiskId="1" Source="$(var.binaries_dir)/maodbcs.lib" />
       </Component>
       <Component Id="DriverA" Guid="@GUID_DRIVER_A@" SharedDllRefCount="yes" Directory="INSTALLFOLDER" Win64="@IS_WIN64@">
-        <File Id="mariadb_odbc_dll" Name="maodbca.dll" KeyPath="yes" DiskId="1" Source="$(var.binaries_dir)/maodbca.dll">
+        <File Id="mariadb_odbc_a_dll" Name="maodbca.dll" KeyPath="yes" DiskId="1" Source="$(var.binaries_dir)/maodbca.dll">
           <!-- TODO: Provide a proper version -->
           <ODBCDriver Id="madb_odbc_driver_a" Name="SingleStore ODBC 0.1-beta ANSI Driver" SetupFile="mariadb_odbc_setup" />
           <!-- <ODBCDriver Id="madb_odbc_driver_a" Name="SingleStore ODBC @MARIADB_ODBC_VERSION_MAJOR@.@MARIADB_ODBC_VERSION_MINOR@ ANSI Driver" SetupFile="mariadb_odbc_setup" /> -->
