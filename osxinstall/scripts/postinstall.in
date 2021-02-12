@@ -68,10 +68,16 @@ if [ ! -f $ODBCINSTINI ] ; then
   echo "" >> $ODBCINSTINI
   echo "[ODBC Drivers]" >> $ODBCINSTINI
   echo "MariaDB ODBC @PRODUCT_SERIES@ Unicode Driver = Installed" >> $ODBCINSTINI
+  echo "MariaDB ODBC @PRODUCT_SERIES@ ANSI Driver = Installed" >> $ODBCINSTINI
   echo "" >> $ODBCINSTINI
   echo "[MariaDB ODBC @PRODUCT_SERIES@ Unicode Driver]" >> $ODBCINSTINI
-  echo "Driver      = ${target}Library/MariaDB/MariaDB-Connector-ODBC/libmaodbc.dylib" >> $ODBCINSTINI
+  echo "Driver      = ${target}Library/MariaDB/MariaDB-Connector-ODBC/libmaodbcw.dylib" >> $ODBCINSTINI
   echo "Description = MariaDB Connector/ODBC(Unicode) @PRODUCT_VERSION@ @PRODUCT_ARCH_BITS@bit" >> $ODBCINSTINI
+  echo "Threading   = 0" >> $ODBCINSTINI
+  echo "" >> $ODBCINSTINI
+  echo "[MariaDB ODBC @PRODUCT_SERIES@ ANSI Driver]" >> $ODBCINSTINI
+  echo "Driver      = ${target}Library/MariaDB/MariaDB-Connector-ODBC/libmaodbca.dylib" >> $ODBCINSTINI
+  echo "Description = MariaDB Connector/ODBC(ANSI) @PRODUCT_VERSION@ @PRODUCT_ARCH_BITS@bit" >> $ODBCINSTINI
   echo "Threading   = 0" >> $ODBCINSTINI
   echo "" >> $ODBCINSTINI
   echo "Registration has been successfully finished" >> /tmp/maodbc_postinstall.log
@@ -79,7 +85,8 @@ if [ ! -f $ODBCINSTINI ] ; then
   exit 0
 fi
 
-${target}Library/MariaDB/MariaDB-Connector-ODBC/bin/install_driver "${target}Library/MariaDB/MariaDB-Connector-ODBC/libmaodbc.dylib" "MariaDB ODBC @PRODUCT_SERIES@ Unicode Driver" "MariaDB Connector/ODBC(Unicode) @PRODUCT_VERSION@ @PRODUCT_ARCH_BITS@bit" >> /tmp/maodbc_postinstall.log
+${target}Library/MariaDB/MariaDB-Connector-ODBC/bin/install_driver "${target}Library/MariaDB/MariaDB-Connector-ODBC/libmaodbca.dylib" "MariaDB ODBC @PRODUCT_SERIES@ ANSI Driver" "MariaDB Connector/ODBC(ANSI) @PRODUCT_VERSION@ @PRODUCT_ARCH_BITS@bit" >> /tmp/maodbc_postinstall.log
+${target}Library/MariaDB/MariaDB-Connector-ODBC/bin/install_driver "${target}Library/MariaDB/MariaDB-Connector-ODBC/libmaodbcw.dylib" "MariaDB ODBC @PRODUCT_SERIES@ Unicode Driver" "MariaDB Connector/ODBC(Unicode) @PRODUCT_VERSION@ @PRODUCT_ARCH_BITS@bit" >> /tmp/maodbc_postinstall.log
 
 echo "Registration has been successfully finished" >> /tmp/maodbc_postinstall.log
 

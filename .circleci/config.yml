@@ -70,21 +70,21 @@ jobs:
         type: string
       test_dsn:
         type: string
-      test_driver:
+      driver_name:
         type: string
     macos:
       xcode: 11.0.0
     environment:
       BUILD_TYPE: << parameters.build_type >>
       TEST_DSN: << parameters.test_dsn >>
-      TEST_DRIVER: << parameters.test_driver >>
+      DRIVER_NAME: << parameters.driver_name >>
       TEST_SCHEMA: odbc_test
       CONTINUOUS_INTEGRATION: true
     steps:
       - run:
           name: Define Environment Variables
           command: |
-            echo 'export TEST_DRIVER=$PWD/libmaodbc.dylib' >> $BASH_ENV
+            echo 'export TEST_DRIVER=$PWD/$DRIVER_NAME' >> $BASH_ENV
             echo 'export TEST_SERVER=$MEMSQL_HOST' >> $BASH_ENV
             echo 'export TEST_UID=$MEMSQL_USER' >> $BASH_ENV
             echo 'export TEST_PORT=$MEMSQL_PORT' >> $BASH_ENV
@@ -245,8 +245,8 @@ workflows:
                 - RelWithDebInfo
               test_dsn:
                 - maodbc_test_w
-              test_driver:
-                - MariaDB ODBC 3.1 Unicode Driver
+              driver_name:
+                - libmaodbcw.dylib
       - build-macos:
           matrix:
             parameters:
@@ -254,8 +254,8 @@ workflows:
                 - RelWithDebInfo
               test_dsn:
                 - maodbc_test_a
-              test_driver:
-                - MariaDB ODBC 3.1 ANSI Driver
+              driver_name:
+                - libmaodbca.dylib
 
   daily:
     triggers:
