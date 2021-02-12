@@ -44,7 +44,7 @@
       <ComponentRef Id="Setup" />
       <ComponentRef Id="DriverW" />
       <ComponentRef Id="CcPlugins" />
-      <ComponentRef Id="InstallerTools" />
+<!--      <ComponentRef Id="InstallerTools" />-->
       <@TLS_LIB_BEGIN@ComponentRef Id="TlsLib" /@TLS_LIB_END@>
     </Feature>
     <Feature Id="DebugFeatureW" Title="Debug Information" Level="2">
