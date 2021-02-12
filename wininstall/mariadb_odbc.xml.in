@@ -74,7 +74,6 @@
 
   <Fragment>
     <!--<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">-->
-<<<<<<< HEAD
       <Component Id="RegistryKeys" Guid="@GUID_REGISTRY@" DiskId="1" Directory="INSTALLFOLDER" Win64="@IS_WIN64@">
         <RegistryKey Id="Version" Root="HKLM" Key="SOFTWARE\@PRODUCT_MANUFACTURER@\@PRODUCT_NAME@" ForceCreateOnInstall="yes" ForceDeleteOnUninstall="yes">
             <RegistryValue Name="Version" Type="string" Value="@PRODUCT_VERSION@"/>
@@ -88,7 +87,7 @@
         <File Id="mariadb_odbc_dll" Name="maodbca.dll" KeyPath="yes" DiskId="1" Source="$(var.binaries_dir)/maodbca.dll">
         //TODO add proper Version
           <ODBCDriver Id="madb_odbc_driver_a" Name="SingleStore ODBC 0.1-beta ANSI Driver" SetupFile="mariadb_odbc_setup" />
-          <!--<ODBCDriver Id="madb_odbc_driver_a" Name="SingleStore ODBC @MARIADB_ODBC_VERSION_MAJOR@.@MARIADB_ODBC_VERSION_MINOR@ ANSI Driver" SetupFile="mariadb_odbc_setup" />-->
+          <!-- <ODBCDriver Id="madb_odbc_driver_a" Name="SingleStore ODBC @MARIADB_ODBC_VERSION_MAJOR@.@MARIADB_ODBC_VERSION_MINOR@ ANSI Driver" SetupFile="mariadb_odbc_setup" /> -->
         </File>
         <File Id="mariadb_odbc_lib" Name="maodbca.lib" DiskId="1" Source="$(var.binaries_dir)/maodbca.lib" />
       </Component>
@@ -96,7 +95,7 @@
         <File Id="mariadb_odbc_w_dll" Name="maodbcw.dll" KeyPath="yes" DiskId="1" Source="$(var.binaries_dir)/maodbcw.dll">
         //TODO add proper Version
           <ODBCDriver Id="madb_odbc_driver_w" Name="SingleStore ODBC 0.1-beta Unicode Driver" SetupFile="mariadb_odbc_setup" />
-          <!--<ODBCDriver Id="madb_odbc_driver_w" Name="SingleStore ODBC @MARIADB_ODBC_VERSION_MAJOR@.@MARIADB_ODBC_VERSION_MINOR@ Unicode Driver" SetupFile="mariadb_odbc_setup" />-->
+          <!-- <ODBCDriver Id="madb_odbc_driver_w" Name="SingleStore ODBC @MARIADB_ODBC_VERSION_MAJOR@.@MARIADB_ODBC_VERSION_MINOR@ Unicode Driver" SetupFile="mariadb_odbc_setup" /> -->
         </File>
         <File Id="mariadb_w_odbc_lib" Name="maodbcw.lib" DiskId="1" Source="$(var.binaries_dir)/maodbcw.lib" />
       </Component>
