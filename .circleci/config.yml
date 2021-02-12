@@ -179,6 +179,7 @@ workflows:
   test:
     jobs:
       - build-ubuntu:
+          name: build-ubuntu-ansi-7.0.15
           matrix:
             parameters:
               machine_class:
@@ -194,6 +195,7 @@ workflows:
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
       - build-ubuntu:
+          name: build-ubuntu-unicode-7.0.15
           matrix:
             parameters:
               machine_class:
@@ -221,6 +223,7 @@ workflows:
 #                - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
 #                - memsql/cluster-in-a-box:centos-7.1.13-11ddea2a3a-3.0.0-1.9.3
       - build-windows:
+          name: build-windows-ansi
           matrix:
             parameters:
               build_type:
@@ -230,6 +233,7 @@ workflows:
               test_driver:
                 - SingleStore ODBC 0.1-beta ANSI Driver
       - build-windows:
+          name: build-windows-unicode
           matrix:
             parameters:
               build_type:
@@ -239,6 +243,7 @@ workflows:
               test_driver:
                 - SingleStore ODBC 0.1-beta Unicode Driver
       - build-macos:
+          name: build-macos-unicode
           matrix:
             parameters:
               build_type:
@@ -248,6 +253,7 @@ workflows:
               driver_name:
                 - libmaodbcw.dylib
       - build-macos:
+          name: build-macos-ansi
           matrix:
             parameters:
               build_type:
