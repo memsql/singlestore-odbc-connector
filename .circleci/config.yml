@@ -222,31 +222,7 @@ workflows:
 #              memsql_image:
 #                - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
 #                - memsql/cluster-in-a-box:centos-7.1.13-11ddea2a3a-3.0.0-1.9.3
-      - build-windows:
-          name: build-windows-ansi-<< matrix.build_type >>
-          matrix:
-            parameters:
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - maodbc_test_a
-              test_driver:
-                - SingleStore ODBC 0.1-beta ANSI Driver
-      - build-windows:
-          requires:
-            - build-windows-ansi-RelWithDebInfo
-          name: build-windows-unicode-<< matrix.build_type >>
-          matrix:
-            parameters:
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - maodbc_test_w
-              test_driver:
-                - SingleStore ODBC 0.1-beta Unicode Driver
       - build-macos:
-          requires:
-            - build-windows-unicode-RelWithDebInfo
           name: build-macos-unicode-<< matrix.build_type >>
           matrix:
             parameters:
@@ -268,6 +244,30 @@ workflows:
                 - maodbc_test_a
               driver_name:
                 - libmaodbca.dylib
+      - build-windows:
+          requires:
+            - build-macos-ansi-RelWithDebInfo
+          name: build-windows-ansi-<< matrix.build_type >>
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_a
+              test_driver:
+                - SingleStore ODBC 0.1-beta ANSI Driver
+      - build-windows:
+          requires:
+            - build-windows-ansi-RelWithDebInfo
+          name: build-windows-unicode-<< matrix.build_type >>
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_w
+              test_driver:
+                - SingleStore ODBC 0.1-beta Unicode Driver
 
   daily:
     triggers:
