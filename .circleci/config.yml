@@ -233,6 +233,8 @@ workflows:
               test_driver:
                 - SingleStore ODBC 0.1-beta ANSI Driver
       - build-windows:
+          requires:
+            - build-windows-ansi-RelWithDebInfo
           name: build-windows-unicode-<< matrix.build_type >>
           matrix:
             parameters:
@@ -243,6 +245,8 @@ workflows:
               test_driver:
                 - SingleStore ODBC 0.1-beta Unicode Driver
       - build-macos:
+          requires:
+            - build-windows-unicode-RelWithDebInfo
           name: build-macos-unicode-<< matrix.build_type >>
           matrix:
             parameters:
@@ -253,6 +257,8 @@ workflows:
               driver_name:
                 - libmaodbcw.dylib
       - build-macos:
+          requires:
+            - build-macos-unicode-RelWithDebInfo
           name: build-macos-ansi-<< matrix.build_type >>
           matrix:
             parameters:
