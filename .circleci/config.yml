@@ -116,7 +116,6 @@ jobs:
       BUILD_TYPE: << parameters.build_type >>
       MEMSQL_IMAGE: << parameters.memsql_image >>
       MEMSQL_PASSWORD: << parameters.memsql_password >>
-      #      TEST_DRIVER: "SingleStore ODBC 0.1-beta Driver"
       TEST_DRIVER: << parameters.test_driver >>
       TEST_DSN: << parameters.test_dsn >>
       TEST_SERVER: singlestore.test.com
@@ -222,43 +221,43 @@ workflows:
 #              memsql_image:
 #                - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
 #                - memsql/cluster-in-a-box:centos-7.1.13-11ddea2a3a-3.0.0-1.9.3
-#      - build-macos:
-#          name: build-macos-ansi-<< matrix.build_type >>
-#          matrix:
-#            parameters:
-#              build_type:
-#                - RelWithDebInfo
-#              test_dsn:
-#                - maodbc_test_a
-#              driver_name:
-#                - libmaodbca.dylib
-#      - build-macos:
-#          requires:
-#            - build-macos-ansi-RelWithDebInfo
-#          name: build-macos-unicode-<< matrix.build_type >>
-#          matrix:
-#            parameters:
-#              build_type:
-#                - RelWithDebInfo
-#              test_dsn:
-#                - maodbc_test_w
-#              driver_name:
-#                - libmaodbcw.dylib
-#      - build-windows:
-#          requires:
-#            - build-macos-ansi-RelWithDebInfo
-#          name: build-windows-ansi-<< matrix.build_type >>
-#          matrix:
-#            parameters:
-#              build_type:
-#                - RelWithDebInfo
-#              test_dsn:
-#                - maodbc_test_a
-#              test_driver:
-#                - SingleStore ODBC 0.1-beta ANSI Driver
+      - build-macos:
+          name: build-macos-ansi-<< matrix.build_type >>
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_a
+              driver_name:
+                - libmaodbca.dylib
+      - build-macos:
+          requires:
+            - build-macos-ansi-RelWithDebInfo
+          name: build-macos-unicode-<< matrix.build_type >>
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_w
+              driver_name:
+                - libmaodbcw.dylib
       - build-windows:
-#          requires:
-#            - build-windows-ansi-RelWithDebInfo
+          requires:
+            - build-macos-ansi-RelWithDebInfo
+          name: build-windows-ansi-<< matrix.build_type >>
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_a
+              test_driver:
+                - SingleStore ODBC 0.1-beta ANSI Driver
+      - build-windows:
+          requires:
+            - build-windows-ansi-RelWithDebInfo
           name: build-windows-unicode-<< matrix.build_type >>
           matrix:
             parameters:

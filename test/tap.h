@@ -946,16 +946,15 @@ SQLHANDLE DoConnect(SQLHANDLE Connection, BOOL DoWConnect,
     return NULL;
   }
 
-    if (unicode_driver < 0)
+  if (unicode_driver < 0)
+  {
+    rc= SQLGetInfo(Connection, SQL_DRIVER_NAME, driver_name, sizeof(driver_name), NULL);
+    if (SQL_SUCCEEDED(rc))
     {
-        rc= SQLGetInfo(Connection, SQL_DRIVER_NAME, driver_name, sizeof(driver_name), NULL);
-
-        if (SQL_SUCCEEDED(rc))
-        {
-            /* ANSI driver file name contains 5a.{dll|so} */
-            unicode_driver= strstr((char*)driver_name, "a.") == NULL ? UNICODE_DRIVER : ANSI_DRIVER;
-        }
+      /* ANSI driver file name contains a.{dll|so} */
+      unicode_driver= strstr((char*)driver_name, "a.") == NULL ? UNICODE_DRIVER : ANSI_DRIVER;
     }
+  }
 
   return stmt;
 }
@@ -1471,7 +1470,7 @@ BOOL UnixOdbc()
 
 int GetDefaultCharType(int WType, BOOL isAnsiConnection)
 {
-    if (isAnsiConnection != FALSE)
+    if (isAnsiConnection)
     {
         switch (WType) {
             case SQL_WCHAR:

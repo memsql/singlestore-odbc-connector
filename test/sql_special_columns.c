@@ -126,7 +126,7 @@ ODBC_TEST(t_specialcolumns3A) {
                                       (SQLPOINTER) SQL_OV_ODBC3, SQL_IS_INTEGER));
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &Connection1));
     CHECK_DBC_RC(Connection1,
-                 SQLDriverConnectA(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
+                 SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
                                   NULL, SQL_DRIVER_NOPROMPT));
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
