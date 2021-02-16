@@ -84,7 +84,7 @@ jobs:
       - run:
           name: Define Environment Variables
           command: |
-            echo 'export TEST_DRIVER=$PWD/$DRIVER_NAME' >> $BASH_ENV
+            echo "export TEST_DRIVER=$PWD/'$DRIVER_NAME'" >> $BASH_ENV
             echo 'export TEST_SERVER=$MEMSQL_HOST' >> $BASH_ENV
             echo 'export TEST_UID=$MEMSQL_USER' >> $BASH_ENV
             echo 'export TEST_PORT=$MEMSQL_PORT' >> $BASH_ENV
