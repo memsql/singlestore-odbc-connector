@@ -43,17 +43,9 @@
 //#define HAVE_UNICODE
 
 #ifdef MAODBC_UNICODEDRIVER
-    # ifdef WIN32
-        #define MADB_DRIVER_NAME "maodbcw.dll"
-    # else
-        #define MADB_DRIVER_NAME "libmaodbcw.so"
-    # endif
+    #define MADB_DRIVER_NAME "libmaodbcw.so"
 #else
-    # ifdef WIN32
-        #define MADB_DRIVER_NAME "maodbca.dll"
-    # else
-        #define MADB_DRIVER_NAME "libmaodbca.so"
-    # endif
+    #define MADB_DRIVER_NAME "libmaodbca.so"
 #endif
 
 #define CP_UTF8          65001
