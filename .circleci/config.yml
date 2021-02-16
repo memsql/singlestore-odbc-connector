@@ -77,13 +77,14 @@ jobs:
     environment:
       BUILD_TYPE: << parameters.build_type >>
       TEST_DSN: << parameters.test_dsn >>
-#      DRIVER_NAME: << parameters.driver_name >>
+      DRIVER_NAME: << parameters.driver_name >>
       TEST_SCHEMA: odbc_test
       CONTINUOUS_INTEGRATION: true
     steps:
       - run:
           name: Define Environment Variables
           command: |
+            echo 'export TEST_DRIVER=$PWD/$DRIVER_NAME' >> $BASH_ENV
             echo 'export TEST_SERVER=$MEMSQL_HOST' >> $BASH_ENV
             echo 'export TEST_UID=$MEMSQL_USER' >> $BASH_ENV
             echo 'export TEST_PORT=$MEMSQL_PORT' >> $BASH_ENV
@@ -229,7 +230,7 @@ workflows:
               test_dsn:
                 - maodbc_test_a
               driver_name:
-                - libmaodbca.dylib
+                - SingleStore ODBC 0.1-beta ANSI Driver
       - build-macos:
           requires:
             - build-macos-ansi-RelWithDebInfo
@@ -241,7 +242,7 @@ workflows:
               test_dsn:
                 - maodbc_test_w
               driver_name:
-                - libmaodbcw.dylib
+                - SingleStore ODBC 0.1-beta Unicode Driver
       - build-windows:
           requires:
             - build-macos-ansi-RelWithDebInfo
