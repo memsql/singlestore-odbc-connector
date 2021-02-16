@@ -77,7 +77,7 @@ jobs:
     environment:
       BUILD_TYPE: << parameters.build_type >>
       TEST_DSN: << parameters.test_dsn >>
-      DRIVER_NAME: << parameters.driver_name >>
+#      DRIVER_NAME: << parameters.driver_name >>
       TEST_SCHEMA: odbc_test
       CONTINUOUS_INTEGRATION: true
     steps:
