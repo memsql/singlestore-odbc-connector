@@ -230,7 +230,7 @@ workflows:
               test_dsn:
                 - maodbc_test_a
               driver_name:
-                - SingleStore ODBC 0.1-beta ANSI Driver
+                - MariaDB ODBC 3.1 ANSI Driver
       - build-macos:
           requires:
             - build-macos-ansi-RelWithDebInfo
@@ -242,7 +242,7 @@ workflows:
               test_dsn:
                 - maodbc_test_w
               driver_name:
-                - SingleStore ODBC 0.1-beta Unicode Driver
+                - MariaDB ODBC 3.1 Unicode Driver
       - build-windows:
           requires:
             - build-macos-ansi-RelWithDebInfo
