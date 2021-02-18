@@ -222,18 +222,6 @@ workflows:
 #                - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
 #                - memsql/cluster-in-a-box:centos-7.1.13-11ddea2a3a-3.0.0-1.9.3
       - build-macos:
-          name: build-macos-ansi-<< matrix.build_type >>
-          matrix:
-            parameters:
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - maodbc_test_a
-              driver_name:
-                - MariaDB ODBC 3.1 ANSI Driver
-      - build-macos:
-          requires:
-            - build-macos-ansi-RelWithDebInfo
           name: build-macos-unicode-<< matrix.build_type >>
           matrix:
             parameters:
@@ -243,6 +231,18 @@ workflows:
                 - maodbc_test_w
               driver_name:
                 - MariaDB ODBC 3.1 Unicode Driver
+      - build-macos:
+          requires:
+            - build-macos-unicode-RelWithDebInfo
+          name: build-macos-ansi-<< matrix.build_type >>
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_a
+              driver_name:
+                - MariaDB ODBC 3.1 ANSI Driver
       - build-windows:
           requires:
             - build-macos-ansi-RelWithDebInfo
