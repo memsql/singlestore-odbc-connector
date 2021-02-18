@@ -213,6 +213,10 @@ typedef struct st_ma_odbc_test {
 #define UNICODE_DRIVER 1
 
 int unicode_driver = -1;
+
+#define is_unicode_driver() (unicode_driver == UNICODE_DRIVER)
+#define is_ansi_driver()    (unicode_driver == ANSI_DRIVER)
+
 #define ODBC_TEST(a)\
 int a()
 

@@ -509,7 +509,7 @@ ODBC_TEST(t_tables_bug)
   SQLSMALLINT i, ColumnCount, pcbColName, pfSqlType, pibScale, pfNullable;
   SQLULEN     pcbColDef;
   SQLCHAR     szColName[MAX_NAME_LEN];
-  const int   RefArrOffset= iOdbc() ? -1 : 4; /* 4 for "ANSI" connection, which is default atm, and -1 for "Unicode" */
+  const int   RefArrOffset= is_unicode_driver() ? -1 : 4; /* 4 for "ANSI" connection, which is default atm, and -1 for "Unicode" */
 
   CHECK_STMT_RC(Stmt,  SQLTables(Stmt, NULL, 0, NULL, 0, NULL, 0,
                             (SQLCHAR *)"TABLE", SQL_NTS));

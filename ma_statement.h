@@ -337,7 +337,7 @@ void         MADB_CspsFreeDAE(MADB_Stmt *Stmt);
     " WHEN 'mediumtext' THEN IF(DTD_IDENTIFIER LIKE '%%mediumblob%%', 'mediumblob', LOWER(DATA_TYPE))" \
     " WHEN 'text' THEN IF(DTD_IDENTIFIER LIKE '%%blob%%', 'blob', LOWER(DATA_TYPE))"  \
     " WHEN 'tinytext' THEN IF(DTD_IDENTIFIER LIKE '%%tinyblob%%', 'tinyblob', LOWER(DATA_TYPE))" \
-    " ELSE IF (DTD_IDENTIFIER LIKE '%UNSIGNED%', CONCAT(LOWER(DATA_TYPE), ' unsigned'), LOWER(DATA_TYPE)) END"
+    " ELSE IF (DTD_IDENTIFIER LIKE '%%UNSIGNED%%', CONCAT(LOWER(DATA_TYPE), ' unsigned'), LOWER(DATA_TYPE)) END"
 
 #define MADB_PROCEDURE_COLUMNSp1 \
   "SELECT SPECIFIC_SCHEMA AS PROCEDURE_CAT, "\
