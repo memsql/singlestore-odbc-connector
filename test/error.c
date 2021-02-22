@@ -506,7 +506,7 @@ ODBC_TEST(t_bug14285620)
   /* Get database name for further checks */
   FAIL_IF(SQLGetInfo(Connection, SQL_DATABASE_NAME, szData, sizeof(szData), NULL)!= SQL_SUCCESS, "success expected");
   /* iODBC will call SQLGetInfoW, and will provide pointer for the value. Thus connector should return SQL_SUCCESS_WITH_INFO */
-  is_num(SQLGetInfo(Connection, SQL_DATABASE_NAME, NULL, 0, &cblen), iOdbc() ? SQL_SUCCESS_WITH_INFO : SQL_SUCCESS);
+  is_num(SQLGetInfo(Connection, SQL_DATABASE_NAME, NULL, 0, &cblen), iOdbc() && is_unicode_driver() ? SQL_SUCCESS_WITH_INFO : SQL_SUCCESS);
 
 #ifdef _WIN32  
   /* Windows uses unicode driver by default */

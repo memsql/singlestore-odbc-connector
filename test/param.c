@@ -863,7 +863,7 @@ ODBC_TEST(t_bug56804)
     SQL_DECIMAL, 4, 0, c2, 4, d2));
 
 
-  EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_SUCCESS_WITH_INFO);
+  EXPECT_STMT(Stmt, SQLExecute(Stmt), iOdbc() ? SQL_SUCCESS : SQL_SUCCESS_WITH_INFO);
   memset(ExpectedStatus, 0x00ff & SQL_PARAM_SUCCESS, sizeof(ExpectedStatus));
   /* all errors but last have SQL_PARAM_DIAG_UNAVAILABLE */
   ExpectedStatus[1] = ExpectedStatus[6]= SQL_PARAM_DIAG_UNAVAILABLE;
