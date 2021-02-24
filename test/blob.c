@@ -829,7 +829,7 @@ ODBC_TEST(t_bug_11746572)
 ODBC_TEST(t_odbc_26)
 {
   SQLLEN     valueLen;
-  SQLWCHAR   buffer[]= {'b', 'b', 0};
+  SQLCHAR   buffer[]= {'b', 'b', 0};
   SQLCHAR    value[3];
   SQLPOINTER parameter;
 
@@ -843,14 +843,14 @@ ODBC_TEST(t_odbc_26)
 
   valueLen= SQL_LEN_DATA_AT_EXEC(4);
 
-  CHECK_STMT_RC(Stmt,  SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_WCHAR,
+  CHECK_STMT_RC(Stmt,  SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
                                   SQL_VARCHAR, 0, 0, (SQLPOINTER)1, 0, &valueLen));
 
   EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_NEED_DATA);
   EXPECT_STMT(Stmt, SQLParamData(Stmt, &parameter), SQL_NEED_DATA);
   is_num(parameter, 1);
 
-  CHECK_STMT_RC(Stmt, SQLPutData(Stmt, buffer, 2*sizeof(SQLWCHAR)));
+  CHECK_STMT_RC(Stmt, SQLPutData(Stmt, buffer, 2*sizeof(SQLCHAR)));
   CHECK_STMT_RC(Stmt, SQLParamData(Stmt, &parameter));
 
   /* We return "N" for SQL_NEED_LONG_DATA_LEN, and this not gonna change. Thus SQL_LEN_DATA_AT_EXEC(0) and with any other parameter should work */
@@ -861,7 +861,7 @@ ODBC_TEST(t_odbc_26)
   EXPECT_STMT(Stmt, SQLParamData(Stmt, &parameter), SQL_NEED_DATA);
   is_num(parameter, 1);
 
-  CHECK_STMT_RC(Stmt, SQLPutData(Stmt, buffer, 2*sizeof(SQLWCHAR)));
+  CHECK_STMT_RC(Stmt, SQLPutData(Stmt, buffer, 2*sizeof(SQLCHAR)));
   CHECK_STMT_RC(Stmt, SQLParamData(Stmt, &parameter));
 
   OK_SIMPLE_STMT(Stmt, "SELECT value FROM bug_odbc26 ORDER BY id");

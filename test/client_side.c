@@ -816,9 +816,9 @@ ODBC_TEST(client_side_get_data_many_types)
     OK_SIMPLE_STMT(Stmt, "SELECT * FROM cs_getdata");
 
     CHECK_STMT_RC(Stmt, SQLGetStmtAttr(Stmt, SQL_ATTR_APP_ROW_DESC, &ard, SQL_IS_POINTER, NULL));
-    CHECK_STMT_RC(ard, SQLSetDescField(ard, 3, SQL_DESC_PRECISION, (void *) 10, 0));
-    CHECK_STMT_RC(ard, SQLSetDescField(ard, 3, SQL_DESC_SCALE, (void *) 3, 0));
-    CHECK_STMT_RC(ard, SQLSetDescField(ard, 3, SQL_DESC_CONCISE_TYPE, (void *) SQL_NUMERIC, 0));
+    CHECK_DESC_RC(ard, SQLSetDescField(ard, 3, SQL_DESC_PRECISION, (void *) 10, 0));
+    CHECK_DESC_RC(ard, SQLSetDescField(ard, 3, SQL_DESC_SCALE, (void *) 3, 0));
+    CHECK_DESC_RC(ard, SQLSetDescField(ard, 3, SQL_DESC_CONCISE_TYPE, (void *) SQL_C_NUMERIC, 0));
 
     CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
     CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 1, SQL_C_WCHAR, aCol, sizeof(aCol), &aColLen));
