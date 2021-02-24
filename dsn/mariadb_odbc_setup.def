@@ -1,4 +1,4 @@
-LIBRARY maodbcs.dll 
+LIBRARY ssodbcs.dll
 EXPORTS
   ConfigDSN
   DSNDialog

@@ -63,8 +63,12 @@ const char* GetDefaultLogDir()
     DefaultLogDir= tmp;
   }
 
-  _snprintf(LogFile, sizeof(LogFile), "%s\\MAODBC.LOG", DefaultLogDir);
- 
+#ifdef MAODBC_UNICODEDRIVER
+  _snprintf(LogFile, sizeof(LogFile), "%s\\SSODBCW.LOG", DefaultLogDir);
+#else
+  _snprintf(LogFile, sizeof(LogFile), "%s\\SSODBCA.LOG", DefaultLogDir);
+#endif
+
   return LogFile;
 }
 

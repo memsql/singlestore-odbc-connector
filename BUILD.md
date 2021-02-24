@@ -16,13 +16,13 @@ git clone https://github.com/memsql/singlestore-odbc-connector.git
 cd singlestore-odbc-connector
 cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCONC_WITH_MSI=OFF -DWITH_SSL=SCHANNEL .
 cmake --build . --config RelWithDebInfo
-msiexec.exe /i ${SINGLESTORE_ODBC_ROOT}\wininstall\mariadb-connector-odbc-${CURRENT_VERSION}-win64.msi
+msiexec.exe /i ${SINGLESTORE_ODBC_ROOT}\wininstall\singestore-connector-odbc-${CURRENT_VERSION}-win64.msi
 
 The driver will be installed in the C:\Program Files\... directory.
 To override the installation dir use the following:
-msiexec.exe /i ${SINGLESTORE_ODBC_ROOT}\wininstall\mariadb-connector-odbc-${CURRENT_VERSION}-win64.msi TARGETDIR="C:\path\to\dir"
+msiexec.exe /i ${SINGLESTORE_ODBC_ROOT}\wininstall\singestore-connector-odbc-${CURRENT_VERSION}-win64.msi TARGETDIR="C:\path\to\dir"
 
-To run the tests add the path to the maodbc.dll to PATH and refresh your cmd and reopen the programs
+To run the tests add the path to the ssodbc.dll to PATH and refresh your cmd and reopen the programs
 to load the new env (or simply reboot).
 ```
 
@@ -39,7 +39,7 @@ go to File->Settings->CMake and for the build target put the following in CMake 
 sudo yum -y install git cmake make gcc openssl-devel unixODBC unixODBC-devel
 git clone https://github.com/memsql/singlestore-odbc-connector.git
 mkdir build && cd build
-cmake ../mariadb-connector-odbc/ -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_SSL=OPENSSL
+cmake ../singlestore-odbc-connector/ -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_SSL=OPENSSL
 cmake --build . --config RelWithDebInfo
 sudo make install
 ```
@@ -51,7 +51,7 @@ sudo apt-get update
 sudo apt-get install -y git cmake make gcc libssl-dev unixodbc-dev
 git clone https://github.com/memsql/singlestore-odbc-connector.git
 mkdir build && cd build
-cmake ../mariadb-connector-odbc/ -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_SSL=OPENSSL
+cmake ../singlestore-odbc-connector/ -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_SSL=OPENSSL
 cmake --build . --config RelWithDebInfo
 sudo make install
 ```

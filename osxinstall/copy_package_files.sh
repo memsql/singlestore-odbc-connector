@@ -18,14 +18,14 @@
 #   51 Franklin St., Fifth Floor, Boston, MA 02110, USA
 # *************************************************************************************/
 
-LibPath="Library/MariaDB/MariaDB-Connector-ODBC"
+LibPath="Library/SingleStore/SingleStore-Connector-ODBC"
 
 set -e
 rm -rf ./ROOT
 
 mkdir -p ./ROOT/${LibPath}/bin
-cp $1/libmaodbcw.dylib ./ROOT/${LibPath}/
-cp $1/libmaodbca.dylib ./ROOT/${LibPath}/
+cp $1/libssodbcw.dylib ./ROOT/${LibPath}/
+cp $1/libssodbca.dylib ./ROOT/${LibPath}/
 cp ./install_driver ./ROOT/${LibPath}/bin
 
 if [ $2 ]; then

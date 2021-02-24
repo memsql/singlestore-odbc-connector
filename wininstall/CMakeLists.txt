@@ -59,15 +59,12 @@ ELSE()
   SET(GUID_INSTALLER_TOOLS "786BD2C3-20B0-4b8f-8D9B-374C736E3A1B")
 ENDIF()
 
-ADD_EXECUTABLE(change_dsns_driver change_dsns_driver.c ${CMAKE_SOURCE_DIR}/ma_dsn.c ${CMAKE_SOURCE_DIR}/ma_platform_win32.c ${CMAKE_SOURCE_DIR}/ma_common.c)
-TARGET_LINK_LIBRARIES(change_dsns_driver ${ODBC_LIBS} ${ODBC_INSTLIBS} legacy_stdio_definitions Shlwapi Pathcch)
-
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/wininstall/mariadb_odbc.xml.in
                ${CMAKE_BINARY_DIR}/wininstall/mariadb_odbc.xml)
 IF(${revno})
-  SET(MSI_PACKAGE "mariadb-connector-odbc-${PRODUCT_VERSION}-r${revno}-${PLATFORM}.msi")
+  SET(MSI_PACKAGE "singlestore-connector-odbc-${PRODUCT_VERSION}-beta-r${revno}-${PLATFORM}.msi")
 ELSE()
-  SET(MSI_PACKAGE "mariadb-connector-odbc-${PRODUCT_VERSION}-${PLATFORM}.msi")
+  SET(MSI_PACKAGE "singlestore-connector-odbc-${PRODUCT_VERSION}-beta-${PLATFORM}.msi")
 ENDIF()
 
 SET(ENV{MARIADB_ODBC_MSI_PACKAGE} "${MSI_PACKAGE}")
@@ -101,9 +98,9 @@ ADD_CUSTOM_TARGET(
 
 ADD_DEPENDENCIES(${MSI_PACKAGE} ODBC_WIX)
 FOREACH(CONNECTOR_DRIVER_TYPE_SHORT IN LISTS CONNECTOR_DRIVER_TYPES_SHORT)
-  ADD_DEPENDENCIES(ODBC_WIX maodbc${CONNECTOR_DRIVER_TYPE_SHORT} maodbcs change_dsns_driver)
+  ADD_DEPENDENCIES(ODBC_WIX ssodbc${CONNECTOR_DRIVER_TYPE_SHORT} ssodbcs)
   IF(NOT USE_SYSTEM_INSTALLED_LIB)
-    ADD_DEPENDENCIES(ODBC_WIX maodbc${CONNECTOR_DRIVER_TYPE_SHORT} maodbcs dialog caching_sha2_password auth_gssapi_client sha256_password mysql_clear_password client_ed25519)
+    ADD_DEPENDENCIES(ODBC_WIX ssodbc${CONNECTOR_DRIVER_TYPE_SHORT} ssodbcs dialog caching_sha2_password auth_gssapi_client sha256_password mysql_clear_password client_ed25519)
   ENDIF()
 ENDFOREACH()
 

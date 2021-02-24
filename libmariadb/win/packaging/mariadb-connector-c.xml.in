@@ -10,8 +10,6 @@
 
     <UIRef Id="WixUI_Mondo" />
     <WixVariable Id="WixUILicenseRtf" Value="@CMAKE_SOURCE_DIR@/win/packaging/license.rtf" />
-    <WixVariable Id="WixUIBannerBmp" Value="@CMAKE_SOURCE_DIR@/win/packaging/WixUIBannerBmp.jpg" />
-    <WixVariable Id="WixUIDialogBmp" Value="@CMAKE_SOURCE_DIR@/win/packaging/WixUIDialogBmp.jpg" />
 
     <Feature Id="ProductFeature" Title="@PRODUCT_NAME@ @PRODUCT_VERSION@" Level="1">
       <ComponentRef Id="RegistryKeys" />

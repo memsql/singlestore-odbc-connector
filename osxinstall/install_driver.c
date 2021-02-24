@@ -60,7 +60,7 @@ int main(int argc, char** argv)
 {
   unsigned int UsageCount, ErrorCode;
   char DriverDescr[1024], ErrorText[128], OutLocation[512], DriverDir[512];
-  const char *DriverLocation, *DriverName, *DriverFileName, *DriverDescription= "MariaDB Connector/ODBC";
+  const char *DriverLocation, *DriverName, *DriverFileName, *DriverDescription= "SingleStore Connector/ODBC";
 
   if (argc < 2 || strcmp(argv[1], "--help") == 0)
   {

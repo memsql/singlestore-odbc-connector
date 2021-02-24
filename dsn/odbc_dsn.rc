@@ -55,7 +55,7 @@ END
 
 IDD_DIALOG1 DIALOGEX 0, 0, 385, 173
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Create a new Data Source to MariaDB"
+CAPTION "Create a new Data Source to SingleStore"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     CONTROL         106,IDC_STATIC,"Static",SS_BITMAP,0,0,80,170
@@ -65,8 +65,8 @@ Page_0 DIALOGEX 0, 0, 299, 182
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_SYSMENU | WS_TABSTOP
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "Welcome to the MariaDB ODBC Data Source Wizard!",IDC_STATIC,7,7,287,25,0,WS_EX_TRANSPARENT
-    LTEXT           "This wizard will help you to create an ODBC data source that you can use to connect to a MariaDB server.",IDC_STATIC,7,33,287,21,0,WS_EX_TRANSPARENT
+    LTEXT           "Welcome to the SingleStore ODBC Data Source Wizard!",IDC_STATIC,7,7,287,25,0,WS_EX_TRANSPARENT
+    LTEXT           "This wizard will help you to create an ODBC data source that you can use to connect to a SingleStore server.",IDC_STATIC,7,33,287,21,0,WS_EX_TRANSPARENT
     LTEXT           "What name do you want to use to refer to your data source ?",IDC_STATIC,7,60,287,12,0,WS_EX_TRANSPARENT
     LTEXT           "Name:",IDC_STATIC,44,78,22,8,0,WS_EX_TRANSPARENT
     EDITTEXT        txtDsnName,73,77,169,14,ES_AUTOHSCROLL | WS_GROUP
@@ -103,9 +103,9 @@ Page_1 DIALOGEX 0, 0, 299, 182
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_SYSMENU
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "How do you want to connect to MariaDB",IDC_STATIC,9,7,130,10,0,WS_EX_TRANSPARENT
+    LTEXT           "How do you want to connect to SingleStore",IDC_STATIC,9,7,130,10,0,WS_EX_TRANSPARENT
     LTEXT           "Server Name:",lblServerName,86,21,49,11,0,WS_EX_TRANSPARENT | WS_EX_RIGHT
-    LTEXT           "Please specify a user name and password to connect to MariaDB",IDC_STATIC,9,54,207,8,0,WS_EX_TRANSPARENT
+    LTEXT           "Please specify a user name and password to connect to SingleStore",IDC_STATIC,9,54,207,8,0,WS_EX_TRANSPARENT
     LTEXT           "Please specify a database to use",IDC_STATIC,9,105,207,8,0,WS_EX_TRANSPARENT
     LTEXT           "User name:",IDC_STATIC,26,70,38,8,0,WS_EX_TRANSPARENT | WS_EX_RIGHT
     LTEXT           "Password:",IDC_STATIC,30,88,34,8,0,WS_EX_TRANSPARENT | WS_EX_RIGHT
@@ -129,7 +129,7 @@ Page_2 DIALOGEX 0, 0, 299, 182
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_SYSMENU
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "Do you want to send initial statement(s) after establishing connection to MariaDB?",IDC_STATIC,7,0,264,8,0,WS_EX_TRANSPARENT
+    LTEXT           "Do you want to send initial statement(s) after establishing connection to SingleStore?",IDC_STATIC,7,0,264,8,0,WS_EX_TRANSPARENT
     EDITTEXT        txtInitCmd,74,15,197,39,ES_MULTILINE | ES_AUTOHSCROLL | WS_VSCROLL
     LTEXT           "Statement(s):",IDC_STATIC,20,17,46,8,0,WS_EX_TRANSPARENT
     RTEXT           "Connection timeout in sec:",IDC_STATIC,17,62,86,8,0,WS_EX_TRANSPARENT
@@ -336,13 +336,6 @@ BEGIN
 END
 #endif    // APSTUDIO_INVOKED
 
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Bitmap
-//
-
-IDB_BITMAP1             BITMAP                  "odbc_logo_left.bmp"
 #endif    // German (Germany) resources
 /////////////////////////////////////////////////////////////////////////////
 

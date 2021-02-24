@@ -46,9 +46,9 @@
 #define strcasecmp(A,B) _stricmp((A),(B))
 
 #ifdef MAODBC_UNICODEDRIVER
-    #define MADB_DRIVER_NAME "maodbcw.so"
+    #define MADB_DRIVER_NAME "ssodbcw.so"
 #else
-    #define MADB_DRIVER_NAME "maodbca.so"
+    #define MADB_DRIVER_NAME "ssodbca.so"
 #endif
 
 char *strndup(const char *s, size_t n);

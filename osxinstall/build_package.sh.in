@@ -18,5 +18,5 @@
 #   51 Franklin St., Fifth Floor, Boston, MA 02110, USA
 # *************************************************************************************/
 
-pkgbuild --root ROOT --scripts scripts --identifier $1 --version $2 libmaodbc.pkg
-productbuild --distribution @CMAKE_CURRENT_BINARY_DIR@/distribution.plist --resources . --package-path libmaodbc.pkg @SIGN_WITH_DEVID@ $3
+pkgbuild --root ROOT --scripts scripts --identifier $1 --version $2 libssodbc.pkg
+productbuild --distribution @CMAKE_CURRENT_BINARY_DIR@/distribution.plist --resources . --package-path libssodbc.pkg @SIGN_WITH_DEVID@ $3

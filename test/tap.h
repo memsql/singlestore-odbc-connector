@@ -120,11 +120,11 @@ int strcpy_s(char *dest, size_t buffer_size, const char *src)
 
 
 BOOL   UseDsnOnly= FALSE;
-static SQLCHAR *my_dsn=             (SQLCHAR *)"maodbc_test_a";
+static SQLCHAR *my_dsn=             (SQLCHAR *)"ssodbc_test_a";
 static SQLCHAR *my_uid=             (SQLCHAR *)"root";
 static SQLCHAR *my_pwd=             (SQLCHAR *)"";
 static SQLCHAR *my_schema=          (SQLCHAR *)"odbc_test";
-static SQLCHAR *my_drivername=      (SQLCHAR *)"MariaDB ODBC 3.1 ANSI Driver";
+static SQLCHAR *my_drivername=      (SQLCHAR *)"SingleStore ODBC 0.8.0-beta ANSI Driver";
 static SQLCHAR *my_servername=      (SQLCHAR *)"127.0.0.1";
 static SQLCHAR *add_connstr=        (SQLCHAR*)"";
 

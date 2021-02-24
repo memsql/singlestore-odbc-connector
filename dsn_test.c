@@ -48,7 +48,7 @@ int  main()
     }
   }
 
-  if ((hmod= LoadLibrary("maodbcs.dll")))
+  if ((hmod= LoadLibrary("ssodbcs.dll")))
   {
     if (DsnFunc= (DSNDialog)GetProcAddress(hmod, "ConfigDSN"))
     {

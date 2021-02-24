@@ -1,7 +1,7 @@
 [ODBC]
 # Change to "yes" to turn on tracing
 Trace     = no
-TraceFile = /tmp/maodbc_trace.log
+TraceFile = /tmp/ssodbc_trace.log
 
 [@TEST_DRIVER1@]
 Driver      = @DRIVER_LIB_LOCATION1@

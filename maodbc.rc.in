@@ -66,13 +66,13 @@ BEGIN
     BEGIN
         BLOCK "040704b0"
         BEGIN
-            VALUE "CompanyName", "MariaDB Corporation AB"
-            VALUE "FileDescription", "MariaDB ODBC @CONNECTOR_DRIVER_TYPE@ Driver"
+            VALUE "CompanyName", "SingleStore Inc."
+            VALUE "FileDescription", "SingleStore ODBC @CONNECTOR_DRIVER_TYPE@ Driver"
             VALUE "FileVersion", "@MARIADB_ODBC_VERSION_MAJOR@.@MARIADB_ODBC_VERSION_MINOR@.@MARIADB_ODBC_VERSION_PATCH@.0"
-            VALUE "InternalName", "ma_odbc_@CONNECTOR_DRIVER_TYPE_SHORT@"
-            VALUE "LegalCopyright", "Copyright (C) 2013, 2019"
-            VALUE "OriginalFilename", "maodbc@CONNECTOR_DRIVER_TYPE_SHORT@.dll"
-            VALUE "ProductName", "MariaDB ODBC @CONNECTOR_DRIVER_TYPE@ Driver"
+            VALUE "InternalName", "ss_odbc_@CONNECTOR_DRIVER_TYPE_SHORT@"
+            VALUE "LegalCopyright", "Copyright (C) 2021"
+            VALUE "OriginalFilename", "ssodbc@CONNECTOR_DRIVER_TYPE_SHORT@.dll"
+            VALUE "ProductName", "SingleStore ODBC @CONNECTOR_DRIVER_TYPE@ Driver"
             VALUE "ProductVersion", "@MARIADB_ODBC_VERSION_MAJOR@.@MARIADB_ODBC_VERSION_MINOR@.@MARIADB_ODBC_VERSION_PATCH@.0"
         END
     END

@@ -1882,7 +1882,7 @@ SQLRETURN MADB_DriverConnect(MADB_Dbc *Dbc, SQLHWND WindowHandle, SQLCHAR *InCon
   else
     Dsn->isPrompt= MAODBC_PROMPT;
 
-  /* We need to obtain the driver name to load maodbcs.dll, if it's not stored inside DSN, 
+  /* We need to obtain the driver name to load ssodbcs.dll, if it's not stored inside DSN,
      error IM007 (dialog prohibited) will be returned */
   if (!Dsn->Driver)
   {

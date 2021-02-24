@@ -1,8 +1,8 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by maodbca.rc
+// Used by ssodbca.rc
 
-// Nächste Standardwerte für neue Objekte
+// Nï¿½chste Standardwerte fï¿½r neue Objekte
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
