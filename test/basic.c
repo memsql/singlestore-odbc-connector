@@ -1609,7 +1609,7 @@ ODBC_TEST(t_odbc139)
   }
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &Hdbc));
 
-  CHECK_DBC_RC(Hdbc, SQLSetConnectAttr(Hdbc, SQL_ATTR_CURRENT_CATALOG, (SQLPOINTER)"test", 4));
+  CHECK_DBC_RC(Hdbc, SQLSetConnectAttr(Hdbc, SQL_ATTR_CURRENT_CATALOG, (SQLPOINTER)"odbc_test", 9));
   Hstmt= DoConnect(Hdbc, FALSE, NULL, NULL, NULL, 0, NULL, &Compression, NULL, NULL);
 
 

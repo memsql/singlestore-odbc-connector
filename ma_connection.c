@@ -136,6 +136,7 @@ my_bool CheckConnection(MADB_Dbc *Dbc)
 SQLRETURN MADB_DbcSetAttr(MADB_Dbc *Dbc, SQLINTEGER Attribute, SQLPOINTER ValuePtr, SQLINTEGER StringLength, my_bool isWChar)
 {
   MADB_CLEAR_ERROR(&Dbc->Error);
+  ADJUST_LENGTH(ValuePtr, StringLength);
 
   if (!Dbc)
   {
@@ -205,7 +206,7 @@ SQLRETURN MADB_DbcSetAttr(MADB_Dbc *Dbc, SQLINTEGER Attribute, SQLPOINTER ValueP
         Dbc->CatalogName= MADB_ConvertFromWChar((SQLWCHAR *)ValuePtr, StringLength, NULL, Dbc->ConnOrSrcCharset, NULL);
       }
       else
-        Dbc->CatalogName= _strdup((char *)ValuePtr);
+        Dbc->CatalogName= strndup((char *)ValuePtr, StringLength);
 
       if (Dbc->mariadb &&
           mysql_select_db(Dbc->mariadb, Dbc->CatalogName))

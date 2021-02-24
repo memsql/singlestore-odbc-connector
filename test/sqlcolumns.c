@@ -123,7 +123,7 @@ ODBC_TEST(t_columns3U) {
     SQLCHAR conn[512];
 
     sprintf((char *) conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s",
-            unicode_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr);
+            my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr);
 
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
     CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
@@ -170,7 +170,7 @@ ODBC_TEST(t_columns3A) {
     SQLCHAR conn[512];
 
     sprintf((char *) conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s",
-            ansi_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr);
+            my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr);
 
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
     CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
@@ -218,7 +218,7 @@ ODBC_TEST(t_columns2U) {
     SQLCHAR conn[512];
 
     sprintf((char *) conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s",
-            unicode_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr);
+            my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr);
 
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
     CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
@@ -265,7 +265,7 @@ ODBC_TEST(t_columns2A) {
     SQLCHAR conn[512];
 
     sprintf((char *) conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s",
-            ansi_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr);
+            my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr);
 
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
     CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,

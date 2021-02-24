@@ -1112,13 +1112,13 @@ SQLRETURN MADB_ConvertDatetimeToChar(MADB_Stmt *Stmt, int SourceType, int SqlTyp
 #define _strtoi64 strtoll
 #endif
 
-#define TINYINT_MIN (-128)
+#define TINYINT_MIN (int)(-128)
 #define TINYINT_MAX 127
 #define UTINYINT_MAX 255
-#define SMALLINT_MIN (-32768)
+#define SMALLINT_MIN (int)(-32768)
 #define SMALLINT_MAX 32767
 #define USMALLINT_MAX 65535
-#define INTEGER_MIN (-2147483648)
+#define INTEGER_MIN (int)(-2147483648)
 #define INTEGER_MAX 2147483647
 #define UINTEGER_MAX 4294967295
 
