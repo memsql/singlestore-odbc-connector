@@ -283,56 +283,56 @@ workflows:
 #              test_driver:
 #                - SingleStore ODBC 0.1-beta Unicode Driver
 
-  daily:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - master
-    jobs:
-      - build-linux-in-docker:
-          matrix:
-            parameters:
-              os_version:
-                - debian:8
-              build_type:
-                - RelWithDebInfo
-      - build-linux-in-docker:
-          requires:
-            - build-linux-in-docker-RelWithDebInfo-debian:8
-          matrix:
-            parameters:
-              os_version:
-                - debian:9
-              build_type:
-                - RelWithDebInfo
-      - build-linux-in-docker:
-          requires:
-            - build-linux-in-docker-RelWithDebInfo-debian:9
-          matrix:
-            parameters:
-              os_version:
-                - debian:10
-              build_type:
-                - RelWithDebInfo
-      - build-linux-in-docker:
-          requires:
-            - build-linux-in-docker-RelWithDebInfo-debian:10
-          matrix:
-            parameters:
-              os_version:
-                - centos:centos7
-              build_type:
-                - RelWithDebInfo
-      - build-linux-in-docker:
-          requires:
-            - build-linux-in-docker-RelWithDebInfo-centos:centos7
-          matrix:
-            parameters:
-              os_version:
-                - centos:centos8
-              build_type:
-                - RelWithDebInfo
+#  daily:
+#    triggers:
+#      - schedule:
+#          cron: "0 0 * * *"
+#          filters:
+#            branches:
+#              only:
+#                - master
+#    jobs:
+#      - build-linux-in-docker:
+#          matrix:
+#            parameters:
+#              os_version:
+#                - debian:8
+#              build_type:
+#                - RelWithDebInfo
+#      - build-linux-in-docker:
+#          requires:
+#            - build-linux-in-docker-RelWithDebInfo-debian:8
+#          matrix:
+#            parameters:
+#              os_version:
+#                - debian:9
+#              build_type:
+#                - RelWithDebInfo
+#      - build-linux-in-docker:
+#          requires:
+#            - build-linux-in-docker-RelWithDebInfo-debian:9
+#          matrix:
+#            parameters:
+#              os_version:
+#                - debian:10
+#              build_type:
+#                - RelWithDebInfo
+#      - build-linux-in-docker:
+#          requires:
+#            - build-linux-in-docker-RelWithDebInfo-debian:10
+#          matrix:
+#            parameters:
+#              os_version:
+#                - centos:centos7
+#              build_type:
+#                - RelWithDebInfo
+#      - build-linux-in-docker:
+#          requires:
+#            - build-linux-in-docker-RelWithDebInfo-centos:centos7
+#          matrix:
+#            parameters:
+#              os_version:
+#                - centos:centos8
+#              build_type:
+#                - RelWithDebInfo
 
