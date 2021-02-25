@@ -142,6 +142,7 @@ SQLRETURN SQL_API SQLConnect(SQLHDBC ConnectionHandle,
                              SQLCHAR *Authentication,
                              SQLSMALLINT NameLength3)
 {
+    printf("D\n");
     MADB_Dbc *Dbc= (MADB_Dbc*)ConnectionHandle;
 
     if (!Dbc)
