@@ -148,13 +148,17 @@ jobs:
         type: string
       build_type:
         type: string
+      test_dsn:
+        type: string
+      test_driver:
+        type: string
     docker:
       - image: << parameters.os_version >>
     environment:
       IMAGE_NAME: << parameters.os_version >>
       BUILD_TYPE: << parameters.build_type >>
-      TEST_DRIVER: "SingleStore ODBC 0.1-beta Driver"
-      TEST_DSN: singlestore_test
+      TEST_DRIVER: << parameters.test_driver >>
+      TEST_DSN: << parameters.test_dsn >>
       TEST_SCHEMA: odbc_test
       CONTINUOUS_INTEGRATION: true
     steps:
