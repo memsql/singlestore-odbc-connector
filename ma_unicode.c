@@ -197,11 +197,9 @@ SQLRETURN SQL_API SQLConnectW(SQLHDBC ConnectionHandle,
     MBServerName= MADB_ConvertFromWChar(ServerName, NameLength1, 0, &utf8, NULL);
     if (UserName) {
         MBUserName= MADB_ConvertFromWChar(UserName, NameLength2, 0, &utf8, NULL);
-        printf("MBUserName: %s\n", MBUserName);
     }
     if (Authentication) {
         MBAuthentication= MADB_ConvertFromWChar(Authentication, NameLength3, 0, &utf8, NULL);
-        printf("Authentication: %s\n", MBAuthentication);
     }
     ret= SQLConnectCommon(ConnectionHandle, (SQLCHAR *)MBServerName, SQL_NTS, (SQLCHAR *)MBUserName, SQL_NTS,
                           (SQLCHAR *)MBAuthentication, SQL_NTS);
