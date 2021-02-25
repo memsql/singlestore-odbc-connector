@@ -371,7 +371,8 @@ SQLRETURN SQLConnectCommon(SQLHDBC ConnectionHandle,
     SQLCHAR *Authentication,
     SQLSMALLINT NameLength3)
 {
-  MADB_Dbc *Connection= (MADB_Dbc *)ConnectionHandle;
+    printf("B\n");
+    MADB_Dbc *Connection= (MADB_Dbc *)ConnectionHandle;
   MADB_Dsn *Dsn;
   SQLRETURN ret;
   my_bool DsnFound;

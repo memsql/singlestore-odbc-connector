@@ -182,6 +182,7 @@ SQLRETURN SQL_API SQLConnectW(SQLHDBC ConnectionHandle,
         SQLWCHAR *Authentication,
         SQLSMALLINT NameLength3)
 {
+    printf("A\n");
     char *MBServerName= NULL, *MBUserName= NULL, *MBAuthentication= NULL;
     SQLRETURN ret;
     MADB_Dbc *Dbc= (MADB_Dbc*)ConnectionHandle;
@@ -195,11 +196,14 @@ SQLRETURN SQL_API SQLConnectW(SQLHDBC ConnectionHandle,
     /* Convert parameters to Cp */
     if (ServerName)
     MBServerName= MADB_ConvertFromWChar(ServerName, NameLength1, 0, &utf8, NULL);
-    if (UserName)
-    MBUserName= MADB_ConvertFromWChar(UserName, NameLength2, 0, &utf8, NULL);
-    if (Authentication)
-    MBAuthentication= MADB_ConvertFromWChar(Authentication, NameLength3, 0, &utf8, NULL);
-
+    if (UserName) {
+        MBUserName= MADB_ConvertFromWChar(UserName, NameLength2, 0, &utf8, NULL);
+        printf("MBUserName: %s\n", MBUserName);
+    }
+    if (Authentication) {
+        MBAuthentication= MADB_ConvertFromWChar(Authentication, NameLength3, 0, &utf8, NULL);
+        printf("Authentication: %s\n", MBAuthentication);
+    }
     ret= SQLConnectCommon(ConnectionHandle, (SQLCHAR *)MBServerName, SQL_NTS, (SQLCHAR *)MBUserName, SQL_NTS,
                           (SQLCHAR *)MBAuthentication, SQL_NTS);
     MADB_FREE(MBServerName);
