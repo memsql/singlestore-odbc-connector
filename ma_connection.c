@@ -577,8 +577,7 @@ SQLRETURN MADB_DbcEndTran(MADB_Dbc *Dbc, SQLSMALLINT CompletionType)
 SQLRETURN MADB_DbcConnectDB(MADB_Dbc *Connection,
     MADB_Dsn *Dsn)
 {
-    printf("C\n");
-    char StmtStr[128];
+  char StmtStr[128];
   unsigned ReportDataTruncation= 1;
   unsigned int i;
   unsigned long client_flags= 0L;

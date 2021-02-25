@@ -182,7 +182,6 @@ SQLRETURN SQL_API SQLConnectW(SQLHDBC ConnectionHandle,
         SQLWCHAR *Authentication,
         SQLSMALLINT NameLength3)
 {
-    printf("A\n");
     char *MBServerName= NULL, *MBUserName= NULL, *MBAuthentication= NULL;
     SQLRETURN ret;
     MADB_Dbc *Dbc= (MADB_Dbc*)ConnectionHandle;
