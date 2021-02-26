@@ -295,7 +295,7 @@ workflows:
               build_type:
                 - RelWithDebInfo
               test_dsn:
-                - ssodbc_test_a
+                - ssodbc_test_w
               test_driver:
                 - SingleStore ODBC 0.8.0-beta Unicode Driver
               memsql_image:
@@ -361,7 +361,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC 0.2-beta ANSI Driver
+                - SingleStore ODBC 0.8.0-beta ANSI Driver
   daily:
     triggers:
       - schedule:
