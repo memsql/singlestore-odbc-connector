@@ -521,6 +521,24 @@ static const flex_int16_t yy_chk[282] =
 #define yymore() yymore_used_but_not_detected
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
+/*************************************************************************************
+  Copyright (c) 2021 SingleStore, Inc.
+
+  This library is free software; you can redistribute it and/or
+  modify it under the terms of the GNU Library General Public
+  License as published by the Free Software Foundation; either
+  version 2.1 of the License, or (at your option) any later version.
+
+  This library is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  Library General Public License for more details.
+
+  You should have received a copy of the GNU Library General Public
+  License along with this library; if not see <http://www.gnu.org/licenses>
+  or write to the Free Software Foundation, Inc.,
+  51 Franklin St., Fifth Floor, Boston, MA 02110, USA
+*************************************************************************************/
 #include "escape_sequences/parser.h"
 #define YY_DECL int yylex(YYSTYPE * yylval_param, yyscan_t yyscanner, MADB_Error *error)
 int yylex();

@@ -1,5 +1,6 @@
 /* Copyright (C) 2000 MySQL AB & MySQL Finland AB & TCX DataKonsult AB
                  2012 by MontyProgram AB
+                 2021 SingleStore, Inc.
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public

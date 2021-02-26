@@ -1,5 +1,6 @@
 #
 #  Copyright (C) 2013-2016 MariaDB Corporation AB
+#                2021 SingleStore, Inc.
 #
 #  Redistribution and use is allowed according to the terms of the New
 #  BSD license.
