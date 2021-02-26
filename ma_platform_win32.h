@@ -45,7 +45,11 @@
 #endif
 #define strcasecmp(A,B) _stricmp((A),(B))
 
-#define MADB_DRIVER_NAME "maodbc.dll"
+#ifdef MAODBC_UNICODEDRIVER
+    #define MADB_DRIVER_NAME "maodbcw.so"
+#else
+    #define MADB_DRIVER_NAME "maodbca.so"
+#endif
 
 char *strndup(const char *s, size_t n);
 char* strcasestr(const char* HayStack, const char* Needle);

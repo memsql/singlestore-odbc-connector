@@ -3451,58 +3451,58 @@ ODBC_TEST(odbc289)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {my_positioned_cursor, "my_positioned_cursor",     NORMAL},
-  {my_setpos_cursor, "my_setpos_cursor",     NORMAL},
-  {t_bug5853, "t_bug5853",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
-  {t_setpos_del_all, "t_setpos_del_all",     NORMAL},
-  {t_setpos_upd_decimal, "t_setpos_upd_decimal",     NORMAL},
-  {t_setpos_position, "t_setpos_position",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
-  {t_pos_column_ignore, "t_pos_column_ignore",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
-  {t_pos_datetime_delete, "t_pos_datetime_delete",     NORMAL},
-  {t_pos_datetime_delete1, "t_pos_datetime_delete1",     NORMAL},
-  {t_getcursor, "t_getcursor",     NORMAL},
-  {t_getcursor1, "t_getcursor1",     NORMAL},
-  {t_acc_crash, "t_acc_crash",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
-  {tmysql_setpos_del, "tmysql_setpos_del",     NORMAL},
-  {tmysql_setpos_del1, "tmysql_setpos_del1",     NORMAL},
-  {tmysql_setpos_upd, "tmysql_setpos_upd",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
-  {tmysql_setpos_add, "tmysql_setpos_add",     NORMAL},
-  {tmysql_pos_delete, "tmysql_pos_delete",     NORMAL},
-  {t_pos_update, "t_pos_update",     NORMAL},
-  {tmysql_pos_update_ex, "tmysql_pos_update_ex",     NORMAL},
-  {tmysql_pos_update_ex1, "tmysql_pos_update_ex1",     NORMAL},
-  {tmysql_pos_update_ex3, "tmysql_pos_update_ex3",     NORMAL},
-  {tmysql_pos_update_ex4, "tmysql_pos_update_ex4",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
-  {tmysql_pos_dyncursor, "tmysql_pos_dyncursor",     NORMAL},
-  {tmysql_mtab_setpos_del, "tmysql_mtab_setpos_del",     NORMAL},
-  {tmysql_setpos_pkdel, "tmysql_setpos_pkdel",     NORMAL},
-  {t_alias_setpos_pkdel, "t_alias_setpos_pkdel",     NORMAL},
-  {t_alias_setpos_del, "t_alias_setpos_del",     NORMAL},
-  {tmysql_setpos_pkdel2, "tmysql_setpos_pkdel2",     NORMAL},
-  {t_setpos_upd_bug1, "t_setpos_upd_bug1",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
-  {my_setpos_upd_pk_order, "my_setpos_upd_pk_order",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
-  {my_setpos_upd_pk_order1, "my_setpos_upd_pk_order1",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
-  {tmy_cursor1, "tmy_cursor1",     NORMAL},
-  {tmy_cursor2, "tmy_cursor2",     NORMAL},
-  {tmysql_pcbvalue, "tmysql_pcbvalue",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
-  {t_bug28255, "t_bug28255",     NORMAL},
-  {bug10563, "bug10563",     NORMAL},
-  {bug6741, "bug6741",     NORMAL},
-  {t_update_type, "t_update_type",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
-  {t_update_offsets, "t_update_offsets",     TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
-  {t_bug6157, "t_bug6157",     NORMAL},
-  {t_bug32420, "t_bug32420",     NORMAL},
-  {t_cursor_pos_static, "t_cursor_pos_static",     NORMAL},
-  {t_cursor_pos_dynamic, "t_cursor_pos_dynamic",     NORMAL},
-  {t_bug11846, "t_bug11846",     NORMAL},
-  {t_dae_setpos_insert, "t_dae_setpos_insert", CSPS_OK | SSPS_FAIL},
-  {t_dae_setpos_update, "t_dae_setpos_update", TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
-  {t_bug39961, "t_bug39961",        NORMAL},
-  {t_bug41946, "t_bug41946",        NORMAL},
-  {odbc251, "odbc251-mblob_update", TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
-  {odbc276, "odbc276-bin_update", TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
-  {odbc289, "odbc289-fetch_after_close", NORMAL},
-  {NULL, NULL}
+  {my_positioned_cursor, "my_positioned_cursor",     NORMAL, ALL_DRIVERS},
+  {my_setpos_cursor, "my_setpos_cursor",     NORMAL, ALL_DRIVERS},
+  {t_bug5853, "t_bug5853",     TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {t_setpos_del_all, "t_setpos_del_all",     NORMAL, ALL_DRIVERS},
+  {t_setpos_upd_decimal, "t_setpos_upd_decimal",     NORMAL, ALL_DRIVERS},
+  {t_setpos_position, "t_setpos_position",     TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {t_pos_column_ignore, "t_pos_column_ignore",     TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {t_pos_datetime_delete, "t_pos_datetime_delete",     NORMAL, ALL_DRIVERS},
+  {t_pos_datetime_delete1, "t_pos_datetime_delete1",     NORMAL, ALL_DRIVERS},
+  {t_getcursor, "t_getcursor",     NORMAL, ALL_DRIVERS},
+  {t_getcursor1, "t_getcursor1",     NORMAL, ALL_DRIVERS},
+  {t_acc_crash, "t_acc_crash",     TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {tmysql_setpos_del, "tmysql_setpos_del",     NORMAL, ALL_DRIVERS},
+  {tmysql_setpos_del1, "tmysql_setpos_del1",     NORMAL, ALL_DRIVERS},
+  {tmysql_setpos_upd, "tmysql_setpos_upd",     TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {tmysql_setpos_add, "tmysql_setpos_add",     NORMAL, ALL_DRIVERS},
+  {tmysql_pos_delete, "tmysql_pos_delete",     NORMAL, ALL_DRIVERS},
+  {t_pos_update, "t_pos_update",     NORMAL, ALL_DRIVERS},
+  {tmysql_pos_update_ex, "tmysql_pos_update_ex",     NORMAL, ALL_DRIVERS},
+  {tmysql_pos_update_ex1, "tmysql_pos_update_ex1",     NORMAL, ALL_DRIVERS},
+  {tmysql_pos_update_ex3, "tmysql_pos_update_ex3",     NORMAL, ALL_DRIVERS},
+  {tmysql_pos_update_ex4, "tmysql_pos_update_ex4",     TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {tmysql_pos_dyncursor, "tmysql_pos_dyncursor",     NORMAL, ALL_DRIVERS},
+  {tmysql_mtab_setpos_del, "tmysql_mtab_setpos_del",     NORMAL, ALL_DRIVERS},
+  {tmysql_setpos_pkdel, "tmysql_setpos_pkdel",     NORMAL, ALL_DRIVERS},
+  {t_alias_setpos_pkdel, "t_alias_setpos_pkdel",     NORMAL, ALL_DRIVERS},
+  {t_alias_setpos_del, "t_alias_setpos_del",     NORMAL, ALL_DRIVERS},
+  {tmysql_setpos_pkdel2, "tmysql_setpos_pkdel2",     NORMAL, ALL_DRIVERS},
+  {t_setpos_upd_bug1, "t_setpos_upd_bug1",     TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {my_setpos_upd_pk_order, "my_setpos_upd_pk_order",     TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {my_setpos_upd_pk_order1, "my_setpos_upd_pk_order1",     TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {tmy_cursor1, "tmy_cursor1",     NORMAL, ALL_DRIVERS},
+  {tmy_cursor2, "tmy_cursor2",     NORMAL, ALL_DRIVERS},
+  {tmysql_pcbvalue, "tmysql_pcbvalue",     TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {t_bug28255, "t_bug28255",     NORMAL, ALL_DRIVERS},
+  {bug10563, "bug10563",     NORMAL, ALL_DRIVERS},
+  {bug6741, "bug6741",     NORMAL, ALL_DRIVERS},
+  {t_update_type, "t_update_type",     TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {t_update_offsets, "t_update_offsets",     TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {t_bug6157, "t_bug6157",     NORMAL, ALL_DRIVERS},
+  {t_bug32420, "t_bug32420",     NORMAL, ALL_DRIVERS},
+  {t_cursor_pos_static, "t_cursor_pos_static",     NORMAL, ALL_DRIVERS},
+  {t_cursor_pos_dynamic, "t_cursor_pos_dynamic",     NORMAL, ALL_DRIVERS},
+  {t_bug11846, "t_bug11846",     NORMAL, ALL_DRIVERS},
+  {t_dae_setpos_insert, "t_dae_setpos_insert", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
+  {t_dae_setpos_update, "t_dae_setpos_update", TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {t_bug39961, "t_bug39961",        NORMAL, ALL_DRIVERS},
+  {t_bug41946, "t_bug41946",        NORMAL, ALL_DRIVERS},
+  {odbc251, "odbc251-mblob_update", TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {odbc276, "odbc276-bin_update", TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
+  {odbc289, "odbc289-fetch_after_close", NORMAL, ALL_DRIVERS},
+  {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
 

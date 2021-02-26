@@ -945,26 +945,26 @@ ODBC_TEST(t_odbc211)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {t_desc_paramset,"t_desc_paramset"},
-  {t_desc_set_error, "t_desc_set_error"},
-  {t_sqlbindcol_count_reset, "t_sqlbindcol_count_reset"},
-  {t_desc_default_type, "t_desc_default_type"},
-  {t_basic_explicit, "t_basic_explicit"},
-  {t_explicit_error, "t_explicit_error"},
-  {t_mult_stmt_free, "t_mult_stmt_free"},
-  {t_set_null_use_implicit, "t_set_null_use_implicit"},
-  {t_free_stmt_with_exp_desc, "t_free_stmt_with_exp_desc"},
-  {t_bug41081,"t_bug41081"},
-  {t_bug44576, "t_bug44576"},
-  {t_desc_curcatalog, "t_desc_curcatalog"},
-  {t_odbc14, "t_odbc14"},
-  {t_set_explicit_copy, "t_set_explicit_copy_of_ard"},
-  {t_odbc155, "t_odbc155and157_decimaldigits_display_size"},
-  {t_odbc166, "t_odbc166_decimal_display_size"},
-  {t_odbc213, "t_odbc213_param_type"},
-  {t_odbc216, "t_odbc216_fixed_prec_scale"},
-  {t_odbc211, "t_odbc211_zero_scale"},
-  {NULL, NULL}
+  {t_desc_paramset,"t_desc_paramset", ALL_DRIVERS},
+  {t_desc_set_error, "t_desc_set_error", ALL_DRIVERS},
+  {t_sqlbindcol_count_reset, "t_sqlbindcol_count_reset", ALL_DRIVERS},
+  {t_desc_default_type, "t_desc_default_type", ALL_DRIVERS},
+  {t_basic_explicit, "t_basic_explicit", ALL_DRIVERS},
+  {t_explicit_error, "t_explicit_error", ALL_DRIVERS},
+  {t_mult_stmt_free, "t_mult_stmt_free", ALL_DRIVERS},
+  {t_set_null_use_implicit, "t_set_null_use_implicit", ALL_DRIVERS},
+  {t_free_stmt_with_exp_desc, "t_free_stmt_with_exp_desc", ALL_DRIVERS},
+  {t_bug41081,"t_bug41081", ALL_DRIVERS},
+  {t_bug44576, "t_bug44576", ALL_DRIVERS},
+  {t_desc_curcatalog, "t_desc_curcatalog", ALL_DRIVERS},
+  {t_odbc14, "t_odbc14", ALL_DRIVERS},
+  {t_set_explicit_copy, "t_set_explicit_copy_of_ard", ALL_DRIVERS},
+  {t_odbc155, "t_odbc155and157_decimaldigits_display_size", ALL_DRIVERS},
+  {t_odbc166, "t_odbc166_decimal_display_size", ALL_DRIVERS},
+  {t_odbc213, "t_odbc213_param_type", ALL_DRIVERS},
+  {t_odbc216, "t_odbc216_fixed_prec_scale", ALL_DRIVERS},
+  {t_odbc211, "t_odbc211_zero_scale", ALL_DRIVERS},
+  {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
 int main(int argc, char **argv)

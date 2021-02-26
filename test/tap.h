@@ -120,13 +120,13 @@ int strcpy_s(char *dest, size_t buffer_size, const char *src)
 
 
 BOOL   UseDsnOnly= FALSE;
-static SQLCHAR *my_dsn=        (SQLCHAR *)"maodbc_test";
-static SQLCHAR *my_uid=        (SQLCHAR *)"root";
-static SQLCHAR *my_pwd=        (SQLCHAR *)"";
-static SQLCHAR *my_schema=     (SQLCHAR *)"odbc_test";
-static SQLCHAR *my_drivername= (SQLCHAR *)"MariaDB ODBC 3.1 Driver";
-static SQLCHAR *my_servername= (SQLCHAR *)"127.0.0.1";
-static SQLCHAR *add_connstr=   (SQLCHAR*)"";
+static SQLCHAR *my_dsn=             (SQLCHAR *)"maodbc_test_a";
+static SQLCHAR *my_uid=             (SQLCHAR *)"root";
+static SQLCHAR *my_pwd=             (SQLCHAR *)"";
+static SQLCHAR *my_schema=          (SQLCHAR *)"odbc_test";
+static SQLCHAR *my_drivername=      (SQLCHAR *)"MariaDB ODBC 3.1 ANSI Driver";
+static SQLCHAR *my_servername=      (SQLCHAR *)"127.0.0.1";
+static SQLCHAR *add_connstr=        (SQLCHAR*)"";
 
 static SQLWCHAR *wdsn;
 static SQLWCHAR *wuid;
@@ -203,7 +203,17 @@ typedef struct st_ma_odbc_test {
   int   (*my_test)();
   char  *title;
   int   test_type;
+  int   required_driver_type;
 } MA_ODBC_TESTS;
+
+#define ALL_DRIVERS -1
+#define ANSI_DRIVER 0
+#define UNICODE_DRIVER 1
+
+int unicode_driver = -1;
+
+#define is_unicode_driver() (unicode_driver == UNICODE_DRIVER)
+#define is_ansi_driver()    (unicode_driver == ANSI_DRIVER)
 
 #define ODBC_TEST(a)\
 int a()
@@ -893,6 +903,8 @@ SQLHANDLE DoConnect(SQLHANDLE Connection, BOOL DoWConnect,
   char        DSNString[1024];
   char        DSNOut[1024];
   SQLSMALLINT Length;
+  SQLRETURN   rc;
+  SQLCHAR     driver_name[128];
 
   /* my_options |= 4; */ /* To enable debug */
   if (UseDsnOnly != FALSE)
@@ -934,6 +946,16 @@ SQLHANDLE DoConnect(SQLHANDLE Connection, BOOL DoWConnect,
   {
     diag("Could not create Stmt handle. Connection: %x", Connection);
     return NULL;
+  }
+
+  if (unicode_driver < 0)
+  {
+    rc= SQLGetInfo(Connection, SQL_DRIVER_NAME, driver_name, sizeof(driver_name), NULL);
+    if (SQL_SUCCEEDED(rc))
+    {
+      /* ANSI driver file name contains a.{dll|so} */
+      unicode_driver= strstr((char*)driver_name, "a.") == NULL ? UNICODE_DRIVER : ANSI_DRIVER;
+    }
   }
 
   return stmt;
@@ -1069,7 +1091,15 @@ int connect_and_run_tests(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
         buff_before_test= buff_pos;
 
         all_tests++;
-        rc= tests->my_test();
+        if (tests->required_driver_type > -1 && tests->required_driver_type != unicode_driver) \
+        { \
+            printf("ok %d # SKIP This testcase is designed for %s drivers only\n", i+1, \
+                unicode_driver == 0 ? "Unicode" : "ANSI" ); \
+            rc = 1;
+        } \
+        else {
+            rc= tests->my_test();
+        }
         comment[0] = '\0';
         if (rc!= SKIP && !test_expected_to_succeed(tests->test_type, NoSsps))
         {
@@ -1442,21 +1472,20 @@ BOOL UnixOdbc()
 
 int GetDefaultCharType(int WType, BOOL isAnsiConnection)
 {
-#ifdef _WIN32
-  if (isAnsiConnection != FALSE)
-  {
-    switch (WType) {
-    case SQL_WCHAR:
-      return SQL_CHAR;
-    case SQL_WVARCHAR:
-      return SQL_VARCHAR;
-    case SQL_WLONGVARCHAR:
-      return SQL_LONGVARCHAR;
+    if (isAnsiConnection)
+    {
+        switch (WType) {
+            case SQL_WCHAR:
+                return SQL_CHAR;
+            case SQL_WVARCHAR:
+                return SQL_VARCHAR;
+            case SQL_WLONGVARCHAR:
+                return SQL_LONGVARCHAR;
+            default:
+                return WType;
+        }
     }
-  }
-#endif
-
-  return WType;
+    return WType;
 }
 
 /* Looks like same version of iOdbc behaves differently on os x and linux, thus for some tests we need to be able to tell there is iOdbc run */

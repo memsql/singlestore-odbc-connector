@@ -776,12 +776,12 @@ ODBC_TEST(t_rows_fetched_ptr1)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {t_relative, "t_relative"},
-  {t_relative1, "t_relative1"},
-  {t_relative2, "t_relative2"},
-  {t_rows_fetched_ptr, "t_rows_fetched_ptr"},
-  {t_rows_fetched_ptr1, "t_rows_fetched_ptr1"},
-  {NULL, NULL}
+  {t_relative, "t_relative", ALL_DRIVERS},
+  {t_relative1, "t_relative1", ALL_DRIVERS},
+  {t_relative2, "t_relative2", ALL_DRIVERS},
+  {t_rows_fetched_ptr, "t_rows_fetched_ptr", ALL_DRIVERS},
+  {t_rows_fetched_ptr1, "t_rows_fetched_ptr1", ALL_DRIVERS},
+  {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
 int main(int argc, char **argv)

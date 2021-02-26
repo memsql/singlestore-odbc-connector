@@ -3,7 +3,12 @@
 Trace     = no
 TraceFile = /tmp/maodbc_trace.log
 
-[@TEST_DRIVER@]
-Driver      = @DRIVER_LIB_LOCATION@
-DESCRIPTION = MariaDB ODBC Connector
+[@TEST_DRIVER1@]
+Driver      = @DRIVER_LIB_LOCATION1@
+DESCRIPTION = @DRIVER_LIB_DESCRIPTION1@
+Threading   = 0
+
+[@TEST_DRIVER2@]
+Driver      = @DRIVER_LIB_LOCATION2@
+DESCRIPTION = @DRIVER_LIB_DESCRIPTION2@
 Threading   = 0

@@ -170,10 +170,10 @@ ODBC_TEST(t_isolation)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {my_transaction,"my_transaction"},
-  {t_tran, "t_tran"},
-  {t_isolation,"t_isolation"},
-  {NULL, NULL}
+  {my_transaction,"my_transaction", ALL_DRIVERS},
+  {t_tran, "t_tran", ALL_DRIVERS},
+  {t_isolation,"t_isolation", ALL_DRIVERS},
+  {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
 int main(int argc, char **argv)

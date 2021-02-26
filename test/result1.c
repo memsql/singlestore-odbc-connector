@@ -313,8 +313,8 @@ ODBC_TEST(t_desc_col)
      Thus we get W types with iODBC here. But probably something has to be done with sizes as well */
   IS(desc_col_check(Stmt1, 1,  "c1",  SQL_INTEGER,   10, 10, 0,  SQL_NULLABLE) == OK);
   IS(desc_col_check(Stmt1, 2,  "c2",  SQL_BINARY,    4,  2,  0,  SQL_NO_NULLS) == OK);
-  IS(desc_col_check(Stmt1, 3,  "c3",  iOdbc() ? SQL_WCHAR : SQL_CHAR, 1, 1, 0, SQL_NULLABLE) == OK);
-  IS(desc_col_check(Stmt1, 4,  "c4",  iOdbc() ? SQL_WVARCHAR : SQL_VARCHAR, 5, 5, 0, SQL_NULLABLE) == OK);
+  IS(desc_col_check(Stmt1, 3,  "c3",  is_unicode_driver() ? SQL_WCHAR : SQL_CHAR, 1, 1, 0, SQL_NULLABLE) == OK);
+  IS(desc_col_check(Stmt1, 4,  "c4",  is_unicode_driver() ? SQL_WVARCHAR : SQL_VARCHAR, 5, 5, 0, SQL_NULLABLE) == OK);
   IS(desc_col_check(Stmt1, 5,  "c5",  SQL_DECIMAL,   10, 10, 3,  SQL_NO_NULLS) == OK);
   IS(desc_col_check(Stmt1, 6,  "c6",  SQL_TINYINT,   3,  4,  0,  SQL_NULLABLE) == OK);
   IS(desc_col_check(Stmt1, 7,  "c7",  SQL_SMALLINT,  5,  6,  0,  SQL_NULLABLE) == OK);
@@ -325,13 +325,13 @@ ODBC_TEST(t_desc_col)
 
   IS(desc_col_check(Stmt1, 12, "c12", SQL_VARBINARY, 12, 12, 0,  SQL_NULLABLE) == OK);
 
-  IS(desc_col_check(Stmt1, 13, "c13", iOdbc() ? SQL_WCHAR : SQL_CHAR, 20, 20, 0,  SQL_NO_NULLS) == OK);
+  IS(desc_col_check(Stmt1, 13, "c13", is_unicode_driver() ? SQL_WCHAR : SQL_CHAR, 20, 20, 0,  SQL_NO_NULLS) == OK);
   IS(desc_col_check(Stmt1, 14, "c14", SQL_REAL,      7,  7,  0,  SQL_NULLABLE) == OK);
-  IS(desc_col_check(Stmt1, 15, "c15", iOdbc() ? SQL_WLONGVARCHAR : SQL_LONGVARCHAR, 255, 255, 0,  SQL_NULLABLE) == OK);
-  IS(desc_col_check(Stmt1, 16, "c16", iOdbc() ? SQL_WLONGVARCHAR : SQL_LONGVARCHAR, 65535, 65535, 0,  SQL_NULLABLE) == OK);
-  IS(desc_col_check(Stmt1, 17, "c17", iOdbc() ? SQL_WLONGVARCHAR : SQL_LONGVARCHAR, 16777215, 16777215, 0,  SQL_NULLABLE) == OK);
+  IS(desc_col_check(Stmt1, 15, "c15", is_unicode_driver() ? SQL_WLONGVARCHAR : SQL_LONGVARCHAR, 255, 255, 0,  SQL_NULLABLE) == OK);
+  IS(desc_col_check(Stmt1, 16, "c16", is_unicode_driver() ? SQL_WLONGVARCHAR : SQL_LONGVARCHAR, 65535, 65535, 0,  SQL_NULLABLE) == OK);
+  IS(desc_col_check(Stmt1, 17, "c17", is_unicode_driver() ? SQL_WLONGVARCHAR : SQL_LONGVARCHAR, 16777215, 16777215, 0,  SQL_NULLABLE) == OK);
   /* Test may fail here if connection charset mbmaxlen > 1 */
-  IS(desc_col_check(Stmt1, 18, "c18", iOdbc() ? SQL_WLONGVARCHAR : SQL_LONGVARCHAR, 4294967295UL, 1431655765 , 0,  SQL_NULLABLE) == OK);
+  IS(desc_col_check(Stmt1, 18, "c18", is_unicode_driver() ? SQL_WLONGVARCHAR : SQL_LONGVARCHAR, 4294967295UL, 1431655765 , 0,  SQL_NULLABLE) == OK);
   IS(desc_col_check(Stmt1, 19, "c19", SQL_LONGVARBINARY, 255, 255, 0,  SQL_NULLABLE) == OK);
   IS(desc_col_check(Stmt1, 20, "c20", SQL_LONGVARBINARY, 65535, 65535, 0,  SQL_NULLABLE) == OK);
   IS(desc_col_check(Stmt1, 21, "c21", SQL_LONGVARBINARY, 16777215, 16777215, 0,  SQL_NULLABLE) == OK);
@@ -2190,37 +2190,37 @@ ODBC_TEST(t_bug34429)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {my_resultset, "my_resultset",     NORMAL},
-  {t_convert_type, "t_convert_type",     NORMAL},
-  {t_desc_col, "t_desc_col",     NORMAL},
-  {t_convert, "t_convert",     NORMAL},
-  {t_max_rows, "t_max_rows",     NORMAL},
-  {t_multistep, "t_multistep",     NORMAL},
-  {t_zerolength, "t_zerolength",     NORMAL},
-  {t_cache_bug, "t_cache_bug",     NORMAL},
-  {t_non_cache_bug, "t_non_cache_bug",     NORMAL},
-  {t_empty_str_bug, "t_empty_str_bug",     NORMAL},
-  {t_desccol, "t_desccol",     NORMAL},
-  {t_desccolext, "t_desccolext",     NORMAL},
-  {t_desccol1, "t_desccol1",     NORMAL},
-  {t_colattributes, "t_colattributes",     NORMAL},
-  {t_exfetch, "t_exfetch",     NORMAL},
-  {tmysql_rowstatus, "tmysql_rowstatus",     NORMAL},
-  {t_true_length, "t_true_length",     NORMAL},
-  {t_bug27544, "t_bug27544",     NORMAL},
-  {bug6157, "bug6157",     NORMAL},
-  {t_bug16817, "t_bug16817",     NORMAL},
-  {t_bug29239, "t_bug29239",     NORMAL},
-  {t_bug30958, "t_bug30958",     NORMAL},
-  {t_bug30958_ansi, "t_bug30958_ansi",     NORMAL},
-  {t_bug30958_wchar, "t_bug30958_wchar",   NORMAL},
-  {t_bug31246, "t_bug31246",     NORMAL},
-  {t_bug13776, "t_bug13776",     NORMAL},
-  {t_bug13776_auto, "t_bug13776_auto",     NORMAL},
-  {t_bug28617, "t_bug28617",     NORMAL},
-  {t_bug34429, "t_bug34429",     NORMAL},
-  {t_binary_collation, "t_binary_collation", CSPS_OK | SSPS_FAIL},
-  {NULL, NULL}
+  {my_resultset, "my_resultset",     NORMAL, ALL_DRIVERS},
+  {t_convert_type, "t_convert_type",     NORMAL, ALL_DRIVERS},
+  {t_desc_col, "t_desc_col",     NORMAL, ANSI_DRIVER},
+  {t_convert, "t_convert",     NORMAL, ALL_DRIVERS},
+  {t_max_rows, "t_max_rows",     NORMAL, ALL_DRIVERS},
+  {t_multistep, "t_multistep",     NORMAL, ALL_DRIVERS},
+  {t_zerolength, "t_zerolength",     NORMAL, ALL_DRIVERS},
+  {t_cache_bug, "t_cache_bug",     NORMAL, ALL_DRIVERS},
+  {t_non_cache_bug, "t_non_cache_bug",     NORMAL, ALL_DRIVERS},
+  {t_empty_str_bug, "t_empty_str_bug",     NORMAL, ALL_DRIVERS},
+  {t_desccol, "t_desccol",     NORMAL, ALL_DRIVERS},
+  {t_desccolext, "t_desccolext",     NORMAL, ALL_DRIVERS},
+  {t_desccol1, "t_desccol1",     NORMAL, ALL_DRIVERS},
+  {t_colattributes, "t_colattributes",     NORMAL, ALL_DRIVERS},
+  {t_exfetch, "t_exfetch",     NORMAL, ALL_DRIVERS},
+  {tmysql_rowstatus, "tmysql_rowstatus",     NORMAL, ALL_DRIVERS},
+  {t_true_length, "t_true_length",     NORMAL, ALL_DRIVERS},
+  {t_bug27544, "t_bug27544",     NORMAL, ALL_DRIVERS},
+  {bug6157, "bug6157",     NORMAL, ALL_DRIVERS},
+  {t_bug16817, "t_bug16817",     NORMAL, ALL_DRIVERS},
+  {t_bug29239, "t_bug29239",     NORMAL, ALL_DRIVERS},
+  {t_bug30958, "t_bug30958",     NORMAL, ALL_DRIVERS},
+  {t_bug30958_ansi, "t_bug30958_ansi",     NORMAL, ALL_DRIVERS},
+  {t_bug30958_wchar, "t_bug30958_wchar",   NORMAL, ALL_DRIVERS},
+  {t_bug31246, "t_bug31246",     NORMAL, ALL_DRIVERS},
+  {t_bug13776, "t_bug13776",     NORMAL, ALL_DRIVERS},
+  {t_bug13776_auto, "t_bug13776_auto",     NORMAL, ALL_DRIVERS},
+  {t_bug28617, "t_bug28617",     NORMAL, ALL_DRIVERS},
+  {t_bug34429, "t_bug34429",     NORMAL, ALL_DRIVERS},
+  {t_binary_collation, "t_binary_collation", CSPS_OK | SSPS_FAIL, ANSI_DRIVER},
+  {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
 int main(int argc, char **argv)

@@ -572,17 +572,17 @@ ODBC_TEST(t_sqlgettypeinfo_stmtattributes) {
 
 MA_ODBC_TESTS my_tests[] =
     {
-        {t_sqlgettypeinfo2, "t_sqlgettypeinfo2", NORMAL},
-        {t_sqlgettypeinfo3, "t_sqlgettypeinfo3", NORMAL},
-        {t_sqlgettypeinfo_sequential, "t_sqlgettypeinfo_sequential", NORMAL},
-        {t_sqlgettypeinfo_no_bind, "t_sqlgettypeinfo_no_bind", NORMAL},
-        {t_sqlgettypeinfo_fetchscroll, "t_sqlgettypeinfo_fetchscroll", NORMAL},
-        {t_sqlgettypeinfo_getdata, "t_sqlgettypeinfo_getdata", NORMAL},
-        {t_sqlgettypeinfo_closecursor, "t_sqlgettypeinfo_closecursor", NORMAL},
-        {t_sqlgettypeinfo_colattribute, "t_sqlgettypeinfo_colattribute", NORMAL},
-        {t_sqlgettypeinfo_describecol, "t_sqlgettypeinfo_describecol", NORMAL},
-        {t_sqlgettypeinfo_stmtattributes, "t_sqlgettypeinfo_stmtattributes", NORMAL},
-        {NULL, NULL, NORMAL}
+        {t_sqlgettypeinfo2, "t_sqlgettypeinfo2", NORMAL, ALL_DRIVERS},
+        {t_sqlgettypeinfo3, "t_sqlgettypeinfo3", NORMAL, ALL_DRIVERS},
+        {t_sqlgettypeinfo_sequential, "t_sqlgettypeinfo_sequential", NORMAL, ALL_DRIVERS},
+        {t_sqlgettypeinfo_no_bind, "t_sqlgettypeinfo_no_bind", NORMAL, ALL_DRIVERS},
+        {t_sqlgettypeinfo_fetchscroll, "t_sqlgettypeinfo_fetchscroll", NORMAL, ALL_DRIVERS},
+        {t_sqlgettypeinfo_getdata, "t_sqlgettypeinfo_getdata", NORMAL, ALL_DRIVERS},
+        {t_sqlgettypeinfo_closecursor, "t_sqlgettypeinfo_closecursor", NORMAL, ALL_DRIVERS},
+        {t_sqlgettypeinfo_colattribute, "t_sqlgettypeinfo_colattribute", NORMAL, ALL_DRIVERS},
+        {t_sqlgettypeinfo_describecol, "t_sqlgettypeinfo_describecol", NORMAL, ANSI_DRIVER},
+        {t_sqlgettypeinfo_stmtattributes, "t_sqlgettypeinfo_stmtattributes", NORMAL, ALL_DRIVERS},
+        {NULL, NULL, NORMAL, ALL_DRIVERS}
     };
 
 

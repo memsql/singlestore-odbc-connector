@@ -23,18 +23,35 @@
 <!--      <WixVariable Id="WixUIDialogBmp" Value="@ODBC_SOURCE_WIX_DIR@/mdb-dialog-popup.png" />-->
 <!--      <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Make User DSN's for older Connnector versions to use this version" />-->
 
-    <Feature Id="ProductFeature" Title="@PRODUCT_NAME@ @PRODUCT_VERSION@" Level="1">
+    <Feature Id="ProductFeatureA" Title="@PRODUCT_NAME@ @PRODUCT_VERSION@ ANSI" Level="1">
       <ComponentRef Id="RegistryKeys" />
       <ComponentRef Id="Setup" />
-      <ComponentRef Id="Driver" />
+      <ComponentRef Id="DriverA" />
       <ComponentRef Id="CcPlugins" />
 <!--      <ComponentRef Id="InstallerTools" />-->
       <@TLS_LIB_BEGIN@ComponentRef Id="TlsLib" /@TLS_LIB_END@>
     </Feature>
-    <Feature Id="DebugFeature" Title="Debug Information" Level="2">
-      <ComponentRef Id="Debug" />
+    <Feature Id="DebugFeatureA" Title="Debug Information" Level="2">
+      <ComponentRef Id="DebugS" />
+      <ComponentRef Id="DebugA" />
     </Feature>
-    <Feature Id="PluginsFeature" Title="Authentification Plugins" Level="2">
+    <Feature Id="PluginsFeatureA" Title="Authentication Plugins" Level="2">
+      <ComponentRef Id="CcPlugins" />
+      <ComponentRef Id="PluginsDebug" />
+    </Feature>
+    <Feature Id="ProductFeatureW" Title="@PRODUCT_NAME@ @PRODUCT_VERSION@ Unicode" Level="1">
+      <ComponentRef Id="RegistryKeys" />
+      <ComponentRef Id="Setup" />
+      <ComponentRef Id="DriverW" />
+      <ComponentRef Id="CcPlugins" />
+<!--      <ComponentRef Id="InstallerTools" />-->
+      <@TLS_LIB_BEGIN@ComponentRef Id="TlsLib" /@TLS_LIB_END@>
+    </Feature>
+    <Feature Id="DebugFeatureW" Title="Debug Information" Level="2">
+      <ComponentRef Id="DebugS" />
+      <ComponentRef Id="DebugW" />
+    </Feature>
+    <Feature Id="PluginsFeatureW" Title="Authentication Plugins" Level="2">
       <ComponentRef Id="CcPlugins" />
       <ComponentRef Id="PluginsDebug" />
     </Feature>
@@ -57,24 +74,40 @@
 
   <Fragment>
     <!--<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">-->
-    <Component Id="RegistryKeys" Guid="@GUID_REGISTRY@" DiskId="1" Directory="INSTALLFOLDER" Win64="@IS_WIN64@">
-      <RegistryKey Id="Version" Root="HKLM" Key="SOFTWARE\@PRODUCT_MANUFACTURER@\@PRODUCT_NAME@" ForceCreateOnInstall="yes" ForceDeleteOnUninstall="yes">
-        <RegistryValue Name="Version" Type="string" Value="@PRODUCT_VERSION@"/>
-      </RegistryKey>
+      <Component Id="RegistryKeys" Guid="@GUID_REGISTRY@" DiskId="1" Directory="INSTALLFOLDER" Win64="@IS_WIN64@">
+        <RegistryKey Id="Version" Root="HKLM" Key="SOFTWARE\@PRODUCT_MANUFACTURER@\@PRODUCT_NAME@" ForceCreateOnInstall="yes" ForceDeleteOnUninstall="yes">
+            <RegistryValue Name="Version" Type="string" Value="@PRODUCT_VERSION@"/>
+          </RegistryKey>
+      </Component>
+      <Component Id="Setup" Guid="@GUID_SETUP@" DiskId="1" Directory="INSTALLFOLDER" Win64="@IS_WIN64@">
+        <File Id="mariadb_odbc_setup" Name="maodbcs.dll"  DiskId="1"  Source="$(var.binaries_dir)/maodbcs.dll" />
+        <File Id="mariadb_odbc_setup_lib" Name="maodbcs.lib" DiskId="1" Source="$(var.binaries_dir)/maodbcs.lib" />
+      </Component>
+      <Component Id="DriverA" Guid="@GUID_DRIVER_A@" SharedDllRefCount="yes" Directory="INSTALLFOLDER" Win64="@IS_WIN64@">
+        <File Id="mariadb_odbc_a_dll" Name="maodbca.dll" KeyPath="yes" DiskId="1" Source="$(var.binaries_dir)/maodbca.dll">
+          <!-- TODO: Provide a proper version -->
+          <ODBCDriver Id="madb_odbc_driver_a" Name="SingleStore ODBC 0.1-beta ANSI Driver" SetupFile="mariadb_odbc_setup" />
+          <!-- <ODBCDriver Id="madb_odbc_driver_a" Name="SingleStore ODBC @MARIADB_ODBC_VERSION_MAJOR@.@MARIADB_ODBC_VERSION_MINOR@ ANSI Driver" SetupFile="mariadb_odbc_setup" /> -->
+        </File>
+        <File Id="mariadb_odbc_lib" Name="maodbca.lib" DiskId="1" Source="$(var.binaries_dir)/maodbca.lib" />
+      </Component>
+      <Component Id="DriverW" Guid="@GUID_DRIVER_W@" SharedDllRefCount="yes" Directory="INSTALLFOLDER" Win64="@IS_WIN64@">
+        <File Id="mariadb_odbc_w_dll" Name="maodbcw.dll" KeyPath="yes" DiskId="1" Source="$(var.binaries_dir)/maodbcw.dll">
+          <!-- TODO: Provide a proper version -->
+          <ODBCDriver Id="madb_odbc_driver_w" Name="SingleStore ODBC 0.1-beta Unicode Driver" SetupFile="mariadb_odbc_setup" />
+          <!-- <ODBCDriver Id="madb_odbc_driver_w" Name="SingleStore ODBC @MARIADB_ODBC_VERSION_MAJOR@.@MARIADB_ODBC_VERSION_MINOR@ Unicode Driver" SetupFile="mariadb_odbc_setup" /> -->
+        </File>
+        <File Id="mariadb_w_odbc_lib" Name="maodbcw.lib" DiskId="1" Source="$(var.binaries_dir)/maodbcw.lib" />
+      </Component>
+    <Component Id="DebugA" Guid="@GUID_DEBUG_A@" Directory="INSTALLFOLDER" DiskId="1" Win64="@IS_WIN64@">
+      <File Id="mariadb_odbc_a_dll_pdb" Name="maodbca.pdb" KeyPath="yes" DiskId="1" Source="$(var.binaries_dir)/maodbca.pdb" />
+      <CreateFolder />
     </Component>
-    <Component Id="Setup" Guid="@GUID_SETUP@" DiskId="1" Directory="INSTALLFOLDER" Win64="@IS_WIN64@">
-      <File Id="mariadb_odbc_setup" Name="maodbcs.dll"  DiskId="1"  Source="$(var.binaries_dir)/maodbcs.dll" />
-      <File Id="mariadb_odbc_setup_lib" Name="maodbcs.lib" DiskId="1" Source="$(var.binaries_dir)/maodbcs.lib" />
+    <Component Id="DebugW" Guid="@GUID_DEBUG_W@" Directory="INSTALLFOLDER" DiskId="1" Win64="@IS_WIN64@">
+      <File Id="mariadb_odbc_w_dll_pdb" Name="maodbcw.pdb" KeyPath="yes" DiskId="1" Source="$(var.binaries_dir)/maodbcw.pdb" />
+      <CreateFolder />
     </Component>
-    <Component Id="Driver" Guid="@GUID_DRIVER@" SharedDllRefCount="yes" Directory="INSTALLFOLDER" Win64="@IS_WIN64@">
-      <File Id="mariadb_odbc_dll" Name="maodbc.dll" KeyPath="yes" DiskId="1" Source="$(var.binaries_dir)/maodbc.dll">
-        <!-- TODO: Provoide a propper version -->
-        <ODBCDriver Id="madb_odbc_driver" Name="SingleStore ODBC 0.1-beta Driver" SetupFile="mariadb_odbc_setup" />
-      </File>
-      <File Id="mariadb_odbc_lib" Name="maodbc.lib" DiskId="1" Source="$(var.binaries_dir)/maodbc.lib" />
-    </Component>
-    <Component Id="Debug" Guid="@GUID_DEBUG@" Directory="INSTALLFOLDER" DiskId="1" Win64="@IS_WIN64@">
-      <File Id="mariadb_odbc_dll_pdb" Name="maodbc.pdb" KeyPath="yes" DiskId="1" Source="$(var.binaries_dir)/maodbc.pdb" />
+    <Component Id="DebugS" Directory="INSTALLFOLDER" DiskId="1" Win64="@IS_WIN64@">
       <File Id="mariadb_odbc_setup_pdb" Name="maodbcs.pdb"  DiskId="1"  Source="$(var.binaries_dir)/maodbcs.pdb" />
       <CreateFolder />
     </Component>

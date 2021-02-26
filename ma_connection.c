@@ -204,9 +204,10 @@ SQLRETURN MADB_DbcSetAttr(MADB_Dbc *Dbc, SQLINTEGER Attribute, SQLPOINTER ValueP
         /* IsAnsi will be set before this, even if it is set before connection */
         Dbc->CatalogName= MADB_ConvertFromWChar((SQLWCHAR *)ValuePtr, StringLength, NULL, Dbc->ConnOrSrcCharset, NULL);
       }
-      else
-        Dbc->CatalogName= _strdup((char *)ValuePtr);
-
+      else {
+          ADJUST_LENGTH(ValuePtr, StringLength);
+          Dbc->CatalogName= strndup((char *)ValuePtr, StringLength);
+      }
       if (Dbc->mariadb &&
           mysql_select_db(Dbc->mariadb, Dbc->CatalogName))
       {
@@ -373,6 +374,9 @@ SQLRETURN MADB_DbcGetAttr(MADB_Dbc *Dbc, SQLINTEGER Attribute, SQLPOINTER ValueP
   case SQL_ATTR_TRACE:
     break;
   case SQL_ATTR_TRACEFILE:
+    break;
+  case SQL_ATTR_ANSI_APP:
+    *(SQLUINTEGER *)ValuePtr= SQL_SUCCESS;
     break;
   case SQL_ATTR_TRANSLATE_LIB:
     break;

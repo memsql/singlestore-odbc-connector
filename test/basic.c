@@ -752,7 +752,7 @@ ODBC_TEST(t_driverconnect_outstring)
                                         sizeof(connw_out)/sizeof(SQLWCHAR), &conn_out_len,
                                         SQL_DRIVER_NOPROMPT));
   /* iODBC returns octets count here. Thus must multiply by 4 in cas of iODBC(sizeof(SQLWCHAR)==4) */
-  is_num(conn_out_len, strlen((const char*)conna)*(iOdbc() ? 4 : 1));
+  is_num(conn_out_len, strlen((const char*)conna)*(iOdbc() && is_unicode_driver() ? 4 : 1));
   IS_WSTR(connw_out, connw, strlen((const char*)conna));
 
   CHECK_DBC_RC(hdbc1, SQLDisconnect(hdbc1));
@@ -1609,7 +1609,7 @@ ODBC_TEST(t_odbc139)
   }
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &Hdbc));
 
-  CHECK_DBC_RC(Hdbc, SQLSetConnectAttr(Hdbc, SQL_ATTR_CURRENT_CATALOG, (SQLPOINTER)"test", 4));
+  CHECK_DBC_RC(Hdbc, SQLSetConnectAttr(Hdbc, SQL_ATTR_CURRENT_CATALOG, (SQLPOINTER)"odbc_test", 9));
   Hstmt= DoConnect(Hdbc, FALSE, NULL, NULL, NULL, 0, NULL, &Compression, NULL, NULL);
 
 
@@ -1729,52 +1729,52 @@ ODBC_TEST(t_odbc181)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {t_disconnect, "t_disconnect",      NORMAL},
-  {t_describe_nulti, "t_describe_nulti", CSPS_FAIL | SSPS_OK},
-  {test_CONO1,     "test_CONO1",     NORMAL},
-  {test_CONO3,     "test_CONO3",     NORMAL},
-  {t_count,        "t_count",        NORMAL},
+  {t_disconnect, "t_disconnect",      NORMAL, ALL_DRIVERS},
+  {t_describe_nulti, "t_describe_nulti", CSPS_FAIL | SSPS_OK, ALL_DRIVERS},
+  {test_CONO1,     "test_CONO1",     NORMAL, ALL_DRIVERS},
+  {test_CONO3,     "test_CONO3",     NORMAL, ALL_DRIVERS},
+  {t_count,        "t_count",        NORMAL, ALL_DRIVERS},
   {simple_test,    "Simple test",    CSPS_OK | SSPS_FAIL},
-  {simple_test1,   "Simple test1",   NORMAL},
-  {select1000,     "select1000",     NORMAL},
-  {simple_2,       "simple_2",       NORMAL},
-  {test_reconnect, "test_reconnect", NORMAL},
-  {bug19823,       "bug19823",       NORMAL},
-  {t_basic,        "t_basic",        NORMAL},
-  {t_reconnect,    "t_reconnect",    NORMAL},
-  {charset_utf8,   "charset_utf8",   NORMAL},
-  {charset_gbk,    "charset_gbk",    NORMAL},
-  {t_bug30774,     "t_bug30774",     NORMAL},
+  {simple_test1,   "Simple test1",   NORMAL, ALL_DRIVERS},
+  {select1000,     "select1000",     NORMAL, ALL_DRIVERS},
+  {simple_2,       "simple_2",       NORMAL, ALL_DRIVERS},
+  {test_reconnect, "test_reconnect", NORMAL, ALL_DRIVERS},
+  {bug19823,       "bug19823",       NORMAL, ANSI_DRIVER},
+  {t_basic,        "t_basic",        NORMAL, ALL_DRIVERS},
+  {t_reconnect,    "t_reconnect",    NORMAL, ALL_DRIVERS},
+  {charset_utf8,   "charset_utf8",   NORMAL, ALL_DRIVERS},
+  {charset_gbk,    "charset_gbk",    NORMAL, ALL_DRIVERS},
+  {t_bug30774,     "t_bug30774",     NORMAL, ALL_DRIVERS},
 #ifdef WE_HAVE_SETUPLIB
-  {t_bug30840,     "t_bug30840",     NORMAL},
+  {t_bug30840,     "t_bug30840",     NORMAL, ALL_DRIVERS},
 #endif
-  {t_bug30983,     "t_bug30983",     NORMAL},
-  {t_driverconnect_outstring, "t_driverconnect_outstring", NORMAL},
-  {setnames,       "setnames",       NORMAL},
-  {setnames_conn,  "setnames_conn",  NORMAL},
-  {sqlcancel,      "sqlcancel",      NORMAL}, 
-  {t_bug32014,     "t_bug32014",     NORMAL},
-  {t_bug10128,     "t_bug10128",     NORMAL},
-  {t_bug32727,     "t_bug32727",     NORMAL},
-  {t_bug28820,     "t_bug28820",     NORMAL},
-  {t_bug31959,     "t_bug31959",     NORMAL},
-  {t_bug41256,     "t_bug41256",     NORMAL},
-  {t_bug48603,     "t_bug48603",     NORMAL},
-  {t_bug45378,     "t_bug45378",     NORMAL},
-  {t_mysqld_stmt_reset, "tmysqld_stmt_reset bug", NORMAL},
-  {t_odbc32,      "odbc32_SQL_ATTR_PACKET_SIZE_option", NORMAL},
-  {t_gh_issue3,   "leading_space_gh_issue3",  NORMAL},
-  {t_odbc48,      "odbc48_iso_call_format",   NORMAL},
-  {t_odbc69,      "odbc69_ci_connstring",     NORMAL},
-  {t_odbc91,      "odbc91_hdbc_reuse",        NORMAL},
-  {t_odbc137,     "odbc137_ansi",             NORMAL},
+  {t_bug30983,     "t_bug30983",     NORMAL, ALL_DRIVERS},
+  {t_driverconnect_outstring, "t_driverconnect_outstring", NORMAL, ALL_DRIVERS},
+  {setnames,       "setnames",       NORMAL, ALL_DRIVERS},
+  {setnames_conn,  "setnames_conn",  NORMAL, ALL_DRIVERS},
+  {sqlcancel,      "sqlcancel",      NORMAL, ALL_DRIVERS}, 
+  {t_bug32014,     "t_bug32014",     NORMAL, ALL_DRIVERS},
+  {t_bug10128,     "t_bug10128",     NORMAL, ALL_DRIVERS},
+  {t_bug32727,     "t_bug32727",     NORMAL, ALL_DRIVERS},
+  {t_bug28820,     "t_bug28820",     NORMAL, ALL_DRIVERS},
+  {t_bug31959,     "t_bug31959",     NORMAL, ALL_DRIVERS},
+  {t_bug41256,     "t_bug41256",     NORMAL, ALL_DRIVERS},
+  {t_bug48603,     "t_bug48603",     NORMAL, ALL_DRIVERS},
+  {t_bug45378,     "t_bug45378",     NORMAL, ALL_DRIVERS},
+  {t_mysqld_stmt_reset, "tmysqld_stmt_reset bug", NORMAL, ALL_DRIVERS},
+  {t_odbc32,      "odbc32_SQL_ATTR_PACKET_SIZE_option", NORMAL, ALL_DRIVERS},
+  {t_gh_issue3,   "leading_space_gh_issue3",  NORMAL, ALL_DRIVERS},
+  {t_odbc48,      "odbc48_iso_call_format",   NORMAL, ALL_DRIVERS},
+  {t_odbc69,      "odbc69_ci_connstring",     NORMAL, ALL_DRIVERS},
+  {t_odbc91,      "odbc91_hdbc_reuse",        NORMAL, ALL_DRIVERS},
+  {t_odbc137,     "odbc137_ansi",             NORMAL, ANSI_DRIVER},
 #ifdef _WIN32
-  {t_odbc139,     "odbc139_compression",       NORMAL},
+  {t_odbc139,     "odbc139_compression",       NORMAL, ALL_DRIVERS},
 #endif
-  {t_odbc162,     "t_odbc162_CTE_query",      NORMAL },
-  {t_replace,     "t_replace",      NORMAL },
-  {t_odbc181,     "t_odbc181",      NORMAL },
-  {NULL, NULL, 0}
+  {t_odbc162,     "t_odbc162_CTE_query",      NORMAL , ALL_DRIVERS},
+  {t_replace,     "t_replace",      NORMAL , ALL_DRIVERS},
+  {t_odbc181,     "t_odbc181",      NORMAL , ALL_DRIVERS},
+  {NULL, NULL, 0, ALL_DRIVERS}
 };
 
 int main(int argc, char **argv)

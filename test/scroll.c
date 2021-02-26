@@ -1236,14 +1236,14 @@ ODBC_TEST(t_unbind_before_fetch)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {t_scroll, "t_scroll"},
-  {t_array_relative_10, "t_array_relative_10"},
-  {t_relative_1, "t_relative_1"},
-  {t_array_relative_2, "t_array_relative_2"},
-  {t_absolute_1,"t_absolute_1"},
-  {t_absolute_2, "t_absolute_2"},
-  {t_unbind_before_fetch, "t_odbc_110_unbind_before_fetch"},
-  {NULL, NULL}
+  {t_scroll, "t_scroll", ALL_DRIVERS},
+  {t_array_relative_10, "t_array_relative_10", ALL_DRIVERS},
+  {t_relative_1, "t_relative_1", ALL_DRIVERS},
+  {t_array_relative_2, "t_array_relative_2", ALL_DRIVERS},
+  {t_absolute_1,"t_absolute_1", ALL_DRIVERS},
+  {t_absolute_2, "t_absolute_2", ALL_DRIVERS},
+  {t_unbind_before_fetch, "t_odbc_110_unbind_before_fetch", ALL_DRIVERS},
+  {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
 int main(int argc, char **argv)

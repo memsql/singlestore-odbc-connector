@@ -79,6 +79,8 @@ ODBC_TEST(t_specialcolumns3U) {
 
     SQLHANDLE henv1;
     SQLHANDLE Connection1;
+    SQLWCHAR    *connw, connw_out[1024];
+    SQLSMALLINT conn_out_len;
     SQLHANDLE Stmt1;
     SQLCHAR conn[512];
 
@@ -89,10 +91,11 @@ ODBC_TEST(t_specialcolumns3U) {
     CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
                                       (SQLPOINTER) SQL_OV_ODBC3, SQL_IS_INTEGER));
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &Connection1));
-    CHECK_DBC_RC(Connection1,
-                 SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
-                                  NULL, SQL_DRIVER_NOPROMPT));
-    CHECK_DBC_RC(Connection1, SQLSetConnectAttr(Connection1, SQL_ATTR_ANSI_APP, NULL, 0));
+
+    connw= CW(conn);
+    CHECK_DBC_RC(Connection1, SQLDriverConnectW(Connection1, NULL, connw, SQL_NTS, connw_out,
+                                                sizeof(connw_out)/sizeof(SQLWCHAR), &conn_out_len,
+                                                SQL_DRIVER_NOPROMPT));
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
     FAIL_IF(run_sql_special_columns(Stmt1, ExpDataType) != OK, "error running SQLSpecialColumns");
@@ -125,7 +128,6 @@ ODBC_TEST(t_specialcolumns3A) {
     CHECK_DBC_RC(Connection1,
                  SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
                                   NULL, SQL_DRIVER_NOPROMPT));
-    CHECK_DBC_RC(Connection1, SQLSetConnectAttr(Connection1, SQL_ATTR_ANSI_APP, (SQLPOINTER) 1, 0));
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
     FAIL_IF(run_sql_special_columns(Stmt1, ExpDataType) != OK, "error running SQLSpecialColumns");
@@ -145,6 +147,8 @@ ODBC_TEST(t_specialcolumns2U) {
 
     SQLHANDLE henv1;
     SQLHANDLE Connection1;
+    SQLWCHAR    *connw, connw_out[1024];
+    SQLSMALLINT conn_out_len;
     SQLHANDLE Stmt1;
     SQLCHAR conn[512];
 
@@ -155,10 +159,11 @@ ODBC_TEST(t_specialcolumns2U) {
     CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
                                       (SQLPOINTER) SQL_OV_ODBC2, SQL_IS_INTEGER));
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &Connection1));
-    CHECK_DBC_RC(Connection1,
-                 SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
-                                  NULL, SQL_DRIVER_NOPROMPT));
-    CHECK_DBC_RC(Connection1, SQLSetConnectAttr(Connection1, SQL_ATTR_ANSI_APP, NULL, 0));
+
+    connw= CW(conn);
+    CHECK_DBC_RC(Connection1, SQLDriverConnectW(Connection1, NULL, connw, SQL_NTS, connw_out,
+                                                sizeof(connw_out)/sizeof(SQLWCHAR), &conn_out_len,
+                                                SQL_DRIVER_NOPROMPT));
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
     FAIL_IF(run_sql_special_columns(Stmt1, ExpDataType) != OK, "error running SQLSpecialColumns");
@@ -191,7 +196,6 @@ ODBC_TEST(t_specialcolumns2A) {
     CHECK_DBC_RC(Connection1,
                  SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
                                   NULL, SQL_DRIVER_NOPROMPT));
-    CHECK_DBC_RC(Connection1, SQLSetConnectAttr(Connection1, SQL_ATTR_ANSI_APP, (SQLPOINTER) 1, 0));
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
     FAIL_IF(run_sql_special_columns(Stmt1, ExpDataType) != OK, "error running SQLSpecialColumns");
@@ -207,11 +211,11 @@ ODBC_TEST(t_specialcolumns2A) {
 
 MA_ODBC_TESTS my_tests[] =
         {
-                {t_specialcolumns3U, "t_specialcolumns3U", NORMAL},
-                {t_specialcolumns3A, "t_specialcolumns3A", NORMAL},
-                {t_specialcolumns2U, "t_specialcolumns2U", NORMAL},
-                {t_specialcolumns2A, "t_specialcolumns2A", NORMAL},
-                {NULL, NULL, NORMAL}
+                {t_specialcolumns3U, "t_specialcolumns3U", NORMAL, UNICODE_DRIVER},
+                {t_specialcolumns3A, "t_specialcolumns3A", NORMAL, ANSI_DRIVER},
+                {t_specialcolumns2U, "t_specialcolumns2U", NORMAL, UNICODE_DRIVER},
+                {t_specialcolumns2A, "t_specialcolumns2A", NORMAL, ANSI_DRIVER},
+                {NULL, NULL, NORMAL, ALL_DRIVERS}
         };
 
 

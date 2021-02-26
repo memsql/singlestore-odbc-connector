@@ -27,11 +27,32 @@ SET(MARIADB_ODBC_VERSION_QUALITY "ga")
 
 SET(MARIADB_ODBC_VERSION "03.01.0010")
 
+IF(UNICODE OR NOT ANSI)
+  MESSAGE(STATUS "Configuring to build Unicode driver")
+  SET(CONNECTOR_DRIVER_TYPE "Unicode")
+  SET(CONNECTOR_DRIVER_TYPE_LIST "UNICODE")
+  SET(CONNECTOR_DRIVER_TYPES_SHORT "w")
+  SET(PACKAGE_DRIVER_TYPES_SUFFIX "")
+ENDIF(UNICODE OR NOT ANSI)
+
+IF(ANSI OR NOT UNICODE)
+  MESSAGE(STATUS "Configuring to build ANSI driver")
+  # We need space separated string
+  IF(UNICODE OR NOT ANSI)
+    SET(CONNECTOR_DRIVER_TYPE "${CONNECTOR_DRIVER_TYPE} ANSI")
+  ELSE(UNICODE OR NOT ANSI)
+    SET(CONNECTOR_DRIVER_TYPE "ANSI")
+  ENDIF(UNICODE OR NOT ANSI)
+
+  LIST(APPEND CONNECTOR_DRIVER_TYPE_LIST "ANSI")
+
+  SET(CONNECTOR_DRIVER_TYPES_SHORT ${CONNECTOR_DRIVER_TYPES_SHORT} "a")
+  SET(PACKAGE_DRIVER_TYPES_SUFFIX ${PACKAGE_DRIVER_TYPE_SUFFIX} "-ansi")
+ENDIF(ANSI OR NOT UNICODE)
+
 SET(MARIADB_DEFAULT_PLUGINS_SUBDIR "plugin")
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/ma_odbc_version.h.in
                ${CMAKE_SOURCE_DIR}/ma_odbc_version.h)
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/maodbcu.rc.in
-               ${CMAKE_SOURCE_DIR}/maodbcu.rc)
 
 SET (MARIADB_ODBC_SOURCES odbc_3_api.c
                           ma_error.c
@@ -314,64 +335,97 @@ ELSE()
   ADD_DEFINITIONS(-DSQLCOLATTRIB_SQLLEN_PTR)
 ENDIF()
 
-IF(WIN32)
-  SET(UNICODE "W")
-ELSE()
-  IF (DIRECT_LINK_TESTS)
-    ADD_DEFINITIONS(-DHAVE_UNICODE)
-  ENDIF()
-ENDIF()
+LIST(LENGTH CONNECTOR_DRIVER_TYPES_SHORT DRIVERS_COUNT)
+SET(DRIVER_INDEX 0)
 
-SET(LIBRARY_NAME "maodbc")
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/mariadb-odbc-driver.def.in
-               ${CMAKE_SOURCE_DIR}/mariadb-odbc-driver-uni.def)
+WHILE(${DRIVER_INDEX} LESS ${DRIVERS_COUNT})
 
-IF(MARIADB_LINK_DYNAMIC)# OR USE_SYSTEM_INSTALLED_LIB)
-  IF(USE_SYSTEM_INSTALLED_LIB)
-    SET(MARIADB_CLIENT_TARGET_NAME mariadb)
+  LIST(GET CONNECTOR_DRIVER_TYPES_SHORT ${DRIVER_INDEX} CONNECTOR_DRIVER_TYPE_SHORT)
+  LIST(GET CONNECTOR_DRIVER_TYPE_LIST ${DRIVER_INDEX} DRIVER_TYPE)
+  IF (${DRIVER_TYPE} STREQUAL UNICODE)
+    SET(UNICODE TRUE)
   ELSE()
-    SET(MARIADB_CLIENT_TARGET_NAME libmariadb)
+    SET(UNICODE FALSE)
   ENDIF()
-  MESSAGE(STATUS "Linking Connector/C library dynamically(${MARIADB_CLIENT_TARGET_NAME})")
-ELSE()
-  SET(MARIADB_CLIENT_TARGET_NAME mariadbclient)
-  MESSAGE(STATUS "Linking Connector/C library statically(${MARIADB_CLIENT_TARGET_NAME})")
-ENDIF()
 
-IF(WIN32)
-  ADD_LIBRARY(${LIBRARY_NAME} SHARED ${MARIADB_ODBC_SOURCES} ${CMAKE_SOURCE_DIR}/mariadb-odbc-driver-uni.def maodbcu.rc)
-ELSE()
-  MESSAGE(STATUS "Version script: ${CMAKE_SOURCE_DIR}/maodbc.def")
-  ADD_LIBRARY(${LIBRARY_NAME} SHARED ${MARIADB_ODBC_SOURCES} maodbcu.rc)
-  
-  IF(APPLE)
-    SET(MAODBC_INSTALL_RPATH "${ODBC_LIB_DIR}" "@loader_path" "/usr/local/opt/libiodbc" "/usr/local/iODBC/lib" "/usr/local/opt/openssl@1.1/lib" "/usr/local/opt/libressl/lib")
-    SET_TARGET_PROPERTIES(${LIBRARY_NAME}
-                          PROPERTIES LINK_FLAGS "-Wl"
-                                     INSTALL_RPATH_USE_LINK_PATH 0
-                                     BUILD_WITH_INSTALL_RPATH 1
-                                     INSTALL_RPATH "${MAODBC_INSTALL_RPATH}")
+  CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/maodbc.rc.in
+          ${CMAKE_SOURCE_DIR}/maodbc${CONNECTOR_DRIVER_TYPE_SHORT}.rc)
+
+  SET(LIBRARY_NAME "maodbc${CONNECTOR_DRIVER_TYPE_SHORT}")
+
+  IF (UNICODE)
+    SET(MARIADB_ODBC_SOURCES_TYPE ${MARIADB_ODBC_SOURCES} ma_unicode.c)
+    SET(WIDECHARCALL "W")
+    CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/mariadb-odbc-driver.def.in ${CMAKE_SOURCE_DIR}/mariadb-odbc-driver-uni.def)
   ELSE()
-    SET_TARGET_PROPERTIES(${LIBRARY_NAME} PROPERTIES LINK_FLAGS "-Wl,--version-script=${CMAKE_SOURCE_DIR}/maodbc.def")
+    SET(MARIADB_ODBC_SOURCES_TYPE ${MARIADB_ODBC_SOURCES} ma_ansi.c)
+    SET(WIDECHARCALL "")
+    CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/mariadb-odbc-driver.def.in ${CMAKE_SOURCE_DIR}/mariadb-odbc-driver-asc.def)
   ENDIF()
-ENDIF()
 
-SET_TARGET_PROPERTIES(${LIBRARY_NAME} PROPERTIES LANGUAGE C)
-SET_TARGET_PROPERTIES(${LIBRARY_NAME} PROPERTIES C_STANDARD 90)
-MESSAGE(STATUS "All linked targets/external dependencies: ${MARIADB_CLIENT_TARGET_NAME} ${ODBC_INSTLIBS} ${PLATFORM_DEPENDENCIES}")
-TARGET_LINK_LIBRARIES(${LIBRARY_NAME} ${MARIADB_CLIENT_TARGET_NAME} ${ODBC_INSTLIBS} ${PLATFORM_DEPENDENCIES})
+  IF(MARIADB_LINK_DYNAMIC)
+    IF(USE_SYSTEM_INSTALLED_LIB)
+      SET(MARIADB_CLIENT_TARGET_NAME mariadb)
+    ELSE()
+      SET(MARIADB_CLIENT_TARGET_NAME libmariadb)
+    ENDIF()
+    MESSAGE(STATUS "Linking Connector/C library dynamically(${MARIADB_CLIENT_TARGET_NAME})")
+  ELSE()
+    SET(MARIADB_CLIENT_TARGET_NAME mariadbclient)
+    MESSAGE(STATUS "Linking Connector/C library statically(${MARIADB_CLIENT_TARGET_NAME})")
+  ENDIF()
 
-# Currently on Windows only
+  IF(WIN32)
+    IF(UNICODE)
+      ADD_LIBRARY(${LIBRARY_NAME} SHARED ${MARIADB_ODBC_SOURCES_TYPE} ${CMAKE_SOURCE_DIR}/mariadb-odbc-driver-uni.def maodbc${CONNECTOR_DRIVER_TYPE_SHORT}.rc)
+    ELSE()
+      ADD_LIBRARY(${LIBRARY_NAME} SHARED ${MARIADB_ODBC_SOURCES_TYPE} ${CMAKE_SOURCE_DIR}/mariadb-odbc-driver-asc.def maodbc${CONNECTOR_DRIVER_TYPE_SHORT}.rc)
+    ENDIF()
+  ELSE()
+    MESSAGE(STATUS "Version script: ${CMAKE_SOURCE_DIR}/maodbc.def")
+    ADD_LIBRARY(${LIBRARY_NAME} SHARED ${MARIADB_ODBC_SOURCES_TYPE} maodbc${CONNECTOR_DRIVER_TYPE_SHORT}.rc)
+
+    IF(APPLE)
+      SET(MAODBC_INSTALL_RPATH "${ODBC_LIB_DIR}" "@loader_path" "/usr/local/opt/libiodbc" "/usr/local/iODBC/lib" "/usr/local/opt/openssl@1.1/lib" "/usr/local/opt/libressl/lib")
+      SET_TARGET_PROPERTIES(${LIBRARY_NAME}
+              PROPERTIES LINK_FLAGS "-Wl"
+              INSTALL_RPATH_USE_LINK_PATH 0
+              BUILD_WITH_INSTALL_RPATH 1
+              INSTALL_RPATH "${MAODBC_INSTALL_RPATH}")
+    ELSE()
+      SET_TARGET_PROPERTIES(${LIBRARY_NAME} PROPERTIES LINK_FLAGS "-Wl,--version-script=${CMAKE_SOURCE_DIR}/maodbc.def")
+    ENDIF()
+  ENDIF()
+
+  IF(UNICODE)
+    SET_TARGET_PROPERTIES(${LIBRARY_NAME} PROPERTIES
+            COMPILE_DEFINITIONS MAODBC_UNICODEDRIVER)
+  ENDIF(UNICODE)
+  SET_TARGET_PROPERTIES(${LIBRARY_NAME} PROPERTIES LANGUAGE C)
+  SET_TARGET_PROPERTIES(${LIBRARY_NAME} PROPERTIES C_STANDARD 90)
+  MESSAGE(STATUS "All linked targets/external dependencies: ${MARIADB_CLIENT_TARGET_NAME} ${ODBC_INSTLIBS} ${PLATFORM_DEPENDENCIES}")
+  TARGET_LINK_LIBRARIES(${LIBRARY_NAME} ${MARIADB_CLIENT_TARGET_NAME} ${ODBC_INSTLIBS} ${PLATFORM_DEPENDENCIES})
+
+  # Currently on Windows only
+  IF(WIN32)
+    ADD_CUSTOM_COMMAND(TARGET maodbc${CONNECTOR_DRIVER_TYPE_SHORT} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} ARGS -DDRIVER_LIB_DIR=$<TARGET_FILE_DIR:maodbc${CONNECTOR_DRIVER_TYPE_SHORT}>
+            -DPLUGINS_LIB_DIR=$<TARGET_FILE_DIR:dialog>
+            -DINSTALLER_TOOLS_DIR=$<TARGET_FILE_DIR:change_dsns_driver>
+            -DPLUGINS_SUBDIR_NAME=${MARIADB_DEFAULT_PLUGINS_SUBDIR}
+            -DFILE_IN=${CMAKE_SOURCE_DIR}/wininstall/binaries_dir.xml.in
+            -DFILE_OUT=${CMAKE_SOURCE_DIR}/wininstall/binaries_dir.xml
+            -P ${CMAKE_SOURCE_DIR}/cmake/ConfigureFile.cmake
+            )
+  ELSEIF(APPLE)
+    ADD_CUSTOM_COMMAND(TARGET maodbc${CONNECTOR_DRIVER_TYPE_SHORT} POST_BUILD
+            COMMAND ${CMAKE_SOURCE_DIR}/osxpostbuild.sh ARGS $<TARGET_FILE:${LIBRARY_NAME}>
+            )
+  ENDIF()
+  MATH(EXPR DRIVER_INDEX "${DRIVER_INDEX} + 1")
+ENDWHILE(${DRIVER_INDEX} LESS ${DRIVERS_COUNT})
+
 IF(WIN32)
-  ADD_CUSTOM_COMMAND(TARGET maodbc POST_BUILD
-    COMMAND ${CMAKE_COMMAND} ARGS -DDRIVER_LIB_DIR=$<TARGET_FILE_DIR:maodbc>
-                                  -DPLUGINS_LIB_DIR=$<TARGET_FILE_DIR:dialog>
-                                  -DINSTALLER_TOOLS_DIR=$<TARGET_FILE_DIR:change_dsns_driver>
-                                  -DPLUGINS_SUBDIR_NAME=${MARIADB_DEFAULT_PLUGINS_SUBDIR}
-                                  -DFILE_IN=${CMAKE_SOURCE_DIR}/wininstall/binaries_dir.xml.in
-                                  -DFILE_OUT=${CMAKE_SOURCE_DIR}/wininstall/binaries_dir.xml
-                                  -P ${CMAKE_SOURCE_DIR}/cmake/ConfigureFile.cmake
-                     )
   ####### MAODBCS #######
   ADD_LIBRARY(maodbcs SHARED ${DSN_DIALOG_FILES} ${CMAKE_SOURCE_DIR}/dsn/mariadb_odbc_setup.def)
   SET_TARGET_PROPERTIES(maodbcs PROPERTIES LANGUAGE C)
@@ -379,10 +433,6 @@ IF(WIN32)
 
   ADD_EXECUTABLE(dsn_test  dsn_test.c)
   TARGET_LINK_LIBRARIES(dsn_test ${MARIADB_LIB})
-ELSEIF(APPLE)
-  ADD_CUSTOM_COMMAND(TARGET maodbc POST_BUILD
-    COMMAND ${CMAKE_SOURCE_DIR}/osxpostbuild.sh ARGS $<TARGET_FILE:${LIBRARY_NAME}>
-  )
 ENDIF()
 
 SET(CPACK_PACKAGE_NAME "mariadb-connector-odbc")
@@ -412,48 +462,6 @@ ELSE()
           COMPONENT Documentation)
 ENDIF()
 
-# Tests. Checking if we have them. May be not the case if we are building from source package
-IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
-  IF(WITH_UNIT_TESTS)
-    ADD_SUBDIRECTORY(test)
-    IF(NOT WIN32)
-      # Configuring ini files for testing with UnixODBC
-      SET_VALUE(TEST_DRIVER "SingleStore ODBC 0.1-beta Driver")
-      SET_VALUE(TEST_DSN "maodbc_test")
-      SET_VALUE(TEST_PORT "5506")
-      SET_VALUE(TEST_SERVER "127.0.0.1")
-      SET_VALUE(TEST_SOCKET "")
-      SET_VALUE(TEST_SCHEMA "odbc_test")
-      SET_VALUE(TEST_UID "root")
-      SET_VALUE(TEST_PASSWORD "")
-
-      MESSAGE(STATUS "Configuring Test Driver: ${TEST_DRIVER}, Test DSN: ${TEST_DSN}, tcp://${TEST_UID}@${TEST_SERVER}:${TEST_PORT}/${TEST_SCHEMA} socket: ${TEST_SOCKET}")
-
-      ADD_CUSTOM_COMMAND(TARGET maodbc POST_BUILD
-        COMMAND ${CMAKE_COMMAND} ARGS -DDRIVER_LIB_LOCATION=$<TARGET_FILE:maodbc>
-                                      -DTEST_DRIVER=${TEST_DRIVER}
-                                      -DFILE_IN=${CMAKE_SOURCE_DIR}/test/odbcinst.ini.in
-                                      -DFILE_OUT=${CMAKE_BINARY_DIR}/test/odbcinst.ini
-                                      -P ${CMAKE_SOURCE_DIR}/cmake/ConfigureFile.cmake
-                         )
-
-      ADD_CUSTOM_COMMAND(TARGET maodbc POST_BUILD
-        COMMAND ${CMAKE_COMMAND} ARGS -DTEST_DRIVER=${TEST_DRIVER}
-                                      -DTEST_DSN=${TEST_DSN}
-                                      -DTEST_PORT=${TEST_PORT}
-                                      -DTEST_SERVER=${TEST_SERVER}
-                                      -DTEST_SOCKET=${TEST_SOCKET}
-                                      -DTEST_SCHEMA=${TEST_SCHEMA}
-                                      -DTEST_UID=${TEST_UID}
-                                      -DTEST_PASSWORD=${TEST_PASSWORD}
-                                      -DFILE_IN=${CMAKE_SOURCE_DIR}/test/odbc.ini.in
-                                      -DFILE_OUT=${CMAKE_BINARY_DIR}/test/odbc.ini
-                                      -P ${CMAKE_SOURCE_DIR}/cmake/ConfigureFile.cmake
-                         )
-    ENDIF()
-  ENDIF()
-ENDIF()
-
 # Packaging
 SET(CPACK_PACKAGE_VENDOR "MariaDB Corporation Ab")
 SET(CPACK_PACKAGE_DESCRIPTION "MariaDB Connector/ODBC. ODBC driver library for connecting to MariaDB and MySQL servers")
@@ -463,7 +471,7 @@ ENDIF()
 IF(PACKAGE_PLATFORM_SUFFIX)
   SET(CPACK_PACKAGE_FILE_NAME "mariadb-connector-odbc-${CPACK_PACKAGE_VERSION}-${PACKAGE_PLATFORM_SUFFIX}")
 ELSE()
- SET(CPACK_PACKAGE_FILE_NAME "mariadb-connector-odbc-${CPACK_PACKAGE_VERSION}-${MARIADB_ODBC_VERSION_QUALITY}-${system_name}-${CMAKE_SYSTEM_PROCESSOR}")
+  SET(CPACK_PACKAGE_FILE_NAME "mariadb-connector-odbc-${CPACK_PACKAGE_VERSION}-${MARIADB_ODBC_VERSION_QUALITY}-${system_name}-${CMAKE_SYSTEM_PROCESSOR}")
 ENDIF()
 MESSAGE(STATUS "Package Name: ${CPACK_PACKAGE_FILE_NAME}")
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING")
@@ -472,36 +480,36 @@ SET(CPACK_SOURCE_PACKAGE_FILE_NAME "mariadb-connector-odbc-${CPACK_PACKAGE_VERSI
 SET(CPACK_PACKAGE_CONTACT "info@mariadb.com")
 SET(CPACK_PACKAGE_VENDOR "MariaDB Corporation AB")
 SET(CPACK_SOURCE_IGNORE_FILES
-/test/
-/.git/
-.gitignore
-.gitmodules
-.gitattributes
-CMakeCache.txt
-cmake_dist.cmake
-CPackSourceConfig.cmake
-CPackConfig.cmake
-/.build/
-cmake_install.cmake
-CTestTestfile.cmake
-/CMakeFiles/
-/version_resources/
-.*vcxproj
-.*gz$
-.*zip$
-.*so$
-.*so.2
-.*so.3
-.*dll$
-.*a$
-.*pdb$
-.*sln$
-.*sdf$
-Makefile$
-/autom4te.cache/
-/libmariadb/
-/_CPack_Packages/
-)
+        /test/
+        /.git/
+        .gitignore
+        .gitmodules
+        .gitattributes
+        CMakeCache.txt
+        cmake_dist.cmake
+        CPackSourceConfig.cmake
+        CPackConfig.cmake
+        /.build/
+        cmake_install.cmake
+        CTestTestfile.cmake
+        /CMakeFiles/
+        /version_resources/
+        .*vcxproj
+        .*gz$
+        .*zip$
+        .*so$
+        .*so.2
+        .*so.3
+        .*dll$
+        .*a$
+        .*pdb$
+        .*sln$
+        .*sdf$
+        Makefile$
+        /autom4te.cache/
+        /libmariadb/
+        /_CPack_Packages/
+        )
 
 # Build source packages
 IF(GIT_BUILD_SRCPKG OR ODBC_GIT_BUILD_SRCPKG)
@@ -530,6 +538,67 @@ ENDIF()
 MESSAGE(STATUS "License File: ${CPACK_RESOURCE_FILE_LICENSE}")
 MESSAGE(STATUS "ReadMe File: ${CPACK_PACKAGE_DESCRIPTION_FILE}")
 MESSAGE(STATUS "Source Package Filename: ${CPACK_SOURCE_PACKAGE_FILE_NAME}.${CPACK_SOURCE_GENERATOR}")
+
+# Tests. Checking if we have them. May be not the case if we are building from source package
+IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
+  IF(WITH_UNIT_TESTS)
+    ADD_SUBDIRECTORY(test)
+    IF(NOT WIN32)
+      SET(drivers_options)
+      SET(dsn_name "maodbc_test")
+      SET_VALUE(TEST_DRIVER "SingleStore ODBC 0.1-beta Driver")
+      SET_VALUE(TEST_DSN "maodbc_test")
+      SET_VALUE(TEST_PORT "5506")
+      SET_VALUE(TEST_SERVER "127.0.0.1")
+      SET_VALUE(TEST_SOCKET "")
+      SET_VALUE(TEST_SCHEMA "odbc_test")
+      SET_VALUE(TEST_UID "root")
+      SET_VALUE(TEST_PASSWORD "")
+
+      foreach(idx RANGE 0 1)
+
+        LIST(GET CONNECTOR_DRIVER_TYPES_SHORT ${idx} CONNECTOR_DRIVER_TYPE_SHORT)
+        LIST(GET CONNECTOR_DRIVER_TYPE_LIST ${idx} DRIVER_TYPE)
+
+        math(EXPR DRIVERS_COUNT "${idx}+1")
+
+        # Configuring ini files for testing with UnixODBC
+        SET(TEST_DRIVER "MariaDB ODBC 3.1 ${DRIVER_TYPE} Driver")
+        SET(TEST_DESCRIPTION "MariaDB ODBC ${DRIVER_TYPE} Connector")
+
+        MESSAGE(STATUS "Configuring Test Driver: ${TEST_DRIVER}, Test DSN: ${dsn_name}_${CONNECTOR_DRIVER_TYPE_SHORT}, tcp://${TEST_UID}@${TEST_SERVER}:${TEST_PORT}/${TEST_SCHEMA} socket: ${TEST_SOCKET}")
+
+        list(APPEND drivers_options
+                -DTEST_DRIVER${DRIVERS_COUNT}=${TEST_DRIVER}
+                -DDRIVER_LIB_LOCATION${DRIVERS_COUNT}=$<TARGET_FILE:maodbc${CONNECTOR_DRIVER_TYPE_SHORT}>
+                -DDRIVER_LIB_DESCRIPTION${DRIVERS_COUNT}=${TEST_DESCRIPTION}
+                -DTEST_DSN${DRIVERS_COUNT}=${dsn_name}_${CONNECTOR_DRIVER_TYPE_SHORT}
+        )
+
+      endforeach()
+
+      ADD_CUSTOM_COMMAND(TARGET maodbc${CONNECTOR_DRIVER_TYPE_SHORT} POST_BUILD
+              COMMAND ${CMAKE_COMMAND} ARGS ${drivers_options}
+              -DFILE_IN=${CMAKE_SOURCE_DIR}/test/odbcinst.ini.in
+              -DFILE_OUT=${CMAKE_BINARY_DIR}/test/odbcinst.ini
+              -P ${CMAKE_SOURCE_DIR}/cmake/ConfigureFile.cmake
+              )
+
+      ADD_CUSTOM_COMMAND(TARGET maodbc${CONNECTOR_DRIVER_TYPE_SHORT} POST_BUILD
+              COMMAND ${CMAKE_COMMAND} ARGS ${drivers_options}
+              -DTEST_PORT=${TEST_PORT}
+              -DTEST_SERVER=${TEST_SERVER}
+              -DTEST_SOCKET=${TEST_SOCKET}
+              -DTEST_SCHEMA=${TEST_SCHEMA}
+              -DTEST_UID=${TEST_UID}
+              -DTEST_PASSWORD=${TEST_PASSWORD}
+              -DFILE_IN=${CMAKE_SOURCE_DIR}/test/odbc.ini.in
+              -DFILE_OUT=${CMAKE_BINARY_DIR}/test/odbc.ini
+              -P ${CMAKE_SOURCE_DIR}/cmake/ConfigureFile.cmake
+              )
+    ENDIF()
+  ENDIF()
+ENDIF()
 
 INCLUDE(CPack)
 

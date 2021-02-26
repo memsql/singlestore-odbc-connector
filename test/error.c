@@ -506,7 +506,7 @@ ODBC_TEST(t_bug14285620)
   /* Get database name for further checks */
   FAIL_IF(SQLGetInfo(Connection, SQL_DATABASE_NAME, szData, sizeof(szData), NULL)!= SQL_SUCCESS, "success expected");
   /* iODBC will call SQLGetInfoW, and will provide pointer for the value. Thus connector should return SQL_SUCCESS_WITH_INFO */
-  is_num(SQLGetInfo(Connection, SQL_DATABASE_NAME, NULL, 0, &cblen), iOdbc() ? SQL_SUCCESS_WITH_INFO : SQL_SUCCESS);
+  is_num(SQLGetInfo(Connection, SQL_DATABASE_NAME, NULL, 0, &cblen), iOdbc() && is_unicode_driver() ? SQL_SUCCESS_WITH_INFO : SQL_SUCCESS);
 
 #ifdef _WIN32  
   /* Windows uses unicode driver by default */
@@ -775,28 +775,28 @@ ODBC_TEST(t_odbc226)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {t_odbc3_error, "t_odbc3_error"},
-  {t_odbc2_error, "t_odbc2_error"},
-  {t_diagrec, "t_diagrec"},
-  {t_warning, "t_warning"},
-  {t_bug3456, "t_bug3456_fails_due_to_conc_bug"},
-  {t_bug16224, "t_bug16224"},
-  {bind_invalidcol, "bind_invalidcol"},
-  {bind_notenoughparam1, "bind_notenoughparam1"},
-  {bind_notenoughparam2, "bind_notenoughparam2" },
-  {getdata_need_nullind, "getdata_need_nullind"},
-  {t_handle_err, "t_handle_err"},
-  {sqlerror, "sqlerror"},
-  {t_bug27158, "t_bug27158"},
-  {t_bug13542600, "t_bug13542600"},
-  {t_bug14285620, "t_bug14285620"},
-  {t_bug49466, "t_bug49466"},
-  {t_odbc94,   "t_odbc94"},
-  {t_odbc115, "t_odbc115"},
-  {t_odbc123, "t_odbc123"},
-  {t_odbc43, "t_odbc43_datetime_overflow"},
-  {t_odbc226, "t_odbc226"},
-  {NULL, NULL}
+  {t_odbc3_error, "t_odbc3_error", ALL_DRIVERS},
+  {t_odbc2_error, "t_odbc2_error", ALL_DRIVERS},
+  {t_diagrec, "t_diagrec", ALL_DRIVERS},
+  {t_warning, "t_warning", ALL_DRIVERS},
+  {t_bug3456, "t_bug3456_fails_due_to_conc_bug", ALL_DRIVERS},
+  {t_bug16224, "t_bug16224", ALL_DRIVERS},
+  {bind_invalidcol, "bind_invalidcol", ALL_DRIVERS},
+  {bind_notenoughparam1, "bind_notenoughparam1", ALL_DRIVERS},
+  {bind_notenoughparam2, "bind_notenoughparam2" , ALL_DRIVERS},
+  {getdata_need_nullind, "getdata_need_nullind", ALL_DRIVERS},
+  {t_handle_err, "t_handle_err", ALL_DRIVERS},
+  {sqlerror, "sqlerror", ALL_DRIVERS},
+  {t_bug27158, "t_bug27158", ALL_DRIVERS},
+  {t_bug13542600, "t_bug13542600", ALL_DRIVERS},
+  {t_bug14285620, "t_bug14285620", ALL_DRIVERS},
+  {t_bug49466, "t_bug49466", ALL_DRIVERS},
+  {t_odbc94,   "t_odbc94", ALL_DRIVERS},
+  {t_odbc115, "t_odbc115", ALL_DRIVERS},
+  {t_odbc123, "t_odbc123", ALL_DRIVERS},
+  {t_odbc43, "t_odbc43_datetime_overflow", ALL_DRIVERS},
+  {t_odbc226, "t_odbc226", ALL_DRIVERS},
+  {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
 int main(int argc, char **argv)

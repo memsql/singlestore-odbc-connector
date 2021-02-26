@@ -816,9 +816,9 @@ ODBC_TEST(client_side_get_data_many_types)
     OK_SIMPLE_STMT(Stmt, "SELECT * FROM cs_getdata");
 
     CHECK_STMT_RC(Stmt, SQLGetStmtAttr(Stmt, SQL_ATTR_APP_ROW_DESC, &ard, SQL_IS_POINTER, NULL));
-    CHECK_STMT_RC(ard, SQLSetDescField(ard, 3, SQL_DESC_PRECISION, (void *) 10, 0));
-    CHECK_STMT_RC(ard, SQLSetDescField(ard, 3, SQL_DESC_SCALE, (void *) 3, 0));
-    CHECK_STMT_RC(ard, SQLSetDescField(ard, 3, SQL_DESC_CONCISE_TYPE, (void *) SQL_NUMERIC, 0));
+    CHECK_DESC_RC(ard, SQLSetDescField(ard, 3, SQL_DESC_PRECISION, (void *) 10, 0));
+    CHECK_DESC_RC(ard, SQLSetDescField(ard, 3, SQL_DESC_SCALE, (void *) 3, 0));
+    CHECK_DESC_RC(ard, SQLSetDescField(ard, 3, SQL_DESC_CONCISE_TYPE, (void *) SQL_C_NUMERIC, 0));
 
     CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
     CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 1, SQL_C_WCHAR, aCol, sizeof(aCol), &aColLen));
@@ -1348,26 +1348,26 @@ ODBC_TEST(client_side_ipd)
 
 MA_ODBC_TESTS my_tests[] =
 {
-    {client_side_show,                      "client_side_show", CSPS_OK | SSPS_FAIL},
-    {client_side_prepare,                   "client_side_prepare", NORMAL},
-    {client_side_static_cursor,             "client_side_static_cursor", NORMAL},
-    {client_side_dynamic_cursor,            "client_side_dynamic_cursor", NORMAL},
-    {client_side_forward_only_cursor,       "client_side_forward_only_cursor", NORMAL},
-    {client_side_multiparam,                "client_side_multiparam", CSPS_OK | SSPS_FAIL},
-    {client_side_multirow,                  "client_side_multirow", NORMAL},
-    {client_side_multirow_columnwise,       "client_side_multirow_columnwise", NORMAL},
-    {client_side_get_data,                  "client_side_get_data", NORMAL},
-    {client_side_get_data_buffered,         "client_side_get_data_buffered", NORMAL},
-    {client_side_get_data_many_types,       "client_side_get_data_many_types", NORMAL},
-    {client_side_put_data,                  "client_side_put_data", CSPS_OK | SSPS_FAIL},
-    {client_side_put_data_non_char,         "client_side_put_data_non_char", CSPS_OK | SSPS_FAIL},
-    {client_side_put_data_multiple,         "client_side_put_data_multiple", NORMAL}, // not yet supported
-    {client_side_bulk_add,                  "client_side_bulk_add", NORMAL},
-    {client_side_set_pos_del,               "client_side_set_pos_del", NORMAL},
-    {client_side_set_pos_del_multiple_rows, "client_side_set_pos_del_multiple_rows", NORMAL},
-    {client_side_multistatements,           "client_side_multistatements", NORMAL},
-    {client_side_ipd, "client_side_ipd", NORMAL},
-    {NULL, NULL}
+    {client_side_show,                      "client_side_show", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
+    {client_side_prepare,                   "client_side_prepare", NORMAL, ALL_DRIVERS},
+    {client_side_static_cursor,             "client_side_static_cursor", NORMAL, ALL_DRIVERS},
+    {client_side_dynamic_cursor,            "client_side_dynamic_cursor", NORMAL, ALL_DRIVERS},
+    {client_side_forward_only_cursor,       "client_side_forward_only_cursor", NORMAL, ALL_DRIVERS},
+    {client_side_multiparam,                "client_side_multiparam", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
+    {client_side_multirow,                  "client_side_multirow", NORMAL, ALL_DRIVERS},
+    {client_side_multirow_columnwise,       "client_side_multirow_columnwise", NORMAL, ALL_DRIVERS},
+    {client_side_get_data,                  "client_side_get_data", NORMAL, ALL_DRIVERS},
+    {client_side_get_data_buffered,         "client_side_get_data_buffered", NORMAL, ALL_DRIVERS},
+    {client_side_get_data_many_types,       "client_side_get_data_many_types", NORMAL, ALL_DRIVERS},
+    {client_side_put_data,                  "client_side_put_data", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
+    {client_side_put_data_non_char,         "client_side_put_data_non_char", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
+    {client_side_put_data_multiple,         "client_side_put_data_multiple", NORMAL, ALL_DRIVERS}, // not yet supported
+    {client_side_bulk_add,                  "client_side_bulk_add", NORMAL, ALL_DRIVERS},
+    {client_side_set_pos_del,               "client_side_set_pos_del", NORMAL, ALL_DRIVERS},
+    {client_side_set_pos_del_multiple_rows, "client_side_set_pos_del_multiple_rows", NORMAL, ALL_DRIVERS},
+    {client_side_multistatements,           "client_side_multistatements", NORMAL, ALL_DRIVERS},
+    {client_side_ipd, "client_side_ipd", NORMAL, ALL_DRIVERS},
+    {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
 int main(int argc, char **argv)

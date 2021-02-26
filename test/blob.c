@@ -829,7 +829,7 @@ ODBC_TEST(t_bug_11746572)
 ODBC_TEST(t_odbc_26)
 {
   SQLLEN     valueLen;
-  SQLWCHAR   buffer[]= {'b', 'b', 0};
+  SQLCHAR   buffer[]= {'b', 'b', 0};
   SQLCHAR    value[3];
   SQLPOINTER parameter;
 
@@ -843,14 +843,14 @@ ODBC_TEST(t_odbc_26)
 
   valueLen= SQL_LEN_DATA_AT_EXEC(4);
 
-  CHECK_STMT_RC(Stmt,  SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_WCHAR,
+  CHECK_STMT_RC(Stmt,  SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
                                   SQL_VARCHAR, 0, 0, (SQLPOINTER)1, 0, &valueLen));
 
   EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_NEED_DATA);
   EXPECT_STMT(Stmt, SQLParamData(Stmt, &parameter), SQL_NEED_DATA);
   is_num(parameter, 1);
 
-  CHECK_STMT_RC(Stmt, SQLPutData(Stmt, buffer, 2*sizeof(SQLWCHAR)));
+  CHECK_STMT_RC(Stmt, SQLPutData(Stmt, buffer, 2*sizeof(SQLCHAR)));
   CHECK_STMT_RC(Stmt, SQLParamData(Stmt, &parameter));
 
   /* We return "N" for SQL_NEED_LONG_DATA_LEN, and this not gonna change. Thus SQL_LEN_DATA_AT_EXEC(0) and with any other parameter should work */
@@ -861,7 +861,7 @@ ODBC_TEST(t_odbc_26)
   EXPECT_STMT(Stmt, SQLParamData(Stmt, &parameter), SQL_NEED_DATA);
   is_num(parameter, 1);
 
-  CHECK_STMT_RC(Stmt, SQLPutData(Stmt, buffer, 2*sizeof(SQLWCHAR)));
+  CHECK_STMT_RC(Stmt, SQLPutData(Stmt, buffer, 2*sizeof(SQLCHAR)));
   CHECK_STMT_RC(Stmt, SQLParamData(Stmt, &parameter));
 
   OK_SIMPLE_STMT(Stmt, "SELECT value FROM bug_odbc26 ORDER BY id");
@@ -932,20 +932,20 @@ ODBC_TEST(t_blob_reading_in_chunks)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {t_blob, "t_blob", CSPS_OK | SSPS_FAIL},
-  {t_1piecewrite2, "t_1piecewrite2", NORMAL},
-  {t_putdata1, "t_putdata1", CSPS_OK | SSPS_FAIL},
-  {t_putdata2, "t_putdata2", CSPS_OK | SSPS_FAIL},
-  {t_putdata3, "t_putdata3", CSPS_OK | SSPS_FAIL},
-  {t_blob_bug, "t_blob_bug", NORMAL},
-  {t_text_fetch, "t_text_fetch", NORMAL},
-  {getdata_lenonly, "getdata_lenonly", NORMAL},
-  {t_bug9781, "t_bug9781", NORMAL},
+  {t_blob, "t_blob", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
+  {t_1piecewrite2, "t_1piecewrite2", NORMAL, ALL_DRIVERS},
+  {t_putdata1, "t_putdata1", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
+  {t_putdata2, "t_putdata2", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
+  {t_putdata3, "t_putdata3", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
+  {t_blob_bug, "t_blob_bug", NORMAL, ALL_DRIVERS},
+  {t_text_fetch, "t_text_fetch", NORMAL, ALL_DRIVERS},
+  {getdata_lenonly, "getdata_lenonly", NORMAL, ALL_DRIVERS},
+  {t_bug9781, "t_bug9781", NORMAL, ALL_DRIVERS},
   {t_bug10562, "t_bug10562", TO_FIX}, // TODO(PLAT-5080): positioned updates are not yet supported.
-  {t_bug_11746572, "t_bug_11746572", NORMAL},
-  {t_odbc_26, "t_odbc_26", CSPS_OK | SSPS_FAIL},
-  {t_blob_reading_in_chunks, "t_blob_reading_in_chunks", NORMAL},
-  {NULL, NULL}
+  {t_bug_11746572, "t_bug_11746572", NORMAL, ALL_DRIVERS},
+  {t_odbc_26, "t_odbc_26", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
+  {t_blob_reading_in_chunks, "t_blob_reading_in_chunks", NORMAL, ALL_DRIVERS},
+  {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
 int main(int argc, char **argv)

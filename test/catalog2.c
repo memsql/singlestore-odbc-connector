@@ -1229,13 +1229,12 @@ ODBC_TEST(odbc119)
 }
 
 
-ODBC_TEST(odbc185)
+ODBC_TEST(odbc185_a)
 {
   HDBC hdbc1;
   HSTMT hstmt1;
   SQLCHAR buff[MAX_ROW_DATA_LEN+1];
-  SQLSMALLINT expectedw[]= {SQL_WCHAR, SQL_WVARCHAR, SQL_WLONGVARCHAR, SQL_WLONGVARCHAR, SQL_WLONGVARCHAR, SQL_WLONGVARCHAR, SQL_WVARCHAR, SQL_WVARCHAR},
-              expecteda[]= {SQL_CHAR, SQL_VARCHAR, SQL_LONGVARCHAR, SQL_LONGVARCHAR, SQL_LONGVARCHAR, SQL_LONGVARCHAR, SQL_VARCHAR, SQL_VARCHAR};
+  SQLSMALLINT expecteda[]= {SQL_CHAR, SQL_VARCHAR, SQL_LONGVARCHAR, SQL_LONGVARCHAR, SQL_LONGVARCHAR, SQL_LONGVARCHAR, SQL_VARCHAR, SQL_VARCHAR};
   unsigned int i;
 
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc1));
@@ -1249,36 +1248,18 @@ ODBC_TEST(odbc185)
     W(L"CREATE TABLE t_odbc185 (ccol CHAR(32), vcfield VARCHAR(32) not null, tcol TEXT, ttcol TINYTEXT, mtcol MEDIUMTEXT,\
                         ltcol LONGTEXT, ecol ENUM('enum val 1', 'enum val 2'), scol SET('set m1', 'set m3'))"), SQL_NTS));
 
-  /* It doesn't matter if we call SQLColumns or SQLColumnsW */
-  CHECK_STMT_RC(hstmt1, SQLColumns(hstmt1, my_schema, SQL_NTS, NULL, 0,
+  CHECK_STMT_RC(Stmt, SQLColumns(Stmt, my_schema, SQL_NTS, NULL, 0,
     "t_odbc185", SQL_NTS, NULL, SQL_NTS));
-  /* Doing the same on the default connection, which is open using ANSI part of the API */
-  CHECK_STMT_RC(Stmt, SQLColumnsW(Stmt, wschema, SQL_NTS, NULL, 0,
-    CW("t_odbc185"), SQL_NTS,
-    NULL, SQL_NTS));
 
-  for (i= 0; i < sizeof(expectedw)/sizeof(expectedw[0]); ++i)
+  for (i= 0; i < sizeof(expecteda)/sizeof(expecteda[0]); ++i)
   {
-    CHECK_STMT_RC(hstmt1, SQLFetch(hstmt1));
-    my_fetch_str(hstmt1, buff, COLUMN_NAME);
-    is_num(my_fetch_int(hstmt1, DATA_TYPE), expectedw[i]);
-    is_num(my_fetch_int(hstmt1, SQL_DATA_TYPE  /* SQL_DATA_TYPE */), expectedw[i]);
-
     CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
     my_fetch_str(Stmt, buff, COLUMN_NAME);
-    if (iOdbc() || UnixOdbc())
-    {
-      is_num(my_fetch_int(Stmt, DATA_TYPE), expectedw[i]);
-      is_num(my_fetch_int(Stmt, SQL_DATA_TYPE), expectedw[i]);
-    }
-    else
-    {
-      is_num(my_fetch_int(Stmt, DATA_TYPE), expecteda[i]);
-      is_num(my_fetch_int(Stmt, SQL_DATA_TYPE), expecteda[i]);
-    }
+
+    is_num(my_fetch_int(Stmt, DATA_TYPE), expecteda[i]);
+    is_num(my_fetch_int(Stmt, SQL_DATA_TYPE), expecteda[i]);
   }
   
-  EXPECT_STMT(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
   EXPECT_STMT(Stmt, SQLFetch(Stmt), SQL_NO_DATA_FOUND);
 
   CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
@@ -1291,6 +1272,50 @@ ODBC_TEST(odbc185)
   CHECK_DBC_RC(hdbc1, SQLFreeConnect(hdbc1));
 
   return OK;
+}
+
+ODBC_TEST(odbc185_w)
+{
+    HDBC hdbc1;
+    HSTMT hstmt1;
+    SQLCHAR buff[MAX_ROW_DATA_LEN+1];
+    SQLSMALLINT expectedw[]= {SQL_WCHAR, SQL_WVARCHAR, SQL_WLONGVARCHAR, SQL_WLONGVARCHAR, SQL_WLONGVARCHAR, SQL_WLONGVARCHAR, SQL_WVARCHAR, SQL_WVARCHAR};
+    unsigned int i;
+
+    CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc1));
+    CHECK_DBC_RC(hdbc1, SQLConnectW(hdbc1, wdsn, SQL_NTS, wuid, SQL_NTS,
+                                    wpwd, SQL_NTS));
+
+    CHECK_DBC_RC(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+    OK_SIMPLE_STMT(hstmt1, "DROP TABLE IF EXISTS t_odbc185");
+    CHECK_STMT_RC(hstmt1, SQLExecDirectW(hstmt1,
+                                         W(L"CREATE TABLE t_odbc185 (ccol CHAR(32), vcfield VARCHAR(32) not null, tcol TEXT, ttcol TINYTEXT, mtcol MEDIUMTEXT,\
+                        ltcol LONGTEXT, ecol ENUM('enum val 1', 'enum val 2'), scol SET('set m1', 'set m3'))"), SQL_NTS));
+
+    CHECK_STMT_RC(hstmt1, SQLColumnsW(hstmt1, wschema, SQL_NTS, NULL, 0,
+                                    CW("t_odbc185"), SQL_NTS,
+                                    NULL, SQL_NTS));
+
+    for (i= 0; i < sizeof(expectedw)/sizeof(expectedw[0]); ++i)
+    {
+        CHECK_STMT_RC(hstmt1, SQLFetch(hstmt1));
+        my_fetch_str(hstmt1, buff, COLUMN_NAME);
+        is_num(my_fetch_int(hstmt1, DATA_TYPE), expectedw[i]);
+        is_num(my_fetch_int(hstmt1, SQL_DATA_TYPE  /* SQL_DATA_TYPE */), expectedw[i]);
+    }
+
+    EXPECT_STMT(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
+
+    CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+    OK_SIMPLE_STMT(hstmt1, "DROP TABLE t_odbc185");
+
+    CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+    CHECK_DBC_RC(hdbc1, SQLDisconnect(hdbc1));
+    CHECK_DBC_RC(hdbc1, SQLFreeConnect(hdbc1));
+
+    return OK;
 }
 
 
@@ -1371,27 +1396,28 @@ ODBC_TEST(odbc231)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {t_bug37621, "t_bug37621", NORMAL},
-  {t_bug34272, "t_bug34272", NORMAL},
-  {t_bug36441, "t_bug36441", NORMAL},
-  {t_bug53235, "t_bug53235", NORMAL},
-  {t_bug50195, "t_bug50195", NORMAL},
-  {t_sqlprocedurecolumns, "t_sqlprocedurecolumns", NORMAL},
-  {t_bug57182, "t_bug57182", NORMAL},
-  {t_bug55870, "t_bug55870", NORMAL},
-  {t_bug31067, "t_bug31067", NORMAL},
-  {bug12824839,               "bug12824839",               NORMAL},
-  {sqlcolumns_nodbselected,   "sqlcolumns_nodbselected",   NORMAL},
-  {t_bug14085211_part1,       "t_bug14085211_part1",       NORMAL},
-  {t_sqlcolumns_after_select, "t_sqlcolumns_after_select", NORMAL},
-  {odbc38,  "odbc32_odbc2_odbc3_data_types", NORMAL},
-  {odbc51,  "odbc51_wchar_emptystring",      NORMAL},
-  {odbc131, "odbc131_columns_data_len",      NORMAL},
-  {odbc119, "odbc119_sqlstats_orderby",      NORMAL},
-  {odbc185, "odbc185_sqlcolumns_wtypes",     NORMAL},
-  {odbc152, "odbc152_sqlcolumns_sql_data_type",   NORMAL},
-  {odbc231, "odbc231_sqlcolumns_longtext",   NORMAL},
-  {NULL, NULL}
+  {t_bug37621, "t_bug37621", NORMAL, ALL_DRIVERS},
+  {t_bug34272, "t_bug34272", NORMAL, ALL_DRIVERS},
+  {t_bug36441, "t_bug36441", NORMAL, ALL_DRIVERS},
+  {t_bug53235, "t_bug53235", NORMAL, ALL_DRIVERS},
+  {t_bug50195, "t_bug50195", NORMAL, ALL_DRIVERS},
+  {t_sqlprocedurecolumns, "t_sqlprocedurecolumns", NORMAL, ANSI_DRIVER},
+  {t_bug57182, "t_bug57182", NORMAL, ALL_DRIVERS},
+  {t_bug55870, "t_bug55870", NORMAL, ALL_DRIVERS},
+  {t_bug31067, "t_bug31067", NORMAL, ALL_DRIVERS},
+  {bug12824839,               "bug12824839",               NORMAL, ALL_DRIVERS},
+  {sqlcolumns_nodbselected,   "sqlcolumns_nodbselected",   NORMAL, ALL_DRIVERS},
+  {t_bug14085211_part1,       "t_bug14085211_part1",       NORMAL, ALL_DRIVERS},
+  {t_sqlcolumns_after_select, "t_sqlcolumns_after_select", NORMAL, ALL_DRIVERS},
+  {odbc38,  "odbc32_odbc2_odbc3_data_types", NORMAL, ALL_DRIVERS},
+  {odbc51,  "odbc51_wchar_emptystring",      NORMAL, ALL_DRIVERS},
+  {odbc131, "odbc131_columns_data_len",      NORMAL, ALL_DRIVERS},
+  {odbc119, "odbc119_sqlstats_orderby",      NORMAL, ALL_DRIVERS},
+  {odbc185_a, "odbc185_sqlcolumns_atypes",     NORMAL, ANSI_DRIVER},
+  {odbc185_w, "odbc185_sqlcolumns_wtypes",     NORMAL, UNICODE_DRIVER},
+  {odbc152, "odbc152_sqlcolumns_sql_data_type",   NORMAL, ALL_DRIVERS},
+  {odbc231, "odbc231_sqlcolumns_longtext",   NORMAL, ALL_DRIVERS},
+  {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
 

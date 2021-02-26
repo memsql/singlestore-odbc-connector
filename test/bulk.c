@@ -645,16 +645,16 @@ ODBC_TEST(t_odbc149)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {t_bulk_insert_nts, "t_bulk_insert_nts"},
-  {t_bulk_insert_test, "t_bulk_insert_test"},
-  {t_bulk_insert, "t_bulk_insert"},
-  {t_mul_pkdel, "t_mul_pkdel"}, 
-  {t_bulk_insert_indicator, "t_bulk_insert_indicator"},
-  {t_bulk_insert_rows, "t_bulk_insert_rows"},
-  {t_odbc90, "odbc90_insert_with_ts_col"},
-  {t_bulk_delete, "t_bulk_delete"},
-  {t_odbc149, "odbc149_ts_col_insert" },
-  {NULL, NULL}
+  {t_bulk_insert_nts, "t_bulk_insert_nts", NORMAL, ALL_DRIVERS},
+  {t_bulk_insert_test, "t_bulk_insert_test", NORMAL, ALL_DRIVERS},
+  {t_bulk_insert, "t_bulk_insert", NORMAL, ALL_DRIVERS},
+  {t_mul_pkdel, "t_mul_pkdel", NORMAL, ALL_DRIVERS},
+  {t_bulk_insert_indicator, "t_bulk_insert_indicator", NORMAL, ALL_DRIVERS},
+  {t_bulk_insert_rows, "t_bulk_insert_rows", NORMAL, ALL_DRIVERS},
+  {t_odbc90, "odbc90_insert_with_ts_col", NORMAL, ALL_DRIVERS},
+  {t_bulk_delete, "t_bulk_delete", NORMAL, ALL_DRIVERS},
+  {t_odbc149, "odbc149_ts_col_insert" , NORMAL, ALL_DRIVERS},
+  {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
 int main(int argc, char **argv)
