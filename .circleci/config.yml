@@ -298,7 +298,7 @@ workflows:
       - build-linux-in-docker:
           requires:
             - build-debian-8-ansi-RelWithDebInfo
-            name: build-debian-9-unicode-<< matrix.build_type >>
+          name: build-debian-9-unicode-<< matrix.build_type >>
           matrix:
             parameters:
               os_version:
@@ -312,7 +312,7 @@ workflows:
       - build-linux-in-docker:
           requires:
             - build-debian-9-unicode-RelWithDebInfo
-            name: build-debian-9-ansi-<< matrix.build_type >>
+          name: build-debian-9-ansi-<< matrix.build_type >>
           matrix:
             parameters:
               os_version:
@@ -326,7 +326,7 @@ workflows:
       - build-linux-in-docker:
           requires:
             - build-debian-9-ansi-RelWithDebInfo
-            name: build-debian-10-unicode-<< matrix.build_type >>
+          name: build-debian-10-unicode-<< matrix.build_type >>
           matrix:
             parameters:
               os_version:
@@ -340,7 +340,7 @@ workflows:
       - build-linux-in-docker:
           requires:
             - build-debian-10-unicode-RelWithDebInfo
-            name: build-debian-10-ansi-<< matrix.build_type >>
+          name: build-debian-10-ansi-<< matrix.build_type >>
           matrix:
             parameters:
               os_version:
@@ -354,7 +354,7 @@ workflows:
       - build-linux-in-docker:
           requires:
             - build-debian-10-ansi-RelWithDebInfo
-            name: build-centos-7-unicode-<< matrix.build_type >>
+          name: build-centos-7-unicode-<< matrix.build_type >>
           matrix:
             parameters:
               os_version:
@@ -368,7 +368,7 @@ workflows:
       - build-linux-in-docker:
           requires:
             - build-centos-7-unicode-RelWithDebInfo
-            name: build-centos-7-ansi-<< matrix.build_type >>
+          name: build-centos-7-ansi-<< matrix.build_type >>
           matrix:
             parameters:
               os_version:
@@ -382,7 +382,7 @@ workflows:
       - build-linux-in-docker:
           requires:
             - build-centos-7-ansi-RelWithDebInfo
-            name: build-centos-8-unicode-<< matrix.build_type >>
+          name: build-centos-8-unicode-<< matrix.build_type >>
           matrix:
             parameters:
               os_version:
@@ -396,7 +396,7 @@ workflows:
       - build-linux-in-docker:
           requires:
             - build-centos-8-unicode-RelWithDebInfo
-            name: build-centos-8-ansi-<< matrix.build_type >>
+          name: build-centos-8-ansi-<< matrix.build_type >>
           matrix:
             parameters:
               os_version:
