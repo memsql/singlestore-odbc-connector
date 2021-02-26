@@ -195,10 +195,12 @@ SQLRETURN SQL_API SQLConnectW(SQLHDBC ConnectionHandle,
     /* Convert parameters to Cp */
     if (ServerName)
     MBServerName= MADB_ConvertFromWChar(ServerName, NameLength1, 0, &utf8, NULL);
-    if (UserName) {
+    if (UserName)
+    {
         MBUserName= MADB_ConvertFromWChar(UserName, NameLength2, 0, &utf8, NULL);
     }
-    if (Authentication) {
+    if (Authentication)
+    {
         MBAuthentication= MADB_ConvertFromWChar(Authentication, NameLength3, 0, &utf8, NULL);
     }
     ret= SQLConnectCommon(ConnectionHandle, (SQLCHAR *)MBServerName, SQL_NTS, (SQLCHAR *)MBUserName, SQL_NTS,
