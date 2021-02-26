@@ -181,17 +181,6 @@ jobs:
 workflows:
   test:
     jobs:
-#      - build-linux-in-docker:
-#          matrix:
-#            parameters:
-#              os_version:
-#                - debian:8
-#              build_type:
-#                - RelWithDebInfo
-#              test_dsn:
-#                - maodbc_test_w
-#              test_driver:
-#                - MariaDB ODBC 3.1 Unicode Driver
       - build-ubuntu:
           name: build-ubuntu-ansi-7.0.15-<< matrix.build_type >>
           matrix:
@@ -224,18 +213,6 @@ workflows:
                 - MariaDB ODBC 3.1 Unicode Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
-#      - build-ubuntu:
-#          matrix:
-#            parameters:
-#              machine_class:
-#                - large
-#              memsql_password:
-#                - password
-#              build_type:
-#                - RelWithDebInfo
-#              memsql_image:
-#                - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
-#                - memsql/cluster-in-a-box:centos-7.1.13-11ddea2a3a-3.0.0-1.9.3
       - build-macos:
           name: build-macos-unicode-<< matrix.build_type >>
           matrix:
@@ -246,93 +223,187 @@ workflows:
                 - maodbc_test_w
               driver_name:
                 - MariaDB ODBC 3.1 Unicode Driver
-#      - build-macos:
-#          requires:
-#            - build-macos-unicode-RelWithDebInfo
-#          name: build-macos-ansi-<< matrix.build_type >>
-#          matrix:
-#            parameters:
-#              build_type:
-#                - RelWithDebInfo
-#              test_dsn:
-#                - maodbc_test_a
-#              driver_name:
-#                - MariaDB ODBC 3.1 ANSI Driver
-#      - build-windows:
-#          requires:
-#            - build-macos-ansi-RelWithDebInfo
-#          name: build-windows-ansi-<< matrix.build_type >>
-#          matrix:
-#            parameters:
-#              build_type:
-#                - RelWithDebInfo
-#              test_dsn:
-#                - maodbc_test_a
-#              test_driver:
-#                - SingleStore ODBC 0.1-beta ANSI Driver
-#      - build-windows:
-#          requires:
-#            - build-windows-ansi-RelWithDebInfo
-#          name: build-windows-unicode-<< matrix.build_type >>
-#          matrix:
-#            parameters:
-#              build_type:
-#                - RelWithDebInfo
-#              test_dsn:
-#                - maodbc_test_w
-#              test_driver:
-#                - SingleStore ODBC 0.1-beta Unicode Driver
+      - build-macos:
+          requires:
+            - build-macos-unicode-RelWithDebInfo
+          name: build-macos-ansi-<< matrix.build_type >>
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_a
+              driver_name:
+                - MariaDB ODBC 3.1 ANSI Driver
+      - build-windows:
+          requires:
+            - build-macos-ansi-RelWithDebInfo
+          name: build-windows-ansi-<< matrix.build_type >>
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_a
+              test_driver:
+                - SingleStore ODBC 0.1-beta ANSI Driver
+      - build-windows:
+          requires:
+            - build-windows-ansi-RelWithDebInfo
+          name: build-windows-unicode-<< matrix.build_type >>
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_w
+              test_driver:
+                - SingleStore ODBC 0.1-beta Unicode Driver
 
-#  daily:
-#    triggers:
-#      - schedule:
-#          cron: "0 0 * * *"
-#          filters:
-#            branches:
-#              only:
-#                - master
-#    jobs:
-#      - build-linux-in-docker:
-#          matrix:
-#            parameters:
-#              os_version:
-#                - debian:8
-#              build_type:
-#                - RelWithDebInfo
-#      - build-linux-in-docker:
-#          requires:
-#            - build-linux-in-docker-RelWithDebInfo-debian:8
-#          matrix:
-#            parameters:
-#              os_version:
-#                - debian:9
-#              build_type:
-#                - RelWithDebInfo
-#      - build-linux-in-docker:
-#          requires:
-#            - build-linux-in-docker-RelWithDebInfo-debian:9
-#          matrix:
-#            parameters:
-#              os_version:
-#                - debian:10
-#              build_type:
-#                - RelWithDebInfo
-#      - build-linux-in-docker:
-#          requires:
-#            - build-linux-in-docker-RelWithDebInfo-debian:10
-#          matrix:
-#            parameters:
-#              os_version:
-#                - centos:centos7
-#              build_type:
-#                - RelWithDebInfo
-#      - build-linux-in-docker:
-#          requires:
-#            - build-linux-in-docker-RelWithDebInfo-centos:centos7
-#          matrix:
-#            parameters:
-#              os_version:
-#                - centos:centos8
-#              build_type:
-#                - RelWithDebInfo
-
+  daily:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - build-linux-in-docker:
+          name: build-debian-8-unicode-<< matrix.build_type >>
+          matrix:
+            parameters:
+              os_version:
+                - debian:8
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_w
+              test_driver:
+                - MariaDB ODBC 3.1 Unicode Driver
+      - build-linux-in-docker:
+          requires:
+            - build-debian-8-unicode-RelWithDebInfo
+          name: build-debian-8-ansi-<< matrix.build_type >>
+          matrix:
+            parameters:
+              os_version:
+                - debian:8
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_a
+              test_driver:
+                - MariaDB ODBC 3.1 ANSI Driver
+      - build-linux-in-docker:
+          requires:
+            - build-debian-8-ansi-RelWithDebInfo
+            name: build-debian-9-unicode-<< matrix.build_type >>
+          matrix:
+            parameters:
+              os_version:
+                - debian:9
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_w
+              test_driver:
+                - MariaDB ODBC 3.1 Unicode Driver
+      - build-linux-in-docker:
+          requires:
+            - build-debian-9-unicode-RelWithDebInfo
+            name: build-debian-9-ansi-<< matrix.build_type >>
+          matrix:
+            parameters:
+              os_version:
+                - debian:9
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_a
+              test_driver:
+                - MariaDB ODBC 3.1 ANSI Driver
+      - build-linux-in-docker:
+          requires:
+            - build-debian-9-ansi-RelWithDebInfo
+            name: build-debian-10-unicode-<< matrix.build_type >>
+          matrix:
+            parameters:
+              os_version:
+                - debian:10
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_w
+              test_driver:
+                - MariaDB ODBC 3.1 Unicode Driver
+      - build-linux-in-docker:
+          requires:
+            - build-debian-10-unicode-RelWithDebInfo
+            name: build-debian-10-ansi-<< matrix.build_type >>
+          matrix:
+            parameters:
+              os_version:
+                - debian:10
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_a
+              test_driver:
+                - MariaDB ODBC 3.1 ANSI Driver
+      - build-linux-in-docker:
+          requires:
+            - build-debian-10-ansi-RelWithDebInfo
+            name: build-centos-7-unicode-<< matrix.build_type >>
+          matrix:
+            parameters:
+              os_version:
+                - centos:centos7
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_w
+              test_driver:
+                - MariaDB ODBC 3.1 Unicode Driver
+      - build-linux-in-docker:
+          requires:
+            - build-centos-7-unicode-RelWithDebInfo
+            name: build-centos-7-ansi-<< matrix.build_type >>
+          matrix:
+            parameters:
+              os_version:
+                - centos:centos7
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_a
+              test_driver:
+                - MariaDB ODBC 3.1 ANSI Driver
+      - build-linux-in-docker:
+          requires:
+            - build-centos-7-ansi-RelWithDebInfo
+            name: build-centos-8-unicode-<< matrix.build_type >>
+          matrix:
+            parameters:
+              os_version:
+                - centos:centos8
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_w
+              test_driver:
+                - MariaDB ODBC 3.1 Unicode Driver
+      - build-linux-in-docker:
+          requires:
+            - build-centos-8-unicode-RelWithDebInfo
+            name: build-centos-8-ansi-<< matrix.build_type >>
+          matrix:
+            parameters:
+              os_version:
+                - centos:centos8
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - maodbc_test_a
+              test_driver:
+                - MariaDB ODBC 3.1 ANSI Driver
