@@ -277,7 +277,7 @@ jobs:
       - run:
           name: Create archive
           command: |
-            tar -zcvf singlestore-connector-odbc-0.8.0-beta-<< parameters.os_name >>-amd64.tar.gz /root/project/linuxinstall/README.txt /root/project/libssodbca.so /root/project/libssodbcw.so
+            tar -zcvf singlestore-connector-odbc-0.8.0-beta-<< parameters.os_name >>-amd64.tar.gz /root/project/linuxinstall/README.md /root/project/libssodbca.so /root/project/libssodbcw.so
       - store_artifacts:
           path: /root/project/singlestore-connector-odbc-0.8.0-beta-<< parameters.os_name >>-amd64.tar.gz
 
