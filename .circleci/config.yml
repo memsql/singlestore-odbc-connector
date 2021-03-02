@@ -436,7 +436,7 @@ workflows:
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
       - build-ubuntu:
-          name: build-ansi-unicode-7.1.13-<< matrix.build_type >>
+          name: build-ubuntu-ansi-7.1.13-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
@@ -452,7 +452,7 @@ workflows:
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.1.13-11ddea2a3a-3.0.0-1.9.3
       - build-ubuntu:
-          name: build-ansi-unicode-7.0.15-<< matrix.build_type >>
+          name: build-ubuntu-ansi-7.0.15-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
@@ -606,6 +606,8 @@ workflows:
               test_driver:
                 - SingleStore ODBC 0.8.0-beta ANSI Driver
       - build-macos:
+          requires:
+            - build-centos-8-ansi-RelWithDebInfo
           name: build-macos-unicode-<< matrix.build_type >>
           matrix:
             parameters:
