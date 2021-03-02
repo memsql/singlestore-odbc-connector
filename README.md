@@ -3,3 +3,6 @@
 
 This is a beta release of the SingleStore Connector/ODBC.
 
+SingleStore Connector/ODBC is released under version 2.1 of the GNU Lesser Public License.
+License information can be found in the COPYING file.
+
