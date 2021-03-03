@@ -328,7 +328,9 @@ workflows:
                 - SingleStore ODBC 0.8.0-beta Unicode Driver
       - build-macos:
           requires:
-            - build-macos-unicode-RelWithDebInfo || true
+            - or:
+                - build-macos-unicode-RelWithDebInfo
+                - true
           name: build-macos-ansi-<< matrix.build_type >>
           matrix:
             parameters:
