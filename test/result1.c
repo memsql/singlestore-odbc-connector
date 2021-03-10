@@ -1900,6 +1900,10 @@ ODBC_TEST(t_bug30958_wchar)
    check first that we get truncation, with zero bytes
    available in out buffer, outbuffer should be untouched
   */
+
+  //WCHAR for ANSI iODBC works incorrect
+  if (iOdbc() && is_ansi_driver()) return OK;
+
   outlen= 99;
   FAIL_IF(SQLGetData(Stmt, 1, SQL_C_WCHAR, outbuf, outmax,
                                 &outlen)!= SQL_SUCCESS_WITH_INFO, "SQL_SUCCESS_WITH_INFO expected");
