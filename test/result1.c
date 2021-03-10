@@ -276,7 +276,7 @@ ODBC_TEST(t_desc_col)
   SQLHSTMT    Stmt1;
 
   AllocEnvConn(&Env, &hdbc1);
-  Stmt1= ConnectWithCharset(&hdbc1, "latin1", NULL); /* We need to make sure that the charset used for connection is not multibyte */
+  Stmt1= ConnectWithCharset(&hdbc1, "binary", NULL); /* We need to make sure that the charset used for connection is not multibyte */
 
   OK_SIMPLE_STMT(Stmt1, "DROP TABLE IF EXISTS t_desc_col");
 

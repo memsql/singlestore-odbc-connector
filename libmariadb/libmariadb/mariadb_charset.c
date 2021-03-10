@@ -23,10 +23,8 @@
 #include <ma_string.h>
 
 MARIADB_CHARSET_INFO *ma_default_charset_info; /* will be set in mysql_server_init */
-MARIADB_CHARSET_INFO *ma_charset_bin= (MARIADB_CHARSET_INFO *)&mariadb_compiled_charsets[32];
-MARIADB_CHARSET_INFO *ma_charset_latin1= (MARIADB_CHARSET_INFO *)&mariadb_compiled_charsets[5];
-MARIADB_CHARSET_INFO *ma_charset_utf8_general_ci= (MARIADB_CHARSET_INFO *)&mariadb_compiled_charsets[21];
-MARIADB_CHARSET_INFO *ma_charset_utf16le_general_ci= (MARIADB_CHARSET_INFO *)&mariadb_compiled_charsets[68];
+MARIADB_CHARSET_INFO *ma_charset_bin= (MARIADB_CHARSET_INFO *)&mariadb_compiled_charsets[1];
+MARIADB_CHARSET_INFO *ma_charset_utf8_general_ci= (MARIADB_CHARSET_INFO *)&mariadb_compiled_charsets[0];
 
 MARIADB_CHARSET_INFO * STDCALL mysql_get_charset_by_nr(uint cs_number)
 {

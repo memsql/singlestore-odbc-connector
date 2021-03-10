@@ -490,7 +490,7 @@ ODBC_TEST(t_sqlprocedurecolumns)
 
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &Hdbc1));
   /* Since results(buffer length) depends on connection charset, and expected that is a single-byte charset, we need to ensure that */
-  Hstmt1= ConnectWithCharset(&Hdbc1, "latin1", NULL);
+  Hstmt1= ConnectWithCharset(&Hdbc1, "binary", NULL);
   FAIL_IF(Hstmt1 == NULL, "Could not establish connection or allocate stmt handle");
 
   OK_SIMPLE_STMT(Hstmt1, "drop procedure if exists procedure_columns_test1");

@@ -23,18 +23,45 @@
 #include <ma_odbc.h>
 #include <wctype.h>
 
-static unsigned int ValidChar(const char *start, const char *end)
+static unsigned int ValidChar32(const char *start, const char *end)
 {
   return 4;
 }
 
 
-static unsigned CharOctetLen(unsigned int utf32)
+static unsigned int CharOctetLen32(unsigned int utf32)
 {
   return 4;
 }
 
-MARIADB_CHARSET_INFO dummyUtf32le= {0, 1, "utf32le", "utf32_general_ci", "", 0, "UTF-32LE", 4, 4, CharOctetLen, ValidChar};
+#define UTF16_HIGH_HEAD(x)  ((((unsigned char) (x)) & 0xFC) == 0xD8)
+#define UTF16_LOW_HEAD(x)   ((((unsigned char) (x)) & 0xFC) == 0xDC)
+
+static unsigned int CharOctetLen16(unsigned int utf16)
+{
+  return UTF16_HIGH_HEAD(utf16) ? 4 : 2;
+}
+
+static unsigned int ValidChar16(const char *start, const char *end)
+{
+  if (start + 2 > end) {
+    return 0;
+  }
+
+  if (UTF16_HIGH_HEAD(*start)) {
+    return (start + 4 <= end) && UTF16_LOW_HEAD(start[2]) ? 4 : 0;
+  }
+
+  if (UTF16_LOW_HEAD(*start)) {
+    return 0;
+  }
+  return 2;
+}
+
+MARIADB_CHARSET_INFO dummyUtf16le= {56,1, "utf16le", "utf16_general_ci", "", 1200, "UTF16LE", 2, 4, CharOctetLen16, ValidChar16};
+MARIADB_CHARSET_INFO dummyUtf16be= {54,1, "utf16", "utf16_general_ci", "", 0, "UTF16", 2, 4, CharOctetLen16, ValidChar16};
+MARIADB_CHARSET_INFO dummyUtf32le= {0, 1, "utf32le", "utf32_general_ci", "", 0, "UTF-32LE", 4, 4, CharOctetLen32, ValidChar32};
+MARIADB_CHARSET_INFO dummyUtf32be= {60,1, "utf32", "utf32_general_ci", "", 0, "UTF32", 4, 4, CharOctetLen32, ValidChar32};
 
 MARIADB_CHARSET_INFO*  DmUnicodeCs= NULL;
 Client_Charset utf8=  {CP_UTF8, NULL};

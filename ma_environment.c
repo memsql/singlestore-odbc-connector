@@ -20,7 +20,10 @@
 
 extern Client_Charset utf8;
 extern MARIADB_CHARSET_INFO* DmUnicodeCs;
+extern MARIADB_CHARSET_INFO  dummyUtf16le;
+extern MARIADB_CHARSET_INFO  dummyUtf16be;
 extern MARIADB_CHARSET_INFO  dummyUtf32le;
+extern MARIADB_CHARSET_INFO  dummyUtf32be;
 Client_Charset SourceAnsiCs= {0, 0}; /* Basically it should be initialized with 0 anyway */
 char* DefaultPluginLocation= NULL;
 #ifndef _MAX_PATH
@@ -109,14 +112,14 @@ MADB_Env *MADB_EnvInit()
   {
     if (sizeof(SQLWCHAR) == 2)
     {
-      DmUnicodeCs= mariadb_get_charset_by_name(little_endian() ? "utf16le" : "utf16");
+      DmUnicodeCs= little_endian() ? &dummyUtf16le : &dummyUtf16be;
     }
     else
     {
-      DmUnicodeCs= little_endian() ? &dummyUtf32le : mariadb_get_charset_by_name("utf32");
+      DmUnicodeCs= little_endian() ? &dummyUtf32le : &dummyUtf32be;
     }
   }
-  utf8.cs_info= mariadb_get_charset_by_name("utf8mb4");
+  utf8.cs_info= mariadb_get_charset_by_name("utf8");
   GetDefaultLogDir();
   GetSourceAnsiCs(&SourceAnsiCs);
   /* If we have something in the buffer - then we've already tried to get default location w/out much success */

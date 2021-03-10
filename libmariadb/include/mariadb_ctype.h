@@ -32,8 +32,8 @@ extern "C" {
 #define CHARSET_DIR	"charsets/"
 #define MY_CS_NAME_SIZE 32
 
-#define MADB_DEFAULT_CHARSET_NAME "latin1"
-#define MADB_DEFAULT_COLLATION_NAME "latin1_swedish_ci"
+#define MADB_DEFAULT_CHARSET_NAME "utf8"
+#define MADB_DEFAULT_COLLATION_NAME "utf8_general_ci"
 #define MADB_AUTODETECT_CHARSET_NAME "auto"
 
 /* we use the mysqlnd implementation */
@@ -55,9 +55,7 @@ typedef struct ma_charset_info_st
 extern const MARIADB_CHARSET_INFO  mariadb_compiled_charsets[];
 extern MARIADB_CHARSET_INFO *ma_default_charset_info;
 extern MARIADB_CHARSET_INFO *ma_charset_bin;
-extern MARIADB_CHARSET_INFO *ma_charset_latin1;
 extern MARIADB_CHARSET_INFO *ma_charset_utf8_general_ci;
-extern MARIADB_CHARSET_INFO *ma_charset_utf16le_general_ci;
 
 MARIADB_CHARSET_INFO *find_compiled_charset(unsigned int cs_number);
 MARIADB_CHARSET_INFO *find_compiled_charset_by_name(const char *name);

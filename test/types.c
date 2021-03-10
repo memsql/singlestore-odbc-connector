@@ -441,10 +441,10 @@ ODBC_TEST(t_bug27862_1)
   SQLLEN   len;
 
   AllocEnvConn(&Env, &hdbc1);
-  hstmt1= ConnectWithCharset(&hdbc1, "latin1", NULL); /* We need to make sure that the charset used for connection is not multibyte */
+  hstmt1= ConnectWithCharset(&hdbc1, "binary", NULL); /* We need to make sure that the charset used for connection is not multibyte */
 
   OK_SIMPLE_STMT(hstmt1, "DROP TABLE IF EXISTS t_bug27862");
-  OK_SIMPLE_STMT(hstmt1, "CREATE TABLE t_bug27862 (a VARCHAR(2), b VARCHAR(2)) charset latin1");
+  OK_SIMPLE_STMT(hstmt1, "CREATE TABLE t_bug27862 (a VARCHAR(2), b VARCHAR(2))");
   OK_SIMPLE_STMT(hstmt1, "INSERT INTO t_bug27862 VALUES ('a','b')");
 
   OK_SIMPLE_STMT(hstmt1, "SELECT CONCAT(a,b) FROM t_bug27862");

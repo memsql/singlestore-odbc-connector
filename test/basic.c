@@ -561,43 +561,19 @@ ODBC_TEST(charset_utf8)
 ODBC_TEST(charset_gbk)
 {
   SQLHANDLE hdbc1;
-  SQLHANDLE hstmt1;
   SQLCHAR conn[512], conn_out[512];
-  /*
-    The fun here is that 0xbf5c is a valid GBK character, and we have 0x27
-    as the second byte of an invalid GBK character. mysql_real_escape_string()
-    handles this, as long as it knows the character set is GBK.
-  */
-  SQLCHAR str[]= "\xef\xbb\xbf\x27\xbf\x10";
   SQLSMALLINT conn_out_len;
 
   sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;CHARSET=gbk",
           my_dsn, my_uid, my_pwd);
-  
+
   CHECK_ENV_RC(Env, SQLAllocHandle(SQL_HANDLE_DBC, Env, &hdbc1));
 
-  CHECK_DBC_RC(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), conn_out,
-                                 sizeof(conn_out), &conn_out_len,
-                                 SQL_DRIVER_NOPROMPT));
-  CHECK_DBC_RC(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
-
-  CHECK_STMT_RC(hstmt1, SQLPrepare(hstmt1, (SQLCHAR *)"SELECT ?", SQL_NTS));
-  CHECK_STMT_RC(hstmt1, SQLBindParameter(hstmt1, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
-                                   SQL_CHAR, 0, 0, str, sizeof(str),
-                                   NULL));
-
-  CHECK_STMT_RC(hstmt1, SQLExecute(hstmt1));
-
-  CHECK_STMT_RC(hstmt1, SQLFetch(hstmt1));
-
-  CHECK_STMT_RC(hstmt1, SQLGetData(hstmt1, 1, SQL_CHAR, conn_out, sizeof(conn_out), NULL));
-  FAIL_IF(strcmp((const char*)conn_out, (const char*)str) != 0, "comparison failed");
-  
-  FAIL_IF(SQLFetch(hstmt1) != SQL_NO_DATA, "SQL_NO_DATA expected");
-
-  CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
-  CHECK_DBC_RC(hdbc1, SQLDisconnect(hdbc1));
-  CHECK_DBC_RC(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+  // gbk charset is not supported
+  FAIL_IF(SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), conn_out,
+                           sizeof(conn_out), &conn_out_len,
+                           SQL_DRIVER_NOPROMPT) != SQL_ERROR, "gbk charset is not supported, expected an error");
+  CHECK_SQLSTATE_EX(hdbc1, SQL_HANDLE_DBC, "HY001");
 
   return OK;
 }
@@ -1514,13 +1490,11 @@ ODBC_TEST(t_odbc137)
   SQLHDBC    Hdbc;
   SQLHSTMT   Hstmt;
   char       buffer[256], AlphabetChars[27], AlphabetHex[53];
-  const char Charset[][16]= {"latin1", "cp850", "cp1251", "cp866", "cp852", "cp1250", "latin2", "latin5" ,"latin7",
-                             "cp1256", "cp1257", "geostd8", "greek", "koi8u", "koi8r", "hebrew", "macce", "macroman",
-                             "dec8", "hp8", "armscii8", "ascii", "swe7", "tis620", "keybcs2"};
+  char *charset= "binary";
   const char CreateStmtTpl[]= "CREATE TABLE `t_odbc137` (\
                           `val` TEXT DEFAULT NULL\
                           ) ENGINE=InnoDB DEFAULT CHARSET=%s";
-  char       CreateStmt[sizeof(CreateStmtTpl) + sizeof(Charset[0])];
+  char       CreateStmt[sizeof(CreateStmtTpl) + 6];
   const char InsertStmtTpl[]= "INSERT INTO t_odbc137(val)  VALUES('%s')";
   char       InsertStmt[sizeof(InsertStmtTpl) + sizeof(AlphabetChars)];// TestStr[0])];
   const char SelectStmtTpl[]= "SELECT * FROM t_odbc137 WHERE val = 0x%s";
@@ -1541,43 +1515,30 @@ ODBC_TEST(t_odbc137)
   }
 
   AlphabetChars[i] = AlphabetHex[i*2]= '\0';
-  
-  for (i= 0; i < sizeof(Charset)/sizeof(Charset[0]); ++i)
+
+  Hstmt= ConnectWithCharset(&Hdbc, charset, NULL);
+  FAIL_IF(Hstmt == NULL, "");
+
+  sprintf(CreateStmt, CreateStmtTpl, charset);
+  OK_SIMPLE_STMT(Hstmt, CreateStmt);
+
+  sprintf(InsertStmt, InsertStmtTpl, AlphabetChars);
+  OK_SIMPLE_STMT(Hstmt, InsertStmt);
+
+  sprintf(SelectStmt, SelectStmtTpl, AlphabetHex);
+  OK_SIMPLE_STMT(Hstmt, SelectStmt);
+
+  FAIL_IF(SQLFetch(Hstmt) == SQL_NO_DATA, "Wrong data has been stored in the table");
+  /* We still need to make sure that the string has been delivered correctly */
+  my_fetch_str(Hstmt, (SQLCHAR*)buffer, 1);
+  /* AllAnsiChars is escaped, so we cannot compare result string against it */
+  for (j= 0; j < 26; ++j)
   {
-    if (iOdbc() && strcmp(Charset[i], "koi8u")==0)
-    {
-      diag("Charset %s is not supported with iODBC", Charset[i]);
-      break;
-    }
-    else
-    {
-      diag("Charset: %s", Charset[i]);
-    }
-    
-    Hstmt= ConnectWithCharset(&Hdbc, Charset[i], NULL);
-    FAIL_IF(Hstmt == NULL, "");
-
-    sprintf(CreateStmt, CreateStmtTpl, Charset[i]);
-    OK_SIMPLE_STMT(Hstmt, CreateStmt);
-
-    sprintf(InsertStmt, InsertStmtTpl, AlphabetChars);
-    OK_SIMPLE_STMT(Hstmt, InsertStmt);
-
-    sprintf(SelectStmt, SelectStmtTpl, AlphabetHex);
-    OK_SIMPLE_STMT(Hstmt, SelectStmt);
-
-    FAIL_IF(SQLFetch(Hstmt) == SQL_NO_DATA, "Wrong data has been stored in the table");
-    /* We still need to make sure that the string has been delivered correctly */
-    my_fetch_str(Hstmt, (SQLCHAR*)buffer, 1);
-    /* AllAnsiChars is escaped, so we cannot compare result string against it */
-    for (j= 0; j < 26; ++j)
-    {
-      is_num((unsigned char)buffer[j], j+'A');
-    }
-    CHECK_STMT_RC(Hstmt, SQLFreeStmt(Hstmt, SQL_DROP));
-    OK_SIMPLE_STMT(Stmt, "DROP TABLE `t_odbc137`");
-    CHECK_DBC_RC(Hdbc, SQLDisconnect(Hdbc));
+    is_num((unsigned char)buffer[j], j+'A');
   }
+  CHECK_STMT_RC(Hstmt, SQLFreeStmt(Hstmt, SQL_DROP));
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE `t_odbc137`");
+  CHECK_DBC_RC(Hdbc, SQLDisconnect(Hdbc));
 
   CHECK_DBC_RC(Hdbc, SQLFreeConnect(Hdbc));
 
@@ -1753,7 +1714,7 @@ MA_ODBC_TESTS my_tests[]=
   {t_driverconnect_outstring, "t_driverconnect_outstring", NORMAL, ALL_DRIVERS},
   {setnames,       "setnames",       NORMAL, ALL_DRIVERS},
   {setnames_conn,  "setnames_conn",  NORMAL, ALL_DRIVERS},
-  {sqlcancel,      "sqlcancel",      NORMAL, ALL_DRIVERS}, 
+  {sqlcancel,      "sqlcancel",      NORMAL, ALL_DRIVERS},
   {t_bug32014,     "t_bug32014",     NORMAL, ALL_DRIVERS},
   {t_bug10128,     "t_bug10128",     NORMAL, ALL_DRIVERS},
   {t_bug32727,     "t_bug32727",     NORMAL, ALL_DRIVERS},
