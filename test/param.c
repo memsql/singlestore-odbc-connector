@@ -997,6 +997,8 @@ ODBC_TEST(insert_fetched_null)
   const char     *str= "Text val";
   const SQLWCHAR *wstr= CW(str);
 
+  if (iOdbc()) return OK;
+
   CHECK_DBC_RC(Connection, SQLAllocHandle(SQL_HANDLE_STMT, Connection, &Stmt1));
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_insert_fetched_null");

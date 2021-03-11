@@ -610,6 +610,10 @@ ODBC_TEST(sqlgetconnectattr)
   SQLWCHAR wbuff[MAX_ROW_DATA_LEN+1];
   SQLINTEGER len;
 
+  if (iOdbc() && is_ansi_driver()) {
+      return OK;
+  }
+
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc1));
   CHECK_DBC_RC(hdbc1, SQLConnectW(hdbc1, wdsn, SQL_NTS, wuid, SQL_NTS,
                             wpwd, SQL_NTS));

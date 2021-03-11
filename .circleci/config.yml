@@ -316,16 +316,6 @@ workflows:
                 - SingleStore ODBC 0.8.0-beta ANSI Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
-#      - build-macos:
-#          name: build-macos-ansi-<< matrix.build_type >>
-#          matrix:
-#            parameters:
-#              build_type:
-#                - RelWithDebInfo
-#              test_dsn:
-#                - ssodbc_test_a
-#              driver_name:
-#                - SingleStore ODBC 0.8.0-beta ANSI Driver
       - build-macos:
           name: build-macos-unicode-<< matrix.build_type >>
           matrix:
@@ -336,21 +326,21 @@ workflows:
                 - ssodbc_test_w
               driver_name:
                 - SingleStore ODBC 0.8.0-beta Unicode Driver
-#      - build-macos:
-#          requires:
-#            - build-macos-unicode-RelWithDebInfo
-#          name: build-macos-ansi-<< matrix.build_type >>
-#          matrix:
-#            parameters:
-#              build_type:
-#                - RelWithDebInfo
-#              test_dsn:
-#                - ssodbc_test_a
-#              driver_name:
-#                - SingleStore ODBC 0.8.0-beta ANSI Driver
-      - build-windows:
+      - build-macos:
           requires:
             - build-macos-unicode-RelWithDebInfo
+          name: build-macos-ansi-<< matrix.build_type >>
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_a
+              driver_name:
+                - SingleStore ODBC 0.8.0-beta ANSI Driver
+      - build-windows:
+          requires:
+            - build-macos-ansi-RelWithDebInfo
           name: build-windows-unicode-<< matrix.build_type >>
           matrix:
             parameters:

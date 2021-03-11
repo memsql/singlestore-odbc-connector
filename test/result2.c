@@ -1052,6 +1052,10 @@ ODBC_TEST(t_odbc73)
 {
   SQLSMALLINT data_type;
 
+  if (iOdbc() && is_unicode_driver()) {
+      return OK;
+  }
+
   OK_SIMPLE_STMT(Stmt, "DROP table if exists t_odbc73");
 
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_odbc73 (binvc VARCHAR(64) COLLATE utf8_bin)");
