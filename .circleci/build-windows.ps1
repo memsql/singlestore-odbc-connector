@@ -38,7 +38,7 @@ function Invoke-Executable {
 Invoke-Executable -ScriptBlock { choco install -y -r --no-progress wixtoolset } -ErrorAction Stop
 refreshenv
 
-Invoke-Executable -ScriptBlock { cmake -DCMAKE_BUILD_TYPE=$ENV:BUILD_TYPE -DCONC_WITH_UNIT_TESTS=Off -DCONC_WITH_MSI=OFF -DWITH_SSL=SCHANNEL . } -ErrorAction Stop
+Invoke-Executable -ScriptBlock { cmake -DCMAKE_BUILD_TYPE=$ENV:BUILD_TYPE -DCONC_WITH_UNIT_TESTS=Off -DCONC_WITH_MSI=OFF -DWITH_SSL=SCHANNEL -DCMAKE_INSTALL_PREFIX="C:/Program Files/SingleStore/SingleStore ODBC Driver 64-bit" . } -ErrorAction Stop
 Invoke-Executable -ScriptBlock { cmake --build . --config $ENV:BUILD_TYPE --parallel 2 } -ErrorAction Stop
 
 $msifile = Get-ChildItem C:\Users\circleci\project\wininstall\singlestore-connector-odbc*.msi | Select-Object -First 1
