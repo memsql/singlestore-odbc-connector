@@ -18,7 +18,7 @@ INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR})
 ENABLE_TESTING()
 
 SET (ODBC_TESTS
-     "prepare")
+     "unicode")
 SET(COMMON_TEST_SOURCES tap.h)
 
 # Interactive makes sense on WIN32 only atm

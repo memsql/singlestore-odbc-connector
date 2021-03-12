@@ -1229,14 +1229,14 @@ ODBC_TEST(t_odbc141)
 
 MA_ODBC_TESTS my_tests[]=
 {
-/*  {t_prep_basic, "t_prep_basic", NORMAL, ALL_DRIVERS},
+  {t_prep_basic, "t_prep_basic", NORMAL, ALL_DRIVERS},
   {t_prep_buffer_length, "t_prep_buffer_length", NORMAL, ALL_DRIVERS},
   {t_prep_truncate, "t_prep_truncate", NORMAL, ALL_DRIVERS},
   {t_prep_scroll, "t_prep_scroll", NORMAL, ALL_DRIVERS},
   {t_prep_getdata, "t_prep_getdata", NORMAL, ALL_DRIVERS},
-  {t_prep_getdata1, "t_prep_getdata1", NORMAL, ALL_DRIVERS},*/
+  {t_prep_getdata1, "t_prep_getdata1", NORMAL, ALL_DRIVERS},
   {t_prep_catalog, "t_prep_catalog", NORMAL, ALL_DRIVERS},
-/*  {t_sps, "t_sps", NORMAL, ALL_DRIVERS},
+  {t_sps, "t_sps", NORMAL, ALL_DRIVERS},
   {t_prepare, "t_prepare", NORMAL, ALL_DRIVERS},
   {t_prepare1, "t_prepare1", NORMAL, ALL_DRIVERS},
   {tmysql_bindcol, "tmysql_bindcol", NORMAL, ALL_DRIVERS},
@@ -1246,7 +1246,7 @@ MA_ODBC_TESTS my_tests[]=
   {t_bug67340, "t_bug67340", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
   {t_bug67702, "t_bug67702", NORMAL, ALL_DRIVERS},
   {t_odbc57, "odbc-57-query_in_parenthesis", NORMAL, ALL_DRIVERS},
-  {t_odbc141, "odbc-141-load_data_infile", NORMAL, ALL_DRIVERS},*/
+  {t_odbc141, "odbc-141-load_data_infile", NORMAL, ALL_DRIVERS},
   {NULL, NULL}
 };
 
