@@ -650,7 +650,7 @@ SQLRETURN SQL_API SQLFetch(SQLHSTMT StatementHandle)
     return SQL_INVALID_HANDLE;
 
   Stmt= (MADB_Stmt *)StatementHandle;
-
+  printf("CHARSET: %s\n", Stmt->Connection->Charset.cs_info->name);
   MDBUG_C_ENTER(Stmt->Connection, "SQLFetch");
   MADB_CLEAR_ERROR(&Stmt->Error);
 
