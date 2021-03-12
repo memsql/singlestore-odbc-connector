@@ -567,7 +567,7 @@ ODBC_TEST(t_prep_catalog)
 
   rc = SQLTables(Stmt,NULL,0,NULL,0,(SQLCHAR *)"t_prep_catalog",14,
                    (SQLCHAR *)"BASE TABLE",10);
-/*  CHECK_STMT_RC(Stmt, rc);
+  CHECK_STMT_RC(Stmt, rc);
 
   rc = SQLFetch(Stmt);
   CHECK_STMT_RC(Stmt, rc);
@@ -580,7 +580,7 @@ ODBC_TEST(t_prep_catalog)
   CHECK_STMT_RC(Stmt, rc);
   is_num(length, 14);
   IS_STR(table, "t_prep_catalog", 14);
-*/
+
   rc = SQLFetch(Stmt);
   IS(rc == SQL_NO_DATA);
 

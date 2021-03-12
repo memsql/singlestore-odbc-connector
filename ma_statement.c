@@ -4368,7 +4368,6 @@ SQLRETURN MADB_StmtTables(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLINT Catalo
                           char *SchemaName, SQLSMALLINT SchemaNameLength, char *TableName,
                           SQLSMALLINT TableNameLength, char *TableType, SQLSMALLINT TableTypeLength)
 {
-  printf("AAAAAAA %s %d %s %d %s %d %s %d\n", CatalogName, CatalogNameLength, SchemaName, SchemaNameLength, TableName, TableNameLength, TableType, TableTypeLength);
   MADB_DynString StmtStr;
   char Quote[2];
   SQLRETURN ret;
@@ -4403,7 +4402,7 @@ SQLRETURN MADB_StmtTables(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLINT Catalo
      (All columns except the TABLE_CAT column contain NULLs
   */
   if (CatalogName && CatalogNameLength && TableName != NULL && !TableNameLength &&
-    SchemaName != NULL && SchemaNameLength == 0 && !strcmp(CatalogName, SQL_ALL_CATALOGS))
+    SchemaName != NULL && SchemaNameLength == 0 && !strncmp(CatalogName, SQL_ALL_CATALOGS, CatalogNameLength))
   {
     MADB_InitDynamicString(&StmtStr, "SELECT SCHEMA_NAME AS TABLE_CAT, CONVERT(NULL,CHAR(64)) AS TABLE_SCHEM, "
                                   "CONVERT(NULL,CHAR(64)) AS TABLE_NAME, NULL AS TABLE_TYPE, NULL AS REMARKS "
@@ -4418,7 +4417,7 @@ SQLRETURN MADB_StmtTables(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLINT Catalo
   */
   else if (CatalogName != NULL && !CatalogNameLength && TableName != NULL && !TableNameLength &&
     SchemaName != NULL && SchemaNameLength == 0 && TableType && TableTypeLength &&
-            !strcmp(TableType, SQL_ALL_TABLE_TYPES))
+            !strncmp(TableType, SQL_ALL_TABLE_TYPES, TableTypeLength))
   {
     MADB_InitDynamicString(&StmtStr, "SELECT NULL AS TABLE_CAT, NULL AS TABLE_SCHEM, "
                                   "NULL AS TABLE_NAME, 'TABLE' AS TABLE_TYPE, NULL AS REMARKS "
@@ -4432,8 +4431,8 @@ SQLRETURN MADB_StmtTables(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLINT Catalo
   /* Since we treat our databases as catalogs, the only acceptable value for schema is NULL or "%"
      if that is not the special case of call for schemas list. Otherwise we return empty resultset*/
   else if (SchemaName &&
-    ((!strcmp(SchemaName,SQL_ALL_SCHEMAS) && CatalogName && CatalogNameLength == 0 && TableName && TableNameLength == 0) ||
-      strcmp(SchemaName, SQL_ALL_SCHEMAS)))
+    ((!strncmp(SchemaName,SQL_ALL_SCHEMAS, SchemaNameLength) && CatalogName && CatalogNameLength == 0 && TableName && TableNameLength == 0) ||
+      strncmp(SchemaName, SQL_ALL_SCHEMAS, SchemaNameLength)))
   {
     MADB_InitDynamicString(&StmtStr, "SELECT NULL AS TABLE_CAT, NULL AS TABLE_SCHEM, "
       "NULL AS TABLE_NAME, NULL AS TABLE_TYPE, NULL AS REMARKS "
@@ -4459,7 +4458,7 @@ SQLRETURN MADB_StmtTables(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLINT Catalo
       MADB_DynstrAppend(&StmtStr, " AND TABLE_SCHEMA ");
       MADB_DynstrAppend(&StmtStr, "LIKE ");
       MADB_DynstrAppend(&StmtStr, Quote);
-      MADB_DynstrAppend(&StmtStr, CatalogName);
+      MADB_DynstrAppendMem(&StmtStr, CatalogName, CatalogNameLength);
       MADB_DynstrAppend(&StmtStr, Quote);
     }
 
@@ -4467,10 +4466,10 @@ SQLRETURN MADB_StmtTables(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLINT Catalo
     {
       MADB_DynstrAppend(&StmtStr, " AND TABLE_NAME LIKE ");
       MADB_DynstrAppend(&StmtStr, Quote);
-      MADB_DynstrAppend(&StmtStr, TableName);
+      MADB_DynstrAppendMem(&StmtStr, TableName, TableNameLength);
       MADB_DynstrAppend(&StmtStr, Quote);
     }
-    if (TableType && TableTypeLength && strcmp(TableType, SQL_ALL_TABLE_TYPES) != 0)
+    if (TableType && TableTypeLength && strncmp(TableType, SQL_ALL_TABLE_TYPES, TableTypeLength) != 0)
     {
       unsigned int i;
       char *myTypes[3]= {"TABLE", "VIEW", "SYNONYM"};
