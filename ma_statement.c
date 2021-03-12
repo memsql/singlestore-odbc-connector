@@ -4368,6 +4368,7 @@ SQLRETURN MADB_StmtTables(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLINT Catalo
                           char *SchemaName, SQLSMALLINT SchemaNameLength, char *TableName,
                           SQLSMALLINT TableNameLength, char *TableType, SQLSMALLINT TableTypeLength)
 {
+  printf("AAAAAAA %s %d %s %d %s %d %s %d\n", CatalogName, CatalogNameLength, SchemaName, SchemaNameLength, TableName, TableNameLength, TableType, TableTypeLength);
   MADB_DynString StmtStr;
   char Quote[2];
   SQLRETURN ret;
