@@ -558,72 +558,72 @@ ODBC_TEST(t_prep_getdata1)
 
 ODBC_TEST(t_prep_catalog)
 {
-    SQLCHAR     table[20];
-    SQLLEN      length;
+  SQLCHAR     table[20];
+  SQLLEN      length;
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_prep_catalog");
 
   OK_SIMPLE_STMT(Stmt, "create table t_prep_catalog(a int default 100)");
 
-    rc = SQLTables(Stmt,NULL,0,NULL,0,(SQLCHAR *)"t_prep_catalog",14,
+  rc = SQLTables(Stmt,NULL,0,NULL,0,(SQLCHAR *)"t_prep_catalog",14,
                    (SQLCHAR *)"BASE TABLE",10);
-    mystmt(Stmt,rc);
+  CHECK_STMT_RC(Stmt, rc);
 
-    rc = SQLFetch(Stmt);
-    mystmt(Stmt,rc);
+  rc = SQLFetch(Stmt);
+  CHECK_STMT_RC(Stmt, rc);
 
-    rc = SQLGetData(Stmt,3,SQL_C_CHAR,table,0,&length);
-    mystmt(Stmt,rc);
-    IS(length == 14);
+  rc = SQLGetData(Stmt,3,SQL_C_CHAR,table,0,&length);
+  CHECK_STMT_RC(Stmt, rc);
+  IS(length == 14);
 
-    rc = SQLGetData(Stmt,3,SQL_C_CHAR,table,15,&length);
-    mystmt(Stmt,rc);
-    is_num(length, 14);
-    IS_STR(table, "t_prep_catalog", 14);
+  rc = SQLGetData(Stmt,3,SQL_C_CHAR,table,15,&length);
+  CHECK_STMT_RC(Stmt, rc);
+  is_num(length, 14);
+  IS_STR(table, "t_prep_catalog", 14);
 
-    rc = SQLFetch(Stmt);
-    IS(rc == SQL_NO_DATA);
+  rc = SQLFetch(Stmt);
+  IS(rc == SQL_NO_DATA);
 
-    rc = SQLFreeStmt(Stmt,SQL_UNBIND);
-    mystmt(Stmt,rc);
+  rc = SQLFreeStmt(Stmt,SQL_UNBIND);
+  CHECK_STMT_RC(Stmt, rc);
 
-    rc = SQLFreeStmt(Stmt,SQL_CLOSE);
-    mystmt(Stmt,rc);
+  rc = SQLFreeStmt(Stmt,SQL_CLOSE);
+  CHECK_STMT_RC(Stmt, rc);
 
-    rc = SQLColumns(Stmt,NULL,0,NULL,0,(SQLCHAR *)"t_prep_catalog",14,NULL,0);
-    mystmt(Stmt,rc);
+  rc = SQLColumns(Stmt,NULL,0,NULL,0,(SQLCHAR *)"t_prep_catalog",14,NULL,0);
+  CHECK_STMT_RC(Stmt, rc);
 
-    rc = SQLFetch(Stmt);
-    mystmt(Stmt,rc);
+  rc = SQLFetch(Stmt);
+  CHECK_STMT_RC(Stmt, rc);
 
-    rc = SQLGetData(Stmt,3,SQL_C_CHAR,table,15,&length);
-    mystmt(Stmt,rc);
-    is_num(length, 14);
-    IS_STR(table, "t_prep_catalog", 14);
+  rc = SQLGetData(Stmt,3,SQL_C_CHAR,table,15,&length);
+  CHECK_STMT_RC(Stmt, rc);
+  is_num(length, 14);
+  IS_STR(table, "t_prep_catalog", 14);
 
-    rc = SQLGetData(Stmt,4,SQL_C_CHAR,table,0,&length);
-    mystmt(Stmt,rc);
-    is_num(length, 1);
+  rc = SQLGetData(Stmt,4,SQL_C_CHAR,table,0,&length);
+  CHECK_STMT_RC(Stmt, rc);
+  is_num(length, 1);
 
-    rc = SQLGetData(Stmt,4,SQL_C_CHAR,table,2,&length);
-    mystmt(Stmt,rc);
-    is_num(length, 1);
-    IS_STR(table, "a", 1);
+  rc = SQLGetData(Stmt,4,SQL_C_CHAR,table,2,&length);
+  CHECK_STMT_RC(Stmt, rc);
+  is_num(length, 1);
+  IS_STR(table, "a", 1);
 
-    rc = SQLGetData(Stmt,13,SQL_C_CHAR,table,10,&length);
-    mystmt(Stmt,rc);
-    diag("table: %s(%d)\n", table, length);
-    is_num(length, 3);
-    IS_STR(table, "100", 3);
+  rc = SQLGetData(Stmt,13,SQL_C_CHAR,table,10,&length);
+  CHECK_STMT_RC(Stmt, rc);
+  diag("table: %s(%d)\n", table, length);
+  is_num(length, 3);
+  IS_STR(table, "100", 3);
 
-    rc = SQLFetch(Stmt);
-    IS(rc == SQL_NO_DATA);
+  rc = SQLFetch(Stmt);
+  IS(rc == SQL_NO_DATA);
 
-    rc = SQLFreeStmt(Stmt,SQL_UNBIND);
-    mystmt(Stmt,rc);
+  rc = SQLFreeStmt(Stmt,SQL_UNBIND);
+  CHECK_STMT_RC(Stmt, rc);
 
-    rc = SQLFreeStmt(Stmt,SQL_CLOSE);
-    mystmt(Stmt,rc);
+  rc = SQLFreeStmt(Stmt,SQL_CLOSE);
+  CHECK_STMT_RC(Stmt, rc);
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_prep_catalog");
 
@@ -1229,14 +1229,14 @@ ODBC_TEST(t_odbc141)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {t_prep_basic, "t_prep_basic", NORMAL, ALL_DRIVERS},
+/*  {t_prep_basic, "t_prep_basic", NORMAL, ALL_DRIVERS},
   {t_prep_buffer_length, "t_prep_buffer_length", NORMAL, ALL_DRIVERS},
   {t_prep_truncate, "t_prep_truncate", NORMAL, ALL_DRIVERS},
   {t_prep_scroll, "t_prep_scroll", NORMAL, ALL_DRIVERS},
   {t_prep_getdata, "t_prep_getdata", NORMAL, ALL_DRIVERS},
-  {t_prep_getdata1, "t_prep_getdata1", NORMAL, ALL_DRIVERS},
+  {t_prep_getdata1, "t_prep_getdata1", NORMAL, ALL_DRIVERS},*/
   {t_prep_catalog, "t_prep_catalog", NORMAL, ALL_DRIVERS},
-  {t_sps, "t_sps", NORMAL, ALL_DRIVERS},
+/*  {t_sps, "t_sps", NORMAL, ALL_DRIVERS},
   {t_prepare, "t_prepare", NORMAL, ALL_DRIVERS},
   {t_prepare1, "t_prepare1", NORMAL, ALL_DRIVERS},
   {tmysql_bindcol, "tmysql_bindcol", NORMAL, ALL_DRIVERS},
@@ -1246,7 +1246,7 @@ MA_ODBC_TESTS my_tests[]=
   {t_bug67340, "t_bug67340", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
   {t_bug67702, "t_bug67702", NORMAL, ALL_DRIVERS},
   {t_odbc57, "odbc-57-query_in_parenthesis", NORMAL, ALL_DRIVERS},
-  {t_odbc141, "odbc-141-load_data_infile", NORMAL, ALL_DRIVERS},
+  {t_odbc141, "odbc-141-load_data_infile", NORMAL, ALL_DRIVERS},*/
   {NULL, NULL}
 };
 
