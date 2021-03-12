@@ -1384,11 +1384,8 @@ ODBC_TEST(t_odbc72)
   SQLHDBC    hdbc1;
   SQLHSTMT   Stmt1;
 
-#ifndef _WIN32
-  skip("There seems to be problem with converting of utf8mb4 to Utf16 on *nix");
-#endif
   AllocEnvConn(&Env, &hdbc1);
-  Stmt1= ConnectWithCharset(&hdbc1, "utf8mb4", NULL);
+  Stmt1= ConnectWithCharset(&hdbc1, "utf8", NULL);
 
   OK_SIMPLE_STMT(Stmt1, "SELECT 0x61F09F98986400");
 
