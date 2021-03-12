@@ -3737,7 +3737,6 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
     {
       char  *ClientValue= NULL;
       size_t CharLength= 0;
-
       /* Kinda this it not 1st call for this value, and we have it nice and recoded */
       if (IrdRec->InternalBuffer == NULL/* && Stmt->Lengths[Offset] == 0*/)
       {
@@ -3751,6 +3750,7 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
         Bind.buffer_length= Stmt->stmt->fields[Offset].max_length + 1;
 
         OK_SUCCESS_OR_TRUNCATION(Stmt, MADB_StmtFetchColumn(Stmt, &Bind, Offset, Stmt->CharOffset[Offset]));
+        printf("AAAAAAAAAAAAAAAAAAAa1 %s\n", ClientValue);
 
         /* check total length: if not enough space, we need to calculate new CharOffset for next fetch */
         if (Stmt->stmt->fields[Offset].max_length)
@@ -3813,6 +3813,8 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
         CharLength= SqlwcsLen((SQLWCHAR*)((char*)IrdRec->InternalBuffer + Stmt->CharOffset[Offset]), -1);
       }
 
+
+
       if (StrLen_or_IndPtr)
       {
         *StrLen_or_IndPtr= CharLength * sizeof(SQLWCHAR);
@@ -3850,7 +3852,7 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
         Stmt->CharOffset[Offset]= Stmt->Lengths[Offset];
         MADB_FREE(IrdRec->InternalBuffer);
       }
-
+      printf("GETTING FIELD %s\n", TargetValuePtr);
       MADB_FREE(ClientValue);
     }
     break;
