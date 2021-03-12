@@ -461,7 +461,7 @@ ODBC_TEST(t_bug14285620)
 {
   SQLSMALLINT cblen, data_type, dec_digits, nullable;
   SQLUINTEGER info;
-  SQLULEN col_size; 
+  SQLULEN col_size;
   SQLINTEGER timeout= 20, cbilen;
   SQLCHAR szData[255]={0};
 
@@ -469,20 +469,20 @@ ODBC_TEST(t_bug14285620)
   FAIL_IF(SQLGetConnectAttr(Connection, SQL_ATTR_LOGIN_TIMEOUT, NULL, 0, NULL) != SQL_SUCCESS, "success expected");
   FAIL_IF(SQLGetConnectAttr(Connection, SQL_ATTR_LOGIN_TIMEOUT, &timeout, 0, NULL) != SQL_SUCCESS, "success expected");
   is_num(timeout, 0);
-  
+
   /* Character attribute */
-  /* 
-    In this particular case MSSQL always returns SQL_SUCCESS_WITH_INFO
-    apparently because the driver manager always provides the buffer even
-    when the client application passes NULL
-  */
-  if (WindowsDM(Connection))
+  if (!WindowsDM(Connection))
   {
     /*
-      This check is only relevant to Windows Driver Manager
+      In this particular case MSSQL always returns SQL_SUCCESS
+      apparently because Windows driver manager always provides the buffer even
+      when the client application passes NULL
     */
+    FAIL_IF(SQLGetConnectAttr(Connection, SQL_ATTR_CURRENT_CATALOG, NULL, 0, NULL) != SQL_SUCCESS, "success expected");
+    FAIL_IF(SQLGetConnectAttr(Connection, SQL_ATTR_CURRENT_CATALOG, szData, 0, NULL) != SQL_SUCCESS_WITH_INFO, "swi expected");
+  } else
+  {
     FAIL_IF(SQLGetConnectAttr(Connection, SQL_ATTR_CURRENT_CATALOG, NULL, 0, NULL) != SQL_SUCCESS_WITH_INFO, "swi expected");
-
     FAIL_IF(SQLGetConnectAttr(Connection, SQL_ATTR_CURRENT_CATALOG, szData, 0, NULL) != SQL_SUCCESS_WITH_INFO, "swi expected");
   }
   /*
@@ -501,15 +501,15 @@ ODBC_TEST(t_bug14285620)
   FAIL_IF(SQLGetInfo(Connection, SQL_AGGREGATE_FUNCTIONS, &info, 0, &cblen)!= SQL_SUCCESS, "success expected");
   is_num(cblen, 4);
 
-  is_num(info, (SQL_AF_ALL | SQL_AF_AVG | SQL_AF_COUNT | SQL_AF_DISTINCT | 
-             SQL_AF_MAX | SQL_AF_MIN | SQL_AF_SUM));
+  is_num(info, (SQL_AF_ALL | SQL_AF_AVG | SQL_AF_COUNT | SQL_AF_DISTINCT |
+                SQL_AF_MAX | SQL_AF_MIN | SQL_AF_SUM));
 
   /* Get database name for further checks */
   FAIL_IF(SQLGetInfo(Connection, SQL_DATABASE_NAME, szData, sizeof(szData), NULL)!= SQL_SUCCESS, "success expected");
   /* iODBC will call SQLGetInfoW, and will provide pointer for the value. Thus connector should return SQL_SUCCESS_WITH_INFO */
   is_num(SQLGetInfo(Connection, SQL_DATABASE_NAME, NULL, 0, &cblen), iOdbc() && is_unicode_driver() ? SQL_SUCCESS_WITH_INFO : SQL_SUCCESS);
 
-#ifdef _WIN32  
+#ifdef _WIN32
   /* Windows uses unicode driver by default */
   is_num(cblen, strlen(szData)*sizeof(SQLWCHAR));
 #else
@@ -533,11 +533,11 @@ ODBC_TEST(t_bug14285620)
   /* Get the native string for further checks */
   FAIL_IF(SQLNativeSql(Connection, (SQLCHAR*)"SELECT 10", SQL_NTS, szData, sizeof(szData), NULL) !=SQL_SUCCESS, "success expected");
   FAIL_IF(SQLNativeSql(Connection, (SQLCHAR*)"SELECT 10", SQL_NTS, NULL, 0, &cbilen)!= iOdbc() ? SQL_SUCCESS_WITH_INFO : SQL_SUCCESS, "success expected");
-  
+
   /* Do like MSSQL, which does calculate as char_count*sizeof(SQLWCHAR) */
   is_num(cbilen, strlen((const char*)szData));
   if (iOdbc())
-  { 
+  {
     is_num(SQLNativeSqlW(Connection, WW("SELECT 10"), SQL_NTS, NULL, 0, &cbilen), SQL_SUCCESS);
     /* SQLNativeSql(W) returns number of characters. Thus stlen is fine*/
     is_num(cbilen, strlen((const char*)szData));
@@ -549,7 +549,7 @@ ODBC_TEST(t_bug14285620)
   /* Get the cursor name for further checks */
   is_num(SQLGetCursorName(Stmt, szData, sizeof(szData), NULL), SQL_SUCCESS);
   FAIL_IF(!SQL_SUCCEEDED(SQLGetCursorName(Stmt, NULL, 0, &cblen)), "success expected");
-  
+
   /* Do like MSSQL, which does calculate as char_count*sizeof(SQLWCHAR) */
   is_num(cblen, strlen((const char*)szData));
 
@@ -567,10 +567,10 @@ ODBC_TEST(t_bug14285620)
     SQLSMALLINT text_len= 0;
     /* try with the NULL pointer for Message */
     FAIL_IF(SQLGetDiagRec(SQL_HANDLE_STMT, Stmt, 1, sqlstate,
-                                    &native_error, NULL, 0, &cblen) != SQL_SUCCESS, "success expected");
+                          &native_error, NULL, 0, &cblen) != SQL_SUCCESS, "success expected");
     /* try with the non-NULL pointer for Message */
     FAIL_IF(SQLGetDiagRec(SQL_HANDLE_STMT, Stmt, 1, sqlstate,
-                                    &native_error, message, 0, NULL) != SQL_SUCCESS, "success expected");
+                          &native_error, message, 0, NULL) != SQL_SUCCESS, "success expected");
   }
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS bug14285620");
