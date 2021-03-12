@@ -285,8 +285,6 @@ workflows:
   test:
     jobs:
       - build-windows:
-          requires:
-            - build-macos-ansi-RelWithDebInfo
           name: build-windows-unicode-<< matrix.build_type >>
           matrix:
             parameters:
