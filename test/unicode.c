@@ -1540,7 +1540,7 @@ MA_ODBC_TESTS my_tests[]=
   {sqlconnect,        "sqlconnect",         NORMAL, ALL_DRIVERS},
   {sqlprepare,        "sqlprepare",         NORMAL, UNICODE_DRIVER},
   {sqlprepare_ansi,   "sqlprepare_ansi",    NORMAL, ALL_DRIVERS},
-  {sqlchar,           "sqlchar",            NORMAL, ALL_DRIVERS},
+  {sqlchar,           "sqlchar",            NORMAL, UNICODE_DRIVER},
   {sqldriverconnect,  "sqldriverconnect",   NORMAL, ALL_DRIVERS},
   {sqlnativesql,      "sqlnativesql",       NORMAL, ALL_DRIVERS},
   {sqlsetcursorname,  "sqlsetcursorname",   NORMAL, UNICODE_DRIVER},

@@ -18,11 +18,11 @@ INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR})
 ENABLE_TESTING()
 
 SET (ODBC_TESTS
-     "basic" "types" "blob" "desc" "info" "tran" "catalog1" "catalog2"
-     "use_result" "scroll" "bulk" "prepare" "datetime" "keys"
-     "curext" "relative" "unicode" "cursor" "dyn_cursor"
-     "error" "escape_sequences" "param" "result1" "result2" "multistatement"
-     "sqlcolumns" "sql_procedure_columns" "sqltypeinfo" "sql_special_columns" "client_side")
+        "basic" "types" "blob" "desc" "info" "tran" "catalog1" "catalog2"
+        "use_result" "scroll" "bulk" "prepare" "datetime" "keys"
+        "curext" "relative" "unicode" "cursor" "dyn_cursor"
+        "error" "escape_sequences" "param" "result1" "result2" "multistatement"
+        "sqlcolumns" "sql_procedure_columns" "sqltypeinfo" "sql_special_columns" "client_side")
 SET(COMMON_TEST_SOURCES tap.h)
 
 # Interactive makes sense on WIN32 only atm
@@ -33,7 +33,7 @@ ENDIF()
 IF(NOT WIN32)
   SET(COMMON_TEST_SOURCES ${COMMON_TEST_SOURCES} "${CMAKE_SOURCE_DIR}/ma_conv_charset.c")
 ENDIF()
-# iOdbc has 
+# iOdbc has
 IF(WITH_IODBC)
   SET(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-Wno-pointer-sign")
 ENDIF()
