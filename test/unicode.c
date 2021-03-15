@@ -1535,13 +1535,13 @@ ODBC_TEST(t_odbc253)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  /*{test_CONO1,        "test_CONO1",         NORMAL, ALL_DRIVERS},
+  {test_CONO1,        "test_CONO1",         NORMAL, ALL_DRIVERS},
   {test_count,        "test_count",         NORMAL, ALL_DRIVERS},
   {sqlconnect,        "sqlconnect",         NORMAL, ALL_DRIVERS},
   {sqlprepare,        "sqlprepare",         NORMAL, UNICODE_DRIVER},
-  {sqlprepare_ansi,   "sqlprepare_ansi",    NORMAL, ALL_DRIVERS},*/
-  {sqlchar,           "sqlchar",            NORMAL, ALL_DRIVERS},
-/*  {sqldriverconnect,  "sqldriverconnect",   NORMAL, ALL_DRIVERS},
+  {sqlprepare_ansi,   "sqlprepare_ansi",    NORMAL, ALL_DRIVERS},
+  {sqlchar,           "sqlchar",            NORMAL, UNICODE_DRIVER},
+  {sqldriverconnect,  "sqldriverconnect",   NORMAL, ALL_DRIVERS},
   {sqlnativesql,      "sqlnativesql",       NORMAL, ALL_DRIVERS},
   {sqlsetcursorname,  "sqlsetcursorname",   NORMAL, UNICODE_DRIVER},
   {sqlgetcursorname,  "sqlgetcursorname",   NORMAL, ALL_DRIVERS},
@@ -1562,7 +1562,7 @@ MA_ODBC_TESTS my_tests[]=
   {t_odbc19,          "test_issue_odbc19",  NORMAL, ALL_DRIVERS},
   {t_odbc72,          "odbc72_surrogate_pairs",  NORMAL, ALL_DRIVERS},
   {t_odbc203,         "t_odbc203",          NORMAL, ALL_DRIVERS},
-  {t_odbc253,         "t_odbc253_empty_str_crash", NORMAL, ALL_DRIVERS},*/
+  {t_odbc253,         "t_odbc253_empty_str_crash", NORMAL, ALL_DRIVERS},
   {NULL, NULL, NORMAL, ALL_DRIVERS},
 };
 
