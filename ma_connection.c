@@ -303,6 +303,7 @@ SQLRETURN MADB_DbcGetAttr(MADB_Dbc *Dbc, SQLINTEGER Attribute, SQLPOINTER ValueP
   if (Attribute == SQL_ATTR_CURRENT_CATALOG && !StringLengthPtr && 
       (!ValuePtr || !BufferLength))
   {
+    printf("AAAAAAAAAA!!!!!!\n");
     return MADB_SetError(&Dbc->Error, MADB_ERR_01004, NULL, 0);
   }
 

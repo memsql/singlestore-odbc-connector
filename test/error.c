@@ -776,7 +776,7 @@ ODBC_TEST(t_odbc226)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {t_odbc3_error, "t_odbc3_error", ALL_DRIVERS},
+/*  {t_odbc3_error, "t_odbc3_error", ALL_DRIVERS},
   {t_odbc2_error, "t_odbc2_error", ALL_DRIVERS},
   {t_diagrec, "t_diagrec", ALL_DRIVERS},
   {t_warning, "t_warning", ALL_DRIVERS},
@@ -789,14 +789,14 @@ MA_ODBC_TESTS my_tests[]=
   {t_handle_err, "t_handle_err", ALL_DRIVERS},
   {sqlerror, "sqlerror", ALL_DRIVERS},
   {t_bug27158, "t_bug27158", ALL_DRIVERS},
-  {t_bug13542600, "t_bug13542600", ALL_DRIVERS},
+  {t_bug13542600, "t_bug13542600", ALL_DRIVERS},*/
   {t_bug14285620, "t_bug14285620", ALL_DRIVERS},
-  {t_bug49466, "t_bug49466", ALL_DRIVERS},
+  /*{t_bug49466, "t_bug49466", ALL_DRIVERS},
   {t_odbc94,   "t_odbc94", ALL_DRIVERS},
   {t_odbc115, "t_odbc115", ALL_DRIVERS},
   {t_odbc123, "t_odbc123", ALL_DRIVERS},
   {t_odbc43, "t_odbc43_datetime_overflow", ALL_DRIVERS},
-  {t_odbc226, "t_odbc226", ALL_DRIVERS},
+  {t_odbc226, "t_odbc226", ALL_DRIVERS},*/
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
