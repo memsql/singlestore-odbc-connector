@@ -3623,6 +3623,7 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
   Bind.error=   &Error;
   Bind.length=  &Bind.length_value;
   Bind.is_null= &IsNull;
+
   switch(OdbcType)
   {
   case SQL_DATE:
@@ -3849,6 +3850,7 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
         Stmt->CharOffset[Offset]= Stmt->Lengths[Offset];
         MADB_FREE(IrdRec->InternalBuffer);
       }
+
       MADB_FREE(ClientValue);
     }
     break;
