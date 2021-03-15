@@ -3616,6 +3616,8 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
     OdbcType= TargetType;
     break;  
   }
+  printf("ODBC_TYPE1 %d %d \n", OdbcType, TargetType);
+
   /* Restoring mariadb/mysql type from odbc type */
   MadbType= MADB_GetMaDBTypeAndLength(OdbcType, &Bind.is_unsigned, &Bind.buffer_length);
 
