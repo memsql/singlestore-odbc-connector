@@ -471,7 +471,7 @@ ODBC_TEST(t_bug14285620)
   is_num(timeout, 0);
 
   /* Character attribute */
-  if (!WindowsDM(Connection))
+  if (WindowsDM(Connection))
   {
     /*
       In this particular case MSSQL always returns SQL_SUCCESS
