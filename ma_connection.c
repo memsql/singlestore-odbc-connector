@@ -298,6 +298,7 @@ SQLRETURN MADB_DbcGetAttr(MADB_Dbc *Dbc, SQLINTEGER Attribute, SQLPOINTER ValueP
   if (!Dbc)
     return SQL_INVALID_HANDLE;
 
+  printf("AAAAAAA %d\n", Attribute);
   if (!ValuePtr && Attribute != SQL_ATTR_CURRENT_CATALOG)
     return SQL_SUCCESS;
   if (Attribute == SQL_ATTR_CURRENT_CATALOG && !StringLengthPtr && 
