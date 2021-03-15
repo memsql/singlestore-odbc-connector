@@ -479,7 +479,7 @@ ODBC_TEST(t_bug14285620)
       when the client application passes NULL
     */
     FAIL_IF(SQLGetConnectAttr(Connection, SQL_ATTR_CURRENT_CATALOG, NULL, 0, NULL) != SQL_SUCCESS, "success expected");
-    FAIL_IF(SQLGetConnectAttr(Connection, SQL_ATTR_CURRENT_CATALOG, szData, 0, NULL) != SQL_SUCCESS_WITH_INFO, "swi expected");
+    FAIL_IF(SQLGetConnectAttr(Connection, SQL_ATTR_CURRENT_CATALOG, szData, 0, NULL) != SQL_SUCCESS, "success expected");
   } else
   {
     FAIL_IF(SQLGetConnectAttr(Connection, SQL_ATTR_CURRENT_CATALOG, NULL, 0, NULL) != SQL_SUCCESS_WITH_INFO, "swi expected");
