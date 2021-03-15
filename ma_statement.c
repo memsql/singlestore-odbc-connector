@@ -3735,6 +3735,7 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
   case SQL_WVARCHAR:
   case SQL_WLONGVARCHAR:
     {
+      printf("processing WCHAR\n");
       char  *ClientValue= NULL;
       size_t CharLength= 0;
       /* Kinda this it not 1st call for this value, and we have it nice and recoded */
