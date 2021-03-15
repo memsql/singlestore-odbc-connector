@@ -3623,7 +3623,7 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
   Bind.error=   &Error;
   Bind.length=  &Bind.length_value;
   Bind.is_null= &IsNull;
-
+  printf("ODBC_TYPE %d \n", OdbcType);
   switch(OdbcType)
   {
   case SQL_DATE:
