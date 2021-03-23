@@ -1053,9 +1053,9 @@ ODBC_TEST(t_odbc73)
   SQLSMALLINT data_type;
 
   if (is_unicode_driver()) {
-      OK_SIMPLE_STMTW(Stmt, "DROP table if exists t_odbc73");
-      OK_SIMPLE_STMTW(Stmt, "CREATE TABLE t_odbc73 (binvc VARCHAR(64) COLLATE utf8_bin)");
-      OK_SIMPLE_STMTW(Stmt, "SELECT binvc FROM t_odbc73");
+      OK_SIMPLE_STMTW(Stmt, CW("DROP table if exists t_odbc73"));
+      OK_SIMPLE_STMTW(Stmt, CW("CREATE TABLE t_odbc73 (binvc VARCHAR(64) COLLATE utf8_bin)"));
+      OK_SIMPLE_STMTW(Stmt, CW("SELECT binvc FROM t_odbc73"));
   } else {
       OK_SIMPLE_STMT(Stmt, "DROP table if exists t_odbc73");
       OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_odbc73 (binvc VARCHAR(64) COLLATE utf8_bin)");
