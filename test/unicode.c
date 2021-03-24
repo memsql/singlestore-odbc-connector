@@ -610,10 +610,6 @@ ODBC_TEST(sqlgetconnectattr)
   SQLWCHAR wbuff[MAX_ROW_DATA_LEN+1];
   SQLINTEGER len;
 
-  if (iOdbc() && is_ansi_driver()) {
-      return OK;
-  }
-
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc1));
   CHECK_DBC_RC(hdbc1, SQLConnectW(hdbc1, wdsn, SQL_NTS, wuid, SQL_NTS,
                             wpwd, SQL_NTS));
@@ -1557,7 +1553,7 @@ MA_ODBC_TESTS my_tests[]=
     {sqlgetcursorname,  "sqlgetcursorname",   NORMAL, ALL_DRIVERS},
     {sqlcolattribute,   "sqlcolattribute",    NORMAL, UNICODE_DRIVER},
     {sqldescribecol,    "sqldescribecol",     NORMAL, UNICODE_DRIVER},
-    {sqlgetconnectattr, "sqlgetconnectattr",  NORMAL, ALL_DRIVERS},
+    {sqlgetconnectattr, "sqlgetconnectattr",  NORMAL, UNICODE_DRIVER},
     {sqlgetdiagrec,     "sqlgetdiagrec",      NORMAL, ALL_DRIVERS},
     {sqlgetdiagfield,   "sqlgetdiagfield",    NORMAL, UNICODE_DRIVER},
     {sqlcolumns,        "sqlcolumns",         NORMAL, UNICODE_DRIVER},
