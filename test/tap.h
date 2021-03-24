@@ -121,7 +121,7 @@ int strcpy_s(char *dest, size_t buffer_size, const char *src)
 
 
 BOOL   UseDsnOnly= FALSE;
-static SQLCHAR *my_dsn=             (SQLCHAR *)"ssodbc_test_a";
+static SQLCHAR *my_dsn=             (SQLCHAR *)"ssodbc_test_w";
 static SQLCHAR *my_uid=             (SQLCHAR *)"root";
 static SQLCHAR *my_pwd=             (SQLCHAR *)"";
 static SQLCHAR *my_schema=          (SQLCHAR *)"odbc_test";

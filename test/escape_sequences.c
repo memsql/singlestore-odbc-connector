@@ -997,15 +997,15 @@ ODBC_TEST(sql_native_sql_buffers_unicode) {
 
     // Terminate the input statement by the number of bytes
     //
-    CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, WW("SELECT 1 some incorrect query suffix"), 8, buffer, BUFFER_SIZE, &len));
+    CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, CW("SELECT 1 some incorrect query suffix"), 8, buffer, BUFFER_SIZE, &len));
     is_num(len, 8);
-    IS_STR(buffer, "SELECT 1", 9);
+    IS_WSTR(buffer, CW("SELECT 1"), 9);
 
     // Terminate the input statement by null character
     //
-    CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, WW("SELECT 1"), SQL_NTS, buffer, BUFFER_SIZE, &len));
+    CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, CW("SELECT 1"), SQL_NTS, buffer, BUFFER_SIZE, &len));
     is_num(len, 8);
-    IS_STR(buffer, "SELECT 1", 9);
+    IS_WSTR(buffer, CW("SELECT 1"), 9);
 
     // Should return the correct length even if output buffer is null
     //
@@ -1016,11 +1016,11 @@ ODBC_TEST(sql_native_sql_buffers_unicode) {
     //
     CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, WW("SELECT 1"), SQL_NTS, buffer, 8, &len));
     is_num(len, 8);
-    IS_STR(buffer, "SELECT ", 8);
+    IS_WSTR(buffer, CW("SELECT "), 8);
 
     CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, WW("SELECT 1"), SQL_NTS, buffer, 3, &len));
     is_num(len, 8);
-    IS_STR(buffer, "SE", 3);
+    IS_WSTR(buffer, CW("SE"), 3);
 
     return OK;
 }
