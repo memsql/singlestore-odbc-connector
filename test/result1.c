@@ -1902,7 +1902,7 @@ ODBC_TEST(t_bug30958_wchar)
   */
 
   //WCHAR for ANSI iODBC works incorrect
-  if (iOdbc() && is_ansi_driver()) return OK;
+//  if (iOdbc() && is_ansi_driver()) return OK;
 
   outlen= 99;
   FAIL_IF(SQLGetData(Stmt, 1, SQL_C_WCHAR, outbuf, outmax,
