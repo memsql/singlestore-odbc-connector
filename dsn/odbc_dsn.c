@@ -1,5 +1,6 @@
 /************************************************************************************
    Copyright (C) 2013,2019 MariaDB Corporation AB
+                 2021 SingleStore, Inc.
    
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -85,6 +86,7 @@ MADB_DsnMap DsnMap[] = {
   {&DsnKeys[16], 2, cbCharset,            0, 0},
   {&DsnKeys[34], 2, txtServerKey,       260, 0},
   {&DsnKeys[18], 3, txtPluginDir,       260, 0},
+  {&DsnKeys[39], 3, ckNoSSPS,             0, 0},
   {&DsnKeys[19], 4, txtSslKey,          260, 0},
   {&DsnKeys[20], 4, txtSslCert,         260, 0},
   {&DsnKeys[21], 4, txtSslCertAuth,     260, 0},

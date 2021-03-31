@@ -44,8 +44,7 @@ ODBC_TEST(test_CONO1)
   CHECK_STMT_RC(Stmt, SQLExecDirectW(Stmt, create_table, SQL_NTS));
 
   ret= SQLColumnsW(Stmt, NULL, 0, NULL, 0, CW("cono1"), SQL_NTS, NULL, 0);
-  if (!SQL_SUCCEEDED(ret))
-    return FAIL;
+  CHECK_STMT_RC(Stmt, ret);
 
   SQLRowCount(Stmt, &rowCount);
   diag("row_count: %u", rowCount);
@@ -53,8 +52,7 @@ ODBC_TEST(test_CONO1)
   CHECK_STMT_RC(Stmt, SQLExecDirectW(Stmt, CW("SET SQL_MODE=''"), SQL_NTS));
 
   ret= SQLColumnsW(Stmt, NULL, 0, NULL, 0, CW("cono1"), SQL_NTS, NULL, 0);
-  if (!SQL_SUCCEEDED(ret))
-    return FAIL;
+  CHECK_STMT_RC(Stmt, ret);
 
   SQLRowCount(Stmt, &rowCount);
   diag("row_count: %u", rowCount);
@@ -1047,7 +1045,7 @@ ODBC_TEST(t_bug34672)
 
   if (iOdbc()) return OK;
   AllocEnvConn(&Env, &hdbc1);
-  Stmt1= ConnectWithCharset(&hdbc1, "utf8mb4", NULL); /* For connection charset we need something, that has representation for those characters */
+  Stmt1= ConnectWithCharset(&hdbc1, "utf8", NULL); /* For connection charset we need something, that has representation for those characters */
 
   if (sizeof(SQLWCHAR) == 2)
   {
@@ -1387,11 +1385,8 @@ ODBC_TEST(t_odbc72)
   SQLHDBC    hdbc1;
   SQLHSTMT   Stmt1;
 
-#ifndef _WIN32
-  skip("There seems to be problem with converting of utf8mb4 to Utf16 on *nix");
-#endif
   AllocEnvConn(&Env, &hdbc1);
-  Stmt1= ConnectWithCharset(&hdbc1, "utf8mb4", NULL);
+  Stmt1= ConnectWithCharset(&hdbc1, "utf8", NULL);
 
   OK_SIMPLE_STMT(Stmt1, "SELECT 0x61F09F98986400");
 
@@ -1541,14 +1536,14 @@ ODBC_TEST(t_odbc253)
 
 MA_ODBC_TESTS my_tests[]=
 {
-    {test_CONO1,        "test_CONO1",         NORMAL, ALL_DRIVERS},
+    {test_CONO1,        "test_CONO1",         NORMAL, UNICODE_DRIVER},
     {test_count,        "test_count",         NORMAL, ALL_DRIVERS},
     {sqlconnect,        "sqlconnect",         NORMAL, ALL_DRIVERS},
     {sqlprepare,        "sqlprepare",         NORMAL, UNICODE_DRIVER},
     {sqlprepare_ansi,   "sqlprepare_ansi",    NORMAL, ALL_DRIVERS},
-    {sqlchar,           "sqlchar",            NORMAL, ALL_DRIVERS},
+    {sqlchar,           "sqlchar",            NORMAL, UNICODE_DRIVER},
     {sqldriverconnect,  "sqldriverconnect",   NORMAL, ALL_DRIVERS},
-    {sqlnativesql,      "sqlnativesql",       NORMAL, ALL_DRIVERS},
+    {sqlnativesql,      "sqlnativesql",       NORMAL, UNICODE_DRIVER},
     {sqlsetcursorname,  "sqlsetcursorname",   NORMAL, UNICODE_DRIVER},
     {sqlgetcursorname,  "sqlgetcursorname",   NORMAL, ALL_DRIVERS},
     {sqlcolattribute,   "sqlcolattribute",    NORMAL, UNICODE_DRIVER},
