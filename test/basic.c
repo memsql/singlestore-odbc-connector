@@ -752,7 +752,6 @@ ODBC_TEST(t_driverconnect_outstring)
   CHECK_DBC_RC(hdbc1, SQLDriverConnectW(hdbc1, NULL, connw, SQL_NTS, connw_out,
                                         sizeof(connw_out)/sizeof(SQLWCHAR), &conn_out_len,
                                         SQL_DRIVER_NOPROMPT));
-  /* iODBC returns octets count here. Thus must multiply by 4 in cas of iODBC(sizeof(SQLWCHAR)==4) */
   is_num(conn_out_len, strlen((const char*)conna));
   IS_WSTR(connw_out, connw, strlen((const char*)conna));
 
@@ -761,7 +760,6 @@ ODBC_TEST(t_driverconnect_outstring)
   CHECK_DBC_RC(hdbc1, SQLDriverConnectW(hdbc1, NULL, connw, SQL_NTS, connw_out,
                                         sizeof(connw_out), &conn_out_len,
                                         SQL_DRIVER_COMPLETE));
-  /* iODBC returns octets count here. Thus must multiply by 4 in cas of iODBC(sizeof(SQLWCHAR)==4) */
   is_num(conn_out_len, strlen((const char*)conna));
   IS_WSTR(connw_out, connw, strlen((const char*)conna));
 
@@ -770,7 +768,6 @@ ODBC_TEST(t_driverconnect_outstring)
   CHECK_DBC_RC(hdbc1, SQLDriverConnectW(hdbc1, NULL, connw, SQL_NTS, connw_out,
                                         sizeof(connw_out), &conn_out_len,
                                         SQL_DRIVER_COMPLETE_REQUIRED));
-  /* iODBC returns octets count here. Thus must multiply by 4 in cas of iODBC(sizeof(SQLWCHAR)==4) */
   is_num(conn_out_len, strlen((const char*)conna));
   IS_WSTR(connw_out, connw, strlen((const char*)conna));
 

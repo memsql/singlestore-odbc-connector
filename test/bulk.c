@@ -573,6 +573,7 @@ ODBC_TEST(t_odbc149)
   SQLLEN  cInd[]= {SQL_NTS, SQL_NTS, SQL_NTS}, wLen; 
   SQLWCHAR w[][8]= {{'x', 'x', 'x', 0}, {'y', 'y', 0}, {'z', 'z', 'z', 'a', 0}}, wBuf[16];
 
+  //TODO https://memsql.atlassian.net/jira/software/c/projects/PLAT/issues/PLAT-5346
   if (iOdbc() && is_unicode_driver()) {
       return OK;
   }
@@ -635,7 +636,7 @@ ODBC_TEST(t_odbc149)
     IS_STR(cBuf, c[row], strlen((const char*)(c[row])) + 1);
     is_num(bBufLen, bLen[row]);
     memcmp(bBuf, b[row], bBufLen);
-    //For some reason doesn't work for iODBC ANSI driver
+    //TODO https://memsql.atlassian.net/jira/software/c/projects/PLAT/issues/PLAT-5346
     if (!iOdbc() && !is_ansi_driver()) {
         IS_WSTR(wBuf, w[row], wLen/sizeof(SQLWCHAR));
     }

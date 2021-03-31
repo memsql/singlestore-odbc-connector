@@ -1045,6 +1045,7 @@ ODBC_TEST(t_bug34672)
   SQLHDBC    hdbc1;
   SQLHSTMT   Stmt1;
 
+  //TODO https://memsql.atlassian.net/jira/software/c/projects/PLAT/issues/PLAT-5347
   if (iOdbc()) return OK;
   AllocEnvConn(&Env, &hdbc1);
   Stmt1= ConnectWithCharset(&hdbc1, "utf8mb4", NULL); /* For connection charset we need something, that has representation for those characters */
@@ -1067,12 +1068,10 @@ ODBC_TEST(t_bug34672)
                                   SQL_WCHAR, 0, 0, chars,
                                   inchars * sizeof(SQLWCHAR), NULL));
 
-  // CSPS Error: Failed to convert a wchar parameter
   CHECK_STMT_RC(Stmt1, SQLExecDirectW(Stmt1, CW("select ? FROM DUAL"), SQL_NTS));
   CHECK_STMT_RC(Stmt1, SQLFetch(Stmt1));
   CHECK_STMT_RC(Stmt1, SQLGetData(Stmt1, 1, SQL_C_WCHAR, result,
                             sizeof(result), &reslen));
-  // SSPS Error: result[iOdbc() ? 1 : 2](65533)!=0(0)
   is_num(result[iOdbc() ? 1 : 2], 0);
   for (i= 0; i < inchars; ++i)
   {
