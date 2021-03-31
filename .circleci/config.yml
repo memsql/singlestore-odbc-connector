@@ -134,7 +134,8 @@ jobs:
         type: string
       build_type:
         type: string
-    machine: true
+    machine:
+      image: ubuntu-2004:202010-01
     resource_class: << parameters.machine_class >>
     environment:
       BUILD_TYPE: << parameters.build_type >>
