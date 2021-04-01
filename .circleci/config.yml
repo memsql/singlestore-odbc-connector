@@ -134,10 +134,14 @@ jobs:
         type: string
       build_type:
         type: string
+      with_sanitizer:
+        type: boolean
+        default: false
     machine:
       image: ubuntu-2004:202010-01
     resource_class: << parameters.machine_class >>
     environment:
+      WITH_SANITIZER: << parameters.with_sanitizer >>
       BUILD_TYPE: << parameters.build_type >>
       MEMSQL_IMAGE: << parameters.memsql_image >>
       MEMSQL_PASSWORD: << parameters.memsql_password >>
@@ -285,6 +289,24 @@ jobs:
 workflows:
   test:
     jobs:
+      - build-ubuntu:
+          name: build-ubuntu-sanitizer-unicode-7.3.2-<< matrix.build_type >>
+          matrix:
+            parameters:
+              machine_class:
+                - large
+              memsql_password:
+                - password
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_w
+              test_driver:
+                - SingleStore ODBC 0.8.1-beta Unicode Driver
+              memsql_image:
+                - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
+              with_sanitizer:
+                - true
       - build-ubuntu:
           name: build-ubuntu-unicode-7.3.2-<< matrix.build_type >>
           matrix:
