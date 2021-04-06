@@ -138,7 +138,7 @@ jobs:
         type: boolean
         default: false
     machine:
-      image: ubuntu-2004:202010-01
+      image: ubuntu-1604:202101-01
     resource_class: << parameters.machine_class >>
     environment:
       WITH_SANITIZER: << parameters.with_sanitizer >>
