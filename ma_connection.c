@@ -635,7 +635,7 @@ SQLRETURN MADB_DbcConnectDB(MADB_Dbc *Connection,
     if (InitClientCharset(&Connection->Charset, MADB_IS_EMPTY(cs_name) ? "utf8" : cs_name))
     {
       /* Memory allocation error */
-      MADB_SetError(&Connection->Error, MADB_ERR_HY001, NULL, 0);
+      MADB_SetError(&Connection->Error, MADB_ERR_HY001, "Charset is not supported", 0);
       goto end;
     }
     if (iOdbc() && strcmp(Connection->Charset.cs_info->csname, "swe7") == 0)
