@@ -1043,6 +1043,8 @@ ODBC_TEST(t_bug34672)
   SQLHDBC    hdbc1;
   SQLHSTMT   Stmt1;
 
+  //TODO https://memsql.atlassian.net/jira/software/c/projects/PLAT/issues/PLAT-5347
+  if (iOdbc()) return OK;
   AllocEnvConn(&Env, &hdbc1);
   Stmt1= ConnectWithCharset(&hdbc1, "utf8", NULL); /* For connection charset we need something, that has representation for those characters */
 
@@ -1533,35 +1535,35 @@ ODBC_TEST(t_odbc253)
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {test_CONO1,        "test_CONO1",         NORMAL, UNICODE_DRIVER},
-  {test_count,        "test_count",         NORMAL, ALL_DRIVERS},
-  {sqlconnect,        "sqlconnect",         NORMAL, ALL_DRIVERS},
-  {sqlprepare,        "sqlprepare",         NORMAL, UNICODE_DRIVER},
-  {sqlprepare_ansi,   "sqlprepare_ansi",    NORMAL, ALL_DRIVERS},
-  {sqlchar,           "sqlchar",            NORMAL, UNICODE_DRIVER},
-  {sqldriverconnect,  "sqldriverconnect",   NORMAL, ALL_DRIVERS},
-  {sqlnativesql,      "sqlnativesql",       NORMAL, UNICODE_DRIVER},
-  {sqlsetcursorname,  "sqlsetcursorname",   NORMAL, UNICODE_DRIVER},
-  {sqlgetcursorname,  "sqlgetcursorname",   NORMAL, ALL_DRIVERS},
-  {sqlcolattribute,   "sqlcolattribute",    NORMAL, UNICODE_DRIVER},
-  {sqldescribecol,    "sqldescribecol",     NORMAL, UNICODE_DRIVER},
-  {sqlgetconnectattr, "sqlgetconnectattr",  NORMAL, ALL_DRIVERS},
-  {sqlgetdiagrec,     "sqlgetdiagrec",      NORMAL, ALL_DRIVERS},
-  {sqlgetdiagfield,   "sqlgetdiagfield",    NORMAL, UNICODE_DRIVER},
-  {sqlcolumns,        "sqlcolumns",         NORMAL, UNICODE_DRIVER},
-  {sqltables,         "sqltables",          NORMAL, UNICODE_DRIVER},
-  {sqlspecialcolumns, "sqlspecialcolumns",  NORMAL, UNICODE_DRIVER},
-  {sqlprimarykeys,    "sqlprimarykeys",     NORMAL, UNICODE_DRIVER},
-  {sqlstatistics,     "sqlstatistics",      NORMAL, UNICODE_DRIVER},
-  {t_bug32161,        "t_bug32161",         NORMAL, UNICODE_DRIVER},
-  {t_bug34672,        "t_bug34672",         NORMAL, ALL_DRIVERS},
-  {t_bug28168,        "t_bug28168",         NORMAL, UNICODE_DRIVER},
-  {t_bug14363601,     "t_bug14363601",      NORMAL, ALL_DRIVERS},
-  {t_odbc19,          "test_issue_odbc19",  NORMAL, ALL_DRIVERS},
-  {t_odbc72,          "odbc72_surrogate_pairs",  NORMAL, ALL_DRIVERS},
-  {t_odbc203,         "t_odbc203",          NORMAL, ALL_DRIVERS},
-  {t_odbc253,         "t_odbc253_empty_str_crash", NORMAL, ALL_DRIVERS},
-  {NULL, NULL, NORMAL, ALL_DRIVERS},
+    {test_CONO1,        "test_CONO1",         NORMAL, UNICODE_DRIVER},
+    {test_count,        "test_count",         NORMAL, ALL_DRIVERS},
+    {sqlconnect,        "sqlconnect",         NORMAL, ALL_DRIVERS},
+    {sqlprepare,        "sqlprepare",         NORMAL, UNICODE_DRIVER},
+    {sqlprepare_ansi,   "sqlprepare_ansi",    NORMAL, ALL_DRIVERS},
+    {sqlchar,           "sqlchar",            NORMAL, UNICODE_DRIVER},
+    {sqldriverconnect,  "sqldriverconnect",   NORMAL, ALL_DRIVERS},
+    {sqlnativesql,      "sqlnativesql",       NORMAL, UNICODE_DRIVER},
+    {sqlsetcursorname,  "sqlsetcursorname",   NORMAL, UNICODE_DRIVER},
+    {sqlgetcursorname,  "sqlgetcursorname",   NORMAL, ALL_DRIVERS},
+    {sqlcolattribute,   "sqlcolattribute",    NORMAL, UNICODE_DRIVER},
+    {sqldescribecol,    "sqldescribecol",     NORMAL, UNICODE_DRIVER},
+    {sqlgetconnectattr, "sqlgetconnectattr",  NORMAL, UNICODE_DRIVER},
+    {sqlgetdiagrec,     "sqlgetdiagrec",      NORMAL, ALL_DRIVERS},
+    {sqlgetdiagfield,   "sqlgetdiagfield",    NORMAL, UNICODE_DRIVER},
+    {sqlcolumns,        "sqlcolumns",         NORMAL, UNICODE_DRIVER},
+    {sqltables,         "sqltables",          NORMAL, UNICODE_DRIVER},
+    {sqlspecialcolumns, "sqlspecialcolumns",  NORMAL, UNICODE_DRIVER},
+    {sqlprimarykeys,    "sqlprimarykeys",     NORMAL, UNICODE_DRIVER},
+    {sqlstatistics,     "sqlstatistics",      NORMAL, UNICODE_DRIVER},
+    {t_bug32161,        "t_bug32161",         NORMAL, UNICODE_DRIVER},
+    {t_bug34672,        "t_bug34672",         NORMAL, ALL_DRIVERS},
+    {t_bug28168,        "t_bug28168",         NORMAL, UNICODE_DRIVER},
+    {t_bug14363601,     "t_bug14363601",      NORMAL, ALL_DRIVERS},
+    {t_odbc19,          "test_issue_odbc19",  NORMAL, ALL_DRIVERS},
+    {t_odbc72,          "odbc72_surrogate_pairs",  NORMAL, ALL_DRIVERS},
+    {t_odbc203,         "t_odbc203",          NORMAL, ALL_DRIVERS},
+    {t_odbc253,         "t_odbc253_empty_str_crash", NORMAL, ALL_DRIVERS},
+    {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
 

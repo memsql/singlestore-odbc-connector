@@ -957,7 +957,7 @@ ODBC_TEST(sql_native_sql) {
 
 // sql_native_sql_buffers checks that SQLNativeSql handle input and output buffers correctly
 //
-ODBC_TEST(sql_native_sql_buffers) {
+ODBC_TEST(sql_native_sql_buffers_ansi) {
   int len;
   SQLCHAR buffer[BUFFER_SIZE];
 
@@ -989,6 +989,40 @@ ODBC_TEST(sql_native_sql_buffers) {
   IS_STR(buffer, "SE", 3);
 
   return OK;
+}
+
+ODBC_TEST(sql_native_sql_buffers_unicode) {
+    int len;
+    SQLWCHAR buffer[BUFFER_SIZE];
+
+    // Terminate the input statement by the number of bytes
+    //
+    CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, CW("SELECT 1 some incorrect query suffix"), 8, buffer, BUFFER_SIZE, &len));
+    is_num(len, 8);
+    IS_WSTR(buffer, CW("SELECT 1"), 9);
+
+    // Terminate the input statement by null character
+    //
+    CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, CW("SELECT 1"), SQL_NTS, buffer, BUFFER_SIZE, &len));
+    is_num(len, 8);
+    IS_WSTR(buffer, CW("SELECT 1"), 9);
+
+    // Should return the correct length even if output buffer is null
+    //
+    CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, WW("SELECT 1"), SQL_NTS, NULL, 0, &len));
+    is_num(len, 8);
+
+    // Should terminate the output buffer with null character and correctly truncate it
+    //
+    CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, WW("SELECT 1"), SQL_NTS, buffer, 8, &len));
+    is_num(len, 8);
+    IS_WSTR(buffer, CW("SELECT "), 8);
+
+    CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, WW("SELECT 1"), SQL_NTS, buffer, 3, &len));
+    is_num(len, 8);
+    IS_WSTR(buffer, CW("SE"), 3);
+
+    return OK;
 }
 
 // sql_native_sql_errors checks that SQLNativeSql returns appropriate errors for invalid statements
@@ -1057,7 +1091,8 @@ MA_ODBC_TESTS my_tests[]=
   {ansi_quotes, "ansi_quotes", NORMAL, ALL_DRIVERS},
   {ansi_quotes_to_fix, "ansi_quotes_to_fix", TO_FIX, ALL_DRIVERS},
   {sql_native_sql, "sql_native_sql", NORMAL, ANSI_DRIVER},
-  {sql_native_sql_buffers, "sql_native_sql_buffers", NORMAL, ALL_DRIVERS},
+  {sql_native_sql_buffers_ansi, "sql_native_sql_buffers_ansi", NORMAL, ANSI_DRIVER},
+  {sql_native_sql_buffers_unicode, "sql_native_sql_buffers_unicode", NORMAL, UNICODE_DRIVER},
   {sql_native_sql_errors, "sql_native_sql_errors", NORMAL, ALL_DRIVERS},
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };

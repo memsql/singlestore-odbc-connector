@@ -322,6 +322,11 @@ ODBC_TEST(t_explicit_error)
   SQLHANDLE expapd;
   SQLHANDLE hstmt2;
 
+  //TODO https://memsql.atlassian.net/browse/PLAT-5382
+  if (iOdbc() && is_ansi_driver()) {
+      return OK;
+  }
+
   /* TODO using an exp from a different dbc */
 
   CHECK_DBC_RC(Connection, SQLAllocHandle(SQL_HANDLE_STMT, Connection, &hstmt2));

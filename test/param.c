@@ -864,7 +864,7 @@ ODBC_TEST(t_bug56804)
     SQL_DECIMAL, 4, 0, c2, 4, d2));
 
 
-  EXPECT_STMT(Stmt, SQLExecute(Stmt), iOdbc() ? SQL_SUCCESS : SQL_SUCCESS_WITH_INFO);
+  EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_SUCCESS_WITH_INFO);
   memset(ExpectedStatus, 0x00ff & SQL_PARAM_SUCCESS, sizeof(ExpectedStatus));
   /* all errors but last have SQL_PARAM_DIAG_UNAVAILABLE */
   ExpectedStatus[1] = ExpectedStatus[6]= SQL_PARAM_DIAG_UNAVAILABLE;
@@ -996,6 +996,9 @@ ODBC_TEST(insert_fetched_null)
   HSTMT       Stmt1;
   const char     *str= "Text val";
   const SQLWCHAR *wstr= CW(str);
+
+  //TODO https://memsql.atlassian.net/jira/software/c/projects/PLAT/issues/PLAT-5348
+  if (iOdbc()) return OK;
 
   CHECK_DBC_RC(Connection, SQLAllocHandle(SQL_HANDLE_STMT, Connection, &Stmt1));
 

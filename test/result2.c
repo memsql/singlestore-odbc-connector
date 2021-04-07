@@ -1052,13 +1052,17 @@ ODBC_TEST(t_odbc73)
 {
   SQLSMALLINT data_type;
 
-  OK_SIMPLE_STMT(Stmt, "DROP table if exists t_odbc73");
-
-  OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_odbc73 (binvc VARCHAR(64) COLLATE utf8_bin)");
-
-  OK_SIMPLE_STMT(Stmt, "SELECT binvc FROM t_odbc73");
-
-  CHECK_STMT_RC(Stmt, SQLDescribeCol(Stmt, 1, NULL, 0, NULL, &data_type, NULL, NULL, NULL));
+  if (is_unicode_driver()) {
+      OK_SIMPLE_STMTW(Stmt, CW("DROP table if exists t_odbc73"));
+      OK_SIMPLE_STMTW(Stmt, CW("CREATE TABLE t_odbc73 (binvc VARCHAR(64) COLLATE utf8_bin)"));
+      OK_SIMPLE_STMTW(Stmt, CW("SELECT binvc FROM t_odbc73"));
+      CHECK_STMT_RC(Stmt, SQLDescribeColW(Stmt, 1, NULL, 0, NULL, &data_type, NULL, NULL, NULL));
+  } else {
+      OK_SIMPLE_STMT(Stmt, "DROP table if exists t_odbc73");
+      OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_odbc73 (binvc VARCHAR(64) COLLATE utf8_bin)");
+      OK_SIMPLE_STMT(Stmt, "SELECT binvc FROM t_odbc73");
+      CHECK_STMT_RC(Stmt, SQLDescribeCol(Stmt, 1, NULL, 0, NULL, &data_type, NULL, NULL, NULL));
+  }
 
   FAIL_IF(data_type == SQL_VARBINARY || data_type == SQL_BINARY || data_type == SQL_LONGVARBINARY,
           "The field shouldn't be described as binary");

@@ -513,7 +513,7 @@ ODBC_TEST(t_bug14285620)
   /* Windows uses unicode driver by default */
   is_num(cblen, strlen(szData)*sizeof(SQLWCHAR));
 #else
-  if (iOdbc())
+  if (iOdbc() && is_unicode_driver())
   {
     is_num(cblen, strlen((const char*)szData)*sizeof(SQLWCHAR));
     is_num(SQLGetInfoW(Connection, SQL_DATABASE_NAME, NULL, 0, &cblen), SQL_SUCCESS);
@@ -528,15 +528,15 @@ ODBC_TEST(t_bug14285620)
   /* Here on Windows a bit strange thing is happening - it gives NULL pointer to SQLGetTypeInfoW(), and not null length ptr
      That altogether makes connector return (correctly) SQL_SUCCES. Not sure what happens with UnixODBC, that the result is
      also success, but iODBC returns SQL_SUCCESS_WITH_INFO */
-  is_num(SQLGetInfo(Connection, SQL_DATABASE_NAME, szData, 0, NULL), iOdbc() ? SQL_SUCCESS_WITH_INFO : SQL_SUCCESS);
+  is_num(SQLGetInfo(Connection, SQL_DATABASE_NAME, szData, 0, NULL), iOdbc() && is_unicode_driver() ? SQL_SUCCESS_WITH_INFO : SQL_SUCCESS);
 
   /* Get the native string for further checks */
   FAIL_IF(SQLNativeSql(Connection, (SQLCHAR*)"SELECT 10", SQL_NTS, szData, sizeof(szData), NULL) !=SQL_SUCCESS, "success expected");
-  FAIL_IF(SQLNativeSql(Connection, (SQLCHAR*)"SELECT 10", SQL_NTS, NULL, 0, &cbilen)!= iOdbc() ? SQL_SUCCESS_WITH_INFO : SQL_SUCCESS, "success expected");
-
+  FAIL_IF(SQLNativeSql(Connection, (SQLCHAR*)"SELECT 10", SQL_NTS, NULL, 0, &cbilen)!= iOdbc() && is_unicode_driver() ? SQL_SUCCESS_WITH_INFO : SQL_SUCCESS, "success expected");
+  
   /* Do like MSSQL, which does calculate as char_count*sizeof(SQLWCHAR) */
   is_num(cbilen, strlen((const char*)szData));
-  if (iOdbc())
+  if (iOdbc() && is_unicode_driver())
   {
     is_num(SQLNativeSqlW(Connection, WW("SELECT 10"), SQL_NTS, NULL, 0, &cbilen), SQL_SUCCESS);
     /* SQLNativeSql(W) returns number of characters. Thus stlen is fine*/
@@ -559,7 +559,7 @@ ODBC_TEST(t_bug14285620)
 
   EXPECT_STMT(Stmt, SQLExecDirect(Stmt, (SQLCHAR*)"ERROR SQL QUERY", SQL_NTS), SQL_ERROR);
 
-  EXPECT_STMT(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, 1, SQL_DIAG_SQLSTATE, NULL, 0, NULL), iOdbc() ? SQL_SUCCESS_WITH_INFO : SQL_SUCCESS);
+  EXPECT_STMT(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, 1, SQL_DIAG_SQLSTATE, NULL, 0, NULL), iOdbc() && is_unicode_driver() ? SQL_SUCCESS_WITH_INFO : SQL_SUCCESS);
 
   {
     SQLCHAR sqlstate[30], message[255];
@@ -585,7 +585,7 @@ ODBC_TEST(t_bug14285620)
   FAIL_IF(SQLColAttribute(Stmt,1, SQL_DESC_TYPE, NULL, 0, NULL, NULL) != SQL_SUCCESS, "Success expected");
   FAIL_IF(SQLColAttribute(Stmt,1, SQL_DESC_TYPE, &data_type, 0, NULL, NULL)!= SQL_SUCCESS, "Success expected");
 
-  EXPECT_STMT(Stmt, SQLColAttribute(Stmt,1, SQL_DESC_TYPE_NAME, NULL, 0, NULL, NULL), iOdbc() ? SQL_SUCCESS_WITH_INFO : SQL_SUCCESS);
+  EXPECT_STMT(Stmt, SQLColAttribute(Stmt,1, SQL_DESC_TYPE_NAME, NULL, 0, NULL, NULL), iOdbc() && is_unicode_driver() ? SQL_SUCCESS_WITH_INFO : SQL_SUCCESS);
   FAIL_IF(SQLColAttribute(Stmt,1, SQL_DESC_TYPE_NAME, szData, 0, NULL, NULL) != SQL_SUCCESS_WITH_INFO, "swi expected");
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
