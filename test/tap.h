@@ -1151,36 +1151,36 @@ void cleanup()
         odbc_print_error(SQL_HANDLE_DBC, Connection);
         goto end;
     }
-    if (!SQL_SUCCEEDED(SQLTables(Stmt, my_schema, SQL_NTS, NULL, 0, NULL, 0, NULL, 0)))
-    {
-        odbc_print_error(SQL_HANDLE_STMT, Stmt);
-        goto end;
-    }
 
-    SQLHSTMT TruncStmt;
-    if (!SQL_SUCCEEDED(SQLAllocHandle(SQL_HANDLE_STMT, Connection, &TruncStmt)))
+    SQLHSTMT DropStmt;
+    if (!SQL_SUCCEEDED(SQLAllocHandle(SQL_HANDLE_STMT, Connection, &DropStmt)))
     {
         odbc_print_error(SQL_HANDLE_DBC, Connection);
         goto end;
     }
 
-    char TruncateStmt[1024];
-    char CurrentTable[512];
-    SQLLEN ctLen;
-    while(SQL_SUCCEEDED(SQLFetch(Stmt)))
+    if (!SQL_SUCCEEDED(SQLExecDirect(DropStmt, (SQLCHAR *)"DROP DATABASE odbc_test", SQL_NTS)))
     {
-        if (SQL_SUCCEEDED(SQLGetData(Stmt, 3, SQL_C_CHAR, CurrentTable, sizeof(CurrentTable), &ctLen)))
-        {
-            _snprintf(TruncateStmt, 1024, "TRUNCATE TABLE %s", CurrentTable);
-            if (!SQL_SUCCEEDED(SQLExecDirect(TruncStmt, (SQLCHAR*)TruncateStmt, SQL_NTS)))
-            {
-                odbc_print_error(SQL_HANDLE_STMT, TruncStmt);
-            }
-        }
-        SQLFreeStmt(TruncStmt, SQL_CLOSE);
+        odbc_print_error(SQL_HANDLE_STMT, DropStmt);
+        goto end;
     }
+    if (!SQL_SUCCEEDED(SQLFreeStmt(DropStmt, SQL_DROP)))
+    {
+        SQLFreeStmt(DropStmt, SQL_CLOSE);
+        goto end;
+    }
+    if (!SQL_SUCCEEDED(SQLExecDirect(DropStmt, (SQLCHAR *)"CREATE DATABASE odbc_test", SQL_NTS)))
+    {
+        odbc_print_error(SQL_HANDLE_STMT, DropStmt);
+        goto end;
+    }
+    if (!SQL_SUCCEEDED(SQLFreeStmt(DropStmt, SQL_DROP)))
+    {
+        odbc_print_error(SQL_HANDLE_STMT, DropStmt);
+        goto end;
+    }
+
     CleanupSuccessful = 1;
-    SQLFreeStmt(TruncStmt, SQL_DROP);
 end:
     ODBC_Disconnect(Env, Connection, Stmt);
     fprintf(stdout, CleanupSuccessful ? "Cleanup finished successfully!\n\n" : "Cleanup failed! Continuing execution...\n\n");
@@ -1228,14 +1228,18 @@ int run_tests_ex(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
   int csps_fail = connect_and_run_tests(tests, ProvideWConnection);
   fprintf(stdout, "Tests %s in the client-side prepared statements mode!\n\n", csps_fail ? "failed" : "passed");
 
+  time_t cleanup_start_time = time(NULL);
   cleanup();
+  fprintf(stdout, "Time spent for cleanup %ld\n", time(NULL) - cleanup_start_time);
 
   fprintf(stdout, "Running tests in the server-side prepared statements mode...\n");
   NoSsps = 0;
   int ssps_fail = connect_and_run_tests(tests, ProvideWConnection);
   fprintf(stdout, "Tests %s in the server-side prepared statements mode!\n\n", ssps_fail ? "failed" : "passed");
 
+  cleanup_start_time = time(NULL);
   cleanup();
+  fprintf(stdout, "Time spent for cleanup %ld\n", time(NULL) - cleanup_start_time);
 
   return csps_fail || ssps_fail;
 }
