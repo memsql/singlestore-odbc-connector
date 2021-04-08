@@ -997,6 +997,7 @@ ODBC_TEST(insert_fetched_null)
   const char     *str= "Text val";
   const SQLWCHAR *wstr= CW(str);
 
+  //TODO https://memsql.atlassian.net/jira/software/c/projects/PLAT/issues/PLAT-5348
   if (iOdbc()) return OK;
 
   CHECK_DBC_RC(Connection, SQLAllocHandle(SQL_HANDLE_STMT, Connection, &Stmt1));

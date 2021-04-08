@@ -1902,7 +1902,8 @@ ODBC_TEST(t_bug30958_wchar)
   */
 
   //WCHAR for ANSI iODBC works incorrect
-//  if (iOdbc() && is_ansi_driver()) return OK;
+  //TODO https://memsql.atlassian.net/jira/software/c/projects/PLAT/issues/PLAT-5345
+  if (iOdbc() && is_ansi_driver()) return OK;
 
   outlen= 99;
   FAIL_IF(SQLGetData(Stmt, 1, SQL_C_WCHAR, outbuf, outmax,

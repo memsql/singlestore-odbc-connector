@@ -841,7 +841,7 @@ ODBC_TEST(client_side_get_data_many_types)
     CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
     CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 1, SQL_C_WCHAR, aCol, sizeof(aCol), &aColLen));
     CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 2, SQL_C_CHAR, bCol, sizeof(bCol), &bColLen));
-    //Temporary fix for the iODBC, should investigate deeper
+    //TODO https://memsql.atlassian.net/jira/software/c/projects/PLAT/issues/PLAT-5344
     CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 3, iOdbc() ? SQL_C_NUMERIC : SQL_ARD_TYPE, &cCol, sizeof(cCol), &cColLen));
     CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 4, SQL_C_LONG, &dCol, sizeof(dCol), &dColLen));
     CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 5, SQL_C_UBIGINT, &eCol, sizeof(eCol), &eColLen));
