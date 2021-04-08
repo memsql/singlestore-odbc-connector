@@ -74,6 +74,21 @@ if (IS_SKYSQL(hostname)) \
 #define SKIP_NOTLS
 #endif
 
+#define IS_MAXSCALE() (getenv("MAXSCALE_TEST_DISABLE")!=NULL)
+#define SKIP_MAXSCALE \
+if (IS_MAXSCALE()) \
+{ \
+  diag("test disabled with maxscale"); \
+  return SKIP; \
+}
+
+#define SKIP_LOAD_INFILE_DISABLE \
+if (!((mysql->server_capabilities & CLIENT_LOCAL_FILES) &&  \
+         (mysql->options.client_flag & CLIENT_LOCAL_FILES))) { \
+  diag("Load local infile not supported"); \
+  return SKIP; \
+}
+
 #define MAX_KEY MAX_INDEXES
 #define MAX_KEY_LENGTH_DECIMAL_WIDTH 4          /* strlen("4096") */
 
@@ -184,6 +199,7 @@ static const char *schema = "c_test";
 static char *hostname = "127.0.0.1";
 static char *password = "";
 static unsigned int port = 5506;
+static unsigned int ssl_port = 5506;
 static char *socketname = 0;
 static char *username = "root";
 static int force_tls= 0;
@@ -519,7 +535,7 @@ MYSQL *test_connect(struct my_tests_st *test)
 static int reset_connection(MYSQL *mysql) {
   int rc;
 
-  if (is_mariadb)
+  if (is_mariadb && !IS_MAXSCALE())
     rc= mysql_change_user(mysql, username, password, schema);
   else
     rc= mysql_reset_connection(mysql);
@@ -565,6 +581,14 @@ void get_envvars() {
     else if ((envvar= getenv("MASTER_MYPORT")))
       port= atoi(envvar);
     diag("port: %d", port);
+  }
+  if (!ssl_port)
+  {
+    if ((envvar= getenv("MYSQL_TEST_SSL_PORT")))
+      ssl_port= atoi(envvar);
+    else
+      ssl_port = port;
+    diag("ssl_port: %d", ssl_port);
   }
   if (!force_tls && (envvar= getenv("MYSQL_TEST_TLS")))
     force_tls= atoi(envvar);
