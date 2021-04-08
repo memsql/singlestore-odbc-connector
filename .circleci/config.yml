@@ -290,24 +290,6 @@ workflows:
   test:
     jobs:
       - build-ubuntu:
-          name: build-ubuntu-sanitizer-unicode-7.3.2-<< matrix.build_type >>
-          matrix:
-            parameters:
-              machine_class:
-                - large
-              memsql_password:
-                - password
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - ssodbc_test_w
-              test_driver:
-                - SingleStore ODBC 0.8.1-beta Unicode Driver
-              memsql_image:
-                - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
-              with_sanitizer:
-                - true
-      - build-ubuntu:
           name: build-ubuntu-unicode-7.3.2-<< matrix.build_type >>
           matrix:
             parameters:
@@ -394,6 +376,24 @@ workflows:
               only:
                 - master
     jobs:
+      - build-ubuntu:
+          name: build-ubuntu-sanitizer-unicode-7.3.2-<< matrix.build_type >>
+          matrix:
+            parameters:
+              machine_class:
+                - large
+              memsql_password:
+                - password
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_w
+              test_driver:
+                - SingleStore ODBC 0.8.1-beta Unicode Driver
+              memsql_image:
+                - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
+              with_sanitizer:
+                - true
       - build-ubuntu:
           name: build-ubuntu-unicode-7.3.2-<< matrix.build_type >>
           matrix:
