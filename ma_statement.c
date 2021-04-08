@@ -267,6 +267,7 @@ SQLRETURN MADB_StmtFree(MADB_Stmt *Stmt, SQLUSMALLINT Option)
       ResetMetadata(&Stmt->metadata, NULL);
 
       MADB_FREE(Stmt->result);
+      MADB_FREE(Stmt->params);
       MADB_FREE(Stmt->CharOffset);
       MADB_FREE(Stmt->Lengths);
 
