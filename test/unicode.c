@@ -1384,6 +1384,10 @@ ODBC_TEST(t_odbc72)
   SQLHDBC    hdbc1;
   SQLHSTMT   Stmt1;
 
+  //TODO https://memsql.atlassian.net/jira/software/c/projects/PLAT/issues/PLAT-5421
+  if (iOdbc()) {
+      return OK;
+  }
   AllocEnvConn(&Env, &hdbc1);
   Stmt1= ConnectWithCharset(&hdbc1, "utf8", NULL);
 
