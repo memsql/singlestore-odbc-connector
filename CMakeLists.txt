@@ -23,10 +23,10 @@ cmake_minimum_required(VERSION 2.8)
 
 SET(MARIADB_ODBC_VERSION_MAJOR 0)
 SET(MARIADB_ODBC_VERSION_MINOR 8)
-SET(MARIADB_ODBC_VERSION_PATCH 1)
+SET(MARIADB_ODBC_VERSION_PATCH 2)
 SET(MARIADB_ODBC_VERSION_QUALITY "beta")
 
-SET(MARIADB_ODBC_VERSION "00.08.0001")
+SET(MARIADB_ODBC_VERSION "00.08.0002")
 
 IF(UNICODE OR NOT ANSI)
   MESSAGE(STATUS "Configuring to build Unicode driver")
@@ -546,7 +546,7 @@ IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
     IF(NOT WIN32)
       SET(drivers_options)
       SET(dsn_name "ssodbc_test")
-      SET_VALUE(TEST_DRIVER "SingleStore ODBC 0.8.1-beta Driver")
+      SET_VALUE(TEST_DRIVER "SingleStore ODBC 0.8.2-beta Driver")
       SET_VALUE(TEST_DSN "ssodbc_test")
       SET_VALUE(TEST_PORT "5506")
       SET_VALUE(TEST_SERVER "127.0.0.1")
@@ -563,8 +563,8 @@ IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
         math(EXPR DRIVERS_COUNT "${idx}+1")
 
         # Configuring ini files for testing with UnixODBC
-        SET(TEST_DRIVER "SingleStore ODBC 0.8.1-beta ${DRIVER_TYPE} Driver")
-        SET(TEST_DESCRIPTION "SingleStore ODBC 0.8.1-beta ${DRIVER_TYPE} Connector")
+        SET(TEST_DRIVER "SingleStore ODBC 0.8.2-beta ${DRIVER_TYPE} Driver")
+        SET(TEST_DESCRIPTION "SingleStore ODBC 0.8.2-beta ${DRIVER_TYPE} Connector")
 
         MESSAGE(STATUS "Configuring Test Driver: ${TEST_DRIVER}, Test DSN: ${dsn_name}_${CONNECTOR_DRIVER_TYPE_SHORT}, tcp://${TEST_UID}@${TEST_SERVER}:${TEST_PORT}/${TEST_SCHEMA} socket: ${TEST_SOCKET}")
 
