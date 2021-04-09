@@ -1144,25 +1144,40 @@ int connect_and_run_tests(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
 
 void cleanup()
 {
-    fprintf(stdout, "Running cleanup...\n");
+    time_t start_time = time(NULL);
+    printf(stdout, "Running cleanup...\n");
     int CleanupSuccessful = 0;
 
     MYSQL* mysql = mysql_init(NULL);
-    mysql_real_connect((const char *)my_servername, (const char *)my_uid, (const char *)my_pwd, NULL, NULL, my_port, NULL, 0);
-    mysql_query(mysql, "DROP DATABASE IF EXISTS odbc_test");
-    mysql_query(mysql, "CREATE DATABASE odbc_test");
+    if (!mysql)
+    {
+        goto end;
+    }
+    if (!mysql_real_connect(mysql, (const char *)my_servername, (const char *)my_uid, (const char *)my_pwd, NULL, my_port, NULL, 0))
+    {
+        // TODO printf error
+        goto end;
+    }
+    if (mysql_query(mysql, "DROP DATABASE IF EXISTS odbc_test"))
+    {
+        // TODO printf error
+        goto end;
+    }
+    if (mysql_query(mysql, "CREATE DATABASE odbc_test"))
+    {
+        // TODO printf error
+        goto end;
+    }
 
     CleanupSuccessful = 1;
 end:
     mysql_close(mysql);
-    fprintf(stdout, CleanupSuccessful ? "Cleanup finished successfully!\n\n" : "Cleanup failed! Continuing execution...\n\n");
+    // TODO: stop the test execution completely
+    fprintf(stdout, CleanupSuccessful ? "Cleanup finished successfully in %ld seconds!\n\n" : "Cleanup failed in %ld seconds! Continuing execution...\n\n", time(NULL) - start_time);
 }
 
 int run_tests_ex(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
 {
-    time_t cleanup_start_time = time(NULL);
-    cleanup();
-    fprintf(stdout, "Time spent for cleanup %ld\n", time(NULL) - cleanup_start_time);
 
     utf16= (little_endian() ? &utf16le : &utf16be);
   utf32= (little_endian() ? &utf32le : &utf32be);
@@ -1199,14 +1214,14 @@ int run_tests_ex(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
     }
   }
 
-    fprintf(stdout, "Running tests in the client-side prepared statements mode...\n");
+  cleanup();
+
+  fprintf(stdout, "Running tests in the client-side prepared statements mode...\n");
   NoSsps = 1;
   int csps_fail = connect_and_run_tests(tests, ProvideWConnection);
   fprintf(stdout, "Tests %s in the client-side prepared statements mode!\n\n", csps_fail ? "failed" : "passed");
 
-    cleanup_start_time = time(NULL);
-    cleanup();
-    fprintf(stdout, "Time spent for cleanup %ld\n", time(NULL) - cleanup_start_time);
+  cleanup();
 
   fprintf(stdout, "Running tests in the server-side prepared statements mode...\n");
   NoSsps = 0;
