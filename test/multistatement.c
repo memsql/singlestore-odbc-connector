@@ -391,44 +391,48 @@ ODBC_TEST(diff_column_binding)
 
 ODBC_TEST(t_odbc159)
 {
-  unsigned int j= 0, ExpectedRows[]= {0, 0, 5};
-  SQLLEN Rows, ExpRowCount[]= {0, 0, 0};
-  SQLSMALLINT ColumnsCount, expCols[]= {0,0,16};
-  SQLRETURN rc;
+    unsigned int j= 0, ExpectedRows[]= {0, 0, 2};
+    SQLLEN Rows, ExpRowCount[]= {0, 0, 0};
+    SQLSMALLINT ColumnsCount, expCols[]= {0,0,16};
+    SQLRETURN rc;
+    OK_SIMPLE_STMT(Stmt,"DROP TABLE IF EXISTS _temp_odbc159_key;");
+    OK_SIMPLE_STMT(Stmt, "CREATE TABLE _temp_odbc159_key(a INT PRIMARY KEY);");
 
-  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS _temp_odbc159;\
+
+    OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS _temp_odbc159;\
                         CREATE TEMPORARY TABLE _temp_odbc159 AS SELECT * FROM INFORMATION_SCHEMA.STATISTICS;\
                         SELECT * FROM _temp_odbc159 LIMIT 5;");
 
-  do {
-    CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &Rows));
-    if (j == 1)
-    {
-      diag("Rows in created table: %lld\n", (long long)Rows);
-      ExpRowCount[2]= Rows < ExpRowCount[2] ? Rows : ExpRowCount[2];
-    }
-    else
-    {
-      is_num(Rows, ExpRowCount[j]);
-    }
-    
-    CHECK_STMT_RC(Stmt, SQLNumResultCols(Stmt, &ColumnsCount));
-    is_num(ColumnsCount, expCols[j]);
+    do {
+        CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &Rows));
+        if (j == 1)
+        {
+            diag("Rows in created table: %lld\n", (long long)Rows);
+            ExpRowCount[2]= Rows < ExpRowCount[2] ? Rows : ExpRowCount[2];
+        }
+        else
+        {
+            is_num(Rows, ExpRowCount[j]);
+        }
 
-    if (!iOdbc() || j != 2)
-    {
-      is_num(ma_print_result_getdata_ex(Stmt, FALSE), ExpectedRows[j]);
-    }
+        CHECK_STMT_RC(Stmt, SQLNumResultCols(Stmt, &ColumnsCount));
+        is_num(ColumnsCount, expCols[j]);
 
-    rc= SQLMoreResults(Stmt);
-    ++j;
-  } while (rc != SQL_NO_DATA);
+        if (!iOdbc() || j != 2)
+        {
+            is_num(ma_print_result_getdata_ex(Stmt, FALSE), ExpectedRows[j]);
+        }
 
-  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+        rc= SQLMoreResults(Stmt);
+        ++j;
+    } while (rc != SQL_NO_DATA);
 
-  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS _temp_odbc159");
+    CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
-  return OK;
+    OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS _temp_odbc159");
+    OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS _temp_odbc159_key;")
+
+    return OK;
 }
 
 
