@@ -1092,12 +1092,12 @@ int connect_and_run_tests(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
         buff_before_test= buff_pos;
 
         all_tests++;
-        if (tests->required_driver_type > -1 && tests->required_driver_type != unicode_driver) \
-        { \
-            printf("ok %d # SKIP This testcase is designed for %s drivers only\n", i+1, \
-                unicode_driver == 0 ? "Unicode" : "ANSI" ); \
+        if (tests->required_driver_type > -1 && tests->required_driver_type != unicode_driver)
+        {
+            printf("ok %d # SKIP This testcase is designed for %s drivers only\n", i,
+                unicode_driver == 0 ? "Unicode" : "ANSI" );
             rc = 1;
-        } \
+        }
         else {
             rc= tests->my_test();
         }
@@ -1144,46 +1144,45 @@ int connect_and_run_tests(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
 
 void cleanup()
 {
-    int CleanupSuccessful = 0;
-    fprintf(stdout, "Running cleanup...\n");
-    if (ODBC_Connect(&Env,&Connection,&Stmt) == FAIL)
+    time_t start_time = time(NULL);
+    const char *errorMessage = NULL;
+    char buff[1024];
+
+    printf(stdout, "Running cleanup...\n");
+
+    MYSQL* mysql = mysql_init(NULL);
+    if (!mysql)
     {
-        odbc_print_error(SQL_HANDLE_DBC, Connection);
+        errorMessage = "failed to init the connection";
         goto end;
     }
-    if (!SQL_SUCCEEDED(SQLTables(Stmt, my_schema, SQL_NTS, NULL, 0, NULL, 0, NULL, 0)))
+    if (!mysql_real_connect(mysql, (const char *)my_servername, (const char *)my_uid, (const char *)my_pwd, NULL, my_port, NULL, 0))
     {
-        odbc_print_error(SQL_HANDLE_STMT, Stmt);
+        errorMessage = mysql_error(mysql);
+        goto end;
+    }
+    sprintf(buff, "DROP DATABASE IF EXISTS %s", my_schema);
+    if (mysql_query(mysql, buff))
+    {
+        errorMessage = mysql_error(mysql);
+        goto end;
+    }
+    sprintf(buff, "CREATE DATABASE %s", my_schema);
+    if (mysql_query(mysql, buff))
+    {
+        errorMessage = mysql_error(mysql);
         goto end;
     }
 
-    SQLHSTMT TruncStmt;
-    if (!SQL_SUCCEEDED(SQLAllocHandle(SQL_HANDLE_STMT, Connection, &TruncStmt)))
-    {
-        odbc_print_error(SQL_HANDLE_DBC, Connection);
-        goto end;
-    }
-
-    char TruncateStmt[1024];
-    char CurrentTable[512];
-    SQLLEN ctLen;
-    while(SQL_SUCCEEDED(SQLFetch(Stmt)))
-    {
-        if (SQL_SUCCEEDED(SQLGetData(Stmt, 3, SQL_C_CHAR, CurrentTable, sizeof(CurrentTable), &ctLen)))
-        {
-            _snprintf(TruncateStmt, 1024, "TRUNCATE TABLE %s", CurrentTable);
-            if (!SQL_SUCCEEDED(SQLExecDirect(TruncStmt, (SQLCHAR*)TruncateStmt, SQL_NTS)))
-            {
-                odbc_print_error(SQL_HANDLE_STMT, TruncStmt);
-            }
-        }
-        SQLFreeStmt(TruncStmt, SQL_CLOSE);
-    }
-    CleanupSuccessful = 1;
-    SQLFreeStmt(TruncStmt, SQL_DROP);
 end:
-    ODBC_Disconnect(Env, Connection, Stmt);
-    fprintf(stdout, CleanupSuccessful ? "Cleanup finished successfully!\n\n" : "Cleanup failed! Continuing execution...\n\n");
+    mysql_close(mysql);
+    if (errorMessage)
+    {
+        printf("Cleanup failed: %s\n\n", errorMessage);
+    } else
+    {
+        printf("Cleanup finished successfully in %ld seconds\n\n", time(NULL) - start_time);
+    }
 }
 
 int run_tests_ex(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
@@ -1223,6 +1222,8 @@ int run_tests_ex(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
     }
   }
 
+  cleanup();
+
   fprintf(stdout, "Running tests in the client-side prepared statements mode...\n");
   NoSsps = 1;
   int csps_fail = connect_and_run_tests(tests, ProvideWConnection);
@@ -1234,8 +1235,6 @@ int run_tests_ex(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
   NoSsps = 0;
   int ssps_fail = connect_and_run_tests(tests, ProvideWConnection);
   fprintf(stdout, "Tests %s in the server-side prepared statements mode!\n\n", ssps_fail ? "failed" : "passed");
-
-  cleanup();
 
   return csps_fail || ssps_fail;
 }
