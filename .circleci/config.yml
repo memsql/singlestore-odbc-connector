@@ -40,7 +40,6 @@ commands:
           name: Setup Machine
           command: |
             brew update
-            sudo chown -R $(whoami) /usr/local/Cellar/nghttp2/1.43.0
             brew install openssl@1.1
             brew install curl
             brew install libiodbc
