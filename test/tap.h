@@ -1092,12 +1092,12 @@ int connect_and_run_tests(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
         buff_before_test= buff_pos;
 
         all_tests++;
-        if (tests->required_driver_type > -1 && tests->required_driver_type != unicode_driver) \
-        { \
-            printf("ok %d # SKIP This testcase is designed for %s drivers only\n", i+1, \
-                unicode_driver == 0 ? "Unicode" : "ANSI" ); \
+        if (tests->required_driver_type > -1 && tests->required_driver_type != unicode_driver)
+        {
+            printf("ok %d # SKIP This testcase is designed for %s drivers only\n", i,
+                unicode_driver == 0 ? "Unicode" : "ANSI" );
             rc = 1;
-        } \
+        }
         else {
             rc= tests->my_test();
         }
@@ -1146,40 +1146,44 @@ void cleanup()
 {
     time_t start_time = time(NULL);
     printf(stdout, "Running cleanup...\n");
-    int CleanupSuccessful = 0;
+    const char *errorMessage = NULL;
 
     MYSQL* mysql = mysql_init(NULL);
     if (!mysql)
     {
+        errorMessage = "failed to init the connection";
         goto end;
     }
     if (!mysql_real_connect(mysql, (const char *)my_servername, (const char *)my_uid, (const char *)my_pwd, NULL, my_port, NULL, 0))
     {
-        // TODO printf error
+        errorMessage = mysql_error(mysql);
         goto end;
     }
     if (mysql_query(mysql, "DROP DATABASE IF EXISTS odbc_test"))
     {
-        // TODO printf error
+        errorMessage = mysql_error(mysql);
         goto end;
     }
     if (mysql_query(mysql, "CREATE DATABASE odbc_test"))
     {
-        // TODO printf error
+        errorMessage = mysql_error(mysql);
         goto end;
     }
 
-    CleanupSuccessful = 1;
 end:
     mysql_close(mysql);
-    // TODO: stop the test execution completely
-    fprintf(stdout, CleanupSuccessful ? "Cleanup finished successfully in %ld seconds!\n\n" : "Cleanup failed in %ld seconds! Continuing execution...\n\n", time(NULL) - start_time);
+    if (errorMessage)
+    {
+        printf("Cleanup failed: %s\n\n", errorMessage);
+    } else
+    {
+        printf("Cleanup finished successfully in %ld seconds\n\n", time(NULL) - start_time);
+    }
 }
 
 int run_tests_ex(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
 {
-
-    utf16= (little_endian() ? &utf16le : &utf16be);
+  utf16= (little_endian() ? &utf16le : &utf16be);
   utf32= (little_endian() ? &utf32le : &utf32be);
 
   if (sizeof(SQLWCHAR) == 4)
