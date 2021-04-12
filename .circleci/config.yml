@@ -40,13 +40,6 @@ commands:
           name: Setup Machine
           command: |
             brew update
-            brew install openssl@1.1
-            brew install curl
-            brew install libiodbc
-            sudo chown -R $(whoami) /usr/local/*
-            brew install mysql-client
-            brew install cmake
-            brew cleanup
 
 orbs:
   win: circleci/windows@2.4.0
