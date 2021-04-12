@@ -41,11 +41,17 @@ commands:
           command: |
             sudo chown -R $(whoami) $(brew --prefix)/*
             brew update
+            sudo chown -R $(whoami) $(brew --prefix)/*
             brew install openssl@1.1
+            sudo chown -R $(whoami) $(brew --prefix)/*
             brew install curl
+            sudo chown -R $(whoami) $(brew --prefix)/*
             brew install libiodbc
+            sudo chown -R $(whoami) $(brew --prefix)/*
             brew install mysql-client
+            sudo chown -R $(whoami) $(brew --prefix)/*
             brew install cmake
+            sudo chown -R $(whoami) $(brew --prefix)/*
             brew cleanup
 
 orbs:
