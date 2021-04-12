@@ -401,7 +401,7 @@ ODBC_TEST(t_odbc159)
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS _temp_odbc159;\
                         CREATE TEMPORARY TABLE _temp_odbc159 AS SELECT * FROM INFORMATION_SCHEMA.STATISTICS;\
-                        SELECT * FROM _temp_odbc159 LIMIT 5;");
+                        SELECT * FROM _temp_odbc159 LIMIT 2;");
 
   do {
     CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &Rows));
