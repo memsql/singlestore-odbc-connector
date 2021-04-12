@@ -1412,9 +1412,17 @@ SQLRETURN MADB_InsertParam(MADB_Stmt* Stmt, MADB_DescRecord* ApdRecord, MADB_Des
                     BOOL isTime;
 
                     /* Enforcing constraints on date/time values */
-                    RETURN_ERROR_OR_CONTINUE(MADB_Str2Ts(DataPtr, Length, &Tm, FALSE, &Stmt->Error, &isTime));
+                    SQLRETURN rc = MADB_Str2Ts(DataPtr, Length, &Tm, FALSE, &Stmt->Error, &isTime);
+                    if (!SQL_SUCCEEDED(rc)) {
+                        MADB_DynstrFree(&data);
+                        return rc;
+                    }
                     MADB_CopyMadbTimeToOdbcTs(&Tm, &Ts);
-                    RETURN_ERROR_OR_CONTINUE(MADB_TsConversionIsPossible(&Ts, IpdRecord->ConciseType, &Stmt->Error, MADB_ERR_22018, isTime));
+                    rc = MADB_TsConversionIsPossible(&Ts, IpdRecord->ConciseType, &Stmt->Error, MADB_ERR_22018, isTime);
+                    if (!SQL_SUCCEEDED(rc)) {
+                        MADB_DynstrFree(&data);
+                        return rc;
+                    }
                     // if everything is ok, fall below and append a char* DataPtr.
                 }
                 default:

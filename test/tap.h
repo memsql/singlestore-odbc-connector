@@ -1100,7 +1100,7 @@ int connect_and_run_tests(MA_ODBC_TESTS *tests, BOOL ProvideWConnection, BOOL No
         } \
         else {
             if (tests->test_type & (NoSSPS ? CSPS_FAIL | CSPS_TO_FIX : SSPS_FAIL | SSPS_TO_FIX)) {
-                rc = NoSSPS ? CSPS_FAIL | CSPS_TO_FIX : SSPS_FAIL | SSPS_TO_FIX;
+                rc = NoSSPS ? tests->test_type & (CSPS_FAIL | CSPS_TO_FIX) : tests->test_type & (SSPS_FAIL | SSPS_TO_FIX);
             } else {
                 rc= tests->my_test();
             }
