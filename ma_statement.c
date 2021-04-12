@@ -5096,6 +5096,13 @@ SQLRETURN MADB_SetCursorName(MADB_Stmt *Stmt, char *Buffer, SQLINTEGER BufferLen
     MADB_SetError(&Stmt->Error, MADB_ERR_34000, NULL, 0);
     return SQL_ERROR;
   }
+  /* check if cursor name length is valid */
+  static const SQLSMALLINT MaxCursorLength = 18;
+  if (BufferLength > MaxCursorLength) {
+    MADB_SetError(&Stmt->Error, MADB_ERR_34000, "Cursor name exceeded maximal allowed length (18).", 0);
+    return SQL_ERROR;
+  }
+
   /* check if cursor name is unique */
   for (LStmt= Stmt->Connection->Stmts; LStmt; LStmt= LStmtNext)
   {
@@ -5103,7 +5110,8 @@ SQLRETURN MADB_SetCursorName(MADB_Stmt *Stmt, char *Buffer, SQLINTEGER BufferLen
     LStmtNext= LStmt->next;
 
     if (Stmt != (MADB_Stmt *)LStmt->data &&
-        Cursor->Name && strncmp(Cursor->Name, Buffer, BufferLength) == 0)
+        Cursor->Name && strlen(Cursor->Name) == BufferLength &&
+        strncmp(Cursor->Name, Buffer, BufferLength) == 0)
     {
       MADB_SetError(&Stmt->Error, MADB_ERR_3C000, NULL, 0);
       return SQL_ERROR;
