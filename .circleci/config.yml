@@ -40,6 +40,8 @@ commands:
           name: Setup Machine
           command: |
             brew update
+            sudo chown -R $(whoami) /usr/local/Cellar/openldap/2.4.58
+            sudo chown -R $(whoami) /usr/local/Cellar/rtmpdump/2.4+20151223_1
             brew install openssl@1.1
             brew install curl
             brew install libiodbc
