@@ -866,6 +866,10 @@ ODBC_TEST(t_cursor_name)
           "expected error on non-unique cursor names");
   CHECK_SQLSTATE(hstmt2, "3C000");
 
+  FAIL_IF(SQLSetCursorName(hstmt2, (SQLCHAR *)"cursorname1", SQL_NTS) != SQL_ERROR,
+          "expected error on non-unique cursor names");
+  CHECK_SQLSTATE(hstmt2, "3C000");
+
   FAIL_IF(SQLSetCursorName(hstmt2, (SQLCHAR *)"cursorNameIsTooLong", SQL_NTS) != SQL_ERROR,
           "expected error on cursor name longer than 18");
   CHECK_SQLSTATE(hstmt2, "34000");

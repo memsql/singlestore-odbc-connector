@@ -5085,21 +5085,30 @@ SQLRETURN MADB_SetCursorName(MADB_Stmt *Stmt, char *Buffer, SQLINTEGER BufferLen
   }
   if (BufferLength== SQL_NTS)
     BufferLength= (SQLINTEGER)strlen(Buffer);
-  if (BufferLength < 0)
+  if (BufferLength <= 0)
   {
     MADB_SetError(&Stmt->Error, MADB_ERR_HY090, NULL, 0);
     return SQL_ERROR;
   }
-  if ((BufferLength > 5 && strncmp(Buffer, "SQLCUR", 6) == 0) ||
-      (BufferLength > 6 && strncmp(Buffer, "SQL_CUR", 7) == 0))
+  /* since all cursor names are lowercase we should convert buffer to lowercase before checks */
+  char *cpBuffer = MADB_CALLOC(BufferLength);
+  int i = 0;
+  for (i = 0; i < BufferLength; i++) {
+    cpBuffer[i] = (char)tolower((int)Buffer[i]);
+  }
+
+  if ((BufferLength > 5 && strncmp(cpBuffer, "sqlcur", 6) == 0) ||
+      (BufferLength > 6 && strncmp(cpBuffer, "sql_cur", 7) == 0))
   {
     MADB_SetError(&Stmt->Error, MADB_ERR_34000, NULL, 0);
+    MADB_FREE(cpBuffer);
     return SQL_ERROR;
   }
   /* check if cursor name length is valid */
   static const SQLSMALLINT MaxCursorLength = 18;
   if (BufferLength > MaxCursorLength) {
     MADB_SetError(&Stmt->Error, MADB_ERR_34000, "Cursor name exceeded maximal allowed length (18).", 0);
+    MADB_FREE(cpBuffer);
     return SQL_ERROR;
   }
 
@@ -5109,17 +5118,29 @@ SQLRETURN MADB_SetCursorName(MADB_Stmt *Stmt, char *Buffer, SQLINTEGER BufferLen
     MADB_Cursor *Cursor= &((MADB_Stmt *)LStmt->data)->Cursor;
     LStmtNext= LStmt->next;
 
-    if (Stmt != (MADB_Stmt *)LStmt->data &&
-        Cursor->Name && strlen(Cursor->Name) == BufferLength &&
-        strncmp(Cursor->Name, Buffer, BufferLength) == 0)
+    if (Stmt == (MADB_Stmt *)LStmt->data ||
+        !Cursor->Name || strlen(Cursor->Name) != BufferLength)
+    {
+      continue;
+    }
+
+    char* cpName = MADB_CALLOC(strlen(Cursor->Name));
+    for (i = 0; i < strlen(Cursor->Name); i++) {
+      cpName[i] = (char)tolower((int)Cursor->Name[i]);
+    }
+    int checkResult = strncmp(cpName, cpBuffer, BufferLength) == 0;
+    free(cpName);
+    if (checkResult)
     {
       MADB_SetError(&Stmt->Error, MADB_ERR_3C000, NULL, 0);
+      MADB_FREE(cpBuffer);
       return SQL_ERROR;
     }
   }
   MADB_FREE(Stmt->Cursor.Name);
   Stmt->Cursor.Name= MADB_CALLOC(BufferLength + 1);
   MADB_SetString(0, Stmt->Cursor.Name, BufferLength + 1, Buffer, BufferLength, NULL);
+  MADB_FREE(cpBuffer);
   return SQL_SUCCESS;
 }
 /* }}} */
