@@ -750,69 +750,7 @@ ODBC_TEST(t_pos_datetime_delete1)
 }
 
 
-ODBC_TEST(t_getcursor)
-{
-  SQLRETURN rc;
-  SQLHSTMT hstmt1,hstmt2,hstmt3;
-  SQLCHAR curname[50];
-  SQLSMALLINT nlen;
-
-  rc = SQLAllocHandle(SQL_HANDLE_STMT,Connection,&hstmt1);
-  CHECK_DBC_RC(Connection, rc);
-  rc = SQLAllocHandle(SQL_HANDLE_STMT,Connection,&hstmt2);
-  CHECK_DBC_RC(Connection, rc);
-  rc = SQLAllocHandle(SQL_HANDLE_STMT,Connection,&hstmt3);
-  CHECK_DBC_RC(Connection, rc);
-
-  rc = SQLGetCursorName(hstmt1, curname, 50, &nlen);
-  if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
-  {
-    fprintf(stdout,"default cursor name  : %s(%d)\n", curname, nlen);
-    is_num(nlen, 8);
-    IS_STR(curname,"SQL_CUR0", 9);
-
-    rc = SQLGetCursorName(hstmt3, curname, 50, &nlen);
-    CHECK_STMT_RC(hstmt1, rc);
-    fprintf(stdout,"default cursor name  : %s(%d)\n", curname, nlen);
-
-    rc = SQLGetCursorName(hstmt1,curname, 4, &nlen);
-    FAIL_IF(rc != SQL_SUCCESS_WITH_INFO, "expected success with info");
-    fprintf(stdout,"truncated cursor name: %s(%d)\n", curname, nlen);
-    is_num(nlen, 8);
-    IS_STR(curname, "SQL", 4);
-
-    rc = SQLGetCursorName(hstmt1, curname, 0, &nlen);
-    FAIL_IF(rc != SQL_SUCCESS_WITH_INFO, "expected success with info");
-    fprintf(stdout, "untouched cursor name: %s(%d)\n", curname, nlen);
-    IS(nlen == 8);
-
-    FAIL_IF(SQLGetCursorName(hstmt1, curname, 8, &nlen) != SQL_SUCCESS_WITH_INFO, "success with info expected");
-    fprintf(stdout, "truncated cursor name: %s(%d)\n", curname, nlen);
-    is_num(nlen, 8);
-    IS_STR(curname, "SQL_CUR", 8);
-
-    rc = SQLGetCursorName(hstmt1,curname, 9, &nlen);
-    fprintf(stdout, "full cursor name     : %s(%d)\n", curname, nlen);
-    is_num(nlen, 8);
-    IS_STR(curname, "SQL_CUR0", 9);
-  }
-
-  rc = SQLSetCursorName(hstmt1, (SQLCHAR *)"venucur123", 7);
-  CHECK_STMT_RC(hstmt1, rc);
-
-  rc = SQLGetCursorName(hstmt1, curname, 8, &nlen);
-  CHECK_STMT_RC(hstmt1, rc);
-  is_num(nlen, 7);
-  IS_STR(curname, "venucur", 8);
-
-  rc = SQLFreeHandle(SQL_HANDLE_STMT, hstmt1);
-  CHECK_STMT_RC(hstmt1, rc);
-
-  return OK;
-}
-
-
-ODBC_TEST(t_getcursor1)
+ODBC_TEST(t_default_cursor)
 {
   SQLRETURN rc;
   SQLHSTMT hstmt1;
@@ -824,10 +762,11 @@ ODBC_TEST(t_getcursor1)
     rc = SQLAllocHandle(SQL_HANDLE_STMT,Connection,&hstmt1);
     CHECK_DBC_RC(Connection, rc);
 
-    rc = SQLGetCursorName(hstmt1,curname,50,&nlen);
-    if (rc != SQL_SUCCESS)
-      break;
+    CHECK_STMT_RC(hstmt1, SQLGetCursorName(hstmt1,curname,50,&nlen));
     fprintf(stdout,"%s(%d) \n",curname,nlen);
+    FAIL_IF((strncmp((char*)curname, "SQL_CUR", 7) != 0 && strncmp((char*)curname, "SQLCUR", 6) != 0),
+            "default name should start with SQL_CUR or SQLCUR");
+    FAIL_IF(nlen > 18, "default name should not exceed length of 18");
 
     rc = SQLFreeHandle(SQL_HANDLE_STMT,hstmt1);
     CHECK_STMT_RC(hstmt1,rc);
@@ -853,12 +792,28 @@ ODBC_TEST(t_cursor_name)
   CHECK_STMT_RC(hstmt1, SQLGetCursorName(hstmt1, curName, 18, &nLen));
   is_num(nLen, 11);
   IS_STR(curName, "cursorName1", 11);
+  FAIL_IF(SQLGetCursorName(hstmt1, curName, 7, &nLen) != SQL_SUCCESS_WITH_INFO,
+          "success with info expected for truncated cursor name");
+  is_num(nLen, 11);
+  IS_STR(curName, "cursor", 7);
+  // calling SQLGetCursorName with BufferLength == 0 should not change the value of CursorName
+  //
+  FAIL_IF(SQLGetCursorName(hstmt1, curName, 0, &nLen) != SQL_SUCCESS_WITH_INFO,
+          "success with info expected for truncated cursor name");
+  is_num(nLen, 11);
+  IS_STR(curName, "cursor", 7);
 
   FAIL_IF(SQLSetCursorName(hstmt2, (SQLCHAR *)"SQLCUR00000", SQL_NTS) != SQL_ERROR,
           "expected error on cursor name starting with SQLCUR");
   CHECK_SQLSTATE(hstmt2, "34000");
+  FAIL_IF(SQLSetCursorName(hstmt2, (SQLCHAR *)"sqlCUR00000", SQL_NTS) != SQL_ERROR,
+          "expected error on cursor name starting with SQLCUR");
+  CHECK_SQLSTATE(hstmt2, "34000");
 
   FAIL_IF(SQLSetCursorName(hstmt2, (SQLCHAR *)"SQL_CUR00000", SQL_NTS) != SQL_ERROR,
+          "expected error on cursor name starting with SQL_CUR");
+  CHECK_SQLSTATE(hstmt2, "34000");
+  FAIL_IF(SQLSetCursorName(hstmt2, (SQLCHAR *)"sql_cur00000", SQL_NTS) != SQL_ERROR,
           "expected error on cursor name starting with SQL_CUR");
   CHECK_SQLSTATE(hstmt2, "34000");
 
@@ -875,12 +830,12 @@ ODBC_TEST(t_cursor_name)
   CHECK_SQLSTATE(hstmt2, "34000");
 
   CHECK_STMT_RC(hstmt2, SQLSetCursorName(hstmt2, (SQLCHAR *)"cursorNameExactLen", SQL_NTS));
-  CHECK_STMT_RC(hstmt2, SQLGetCursorName(hstmt2, curName, 19, &nLen));
+  CHECK_STMT_RC(hstmt2, SQLGetCursorName(hstmt2, curName, 50, &nLen));
   is_num(nLen, 18);
   IS_STR(curName, "cursorNameExactLen", 18);
 
   CHECK_STMT_RC(hstmt2, SQLSetCursorName(hstmt2, (SQLCHAR *)"cursorName1", 10));
-  CHECK_STMT_RC(hstmt2, SQLGetCursorName(hstmt2, curName, 11, &nLen));
+  CHECK_STMT_RC(hstmt2, SQLGetCursorName(hstmt2, curName, 50, &nLen));
   is_num(nLen, 10);
   IS_STR(curName, "cursorName", 10);
 
@@ -901,19 +856,21 @@ ODBC_TEST(t_cursor_name)
           "expected error on renaming open cursor");
   CHECK_SQLSTATE(hstmt1, "24000");
 
+  CHECK_STMT_RC(hstmt1, SQLCloseCursor(hstmt1));
   // testing cursor name with spaces
   //
-  CHECK_STMT_RC(hstmt1, SQLCloseCursor(hstmt1));
   CHECK_STMT_RC(hstmt1, SQLSetCursorName(hstmt1, (SQLCHAR *)"modified name", SQL_NTS));
   CHECK_STMT_RC(hstmt1, SQLGetCursorName(hstmt1, curName, 14, &nLen));
   is_num(nLen, 13);
   IS_STR(curName, "modified name", 13);
+
   CHECK_STMT_RC(hstmt1, SQLExecDirect(hstmt1, (SQLCHAR *)"SELECT id, name FROM test_table ORDER BY id", SQL_NTS));
   CHECK_STMT_RC(hstmt1, SQLFetch(hstmt1));
   OK_SIMPLE_STMT(hstmt2, "DELETE FROM test_table WHERE CURRENT OF modified name");
 
-  // testing cursor name with reserved keywords
   CHECK_STMT_RC(hstmt1, SQLCloseCursor(hstmt1));
+  // testing cursor name with reserved keywords
+  //
   CHECK_STMT_RC(hstmt1, SQLSetCursorName(hstmt1, (SQLCHAR *)"order group", SQL_NTS));
   CHECK_STMT_RC(hstmt1, SQLGetCursorName(hstmt1, curName, 12, &nLen));
   is_num(nLen, 11);
@@ -922,17 +879,24 @@ ODBC_TEST(t_cursor_name)
   CHECK_STMT_RC(hstmt1, SQLFetch(hstmt1));
   OK_SIMPLE_STMT(hstmt2, "DELETE FROM test_table WHERE CURRENT OF order group");
   // testing case-insensitivity
+  //
   CHECK_STMT_RC(hstmt1, SQLFetch(hstmt1));
   OK_SIMPLE_STMT(hstmt2, "DELETE FROM test_table WHERE CURRENT OF ORDER GROUP");
 
   // until this point we should have deleted everything except the last row
+  //
   OK_SIMPLE_STMT(Stmt, "SELECT id, name FROM test_table ORDER BY id");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 4);
   IS_STR(my_fetch_str(Stmt, curName, 2), "name4", 5);
+  FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "eof expected");
 
   CHECK_STMT_RC(Stmt, SQLCloseCursor(Stmt));
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS test_table");
+
+  CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+  CHECK_STMT_RC(hstmt2, SQLFreeStmt(hstmt2, SQL_CLOSE));
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   return OK;
 }
@@ -3563,8 +3527,7 @@ MA_ODBC_TESTS my_tests[]=
   {t_pos_column_ignore, "t_pos_column_ignore",     TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
   {t_pos_datetime_delete, "t_pos_datetime_delete",     NORMAL, ALL_DRIVERS},
   {t_pos_datetime_delete1, "t_pos_datetime_delete1",     NORMAL, ALL_DRIVERS},
-  {t_getcursor, "t_getcursor",     NORMAL, ALL_DRIVERS},
-  {t_getcursor1, "t_getcursor1",     NORMAL, ALL_DRIVERS},
+  {t_default_cursor, "t_default_cursor",     NORMAL, ALL_DRIVERS},
   {t_cursor_name, "t_cursor_name",     NORMAL, ALL_DRIVERS},
   {t_acc_crash, "t_acc_crash",     TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
   {tmysql_setpos_del, "tmysql_setpos_del",     NORMAL, ALL_DRIVERS},
