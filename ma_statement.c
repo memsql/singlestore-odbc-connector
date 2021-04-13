@@ -5089,7 +5089,13 @@ SQLRETURN MADB_SetCursorName(MADB_Stmt *Stmt, char *Buffer, SQLINTEGER BufferLen
     MADB_SetError(&Stmt->Error, MADB_ERR_HY090, NULL, 0);
     return SQL_ERROR;
   }
-  if (isspace((int)Buffer[0]) || isspace((int)Buffer[BufferLength - 1])) {
+  if (BufferLength == 0)
+  {
+    MADB_SetError(&Stmt->Error, MADB_ERR_34000, "Empty cursor name is not allowed.", 0);
+    return SQL_ERROR;
+  }
+  if (isspace((int)Buffer[0]) || isspace((int)Buffer[BufferLength - 1]))
+  {
     MADB_SetError(&Stmt->Error, MADB_ERR_34000, "Cursor name with leading or trailing spaces is not allowed.", 0);
     return SQL_ERROR;
   }
