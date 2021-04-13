@@ -43,6 +43,8 @@ commands:
             brew install openssl@1.1
             brew install curl
             brew install libiodbc
+            brew install mysql-client
+            brew install cmake
             
 orbs:
   win: circleci/windows@2.4.0
