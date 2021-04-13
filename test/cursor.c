@@ -817,6 +817,13 @@ ODBC_TEST(t_cursor_name)
           "expected error on cursor name starting with SQL_CUR");
   CHECK_SQLSTATE(hstmt2, "34000");
 
+  FAIL_IF(SQLSetCursorName(hstmt2, (SQLCHAR *)" name", SQL_NTS) != SQL_ERROR,
+          "expected error on cursor name with leading spaces");
+  CHECK_SQLSTATE(hstmt2, "34000");
+  FAIL_IF(SQLSetCursorName(hstmt2, (SQLCHAR *)"name ", SQL_NTS) != SQL_ERROR,
+          "expected error on cursor name with trailing spaces");
+  CHECK_SQLSTATE(hstmt2, "34000");
+
   FAIL_IF(SQLSetCursorName(hstmt2, (SQLCHAR *)"cursorName1", SQL_NTS) != SQL_ERROR,
           "expected error on non-unique cursor names");
   CHECK_SQLSTATE(hstmt2, "3C000");
