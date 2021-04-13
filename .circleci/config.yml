@@ -294,8 +294,6 @@ workflows:
   test:
     jobs:
       - build-linux-in-docker:
-          requires:
-            - build-debian-9-unicode-RelWithDebInfo
           name: build-debian-9-ansi-<< matrix.build_type >>
           matrix:
             parameters:
