@@ -40,7 +40,10 @@ commands:
           name: Setup Machine
           command: |
             brew update
-
+            brew install openssl@1.1
+            brew install curl
+            brew install libiodbc
+            
 orbs:
   win: circleci/windows@2.4.0
 
