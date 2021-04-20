@@ -700,12 +700,15 @@ do {\
 #define CHECK_ENV_RC(env,rc) CHECK_HANDLE_RC(SQL_HANDLE_ENV,env,rc)
 #define CHECK_DESC_RC(desc,rc) CHECK_HANDLE_RC(SQL_HANDLE_DESC,desc,rc)
 
-#define FAIL_IF_NE_INT(exp,got, message)\
-  if ((exp) != (got))\
+#define FAIL_IF_NE_INT(got, exp, message) \
+do {\
+  long long local_exp = (exp), local_got = (got);\
+  if (local_exp != local_got)\
     {\
-        fprintf(stdout, "%s(exp: %d, got: %d) (File: %s Line: %d)\n", message, exp, got, __FILE__, __LINE__);\
+        fprintf(stdout, "%s(exp: %d, got: %d) (File: %s Line: %d)\n", message, local_exp, local_got, __FILE__, __LINE__);\
         return FAIL;\
-    }
+    }\
+} while(0)
 
 #define FAIL_IF_NE_STR(exp,got,message)\
   if (_stricmp((exp), (got)) != 0)\
