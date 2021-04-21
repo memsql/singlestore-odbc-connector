@@ -3538,8 +3538,8 @@ MA_ODBC_TESTS my_tests[]=
   {t_pos_column_ignore, "t_pos_column_ignore",     TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
   {t_pos_datetime_delete, "t_pos_datetime_delete",     NORMAL, ALL_DRIVERS},
   {t_pos_datetime_delete1, "t_pos_datetime_delete1",     NORMAL, ALL_DRIVERS},
-  {t_default_cursor, "t_default_cursor",     NORMAL, ALL_DRIVERS},
-  {t_cursor_name, "t_cursor_name",     NORMAL, ALL_DRIVERS},
+  {t_default_cursor, "t_default_cursor",     NORMAL, ANSI_DRIVER},
+  {t_cursor_name, "t_cursor_name",     NORMAL, ANSI_DRIVER},
   {t_acc_crash, "t_acc_crash",     TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
   {tmysql_setpos_del, "tmysql_setpos_del",     NORMAL, ALL_DRIVERS},
   {tmysql_setpos_del1, "tmysql_setpos_del1",     NORMAL, ALL_DRIVERS},
