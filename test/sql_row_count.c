@@ -39,9 +39,9 @@ ODBC_TEST(t_sqlrowcnt_select) {
 
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
-    OK_SIMPLE_STMT(Stmt1, "DROP TABLE IF EXISTS test_rowcount_values;");
-    OK_SIMPLE_STMT(Stmt1, "CREATE TABLE test_rowcount_values (id INT, text VARCHAR(16));");
-    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (1, 'a'), (2, 'b');");
+    OK_SIMPLE_STMT(Stmt1, "DROP TABLE IF EXISTS test_rowcount_values");
+    OK_SIMPLE_STMT(Stmt1, "CREATE TABLE test_rowcount_values (id INT, text VARCHAR(16))");
+    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (1, 'a'), (2, 'b')");
     OK_SIMPLE_STMT(Stmt1, "SELECT * FROM test_rowcount_values");
     CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
 
@@ -73,14 +73,14 @@ ODBC_TEST(t_sqlrowcnt_select_nocache) {
 
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
-    OK_SIMPLE_STMT(Stmt1, "DROP TABLE IF EXISTS test_rowcount_values;");
-    OK_SIMPLE_STMT(Stmt1, "CREATE TABLE test_rowcount_values (id INT, text VARCHAR(16));");
-    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (1, 'a'), (2, 'b');");
+    OK_SIMPLE_STMT(Stmt1, "DROP TABLE IF EXISTS test_rowcount_values");
+    OK_SIMPLE_STMT(Stmt1, "CREATE TABLE test_rowcount_values (id INT, text VARCHAR(16))");
+    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (1, 'a'), (2, 'b')");
     OK_SIMPLE_STMT(Stmt1, "SELECT * FROM test_rowcount_values");
     CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
 
-    // We return 0 since we don't cache result
-    FAIL_IF_NE_INT(rc, -1, "SQLRowCount should return zero for select statement with no cache");
+    // We return -1 since we don't cache result
+    FAIL_IF_NE_INT(rc, -1, "SQLRowCount should return -1 for select statement with no cache");
 
     CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
     CHECK_DBC_RC(Connection1, SQLDisconnect(Connection1));
@@ -108,16 +108,16 @@ ODBC_TEST(t_sqlrowcnt_update) {
 
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
-    OK_SIMPLE_STMT(Stmt1, "DROP TABLE IF EXISTS test_rowcount_values;");
-    OK_SIMPLE_STMT(Stmt1, "CREATE TABLE test_rowcount_values (id INT, text VARCHAR(16));");
-    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (1, 'a'), (2, 'b'), (3, 'a');");
+    OK_SIMPLE_STMT(Stmt1, "DROP TABLE IF EXISTS test_rowcount_values");
+    OK_SIMPLE_STMT(Stmt1, "CREATE TABLE test_rowcount_values (id INT, text VARCHAR(16))");
+    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (1, 'a'), (2, 'b'), (3, 'a')");
 
-    OK_SIMPLE_STMT(Stmt1, "UPDATE test_rowcount_values SET id=4 WHERE text='a';");
+    OK_SIMPLE_STMT(Stmt1, "UPDATE test_rowcount_values SET id=4 WHERE text='a'");
     CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
 
     FAIL_IF_NE_INT(rc, 2, "SQLRowCount should return updated rows count for update query");
 
-    OK_SIMPLE_STMT(Stmt1, "UPDATE test_rowcount_values SET id=5 WHERE text='c';");
+    OK_SIMPLE_STMT(Stmt1, "UPDATE test_rowcount_values SET id=5 WHERE text='c'");
     CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
 
     FAIL_IF_NE_INT(rc, 0, "SQLRowCount should return updated rows count for update query");
@@ -139,8 +139,6 @@ ODBC_TEST(t_sqlrowcnt_insert) {
     SQLHANDLE henv1, Connection1, Stmt1;
     SQLLEN rc;
     SQLCHAR conn[512];
-    SQLINTEGER ids[INSERT_CNT] = {7, 8, 9};
-    SQLCHAR texts[INSERT_CNT][16] = {"a", "b", "c"};
 
     sprintf((char *) conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s",
             my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr);
@@ -155,42 +153,28 @@ ODBC_TEST(t_sqlrowcnt_insert) {
 
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
-    OK_SIMPLE_STMT(Stmt1, "DROP TABLE IF EXISTS test_rowcount_values;");
-    OK_SIMPLE_STMT(Stmt1, "CREATE TABLE test_rowcount_values (id INT PRIMARY KEY, text VARCHAR(16));");
-    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (1, 'a'), (2, 'b');");
+    OK_SIMPLE_STMT(Stmt1, "DROP TABLE IF EXISTS test_rowcount_values");
+    OK_SIMPLE_STMT(Stmt1, "CREATE TABLE test_rowcount_values (id INT PRIMARY KEY, text VARCHAR(16))");
+    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (1, 'a'), (2, 'b')");
 
-    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (3, 'c'), (4, 'd');");
+    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (3, 'c'), (4, 'd')");
     CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
 
     FAIL_IF_NE_INT(rc, 2 * UPDATE_NEW_ROW_INSERTED, "SQLRowCount should return inserted rows count for insert query");
 
-    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (2, 'b'), (5, 'a') ON DUPLICATE KEY UPDATE text = VALUES(text);");
+    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (2, 'b'), (5, 'a') ON DUPLICATE KEY UPDATE text = VALUES(text)");
     CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
 
     // SingleStore return 0 if column value is not changed
     FAIL_IF_NE_INT(rc, UPDATE_NO_EXISTING_ROW_CHANGED  + UPDATE_NEW_ROW_INSERTED,
                    "SQLRowCount should return inserted rows count for insert query when column is not changed");
 
-    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (2, 'c'), (6, 'a') ON DUPLICATE KEY UPDATE text = VALUES(text);");
+    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (2, 'c'), (6, 'a') ON DUPLICATE KEY UPDATE text = VALUES(text)");
     CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
 
     // SingleStore return 2 if column value is not updated
     FAIL_IF_NE_INT(rc, UPDATE_EXISTING_ROW_UPDATED  + UPDATE_NEW_ROW_INSERTED,
                    "SQLRowCount should return inserted rows count for insert query when column is updated");
-
-    SQLCHAR *insStmt = "INSERT INTO test_rowcount_values VALUES (?, ?);";
-    CHECK_STMT_RC(Stmt1, SQLPrepare(Stmt1, insStmt, strlen(insStmt)));
-
-    CHECK_STMT_RC(Stmt1, SQLBindParameter(Stmt1, 1, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 0, 0, ids, 0, NULL));
-    CHECK_STMT_RC(Stmt1, SQLBindParameter(Stmt1, 2, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR, 16, 0, texts, sizeof(texts[0]), NULL));
-
-    CHECK_STMT_RC(Stmt1, SQLExecute(Stmt1));
-
-    CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
-
-    // We only return row count for last statement
-    FAIL_IF_NE_INT(rc, 1, "SQLRowCount should return last statement inserted rows count for bulk insert query");
-
 
     CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
     CHECK_DBC_RC(Connection1, SQLDisconnect(Connection1));
@@ -293,6 +277,8 @@ ODBC_TEST(t_sqlrowcnt_batch) {
     SQLHANDLE henv1, Connection1, Stmt1;
     SQLLEN rc;
     SQLCHAR conn[512];
+    SQLINTEGER ids[INSERT_CNT] = {4, 5, 6};
+    SQLCHAR texts[INSERT_CNT][16] = {"a", "b", "c"};
 
     sprintf((char *) conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s;OPTIONS=%lu",
             my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr, my_options);
@@ -307,12 +293,12 @@ ODBC_TEST(t_sqlrowcnt_batch) {
 
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
-    OK_SIMPLE_STMT(Stmt1, "DROP TABLE IF EXISTS test_rowcount_values;");
-    OK_SIMPLE_STMT(Stmt1, "CREATE TABLE test_rowcount_values (id INT PRIMARY KEY, text VARCHAR(16));");
+    OK_SIMPLE_STMT(Stmt1, "DROP TABLE IF EXISTS test_rowcount_values");
+    OK_SIMPLE_STMT(Stmt1, "CREATE TABLE test_rowcount_values (id INT PRIMARY KEY, text VARCHAR(16))");
 
     SQLCHAR *multiStmt = "INSERT INTO test_rowcount_values VALUES (1, 'a');"
                          "INSERT INTO test_rowcount_values VALUES (2, 'b');"
-                         "INSERT INTO test_rowcount_values VALUES (3, 'c');";
+                         "INSERT INTO test_rowcount_values VALUES (3, 'c')";
 
     CHECK_STMT_RC(Stmt1, SQLPrepare(Stmt1, multiStmt, strlen(multiStmt)));
     CHECK_STMT_RC(Stmt1, SQLExecute(Stmt1));
@@ -320,6 +306,32 @@ ODBC_TEST(t_sqlrowcnt_batch) {
 
     // We only return row count for last statement
     FAIL_IF_NE_INT(rc, 1, "SQLRowCount should return last statement inserted rows count for explicit batch insert");
+
+    SQLCHAR *insStmt = "INSERT INTO test_rowcount_values VALUES (?, ?)";
+    CHECK_STMT_RC(Stmt1, SQLPrepare(Stmt1, insStmt, strlen(insStmt)));
+
+    CHECK_STMT_RC(Stmt1, SQLBindParameter(Stmt1, 1, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 0, 0, ids, 0, NULL));
+    CHECK_STMT_RC(Stmt1, SQLBindParameter(Stmt1, 2, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR, 16, 0, texts, sizeof(texts[0]), NULL));
+
+    CHECK_STMT_RC(Stmt1, SQLExecute(Stmt1));
+
+    CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
+
+    // We only return row count for last statement
+    FAIL_IF_NE_INT(rc, 1, "SQLRowCount should return last statement inserted rows count for bulk insert query");
+
+    OK_SIMPLE_STMT(Stmt1, "DROP PROCEDURE IF EXISTS t_sqlrowcnt_batch")
+    OK_SIMPLE_STMT(Stmt1, " CREATE PROCEDURE t_sqlrowcnt_batch () AS BEGIN "
+                          "INSERT INTO test_rowcount_values VALUES (7, 'd');"
+                          "INSERT INTO test_rowcount_values VALUES (8, 'e');"
+                          "END;"
+                  );
+    OK_SIMPLE_STMT(Stmt1, "CALL t_sqlrowcnt_batch();")
+
+    CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
+
+    // We don't support row count for procedures
+    FAIL_IF_NE_INT(rc, 0, "SQLRowCount should return 0 for stored procedures");
 
     CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
     CHECK_DBC_RC(Connection1, SQLDisconnect(Connection1));
