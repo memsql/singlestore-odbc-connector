@@ -750,7 +750,7 @@ ODBC_TEST(t_pos_datetime_delete1)
 }
 
 
-ODBC_TEST(t_default_cursor_ansi)
+ODBC_TEST(t_default_cursor)
 {
   SQLRETURN rc;
   SQLHSTMT hstmt1;
@@ -761,36 +761,10 @@ ODBC_TEST(t_default_cursor_ansi)
   {
     rc = SQLAllocHandle(SQL_HANDLE_STMT,Connection,&hstmt1);
     CHECK_DBC_RC(Connection, rc);
-
+    CHECK_STMT_RC(hstmt1, SQLExecDirect(hstmt1, (SQLCHAR*)"SELECT 1", SQL_NTS));
     CHECK_STMT_RC(hstmt1, SQLGetCursorName(hstmt1,curname,50,&nlen));
     fprintf(stdout,"%s(%d) \n",curname,nlen);
     FAIL_IF((strncmp((char*)curname, "SQL_CUR", 7) != 0 && strncmp((char*)curname, "SQLCUR", 6) != 0),
-            "default name should start with SQL_CUR or SQLCUR");
-    FAIL_IF(nlen > 18, "default name should not exceed length of 18");
-
-    rc = SQLFreeHandle(SQL_HANDLE_STMT,hstmt1);
-    CHECK_STMT_RC(hstmt1,rc);
-  }
-
-  return OK;
-}
-
-
-ODBC_TEST(t_default_cursor_unicode)
-{
-  SQLRETURN rc;
-  SQLHSTMT hstmt1;
-  SQLWCHAR curname[50];
-  SQLSMALLINT nlen,index;
-
-  for(index=0; index < 100; index++)
-  {
-    rc = SQLAllocHandle(SQL_HANDLE_STMT,Connection,&hstmt1);
-    CHECK_DBC_RC(Connection, rc);
-
-    CHECK_STMT_RC(hstmt1, SQLGetCursorNameW(hstmt1,curname,50,&nlen));
-    fwprintf(stdout,L"%s(%d) \n",curname,nlen);
-    FAIL_IF((wcsncmp((wchar_t*)curname, L"SQL_CUR", 7) != 0 && (wcsncmp((wchar_t*)curname, L"SQLCUR", 6) != 0)),
             "default name should start with SQL_CUR or SQLCUR");
     FAIL_IF(nlen > 18, "default name should not exceed length of 18");
 
@@ -3564,8 +3538,7 @@ MA_ODBC_TESTS my_tests[]=
   {t_pos_column_ignore, "t_pos_column_ignore",     TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
   {t_pos_datetime_delete, "t_pos_datetime_delete",     NORMAL, ALL_DRIVERS},
   {t_pos_datetime_delete1, "t_pos_datetime_delete1",     NORMAL, ALL_DRIVERS},
-  {t_default_cursor_ansi, "t_default_cursor_ansi",     NORMAL, ANSI_DRIVER},
-  {t_default_cursor_unicode, "t_default_cursor_unicode",     NORMAL, UNICODE_DRIVER},
+  {t_default_cursor, "t_default_cursor",     NORMAL, ALL_DRIVERS},
   {t_cursor_name, "t_cursor_name",     NORMAL, ALL_DRIVERS},
   {t_acc_crash, "t_acc_crash",     TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
   {tmysql_setpos_del, "tmysql_setpos_del",     NORMAL, ALL_DRIVERS},
