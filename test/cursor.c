@@ -757,6 +757,10 @@ ODBC_TEST(t_default_cursor)
   SQLCHAR curname[50];
   SQLSMALLINT nlen,index;
 
+  SQLINTEGER  OdbcVersion;
+  CHECK_STMT_RC(Env, SQLGetEnvAttr(Env,SQL_ATTR_ODBC_VERSION,&OdbcVersion,0,NULL));
+  fprintf(stdout, "Driver version: %d", OdbcVersion);
+
   for(index=0; index < 100; index++)
   {
     rc = SQLAllocHandle(SQL_HANDLE_STMT,Connection,&hstmt1);
