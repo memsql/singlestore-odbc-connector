@@ -819,6 +819,7 @@ ODBC_TEST(t_cursor_name)
   SQLCHAR curName[200];
   char nameToSet[64 * 3 + 3];
   SQLSMALLINT nLen;
+  int maxCursorNameLength = 64 * 3 + 1;
 
   CHECK_DBC_RC(Connection, SQLAllocHandle(SQL_HANDLE_STMT,Connection,&hstmt1));
   CHECK_DBC_RC(Connection, SQLAllocHandle(SQL_HANDLE_STMT,Connection,&hstmt2));
@@ -962,6 +963,7 @@ ODBC_TEST(t_cursor_name_unicode)
   SQLWCHAR curName[200];
   char nameToSet[64 * 3 + 3];
   SQLSMALLINT nLen;
+  int maxCursorNameLength = 64 * 3 + 1;
 
   CHECK_DBC_RC(Connection, SQLAllocHandle(SQL_HANDLE_STMT,Connection,&hstmt1));
   CHECK_DBC_RC(Connection, SQLAllocHandle(SQL_HANDLE_STMT,Connection,&hstmt2));
