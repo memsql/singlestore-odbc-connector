@@ -20,7 +20,7 @@ ENABLE_TESTING()
 SET (ODBC_TESTS
         "basic" "types" "blob" "desc" "info" "tran" "catalog1" "catalog2"
         "use_result" "scroll" "bulk" "prepare" "datetime" "keys"
-        "curext" "relative" "unicode" "cursor" "dyn_cursor"
+        "curext" "relative" "cursor" "dyn_cursor"
         "error" "escape_sequences" "param" "result1" "result2" "multistatement"
         "sqlcolumns" "sql_procedure_columns" "sqltypeinfo" "sql_special_columns" "client_side")
 SET(COMMON_TEST_SOURCES tap.h)
