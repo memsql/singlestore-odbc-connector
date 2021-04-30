@@ -754,12 +754,11 @@ ODBC_TEST(t_default_cursor)
 {
   SQLRETURN rc;
   SQLHSTMT hstmt1;
-  SQLCHAR curname[50];
+  SQLCHAR curname[200];
   SQLSMALLINT nlen,index;
 
   SQLINTEGER  OdbcVersion;
   CHECK_STMT_RC(Env, SQLGetEnvAttr(Env,SQL_ATTR_ODBC_VERSION,&OdbcVersion,0,NULL));
-  fprintf(stdout, "Driver version: %d", OdbcVersion);
 
   for(index=0; index < 100; index++)
   {
@@ -780,13 +779,44 @@ ODBC_TEST(t_default_cursor)
 }
 
 
+ODBC_TEST(t_default_cursor_unicode)
+{
+  {
+    SQLRETURN rc;
+    SQLHSTMT hstmt1;
+    SQLWCHAR curname[200];
+    SQLSMALLINT nlen,index;
+
+    SQLINTEGER  OdbcVersion;
+    CHECK_STMT_RC(Env, SQLGetEnvAttr(Env,SQL_ATTR_ODBC_VERSION,&OdbcVersion,0,NULL));
+
+    for(index=0; index < 100; index++)
+    {
+      rc = SQLAllocHandle(SQL_HANDLE_STMT,Connection,&hstmt1);
+      CHECK_DBC_RC(Connection, rc);
+      CHECK_STMT_RC(hstmt1, SQLExecDirect(hstmt1, (SQLCHAR*)"SELECT 1", SQL_NTS));
+      CHECK_STMT_RC(hstmt1, SQLGetCursorNameW(hstmt1,curname,50,&nlen));
+      printHex((char*)curname, nlen * sizeof(SQLWCHAR));
+      fprintf(stdout, "(%d)\n", nlen);
+      FAIL_IF((memcmp(curname, CW("SQL_CUR"), 7 * sizeof(SQLWCHAR)) != 0 &&
+                    memcmp(curname, CW("SQLCUR"), 6 * sizeof(SQLWCHAR)) != 0),
+              "default name should start with SQL_CUR or SQLCUR");
+      FAIL_IF(nlen > 18, "default name should not exceed length of 18");
+
+      rc = SQLFreeHandle(SQL_HANDLE_STMT,hstmt1);
+      CHECK_STMT_RC(hstmt1,rc);
+    }
+    return OK;
+  }
+}
+
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
 ODBC_TEST(t_cursor_name)
 {
   SQLRETURN rc;
   SQLHSTMT hstmt1,hstmt2;
-  SQLCHAR curName[50];
+  SQLCHAR curName[200];
   SQLSMALLINT nLen;
 
   CHECK_DBC_RC(Connection, SQLAllocHandle(SQL_HANDLE_STMT,Connection,&hstmt1));
@@ -840,14 +870,19 @@ ODBC_TEST(t_cursor_name)
           "expected error on non-unique cursor names");
   CHECK_SQLSTATE(hstmt2, "3C000");
 
-  FAIL_IF(SQLSetCursorName(hstmt2, (SQLCHAR *)"cursorNameIsTooLong", SQL_NTS) != SQL_ERROR,
-          "expected error on cursor name longer than 18");
+  int maxCursorNameLength = 64 * 3 + 1;
+  char nameToSet[maxCursorNameLength + 2];
+  memset(nameToSet, (int)('a'), maxCursorNameLength + 1);
+  nameToSet[maxCursorNameLength + 1] = '\0';
+  FAIL_IF(SQLSetCursorName(hstmt2, (SQLCHAR *)nameToSet, SQL_NTS) != SQL_ERROR,
+          "expected error on cursor name longer than max allowed name length");
   CHECK_SQLSTATE(hstmt2, "34000");
 
-  CHECK_STMT_RC(hstmt2, SQLSetCursorName(hstmt2, (SQLCHAR *)"cursorNameExactLen", SQL_NTS));
-  CHECK_STMT_RC(hstmt2, SQLGetCursorName(hstmt2, curName, 50, &nLen));
-  is_num(nLen, 18);
-  IS_STR(curName, "cursorNameExactLen", 18);
+  nameToSet[maxCursorNameLength] = '\0';
+  CHECK_STMT_RC(hstmt2, SQLSetCursorName(hstmt2, (SQLCHAR *)nameToSet, SQL_NTS));
+  CHECK_STMT_RC(hstmt2, SQLGetCursorName(hstmt2, curName, maxCursorNameLength + 1, &nLen));
+  is_num(nLen, maxCursorNameLength);
+  IS_STR(curName, nameToSet, maxCursorNameLength);
 
   CHECK_STMT_RC(hstmt2, SQLSetCursorName(hstmt2, (SQLCHAR *)"cursorName1", 10));
   CHECK_STMT_RC(hstmt2, SQLGetCursorName(hstmt2, curName, 50, &nLen));
@@ -859,9 +894,8 @@ ODBC_TEST(t_cursor_name)
   OK_SIMPLE_STMT(Stmt, "INSERT INTO test_table VALUES (0,'name0'),(1,'name1'),"
                        "(2,'name2'),(3,'name3'),(4,'name4')");
 
-  // at this point we have cursor over hstmt1 named cursorName1 and cursor over
-  // hstmt2 named cursorName
-  //
+  CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+  CHECK_STMT_RC(hstmt2, SQLFreeStmt(hstmt2, SQL_CLOSE));
 
   CHECK_STMT_RC(hstmt1, SQLExecDirect(hstmt1, (SQLCHAR *)"SELECT id, name FROM test_table ORDER BY id", SQL_NTS));
   CHECK_STMT_RC(hstmt1, SQLFetch(hstmt1));
@@ -911,6 +945,155 @@ ODBC_TEST(t_cursor_name)
 
   CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
   CHECK_STMT_RC(hstmt2, SQLFreeStmt(hstmt2, SQL_CLOSE));
+  rc = SQLFreeHandle(SQL_HANDLE_STMT,hstmt1);
+  rc = SQLFreeHandle(SQL_HANDLE_STMT,hstmt2);
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+
+  return OK;
+}
+#pragma clang diagnostic pop
+
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "hicpp-signed-bitwise"
+ODBC_TEST(t_cursor_name_unicode)
+{
+  SQLRETURN rc;
+  SQLHSTMT hstmt1,hstmt2;
+  SQLWCHAR curName[200];
+  SQLSMALLINT nLen;
+
+  CHECK_DBC_RC(Connection, SQLAllocHandle(SQL_HANDLE_STMT,Connection,&hstmt1));
+  CHECK_DBC_RC(Connection, SQLAllocHandle(SQL_HANDLE_STMT,Connection,&hstmt2));
+
+  CHECK_STMT_RC(hstmt1, SQLSetCursorNameW(hstmt1, CW("cursorName1"), 11));
+  CHECK_STMT_RC(hstmt1, SQLGetCursorNameW(hstmt1, curName, 18, &nLen));
+  is_num(nLen, 11);
+  IS_WSTR(curName, CW("cursorName1"), 11);
+  FAIL_IF(SQLGetCursorNameW(hstmt1, CW(curName), 7, &nLen) != SQL_SUCCESS_WITH_INFO,
+          "success with info expected for truncated cursor name");
+  is_num(nLen, 11);
+  IS_WSTR(curName, CW("cursor"), 6);
+  // calling SQLGetCursorName with BufferLength == 0 should not change the value of CursorName
+  //
+  FAIL_IF(SQLGetCursorNameW(hstmt1, curName, 0, &nLen) != SQL_SUCCESS_WITH_INFO,
+          "success with info expected for truncated cursor name");
+  is_num(nLen, 11);
+  IS_WSTR(curName, CW("cursor"), 6);
+
+  FAIL_IF(SQLSetCursorNameW(hstmt2, CW("SQLCUR00000"), SQL_NTS) != SQL_ERROR,
+          "expected error on cursor name starting with SQLCUR");
+  CHECK_SQLSTATE(hstmt2, "34000");
+  FAIL_IF(SQLSetCursorNameW(hstmt2, CW("sqlCUR00000"), SQL_NTS) != SQL_ERROR,
+          "expected error on cursor name starting with SQLCUR");
+  CHECK_SQLSTATE(hstmt2, "34000");
+
+  FAIL_IF(SQLSetCursorNameW(hstmt2, CW("SQL_CUR00000"), SQL_NTS) != SQL_ERROR,
+          "expected error on cursor name starting with SQL_CUR");
+  CHECK_SQLSTATE(hstmt2, "34000");
+  FAIL_IF(SQLSetCursorNameW(hstmt2, CW("sql_cur00000"), SQL_NTS) != SQL_ERROR,
+          "expected error on cursor name starting with SQL_CUR");
+  CHECK_SQLSTATE(hstmt2, "34000");
+
+  FAIL_IF(SQLSetCursorNameW(hstmt2, CW(" name"), SQL_NTS) != SQL_ERROR,
+          "expected error on cursor name with leading spaces");
+  CHECK_SQLSTATE(hstmt2, "34000");
+  FAIL_IF(SQLSetCursorNameW(hstmt2, CW("name "), SQL_NTS) != SQL_ERROR,
+          "expected error on cursor name with trailing spaces");
+  CHECK_SQLSTATE(hstmt2, "34000");
+
+  FAIL_IF(SQLSetCursorNameW(hstmt2, CW(""), SQL_NTS) != SQL_ERROR,
+          "expected error on empty cursor name");
+  CHECK_SQLSTATE(hstmt2, "34000");
+
+  FAIL_IF(SQLSetCursorNameW(hstmt2, CW("cursorName1"), SQL_NTS) != SQL_ERROR,
+          "expected error on non-unique cursor names");
+  CHECK_SQLSTATE(hstmt2, "3C000");
+
+  FAIL_IF(SQLSetCursorNameW(hstmt2, CW("cursorname1"), SQL_NTS) != SQL_ERROR,
+          "expected error on non-unique cursor names");
+  CHECK_SQLSTATE(hstmt2, "3C000");
+
+  int maxCursorNameLength = 64 * 3 + 1;
+  char nameToSet[maxCursorNameLength + 2];
+  memset(nameToSet, (int)('a'), maxCursorNameLength + 1);
+  nameToSet[maxCursorNameLength + 1] = '\0';
+  FAIL_IF(SQLSetCursorNameW(hstmt2, CW(nameToSet), SQL_NTS) != SQL_ERROR,
+          "expected error on cursor name longer than max allowed name length");
+  CHECK_SQLSTATE(hstmt2, "34000");
+
+  nameToSet[maxCursorNameLength] = '\0';
+  CHECK_STMT_RC(hstmt2, SQLSetCursorNameW(hstmt2, CW(nameToSet), SQL_NTS));
+  CHECK_STMT_RC(hstmt2, SQLGetCursorNameW(hstmt2, curName, maxCursorNameLength + 1, &nLen));
+  is_num(nLen, maxCursorNameLength);
+  IS_WSTR(curName, CW(nameToSet), maxCursorNameLength);
+
+  CHECK_STMT_RC(hstmt2, SQLSetCursorNameW(hstmt2, CW("cursorName1"), 10));
+  CHECK_STMT_RC(hstmt2, SQLGetCursorNameW(hstmt2, curName, 50, &nLen));
+  is_num(nLen, 10);
+  IS_WSTR(curName, CW("cursorName"), 10);
+
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS test_table");
+  OK_SIMPLE_STMT(Stmt, "CREATE TABLE test_table (id INT, name VARCHAR(20))");
+  OK_SIMPLE_STMT(Stmt, "INSERT INTO test_table VALUES (0,'name0'),(1,'name1'),"
+                       "(2,'name2'),(3,'name3'),(4,'name4')");
+
+  // at this point we have cursor over hstmt1 named cursorName1 and cursor over
+  // hstmt2 named cursorName
+  //
+  CHECK_STMT_RC(hstmt2, SQLFreeStmt(hstmt2, SQL_CLOSE));
+
+  CHECK_STMT_RC(hstmt1, SQLExecDirect(hstmt1, (SQLCHAR *)"SELECT id, name FROM test_table ORDER BY id", SQL_NTS));
+  CHECK_STMT_RC(hstmt1, SQLFetch(hstmt1));
+  OK_SIMPLE_STMT(hstmt2, "DELETE FROM test_table WHERE CURRENT OF cursorName1");
+
+  FAIL_IF(SQLSetCursorNameW(hstmt1, CW("modifiedName"), SQL_NTS) != SQL_ERROR,
+          "expected error on renaming open cursor");
+  CHECK_SQLSTATE(hstmt1, "24000");
+
+  CHECK_STMT_RC(hstmt1, SQLCloseCursor(hstmt1));
+  // testing cursor name with spaces
+  //
+  CHECK_STMT_RC(hstmt1, SQLSetCursorNameW(hstmt1, CW("modified name"), SQL_NTS));
+  CHECK_STMT_RC(hstmt1, SQLGetCursorNameW(hstmt1, curName, 14, &nLen));
+  is_num(nLen, 13);
+  IS_WSTR(curName, CW("modified name"), 13);
+
+  CHECK_STMT_RC(hstmt1, SQLExecDirect(hstmt1, (SQLCHAR *)"SELECT id, name FROM test_table ORDER BY id", SQL_NTS));
+  CHECK_STMT_RC(hstmt1, SQLFetch(hstmt1));
+  OK_SIMPLE_STMT(hstmt2, "DELETE FROM test_table WHERE CURRENT OF modified name");
+
+  CHECK_STMT_RC(hstmt1, SQLCloseCursor(hstmt1));
+  // testing cursor name with reserved keywords(
+  //
+  CHECK_STMT_RC(hstmt1, SQLSetCursorNameW(hstmt1, CW("order group"), SQL_NTS));
+  CHECK_STMT_RC(hstmt1, SQLGetCursorNameW(hstmt1, curName, 12, &nLen));
+  is_num(nLen, 11);
+  IS_WSTR(curName, CW("order group"), 11);
+  CHECK_STMT_RC(hstmt1, SQLExecDirect(hstmt1, (SQLCHAR *)"SELECT id, name FROM test_table ORDER BY id", SQL_NTS));
+  CHECK_STMT_RC(hstmt1, SQLFetch(hstmt1));
+  OK_SIMPLE_STMT(hstmt2, "DELETE FROM test_table WHERE CURRENT OF order group");
+  // testing case-insensitivity
+  //
+  CHECK_STMT_RC(hstmt1, SQLFetch(hstmt1));
+  OK_SIMPLE_STMT(hstmt2, "DELETE FROM test_table WHERE CURRENT OF ORDER GROUP");
+
+  // until this point we should have deleted everything except the last row
+  //
+  OK_SIMPLE_STMT(Stmt, "SELECT id, name FROM test_table ORDER BY id");
+  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+  is_num(my_fetch_int(Stmt, 1), 4);
+  SQLCHAR colVal[50];
+  IS_STR(my_fetch_str(Stmt, colVal, 2), "name4", 5);
+  FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "eof expected");
+
+  CHECK_STMT_RC(Stmt, SQLCloseCursor(Stmt));
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS test_table");
+
+  CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+  CHECK_STMT_RC(hstmt2, SQLFreeStmt(hstmt2, SQL_CLOSE));
+  rc = SQLFreeHandle(SQL_HANDLE_STMT,hstmt1);
+  rc = SQLFreeHandle(SQL_HANDLE_STMT,hstmt2);
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   return OK;
@@ -3542,8 +3725,11 @@ MA_ODBC_TESTS my_tests[]=
   {t_pos_column_ignore, "t_pos_column_ignore",     TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
   {t_pos_datetime_delete, "t_pos_datetime_delete",     NORMAL, ALL_DRIVERS},
   {t_pos_datetime_delete1, "t_pos_datetime_delete1",     NORMAL, ALL_DRIVERS},
+
   {t_default_cursor, "t_default_cursor",     NORMAL, ALL_DRIVERS},
+  {t_default_cursor_unicode, "t_default_cursor_unicode",     NORMAL, UNICODE_DRIVER},
   {t_cursor_name, "t_cursor_name",     NORMAL, ALL_DRIVERS},
+  {t_cursor_name_unicode, "t_cursor_name_unicode",     NORMAL, UNICODE_DRIVER},
   {t_acc_crash, "t_acc_crash",     TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
   {tmysql_setpos_del, "tmysql_setpos_del",     NORMAL, ALL_DRIVERS},
   {tmysql_setpos_del1, "tmysql_setpos_del1",     NORMAL, ALL_DRIVERS},

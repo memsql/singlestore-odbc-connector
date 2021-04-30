@@ -5106,9 +5106,10 @@ SQLRETURN MADB_SetCursorName(MADB_Stmt *Stmt, char *Buffer, SQLINTEGER BufferLen
     return SQL_ERROR;
   }
   /* check if cursor name length is valid */
-  static const SQLSMALLINT MaxCursorLength = 18;
-  if (BufferLength > MaxCursorLength) {
-    MADB_SetError(&Stmt->Error, MADB_ERR_34000, "Cursor name exceeded maximal allowed length (18).", 0);
+  if (BufferLength > MADB_MAX_CURSOR_NAME) {
+    char error_msg[64];
+    sprintf(error_msg, "Cursor name exceeded maximal allowed length (%d).", MADB_MAX_CURSOR_NAME);
+    MADB_SetError(&Stmt->Error, MADB_ERR_34000, error_msg, 0);
     return SQL_ERROR;
   }
 
