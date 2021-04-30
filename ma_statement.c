@@ -5099,8 +5099,8 @@ SQLRETURN MADB_SetCursorName(MADB_Stmt *Stmt, char *Buffer, SQLINTEGER BufferLen
     MADB_SetError(&Stmt->Error, MADB_ERR_34000, "Cursor name with leading or trailing spaces is not allowed.", 0);
     return SQL_ERROR;
   }
-  if ((BufferLength > 5 && strncasecmp(Buffer, "SQLCUR", 6) == 0) ||
-      (BufferLength > 6 && strncasecmp(Buffer, "SQL_CUR", 7) == 0))
+  if ((BufferLength > 5 && _strnicmp(Buffer, "SQLCUR", 6) == 0) ||
+      (BufferLength > 6 && _strnicmp(Buffer, "SQL_CUR", 7) == 0))
   {
     MADB_SetError(&Stmt->Error, MADB_ERR_34000, NULL, 0);
     return SQL_ERROR;
@@ -5121,7 +5121,7 @@ SQLRETURN MADB_SetCursorName(MADB_Stmt *Stmt, char *Buffer, SQLINTEGER BufferLen
 
     if (Stmt != (MADB_Stmt *)LStmt->data &&
         Cursor->Name && strlen(Cursor->Name) == BufferLength &&
-        strncasecmp(Cursor->Name, Buffer, BufferLength) == 0)
+        _strnicmp(Cursor->Name, Buffer, BufferLength) == 0)
     {
       MADB_SetError(&Stmt->Error, MADB_ERR_3C000, NULL, 0);
       return SQL_ERROR;
