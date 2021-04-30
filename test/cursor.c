@@ -870,7 +870,7 @@ ODBC_TEST(t_cursor_name)
           "expected error on non-unique cursor names");
   CHECK_SQLSTATE(hstmt2, "3C000");
 
-  int maxCursorNameLength = 64 * 3 + 1;
+  static const int maxCursorNameLength = 64 * 3 + 1;
   char nameToSet[maxCursorNameLength + 2];
   memset(nameToSet, (int)('a'), maxCursorNameLength + 1);
   nameToSet[maxCursorNameLength + 1] = '\0';
@@ -1014,7 +1014,7 @@ ODBC_TEST(t_cursor_name_unicode)
           "expected error on non-unique cursor names");
   CHECK_SQLSTATE(hstmt2, "3C000");
 
-  int maxCursorNameLength = 64 * 3 + 1;
+  static const int maxCursorNameLength = 64 * 3 + 1;
   char nameToSet[maxCursorNameLength + 2];
   memset(nameToSet, (int)('a'), maxCursorNameLength + 1);
   nameToSet[maxCursorNameLength + 1] = '\0';
