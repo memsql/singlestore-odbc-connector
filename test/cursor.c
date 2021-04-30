@@ -817,6 +817,7 @@ ODBC_TEST(t_cursor_name)
   SQLRETURN rc;
   SQLHSTMT hstmt1,hstmt2;
   SQLCHAR curName[200];
+  char nameToSet[64 * 3 + 3];
   SQLSMALLINT nLen;
 
   CHECK_DBC_RC(Connection, SQLAllocHandle(SQL_HANDLE_STMT,Connection,&hstmt1));
@@ -870,8 +871,6 @@ ODBC_TEST(t_cursor_name)
           "expected error on non-unique cursor names");
   CHECK_SQLSTATE(hstmt2, "3C000");
 
-  static const int maxCursorNameLength = 64 * 3 + 1;
-  char nameToSet[maxCursorNameLength + 2];
   memset(nameToSet, (int)('a'), maxCursorNameLength + 1);
   nameToSet[maxCursorNameLength + 1] = '\0';
   FAIL_IF(SQLSetCursorName(hstmt2, (SQLCHAR *)nameToSet, SQL_NTS) != SQL_ERROR,
@@ -961,6 +960,7 @@ ODBC_TEST(t_cursor_name_unicode)
   SQLRETURN rc;
   SQLHSTMT hstmt1,hstmt2;
   SQLWCHAR curName[200];
+  char nameToSet[64 * 3 + 3];
   SQLSMALLINT nLen;
 
   CHECK_DBC_RC(Connection, SQLAllocHandle(SQL_HANDLE_STMT,Connection,&hstmt1));
@@ -1014,8 +1014,6 @@ ODBC_TEST(t_cursor_name_unicode)
           "expected error on non-unique cursor names");
   CHECK_SQLSTATE(hstmt2, "3C000");
 
-  static const int maxCursorNameLength = 64 * 3 + 1;
-  char nameToSet[maxCursorNameLength + 2];
   memset(nameToSet, (int)('a'), maxCursorNameLength + 1);
   nameToSet[maxCursorNameLength + 1] = '\0';
   FAIL_IF(SQLSetCursorNameW(hstmt2, CW(nameToSet), SQL_NTS) != SQL_ERROR,
