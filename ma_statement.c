@@ -5083,19 +5083,36 @@ SQLRETURN MADB_SetCursorName(MADB_Stmt *Stmt, char *Buffer, SQLINTEGER BufferLen
     MADB_SetError(&Stmt->Error, MADB_ERR_HY009, NULL, 0);
     return SQL_ERROR;
   }
-  if (BufferLength== SQL_NTS)
-    BufferLength= (SQLINTEGER)strlen(Buffer);
+  ADJUST_LENGTH(Buffer, BufferLength);
   if (BufferLength < 0)
   {
     MADB_SetError(&Stmt->Error, MADB_ERR_HY090, NULL, 0);
     return SQL_ERROR;
   }
-  if ((BufferLength > 5 && strncmp(Buffer, "SQLCUR", 6) == 0) ||
-      (BufferLength > 6 && strncmp(Buffer, "SQL_CUR", 7) == 0))
+  if (BufferLength == 0)
+  {
+    MADB_SetError(&Stmt->Error, MADB_ERR_34000, "Empty cursor name is not allowed.", 0);
+    return SQL_ERROR;
+  }
+  if (isspace((int)Buffer[0]) || isspace((int)Buffer[BufferLength - 1]))
+  {
+    MADB_SetError(&Stmt->Error, MADB_ERR_34000, "Cursor name with leading or trailing spaces is not allowed.", 0);
+    return SQL_ERROR;
+  }
+  if ((BufferLength > 5 && _strnicmp(Buffer, "SQLCUR", 6) == 0) ||
+      (BufferLength > 6 && _strnicmp(Buffer, "SQL_CUR", 7) == 0))
   {
     MADB_SetError(&Stmt->Error, MADB_ERR_34000, NULL, 0);
     return SQL_ERROR;
   }
+  /* check if cursor name length is valid */
+  if (BufferLength > MADB_MAX_CURSOR_NAME) {
+    char error_msg[64];
+    sprintf(error_msg, "Cursor name exceeded maximal allowed length (%d).", MADB_MAX_CURSOR_NAME);
+    MADB_SetError(&Stmt->Error, MADB_ERR_34000, error_msg, 0);
+    return SQL_ERROR;
+  }
+
   /* check if cursor name is unique */
   for (LStmt= Stmt->Connection->Stmts; LStmt; LStmt= LStmtNext)
   {
@@ -5103,7 +5120,8 @@ SQLRETURN MADB_SetCursorName(MADB_Stmt *Stmt, char *Buffer, SQLINTEGER BufferLen
     LStmtNext= LStmt->next;
 
     if (Stmt != (MADB_Stmt *)LStmt->data &&
-        Cursor->Name && strncmp(Cursor->Name, Buffer, BufferLength) == 0)
+        Cursor->Name && strlen(Cursor->Name) == BufferLength &&
+        _strnicmp(Cursor->Name, Buffer, BufferLength) == 0)
     {
       MADB_SetError(&Stmt->Error, MADB_ERR_3C000, NULL, 0);
       return SQL_ERROR;
