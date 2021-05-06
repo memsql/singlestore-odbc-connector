@@ -990,14 +990,24 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
   MADB_CLEAR_ERROR(&Dbc->Error);
   switch(InfoType) {
   case SQL_ACCESSIBLE_PROCEDURES:
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, 
+    // SQL_ACCESSIBLE_PROCEDURES is a character string:
+    // "Y" if the user can execute all procedures returned by SQLProcedures;
+    // "N" if there may be procedures returned that the user cannot execute.
+    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL,
                                      (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), "N", SQL_NTS, &Dbc->Error);
     break;
   case SQL_ACCESSIBLE_TABLES:
+    // SQL_ACCESSIBLE_TABLES is a character string:
+    // "Y" if the user is guaranteed SELECT privileges to all tables returned by SQLTables;
+    // "N" if there may be tables returned that the user cannot access.
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL,
                                      (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), "N", SQL_NTS, &Dbc->Error);
     break;
   case SQL_ACTIVE_ENVIRONMENTS:
+    // SQL_ACTIVE_ENVIRONMENTS specifies the maximum number of active environments that the driver can support.
+    // We don't have a limit for maximum number of active environments
+    // therefore we are returning 0
+    //
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_AGGREGATE_FUNCTIONS:
@@ -1012,6 +1022,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                      SQL_AT_ADD_COLUMN_SINGLE | SQL_AT_ADD_COLUMN_DEFAULT | SQL_AT_ADD_COLUMN_COLLATION |
                      SQL_AT_SET_COLUMN_DEFAULT, StringLengthPtr);
     break;
+// TODO PLAT-5465
 #ifdef SQL_ASYNC_DBC_FUNCTIONS
   case SQL_ASYNC_DBC_FUNCTIONS:
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_ASYNC_DBC_NOT_CAPABLE, StringLengthPtr);
@@ -1022,27 +1033,44 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_AM_NONE, StringLengthPtr);
     break;
 #endif
+// TODO PLAT-5465
 #ifdef SQL_ASYNC_NOTIFICATION
   case SQL_ASYNC_NOTIFICATION:
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_ASYNC_NOTIFICATION_NOT_CAPABLE, StringLengthPtr);
     break;
 #endif
   case SQL_BATCH_ROW_COUNT:
+    // TODO PLAT-5419 check if this value is actually correct
+    // SQL_BATCH_ROW_COUNT enumerates the behavior of the driver with respect to the availability of row counts.
+    // SQL_BRC_ROLLED_UP = row counts for consecutive INSERT, DELETE, or UPDATE statements are rolled up into one.
+    // In this driver, row counts are available for each statement.
+    // SQL_BRC_PROCEDURES = row counts, if any, are available when a batch is executed in a stored procedure.
+    // SQL_BRC_EXPLICIT = row counts, if any, are available when a batch is executed directly by calling SQLExecute or SQLExecDirect.
+    //
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_BRC_EXPLICIT, StringLengthPtr);
     break;
   case SQL_BATCH_SUPPORT:
+    // SQL_BATCH_SUPPORT enumerating the driver's support for batches.
+    // This driver supports all types of batches.
+    // SQL_BS_SELECT_EXPLICIT = the driver supports explicit batches that can have result-set generating statements.
+    // SQL_BS_ROW_COUNT_EXPLICIT = the driver supports explicit batches that can have row-count generating statements.
+    // SQL_BS_SELECT_PROC = the driver supports explicit procedures that can have result-set generating statements.
+    // SQL_BS_ROW_COUNT_PROC = the driver supports explicit procedures that can have row-count generating statements.
+    //
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_BS_SELECT_EXPLICIT | SQL_BS_ROW_COUNT_EXPLICIT |
                                                 SQL_BS_SELECT_PROC | SQL_BS_ROW_COUNT_PROC,
                      StringLengthPtr);
     break;
   case SQL_BOOKMARK_PERSISTENCE:
+    // SQL_BOOKMARK_PERSISTENCE enumerates the operations through which bookmarks persist.
+    // TODO PLAT-5471
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_CATALOG_LOCATION:
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_CL_START, StringLengthPtr);
     break;
   case SQL_CATALOG_NAME:
-    /* Todo: MyODBC Driver has a DSN configuration for diabling catalog usage:
+    /* Todo: MyODBC Driver has a DSN configuration for disabling catalog usage:
        but it's not implemented in MAODBC */
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, 
                                      (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), "Y", SQL_NTS, &Dbc->Error);
@@ -1052,6 +1080,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                                      (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), ".", SQL_NTS, &Dbc->Error);
     break;
   case SQL_CATALOG_TERM:
+    // SQL_CATALOG_TERM is a character string with the data source vendor's name for a catalog.
     /* todo: See comment for SQL_CATALOG_NAME */
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, 
                                      (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), "database", SQL_NTS, &Dbc->Error);
@@ -1066,6 +1095,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
   case SQL_COLLATION_SEQ:
   {
+    // SQL_COLLATION_SEQ is the name of the collation sequence.
     MY_CHARSET_INFO cs;
     mariadb_get_infov(Dbc->mariadb, MARIADB_CONNECTION_MARIADB_CHARSET_INFO, (void*)&cs);
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL,
@@ -1078,6 +1108,9 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                            (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), "Y", SQL_NTS, &Dbc->Error);
     break;
   case SQL_CONCAT_NULL_BEHAVIOR:
+    // SQL_CONCAT_NULL_BEHAVIOR  indicates how the data source handles the concatenation of NULL valued character data type columns
+    // with non-NULL valued character data type columns.
+    // SQL_CB_NULL = Result is NULL valued.
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_CB_NULL, StringLengthPtr);
     break;
   case SQL_CONVERT_BIGINT:
@@ -1194,19 +1227,34 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                                                 SQL_CV_CREATE_VIEW, StringLengthPtr);
     break;
   case SQL_CURSOR_COMMIT_BEHAVIOR:
+    // SQL_CURSOR_COMMIT_BEHAVIOR indicates how a COMMIT operation affects cursors and prepared statements in the data source
+    // SQL_CB_PRESERVE = Preserve cursors in the same position as before the COMMIT operation.
+    // The application can continue to fetch data, or it can close the cursor and re-execute the statement without repreparing it.
+    // TODO PLAT-5414
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_CB_PRESERVE, StringLengthPtr);
     break;
   case SQL_CURSOR_ROLLBACK_BEHAVIOR:
+    // SQL_CURSOR_ROLLBACK_BEHAVIOR indicates how a ROLLBACK operation affects cursors and prepared statements in the data source.
+    // SQL_CB_PRESERVE = Preserve cursors in the same position as before the ROLLBACK operation.
+    // The application can continue to fetch data, or it can close the cursor and re-execute the statement without repreparing it.
+    // TODO PLAT-5414
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_CB_PRESERVE, StringLengthPtr);
     break;
   case SQL_CURSOR_SENSITIVITY:
+    // SQL_CURSOR_SENSITIVITY indicates the support for cursor sensitivity.
+    // SQL_UNSPECIFIED = It is unspecified whether cursors on the statement handle make visible the changes
+    // that were made to a result set by another cursor within the same transaction.
+    // Cursors on the statement handle may make visible none, some, or all such changes.
+    // TODO PLAT-5414
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_UNSPECIFIED, StringLengthPtr);
     break;
   case SQL_DATA_SOURCE_NAME:
+    // SQL_DATA_SOURCE_NAME is a character string with the data source name that was used during connection
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      Dbc->Dsn ? Dbc->Dsn->DSNName : "", SQL_NTS, &Dbc->Error);
     break;
   case SQL_DATABASE_NAME:
+    // SQL_DATABASE_NAME is a character string with the name of the current database in use
     return MADB_Dbc_GetCurrentDB(Dbc, InfoValuePtr, BufferLength, (SQLSMALLINT *)StringLengthPtr, isWChar);
     break;
   case SQL_DATETIME_LITERALS:
@@ -1214,24 +1262,25 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                                                 SQL_DL_SQL92_TIMESTAMP, StringLengthPtr);
     break;
   case SQL_DBMS_NAME:
-    // TODO: revisit this section (and everything related to name and versioning) when we decide what should be reported.
+    // SQL_DBMS_NAME is a character string with the name of the DBMS product accessed by the driver.
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
                                       !Dbc->Dsn->CompatMode ? "SingleStore" : "MySQL",
                                      SQL_NTS, &Dbc->Error);
     break;
   case SQL_DBMS_VER:
     {
+      // SQL_DBMS_VER is a character string that indicates the version of the DBMS product accessed by the driver.
+      // The version is of the form ##.##.####, where the first two digits are the major version, the next two digits are the minor version, and the last four digits are the release version.
       char Version[13];
       unsigned long ServerVersion= 0L;
       if (Dbc->mariadb)
       {
         ServerVersion = !Dbc->Dsn->CompatMode ? single_store_get_server_version(Dbc->mariadb) : mysql_get_server_version(Dbc->mariadb);
-        // TODO: revisit this section (and everything related to name and versioning) when we decide what should be reported.
         if (ServerVersion < 50600)
         {
             ServerVersion = 50600;
         }
-        _snprintf(Version, sizeof(Version), "%02u.%02u.%06u", ServerVersion / 10000,
+        _snprintf(Version, sizeof(Version), "%02u.%02u.%04u", ServerVersion / 10000,
                     (ServerVersion % 10000) / 100, ServerVersion % 100);
       }
       else
@@ -1244,14 +1293,22 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
      MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_DI_CREATE_INDEX | SQL_DI_DROP_INDEX, StringLengthPtr);
     break;
   case SQL_DEFAULT_TXN_ISOLATION:
+    // SQL_DEFAULT_TXN_ISOLATION ndicates the default transaction isolation level supported by the driver or data source.
+    // SQL_TXN_READ_COMMITTED = Dirty reads are not possible. Non-repeatable reads and phantoms are possible.
+    // TODO PLAT-5414
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_TXN_READ_COMMITTED, StringLengthPtr);
     break;
   case SQL_DESCRIBE_PARAMETER:
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
+    // SQL_DESCRIBE_PARAMETER is a character string: "Y" if parameters can be described; "N", if not.
+    // TODO PLAT-5483
+    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "N", SQL_NTS, &Dbc->Error);
     break;
 #ifdef SQL_DRIVER_AWARE_POOLING_SUPPORTED
   case SQL_DRIVER_AWARE_POOLING_SUPPORTED:
+    // SQL_DRIVER_AWARE_POOLING_SUPPORTED indicates if the driver support driver-aware pooling.
+    // SQL_DRIVER_AWARE_POOLING_NOT_CAPABLE indicates that the driver cannot support driver-aware pooling mechanism.
+    // TODO PLAT-5459 investigate if we can/need to support this
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_DRIVER_AWARE_POOLING_NOT_CAPABLE, StringLengthPtr);
     break;
 #endif
@@ -1265,11 +1322,13 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
   case SQL_DRIVER_HSTMT:
     break;
   case SQL_DRIVER_NAME:
+    // A character string with the file name of the driver used to access the data source
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL,
                                      (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
                                      MADB_DRIVER_NAME, SQL_NTS, &Dbc->Error);
     break;
   case SQL_DRIVER_ODBC_VER:
+    // A character string with the version of ODBC that the driver supports.
     {
       char *OdbcVersion = "03.51";
       /* DM requests this info before Dbc->Charset initialized. Thus checking if it is, and use utf8 by default
@@ -1280,6 +1339,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     }
     break;
   case SQL_DRIVER_VER:
+     // A character string with the version of the driver and optionally, a description of the driver
      SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL,
                                      (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
                                      MARIADB_ODBC_VERSION, SQL_NTS, &Dbc->Error);
@@ -1310,61 +1370,149 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_DV_DROP_VIEW, StringLengthPtr);
     break;
   case SQL_DYNAMIC_CURSOR_ATTRIBUTES1:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_CA1_ABSOLUTE |
-                                                SQL_CA1_BULK_ADD |
-                                                SQL_CA1_LOCK_NO_CHANGE |
-                                                SQL_CA1_NEXT |
-                                                SQL_CA1_POSITIONED_DELETE |
-                                                SQL_CA1_POSITIONED_UPDATE |
-                                                SQL_CA1_POS_DELETE |
-                                                SQL_CA1_POS_POSITION |
-                                                SQL_CA1_POS_REFRESH |
-                                                SQL_CA1_POS_UPDATE |
-                                                SQL_CA1_RELATIVE, StringLengthPtr);
+    // SQL_DYNAMIC_CURSOR_ATTRIBUTES1 describes the attributes of a dynamic cursor that are supported by the driver.
+    // SQL_CA1_NEXT = A FetchOrientation argument of SQL_FETCH_NEXT is supported in a call to SQLFetchScroll when the cursor is a dynamic cursor.
+    // SQL_CA1_ABSOLUTE = FetchOrientation arguments of SQL_FETCH_FIRST, SQL_FETCH_LAST, and SQL_FETCH_ABSOLUTE are supported in a call to SQLFetchScroll when the cursor is a dynamic cursor. (The rowset that will be fetched is independent of the current cursor position.)
+    // SQL_CA1_RELATIVE = FetchOrientation arguments of SQL_FETCH_PRIOR and SQL_FETCH_RELATIVE are supported in a call to SQLFetchScroll when the cursor is a dynamic cursor. (The rowset that will be fetched depends on the current cursor position. Note that this is separated from SQL_FETCH_NEXT because in a forward-only cursor, only SQL_FETCH_NEXT is supported.)
+    // SQL_CA1_BOOKMARK = A FetchOrientation argument of SQL_FETCH_BOOKMARK is supported in a call to SQLFetchScroll when the cursor is a dynamic cursor.
+    // SQL_CA1_LOCK_EXCLUSIVE = A LockType argument of SQL_LOCK_EXCLUSIVE is supported in a call to SQLSetPos when the cursor is a dynamic cursor.
+    // SQL_CA1_LOCK_NO_CHANGE = A LockType argument of SQL_LOCK_NO_CHANGE is supported in a call to SQLSetPos when the cursor is a dynamic cursor.
+    // SQL_CA1_LOCK_UNLOCK = A LockType argument of SQL_LOCK_UNLOCK is supported in a call to SQLSetPos when the cursor is a dynamic cursor.
+    // SQL_CA1_POS_POSITION = An Operation argument of SQL_POSITION is supported in a call to SQLSetPos when the cursor is a dynamic cursor.
+    // SQL_CA1_POS_UPDATE = An Operation argument of SQL_UPDATE is supported in a call to SQLSetPos when the cursor is a dynamic cursor.
+    // SQL_CA1_POS_DELETE = An Operation argument of SQL_DELETE is supported in a call to SQLSetPos when the cursor is a dynamic cursor.
+    // SQL_CA1_POS_REFRESH = An Operation argument of SQL_REFRESH is supported in a call to SQLSetPos when the cursor is a dynamic cursor.
+    // SQL_CA1_POSITIONED_UPDATE = An UPDATE WHERE CURRENT OF SQL statement is supported when the cursor is a dynamic cursor. (An SQL-92 Entry level-conformant driver will always return this option as supported.)
+    // SQL_CA1_POSITIONED_DELETE = A DELETE WHERE CURRENT OF SQL statement is supported when the cursor is a dynamic cursor. (An SQL-92 Entry level-conformant driver will always return this option as supported.)
+    // SQL_CA1_SELECT_FOR_UPDATE = A SELECT FOR UPDATE SQL statement is supported when the cursor is a dynamic cursor. (An SQL-92 Entry level-conformant driver will always return this option as supported.)
+    // SQL_CA1_BULK_ADD = An Operation argument of SQL_ADD is supported in a call to SQLBulkOperations when the cursor is a dynamic cursor.
+    // SQL_CA1_BULK_UPDATE_BY_BOOKMARK = An Operation argument of SQL_UPDATE_BY_BOOKMARK is supported in a call to SQLBulkOperations when the cursor is a dynamic cursor.
+    // SQL_CA1_BULK_DELETE_BY_BOOKMARK = An Operation argument of SQL_DELETE_BY_BOOKMARK is supported in a call to SQLBulkOperations when the cursor is a dynamic cursor.
+    // SQL_CA1_BULK_FETCH_BY_BOOKMARK = An Operation argument of SQL_FETCH_BY_BOOKMARK is supported in a call to SQLBulkOperations when the cursor is a dynamic cursor.
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_CA1_NEXT |
+                                                  SQL_CA1_ABSOLUTE |
+                                                  SQL_CA1_RELATIVE |
+                                                  // SQL_CA1_BOOKMARK | TODO PLAT-5471
+                                                  SQL_CA1_LOCK_NO_CHANGE |
+                                                  SQL_CA1_POS_POSITION |
+                                                  // SQL_CA1_POS_UPDATE | TODO PLAT-5080
+                                                  SQL_CA1_POS_DELETE |
+                                                  // SQL_CA1_POS_REFRESH | TODO PLAT-5466
+                                                  // SQL_CA1_POSITIONED_UPDATE | TODO PLAT-5080
+                                                  SQL_CA1_POSITIONED_DELETE |
+                                                  SQL_CA1_BULK_ADD,
+                     StringLengthPtr);
     break;
   case SQL_DYNAMIC_CURSOR_ATTRIBUTES2:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_CA2_CRC_EXACT | 
-                                                SQL_CA2_MAX_ROWS_DELETE |
-                                                SQL_CA2_MAX_ROWS_INSERT |
-                                                SQL_CA2_MAX_ROWS_SELECT |
-                                                SQL_CA2_MAX_ROWS_UPDATE |
-                                                SQL_CA2_SENSITIVITY_ADDITIONS |
-                                                SQL_CA2_SENSITIVITY_DELETIONS |
-                                                SQL_CA2_SENSITIVITY_UPDATES |
-                                                SQL_CA2_SIMULATE_TRY_UNIQUE, StringLengthPtr);
+    // SQL_DYNAMIC_CURSOR_ATTRIBUTES2 describes the attributes of a dynamic cursor that are supported by the driver.
+    // SQL_CA2_READ_ONLY_CONCURRENCY = A read-only dynamic cursor, in which no updates are allowed, is supported. (The SQL_ATTR_CONCURRENCY statement attribute can be SQL_CONCUR_READ_ONLY for a dynamic cursor).
+    // SQL_CA2_LOCK_CONCURRENCY = A dynamic cursor that uses the lowest level of locking sufficient to make sure that the row can be updated is supported. (The SQL_ATTR_CONCURRENCY statement attribute can be SQL_CONCUR_LOCK for a dynamic cursor.) These locks must be consistent with the transaction isolation level set by the SQL_ATTR_TXN_ISOLATION connection attribute.
+    // SQL_CA2_OPT_ROWVER_CONCURRENCY = A dynamic cursor that uses the optimistic concurrency control comparing row versions is supported. (The SQL_ATTR_CONCURRENCY statement attribute can be SQL_CONCUR_ROWVER for a dynamic cursor.)
+    // SQL_CA2_OPT_VALUES_CONCURRENCY = A dynamic cursor that uses the optimistic concurrency control comparing values is supported. (The SQL_ATTR_CONCURRENCY statement attribute can be SQL_CONCUR_VALUES for a dynamic cursor.)
+    // SQL_CA2_SENSITIVITY_ADDITIONS = Added rows are visible to a dynamic cursor; the cursor can scroll to those rows. (Where these rows are added to the cursor is driver-dependent.)
+    // SQL_CA2_SENSITIVITY_DELETIONS = Deleted rows are no longer available to a dynamic cursor, and do not leave a "hole" in the result set; after the dynamic cursor scrolls from a deleted row, it cannot return to that row.
+    // SQL_CA2_SENSITIVITY_UPDATES = Updates to rows are visible to a dynamic cursor; if the dynamic cursor scrolls from and returns to an updated row, the data returned by the cursor is the updated data, not the original data.
+    // SQL_CA2_MAX_ROWS_SELECT = The SQL_ATTR_MAX_ROWS statement attribute affects SELECT statements when the cursor is a dynamic cursor.
+    // SQL_CA2_MAX_ROWS_INSERT = The SQL_ATTR_MAX_ROWS statement attribute affects INSERT statements when the cursor is a dynamic cursor.
+    // SQL_CA2_MAX_ROWS_DELETE = The SQL_ATTR_MAX_ROWS statement attribute affects DELETE statements when the cursor is a dynamic cursor.
+    // SQL_CA2_MAX_ROWS_UPDATE = The SQL_ATTR_MAX_ROWS statement attribute affects UPDATE statements when the cursor is a dynamic cursor.
+    // SQL_CA2_MAX_ROWS_CATALOG = The SQL_ATTR_MAX_ROWS statement attribute affects CATALOG result sets when the cursor is a dynamic cursor.
+    // SQL_CA2_MAX_ROWS_AFFECTS_ALL = The SQL_ATTR_MAX_ROWS statement attribute affects SELECT, INSERT, DELETE, and UPDATE statements, and CATALOG result sets, when the cursor is a dynamic cursor.
+    // SQL_CA2_CRC_EXACT = The exact row count is available in the SQL_DIAG_CURSOR_ROW_COUNT diagnostic field when the cursor is a dynamic cursor.
+    // SQL_CA2_CRC_APPROXIMATE = An approximate row count is available in the SQL_DIAG_CURSOR_ROW_COUNT diagnostic field when the cursor is a dynamic cursor.
+    // SQL_CA2_SIMULATE_NON_UNIQUE = The driver does not guarantee that simulated positioned update or delete statements will affect only one row when the cursor is a dynamic cursor; it is the application's responsibility to guarantee this. (If a statement affects more than one row, SQLExecute or SQLExecDirect returns SQLSTATE 01001 [Cursor operation conflict].) To set this behavior, the application calls SQLSetStmtAttr with the SQL_ATTR_SIMULATE_CURSOR attribute set to SQL_SC_NON_UNIQUE.
+    // SQL_CA2_SIMULATE_TRY_UNIQUE = The driver tries to guarantee that simulated positioned update or delete statements will affect only one row when the cursor is a dynamic cursor. The driver always executes such statements, even if they might affect more than one row, such as when there is no unique key. (If a statement affects more than one row, SQLExecute or SQLExecDirect returns SQLSTATE 01001 [Cursor operation conflict].) To set this behavior, the application calls SQLSetStmtAttr with the SQL_ATTR_SIMULATE_CURSOR attribute set to SQL_SC_TRY_UNIQUE.
+    // SQL_CA2_SIMULATE_UNIQUE = The driver guarantees that simulated positioned update or delete statements will affect only one row when the cursor is a dynamic cursor. If the driver cannot guarantee this for a given statement, SQLExecDirect or SQLPrepare return SQLSTATE 01001 (Cursor operation conflict). To set this behavior, the application calls SQLSetStmtAttr with the SQL_ATTR_SIMULATE_CURSOR attribute set to SQL_SC_UNIQUE.
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_CA2_READ_ONLY_CONCURRENCY |
+                                                  SQL_CA2_SENSITIVITY_ADDITIONS |
+                                                  SQL_CA2_SENSITIVITY_DELETIONS |
+                                                  SQL_CA2_SENSITIVITY_UPDATES |
+                                                  SQL_CA2_MAX_ROWS_SELECT |
+                                                  SQL_CA2_MAX_ROWS_INSERT |
+                                                  SQL_CA2_MAX_ROWS_DELETE |
+                                                  SQL_CA2_MAX_ROWS_UPDATE |
+                                                  SQL_CA2_CRC_EXACT |
+                                                  SQL_CA2_SIMULATE_TRY_UNIQUE, StringLengthPtr);
     break;
   case SQL_EXPRESSIONS_IN_ORDERBY:
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
                                      "Y", SQL_NTS, &Dbc->Error);
     break;
   case SQL_FILE_USAGE:
+    // SQL_FILE_USAGE indicates how a single-tier driver directly treats files in a data source:
+    //SQL_FILE_NOT_SUPPORTED = The driver is not a single-tier driver. For example, an ORACLE driver is a two-tier driver.
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_FILE_NOT_SUPPORTED, StringLengthPtr);
     break;
   case SQL_FORWARD_ONLY_CURSOR_ATTRIBUTES1:
+    // SQL_FORWARD_ONLY_CURSOR_ATTRIBUTES1 describes the attributes of a forward-only cursor that are supported by the driver.
+    // SQL_CA1_NEXT = A FetchOrientation argument of SQL_FETCH_NEXT is supported in a call to SQLFetchScroll when the cursor is a forward-only cursor.
+    // SQL_CA1_ABSOLUTE = FetchOrientation arguments of SQL_FETCH_FIRST, SQL_FETCH_LAST, and SQL_FETCH_ABSOLUTE are supported in a call to SQLFetchScroll when the cursor is a forward-only cursor. (The rowset that will be fetched is independent of the current cursor position.)
+    // SQL_CA1_RELATIVE = FetchOrientation arguments of SQL_FETCH_PRIOR and SQL_FETCH_RELATIVE are supported in a call to SQLFetchScroll when the cursor is a forward-only cursor. (The rowset that will be fetched depends on the current cursor position. Note that this is separated from SQL_FETCH_NEXT because in a forward-only cursor, only SQL_FETCH_NEXT is supported.)
+    // SQL_CA1_BOOKMARK = A FetchOrientation argument of SQL_FETCH_BOOKMARK is supported in a call to SQLFetchScroll when the cursor is a forward-only cursor.
+    // SQL_CA1_LOCK_EXCLUSIVE = A LockType argument of SQL_LOCK_EXCLUSIVE is supported in a call to SQLSetPos when the cursor is a forward-only cursor.
+    // SQL_CA1_LOCK_NO_CHANGE = A LockType argument of SQL_LOCK_NO_CHANGE is supported in a call to SQLSetPos when the cursor is a forward-only cursor.
+    // SQL_CA1_LOCK_UNLOCK = A LockType argument of SQL_LOCK_UNLOCK is supported in a call to SQLSetPos when the cursor is a forward-only cursor.
+    // SQL_CA1_POS_POSITION = An Operation argument of SQL_POSITION is supported in a call to SQLSetPos when the cursor is a forward-only cursor.
+    // SQL_CA1_POS_UPDATE = An Operation argument of SQL_UPDATE is supported in a call to SQLSetPos when the cursor is a forward-only cursor.
+    // SQL_CA1_POS_DELETE = An Operation argument of SQL_DELETE is supported in a call to SQLSetPos when the cursor is a forward-only cursor.
+    // SQL_CA1_POS_REFRESH = An Operation argument of SQL_REFRESH is supported in a call to SQLSetPos when the cursor is a forward-only cursor.
+    // SQL_CA1_POSITIONED_UPDATE = An UPDATE WHERE CURRENT OF SQL statement is supported when the cursor is a forward-only cursor. (An SQL-92 Entry level-conformant driver will always return this option as supported.)
+    // SQL_CA1_POSITIONED_DELETE = A DELETE WHERE CURRENT OF SQL statement is supported when the cursor is a forward-only cursor. (An SQL-92 Entry level-conformant driver will always return this option as supported.)
+    // SQL_CA1_SELECT_FOR_UPDATE = A SELECT FOR UPDATE SQL statement is supported when the cursor is a forward-only cursor. (An SQL-92 Entry level-conformant driver will always return this option as supported.)
+    // SQL_CA1_BULK_ADD = An Operation argument of SQL_ADD is supported in a call to SQLBulkOperations when the cursor is a forward-only cursor.
+    // SQL_CA1_BULK_UPDATE_BY_BOOKMARK = An Operation argument of SQL_UPDATE_BY_BOOKMARK is supported in a call to SQLBulkOperations when the cursor is a forward-only cursor.
+    // SQL_CA1_BULK_DELETE_BY_BOOKMARK = An Operation argument of SQL_DELETE_BY_BOOKMARK is supported in a call to SQLBulkOperations when the cursor is a forward-only cursor.
+    // SQL_CA1_BULK_FETCH_BY_BOOKMARK = An Operation argument of SQL_FETCH_BY_BOOKMARK is supported in a call to SQLBulkOperations when the cursor is a forward-only cursor.
+    // TODO PLAT-5473 make these limitations stricter
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, Dbc->Dsn && Dbc->Dsn->NoCache ?
                                                 SQL_CA1_NEXT:
-                                                (SQL_CA1_ABSOLUTE |
-                                                SQL_CA1_BULK_ADD |
-                                                SQL_CA1_LOCK_NO_CHANGE |
-                                                SQL_CA1_NEXT |
-                                                SQL_CA1_POSITIONED_DELETE |
-                                                SQL_CA1_POSITIONED_UPDATE |
-                                                SQL_CA1_POS_DELETE |
-                                                SQL_CA1_POS_POSITION |
-                                                SQL_CA1_POS_REFRESH |
-                                                SQL_CA1_POS_UPDATE |
-                                                SQL_CA1_RELATIVE), StringLengthPtr);
+                                                (SQL_CA1_NEXT |
+                                                  SQL_CA1_LOCK_NO_CHANGE |
+                                                  SQL_CA1_POS_POSITION |
+                                                  // SQL_CA1_POS_UPDATE | TODO PLAT-5080
+                                                  SQL_CA1_POS_DELETE |
+                                                  // SQL_CA1_POS_REFRESH | TODO PLAT-5466
+                                                  // SQL_CA1_POSITIONED_UPDATE | TODO PLAT-5466
+                                                  SQL_CA1_POSITIONED_DELETE |
+                                                  SQL_CA1_BULK_ADD), StringLengthPtr);
     break;
   case SQL_FORWARD_ONLY_CURSOR_ATTRIBUTES2:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr,
-                                                (Dbc->Dsn && Dbc->Dsn->NoCache ? 0: SQL_CA2_CRC_EXACT) |
-                                                SQL_CA2_MAX_ROWS_DELETE |
-                                                SQL_CA2_MAX_ROWS_INSERT |
-                                                SQL_CA2_MAX_ROWS_SELECT |
-                                                SQL_CA2_MAX_ROWS_UPDATE, StringLengthPtr);
+    // An SQLUINTEGER bitmask that describes the attributes of a forward-only cursor that are supported by the driver.
+    // SQL_CA2_READ_ONLY_CONCURRENCY = A read-only forward-only cursor, in which no updates are allowed, is supported. (The SQL_ATTR_CONCURRENCY statement attribute can be SQL_CONCUR_READ_ONLY for a forward-only cursor).
+    // SQL_CA2_LOCK_CONCURRENCY = A forward-only cursor that uses the lowest level of locking sufficient to make sure that the row can be updated is supported. (The SQL_ATTR_CONCURRENCY statement attribute can be SQL_CONCUR_LOCK for a forward-only cursor.) These locks must be consistent with the transaction isolation level set by the SQL_ATTR_TXN_ISOLATION connection attribute.
+    // SQL_CA2_OPT_ROWVER_CONCURRENCY = A forward-only cursor that uses the optimistic concurrency control comparing row versions is supported. (The SQL_ATTR_CONCURRENCY statement attribute can be SQL_CONCUR_ROWVER for a forward-only cursor.)
+    // SQL_CA2_OPT_VALUES_CONCURRENCY = A forward-only cursor that uses the optimistic concurrency control comparing values is supported. (The SQL_ATTR_CONCURRENCY statement attribute can be SQL_CONCUR_VALUES for a forward-only cursor.)
+    // SQL_CA2_SENSITIVITY_ADDITIONS = Added rows are visible to a forward-only cursor; the cursor can scroll to those rows. (Where these rows are added to the cursor is driver-dependent.)
+    // SQL_CA2_SENSITIVITY_DELETIONS = Deleted rows are no longer available to a forward-only cursor, and do not leave a "hole" in the result set; after the forward-only cursor scrolls from a deleted row, it cannot return to that row.
+    // SQL_CA2_SENSITIVITY_UPDATES = Updates to rows are visible to a forward-only cursor; if the forward-only cursor scrolls from and returns to an updated row, the data returned by the cursor is the updated data, not the original data.
+    // SQL_CA2_MAX_ROWS_SELECT = The SQL_ATTR_MAX_ROWS statement attribute affects SELECT statements when the cursor is a forward-only cursor.
+    // SQL_CA2_MAX_ROWS_INSERT = The SQL_ATTR_MAX_ROWS statement attribute affects INSERT statements when the cursor is a forward-only cursor.
+    // SQL_CA2_MAX_ROWS_DELETE = The SQL_ATTR_MAX_ROWS statement attribute affects DELETE statements when the cursor is a forward-only cursor.
+    // SQL_CA2_MAX_ROWS_UPDATE = The SQL_ATTR_MAX_ROWS statement attribute affects UPDATE statements when the cursor is a forward-only cursor.
+    // SQL_CA2_MAX_ROWS_CATALOG = The SQL_ATTR_MAX_ROWS statement attribute affects CATALOG result sets when the cursor is a forward-only cursor.
+    // SQL_CA2_MAX_ROWS_AFFECTS_ALL = The SQL_ATTR_MAX_ROWS statement attribute affects SELECT, INSERT, DELETE, and UPDATE statements, and CATALOG result sets, when the cursor is a forward-only cursor.
+    // SQL_CA2_CRC_EXACT = The exact row count is available in the SQL_DIAG_CURSOR_ROW_COUNT diagnostic field when the cursor is a forward-only cursor.
+    // SQL_CA2_CRC_APPROXIMATE = An approximate row count is available in the SQL_DIAG_CURSOR_ROW_COUNT diagnostic field when the cursor is a forward-only cursor.
+    // SQL_CA2_SIMULATE_NON_UNIQUE = The driver does not guarantee that simulated positioned update or delete statements will affect only one row when the cursor is a forward-only cursor; it is the application's responsibility to guarantee this. (If a statement affects more than one row, SQLExecute or SQLExecDirect returns SQLSTATE 01001 [Cursor operation conflict].) To set this behavior, the application calls SQLSetStmtAttr with the SQL_ATTR_SIMULATE_CURSOR attribute set to SQL_SC_NON_UNIQUE.
+    // SQL_CA2_SIMULATE_TRY_UNIQUE = The driver tries to guarantee that simulated positioned update or delete statements will affect only one row when the cursor is a forward-only cursor. The driver always executes such statements, even if they might affect more than one row, such as when there is no unique key. (If a statement affects more than one row, SQLExecute or SQLExecDirect returns SQLSTATE 01001 [Cursor operation conflict].) To set this behavior, the application calls SQLSetStmtAttr with the SQL_ATTR_SIMULATE_CURSOR attribute set to SQL_SC_TRY_UNIQUE.
+    // SQL_CA2_SIMULATE_UNIQUE = The driver guarantees that simulated positioned update or delete statements will affect only one row when the cursor is a forward-only cursor. If the driver cannot guarantee this for a given statement, SQLExecDirect or SQLPrepare return SQLSTATE 01001 (Cursor operation conflict). To set this behavior, the application calls SQLSetStmtAttr with the SQL_ATTR_SIMULATE_CURSOR attribute set to SQL_SC_UNIQUE.
+    // TODO PLAT-5473 make these limitations stricter
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, (Dbc->Dsn && Dbc->Dsn->NoCache ? 0: SQL_CA2_CRC_EXACT) |
+                                                  SQL_CA2_READ_ONLY_CONCURRENCY |
+                                                  SQL_CA2_MAX_ROWS_SELECT |
+                                                  SQL_CA2_MAX_ROWS_INSERT |
+                                                  SQL_CA2_MAX_ROWS_DELETE |
+                                                  SQL_CA2_MAX_ROWS_UPDATE, StringLengthPtr);
     break;
   case SQL_GETDATA_EXTENSIONS:
   {
+    // SQL_GETDATA_EXTENSIONS enumerates extensions to SQLGetData.
+    // SQL_GD_ANY_COLUMN = SQLGetData can be called for any unbound column, including those before the last bound column. Note that the columns must be called in order of ascending column number unless SQL_GD_ANY_ORDER is also returned.
+    // SQL_GD_ANY_ORDER = SQLGetData can be called for unbound columns in any order. Note that SQLGetData can be called only for columns after the last bound column unless SQL_GD_ANY_COLUMN is also returned.
+    // SQL_GD_BLOCK = SQLGetData can be called for an unbound column in any row in a block (where the rowset size is greater than 1) of data after positioning to that row with SQLSetPos.
+    // SQL_GD_BOUND = SQLGetData can be called for bound columns in addition to unbound columns. A driver cannot return this value unless it also returns SQL_GD_ANY_COLUMN.
+    // SQL_GD_OUTPUT_PARAMS = SQLGetData can be called to return output parameter values. (SingleStore doesn't support output parameters, so this feature is disabled)
+    // TODO PLAT-5418 check that these values are correct
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_GD_ANY_COLUMN | SQL_GD_ANY_ORDER |
                                                 SQL_GD_BLOCK | SQL_GD_BOUND, StringLengthPtr);
     break;
@@ -1382,10 +1530,34 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_IK_NONE, StringLengthPtr);
     break;
   case SQL_INFO_SCHEMA_VIEWS:
+    // SQL_INFO_SCHEMA_VIEWS enumerates the views in the INFORMATION_SCHEMA that are supported by the driver.
+    // SQL_ISV_ASSERTIONS = Identifies the catalog's assertions that are owned by a given user. (Full level)
+    // SQL_ISV_CHARACTER_SETS = Identifies the catalog's character sets that can be accessed by a given user. (Intermediate level)
+    // SQL_ISV_CHECK_CONSTRAINTS = Identifies the CHECK constraints that are owned by a given user. (Intermediate level)
+    // SQL_ISV_COLLATIONS = Identifies the character collations for the catalog that can be accessed by a given user. (Full level)
+    // SQL_ISV_COLUMN_DOMAIN_USAGE = Identifies columns for the catalog that depend on domains defined in the catalog and are owned by a given user. (Intermediate level)
+    // SQL_ISV_COLUMN_PRIVILEGES = Identifies the privileges on columns of persistent tables that are available to or granted by a given user. (FIPS Transitional level)
+    // SQL_ISV_COLUMNS = Identifies the columns of persistent tables that can be accessed by a given user. (FIPS Transitional level)
+    // SQL_ISV_CONSTRAINT_COLUMN_USAGE = Similar to CONSTRAINT_TABLE_USAGE view, columns are identified for the various constraints that are owned by a given user. (Intermediate level)
+    // SQL_ISV_CONSTRAINT_TABLE_USAGE = Identifies the tables that are used by constraints (referential, unique, and assertions), and are owned by a given user. (Intermediate level)
+    // SQL_ISV_DOMAIN_CONSTRAINTS = Identifies the domain constraints (of the domains in the catalog) that can be accessed by a given user. (Intermediate level)
+    // SQL_ISV_DOMAINS = Identifies the domains defined in a catalog that can be accessed by the user. (Intermediate level)
+    // SQL_ISV_KEY_COLUMN_USAGE = Identifies columns defined in the catalog that are constrained as keys by a given user. (Intermediate level)
+    // SQL_ISV_REFERENTIAL_CONSTRAINTS = Identifies the referential constraints that are owned by a given user. (Intermediate level)
+    // SQL_ISV_SCHEMATA = Identifies the schemas that are owned by a given user. (Intermediate level)
+    // SQL_ISV_SQL_LANGUAGES = Identifies the SQL conformance levels, options, and dialects supported by the SQL implementation. (Intermediate level)
+    // SQL_ISV_TABLE_CONSTRAINTS = Identifies the table constraints that are owned by a given user. (Intermediate level)
+    // SQL_ISV_TABLE_PRIVILEGES = Identifies the privileges on persistent tables that are available to or granted by a given user. (FIPS Transitional level)
+    // SQL_ISV_TABLES = Identifies the persistent tables defined in a catalog that can be accessed by a given user. (FIPS Transitional level)
+    // SQL_ISV_TRANSLATIONS = Identifies character translations for the catalog that can be accessed by a given user. (Full level)
+    // SQL_ISV_USAGE_PRIVILEGES = Identifies the USAGE privileges on catalog objects that are available to or owned by a given user. (FIPS Transitional level)
+    // SQL_ISV_VIEW_COLUMN_USAGE = Identifies the columns on which the catalog's views that are owned by a given user are dependent. (Intermediate level)
+    // SQL_ISV_VIEW_TABLE_USAGE = Identifies the tables on which the catalog's views that are owned by a given user are dependent. (Intermediate level)
+    // SQL_ISV_VIEWS = Identifies the viewed tables defined in this catalog that can be accessed by a given user. (FIPS Transitional level)
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_ISV_CHARACTER_SETS | SQL_ISV_COLLATIONS |
                                                 SQL_ISV_COLUMNS | SQL_ISV_COLUMN_PRIVILEGES |
                                                 SQL_ISV_KEY_COLUMN_USAGE | SQL_ISV_REFERENTIAL_CONSTRAINTS |
-                                                SQL_ISV_TABLES | SQL_ISV_TABLE_PRIVILEGES |
+                                                SQL_ISV_SCHEMATA | SQL_ISV_TABLES | SQL_ISV_TABLE_PRIVILEGES |
                                                 SQL_ISV_TABLE_CONSTRAINTS | SQL_ISV_VIEWS, StringLengthPtr);
     break;
   case SQL_INSERT_STATEMENT:
@@ -1397,9 +1569,13 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                                      "N", SQL_NTS, &Dbc->Error);
     break;
   case SQL_KEYSET_CURSOR_ATTRIBUTES1:
+    // SQL_KEYSET_CURSOR_ATTRIBUTES1 describes the attributes of a keyset cursor that are supported by the driver.
+    // This driver doesn't support keyset cursor, so we are returning 0
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_KEYSET_CURSOR_ATTRIBUTES2:
+    // SQL_KEYSET_CURSOR_ATTRIBUTES2 describes the attributes of a keyset cursor that are supported by the driver.
+    // This driver doesn't support keyset cursor, so we are returning 0
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_KEYWORDS:
@@ -1427,6 +1603,9 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                                      "Y", SQL_NTS, &Dbc->Error);
     break;
   case SQL_MAX_ASYNC_CONCURRENT_STATEMENTS:
+    // SQL_MAX_ASYNC_CONCURRENT_STATEMENTS  specifies the maximum number of active concurrent statements in asynchronous mode that the driver can support on a given connection.
+    // We are returning 0. It means that we don't have a specific limit or limit is unknown.
+    // TODO PLAT-5472
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_MAX_BINARY_LITERAL_LEN:
@@ -1457,12 +1636,17 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_MAX_CONCURRENT_ACTIVITIES:
+    // SQL_MAX_CONCURRENT_ACTIVITIES specifies the maximum number of active statements that the driver can support for a connection.
+    // We are returning 0. It means that we don't have specific limit or limit is unknown.
+    // TODO PLAT-5472
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_MAX_CURSOR_NAME_LEN:
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, MADB_MAX_CURSOR_NAME, StringLengthPtr);
     break;
   case SQL_MAX_DRIVER_CONNECTIONS:
+    // SQL_MAX_DRIVER_CONNECTIONS specifies the maximum number of active connections that the driver can support for an environment.
+    // We are returning 0. It means that we don't have specific limit or limit is unknown.
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_MAX_IDENTIFIER_LEN:
@@ -1501,14 +1685,21 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
      MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, USERNAME_LENGTH, StringLengthPtr);
     break;
   case SQL_MULT_RESULT_SETS:
+    // SQL_MULT_RESULT_SETS is a character string: "Y" if the data source supports multiple result sets, "N" if it does not.
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
                                      "Y", SQL_NTS, &Dbc->Error);
     break;
   case SQL_MULTIPLE_ACTIVE_TXN:
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
+    // SQL_MULTIPLE_ACTIVE_TXN 	is a character string: "Y" if the driver supports more than one active transaction at the same time,
+    // "N" if only one transaction can be active at any time.
+    // TODO PLAT-5414
+    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "Y", SQL_NTS, &Dbc->Error);
     break;
   case SQL_NEED_LONG_DATA_LEN:
+    // SQL_NEED_LONG_DATA_LEN is a character string: "Y" if the data source needs the length of a long data value
+    // (the data type is SQL_LONGVARCHAR, SQL_LONGVARBINARY, or a long data source-specific data type)
+    // before that value is sent to the data source, "N" if it does not.
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
                                      "N", SQL_NTS, &Dbc->Error);
     break;
@@ -1516,6 +1707,8 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_NNC_NON_NULL, StringLengthPtr);
     break;
   case SQL_NULL_COLLATION:
+    // SQL_NULL_COLLATION specifies where NULLs are sorted in a result set
+    // SQL_NC_LOW = NULLs are sorted at the low end of the result set, depending on the ASC or DESC keywords.
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_NC_LOW, StringLengthPtr);
     break;
   case SQL_NUMERIC_FUNCTIONS:
@@ -1533,6 +1726,10 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLSMALLINT, InfoValuePtr, SQL_OAC_LEVEL1, StringLengthPtr);
     break;
   case SQL_ODBC_INTERFACE_CONFORMANCE:
+    // SQL_ODBC_INTERFACE_CONFORMANCE indicates the level of the ODBC 3*.x* interface that the driver complies with.
+    // SQL_OIC_CORE: The minimum level that all ODBC drivers are expected to comply with.
+    // This level includes basic interface elements such as connection functions, functions for preparing and executing an SQL statement, basic result set metadata functions, basic catalog functions, and so on.
+    // We don't support bookmarks and positioned updates, so we can return only SQL_OIC_CORE
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_OIC_CORE, StringLengthPtr);
     break;
   case SQL_ODBC_SQL_CONFORMANCE:
@@ -1553,12 +1750,21 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                                      "N", SQL_NTS, &Dbc->Error);
     break;
   case SQL_PARAM_ARRAY_ROW_COUNTS:
+    // SQL_PARAM_ARRAY_ROW_COUNTS enumerates the driver's properties regarding the availability of row counts in a parameterized execution.
+    // SQL_PARC_NO_BATCH = There is only one row count available, which is the cumulative row count resulting from the execution of the statement for the entire array of parameters.
+    // This is conceptually equivalent to treating the statement together with the complete parameter array as one atomic unit.
+    // Errors are handled the same as if one statement were executed.
+    // TODO PLAT-5419 check that this value is actually correct
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_PARC_NO_BATCH, StringLengthPtr);
     break;
   case SQL_PARAM_ARRAY_SELECTS:
+    // SQL_PARAM_ARRAY_SELECTS enumerates the driver's properties regarding the availability of result sets in a parameterized execution.
+    // SQL_PAS_NO_BATCH = There is only one result set available, which represents the cumulative result set resulting from the execution of the statement for the complete array of parameters.
+    // This is conceptually equivalent to treating the statement together with the complete parameter array as one atomic unit.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_PAS_NO_BATCH, StringLengthPtr);
     break;
   case SQL_PROCEDURE_TERM:
+    // SQL_PROCEDURE_TERM is a character string with the data source vendor's name for a procedure.
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
                                      "procedure", SQL_NTS, &Dbc->Error);
     break;
@@ -1570,11 +1776,16 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_IC_SENSITIVE, StringLengthPtr);
     break;
   case SQL_ROW_UPDATES:
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, 
+    // SQL_ROW_UPDATES is "Y" if a keyset-driven or mixed cursor maintains row versions or values for all fetched rows
+    // and therefore can detect any updates that were made to a row by any user since the row was last fetched.
+    // This driver doesn't support keyset-driven or mixed cursor, so we are returning "N".
+    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr,
                                       BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "N", SQL_NTS, &Dbc->Error);
     break;
   case SQL_SCHEMA_TERM:
+    // SQL_SCHEMA_TERM is a character string with the data source vendor's name for a schema.
+    // TODO PLAT-5484
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr,
                                       BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "", SQL_NTS, &Dbc->Error);
@@ -1584,6 +1795,13 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
   case SQL_SCROLL_OPTIONS:
     {
+      // SQL_SCROLL_OPTIONS enumerates the scroll options supported for scrollable cursors.
+      // SQL_SO_FORWARD_ONLY = The cursor only scrolls forward. (ODBC 1.0)
+      // SQL_SO_STATIC = The data in the result set is static. (ODBC 2.0)
+      // SQL_SO_KEYSET_DRIVEN = The driver saves and uses the keys for every row in the result set. (ODBC 1.0)
+      // SQL_SO_DYNAMIC = The driver keeps the keys for every row in the rowset (the keyset size is the same as the rowset size). (ODBC 1.0)
+      // SQL_SO_MIXED = The driver keeps the keys for every row in the keyset, and the keyset size is greater than the rowset size. The cursor is keyset-driven inside the keyset and dynamic outside the keyset. (ODBC 1.0)
+      // TODO PLAT-5418
       SQLUINTEGER Options= SQL_SO_FORWARD_ONLY;
       if (!MA_ODBC_CURSOR_FORWARD_ONLY(Dbc))
         Options|= SQL_SO_STATIC;
@@ -1593,12 +1811,15 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     }
     break;
   case SQL_SEARCH_PATTERN_ESCAPE:
+    // SQL_SEARCH_PATTERN_ESCAPE specifies what the driver supports as an escape character that allows the use of the
+    // pattern match metacharacters underscore (_) and percent sign (%) as valid characters in search patterns.
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr,
                                       BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "\\", SQL_NTS, &Dbc->Error);
     break;
   case SQL_SERVER_NAME:
   {
+    // SQL_SERVER_NAME is the actual data source-specific server name.
     const char *Host= "";
     if (Dbc->mariadb)
     {
@@ -1679,12 +1900,64 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SCC_ISO92_CLI, StringLengthPtr);
     break;
   case SQL_STATIC_CURSOR_ATTRIBUTES1:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_CA1_ABSOLUTE | /* SQL_CA1_BOOKMARK | */
-                                                SQL_CA1_NEXT | SQL_CA1_RELATIVE,
+    // SQL_STATIC_CURSOR_ATTRIBUTES1 describes the attributes of a static cursor that are supported by the driver.
+    // SQL_CA1_NEXT = A FetchOrientation argument of SQL_FETCH_NEXT is supported in a call to SQLFetchScroll when the cursor is a static cursor.
+    // SQL_CA1_ABSOLUTE = FetchOrientation arguments of SQL_FETCH_FIRST, SQL_FETCH_LAST, and SQL_FETCH_ABSOLUTE are supported in a call to SQLFetchScroll when the cursor is a static cursor. (The rowset that will be fetched is independent of the current cursor position.)
+    // SQL_CA1_RELATIVE = FetchOrientation arguments of SQL_FETCH_PRIOR and SQL_FETCH_RELATIVE are supported in a call to SQLFetchScroll when the cursor is a static cursor. (The rowset that will be fetched depends on the current cursor position. Note that this is separated from SQL_FETCH_NEXT because in a forward-only cursor, only SQL_FETCH_NEXT is supported.)
+    // SQL_CA1_BOOKMARK = A FetchOrientation argument of SQL_FETCH_BOOKMARK is supported in a call to SQLFetchScroll when the cursor is a static cursor.
+    // SQL_CA1_LOCK_EXCLUSIVE = A LockType argument of SQL_LOCK_EXCLUSIVE is supported in a call to SQLSetPos when the cursor is a static cursor.
+    // SQL_CA1_LOCK_NO_CHANGE = A LockType argument of SQL_LOCK_NO_CHANGE is supported in a call to SQLSetPos when the cursor is a static cursor.
+    // SQL_CA1_LOCK_UNLOCK = A LockType argument of SQL_LOCK_UNLOCK is supported in a call to SQLSetPos when the cursor is a static cursor.
+    // SQL_CA1_POS_POSITION = An Operation argument of SQL_POSITION is supported in a call to SQLSetPos when the cursor is a static cursor.
+    // SQL_CA1_POS_UPDATE = An Operation argument of SQL_UPDATE is supported in a call to SQLSetPos when the cursor is a static cursor.
+    // SQL_CA1_POS_DELETE = An Operation argument of SQL_DELETE is supported in a call to SQLSetPos when the cursor is a static cursor.
+    // SQL_CA1_POS_REFRESH = An Operation argument of SQL_REFRESH is supported in a call to SQLSetPos when the cursor is a static cursor.
+    // SQL_CA1_POSITIONED_UPDATE = An UPDATE WHERE CURRENT OF SQL statement is supported when the cursor is a static cursor. (An SQL-92 Entry level-conformant driver will always return this option as supported.)
+    // SQL_CA1_POSITIONED_DELETE = A DELETE WHERE CURRENT OF SQL statement is supported when the cursor is a static cursor. (An SQL-92 Entry level-conformant driver will always return this option as supported.)
+    // SQL_CA1_SELECT_FOR_UPDATE = A SELECT FOR UPDATE SQL statement is supported when the cursor is a static cursor. (An SQL-92 Entry level-conformant driver will always return this option as supported.)
+    // SQL_CA1_BULK_ADD = An Operation argument of SQL_ADD is supported in a call to SQLBulkOperations when the cursor is a static cursor.
+    // SQL_CA1_BULK_UPDATE_BY_BOOKMARK = An Operation argument of SQL_UPDATE_BY_BOOKMARK is supported in a call to SQLBulkOperations when the cursor is a static cursor.
+    // SQL_CA1_BULK_DELETE_BY_BOOKMARK = An Operation argument of SQL_DELETE_BY_BOOKMARK is supported in a call to SQLBulkOperations when the cursor is a static cursor.
+    // SQL_CA1_BULK_FETCH_BY_BOOKMARK = An Operation argument of SQL_FETCH_BY_BOOKMARK is supported in a call to SQLBulkOperations when the cursor is a static cursor.
+    // TODO PLAT-5473 make these limitations stricter
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_CA1_NEXT |
+                                                SQL_CA1_LOCK_NO_CHANGE |
+                                                SQL_CA1_POS_POSITION |
+                                                // SQL_CA1_POS_UPDATE | TODO PLAT-5080
+                                                SQL_CA1_POS_DELETE |
+                                                // SQL_CA1_POS_REFRESH | TODO PLAT-5466
+                                                // SQL_CA1_POSITIONED_UPDATE | TODO PLAT-5466
+                                                SQL_CA1_POSITIONED_DELETE |
+                                                SQL_CA1_BULK_ADD,
                      StringLengthPtr);
     break;
   case SQL_STATIC_CURSOR_ATTRIBUTES2:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_CA2_MAX_ROWS_SELECT, StringLengthPtr);
+    // SQL_STATIC_CURSOR_ATTRIBUTES2 describes the attributes of a static cursor that are supported by the driver.
+    // SQL_CA2_READ_ONLY_CONCURRENCY = A read-only static cursor, in which no updates are allowed, is supported. (The SQL_ATTR_CONCURRENCY statement attribute can be SQL_CONCUR_READ_ONLY for a static cursor).
+    // SQL_CA2_LOCK_CONCURRENCY = A static cursor that uses the lowest level of locking sufficient to make sure that the row can be updated is supported. (The SQL_ATTR_CONCURRENCY statement attribute can be SQL_CONCUR_LOCK for a static cursor.) These locks must be consistent with the transaction isolation level set by the SQL_ATTR_TXN_ISOLATION connection attribute.
+    // SQL_CA2_OPT_ROWVER_CONCURRENCY = A static cursor that uses the optimistic concurrency control comparing row versions is supported. (The SQL_ATTR_CONCURRENCY statement attribute can be SQL_CONCUR_ROWVER for a static cursor.)
+    // SQL_CA2_OPT_VALUES_CONCURRENCY = A static cursor that uses the optimistic concurrency control comparing values is supported. (The SQL_ATTR_CONCURRENCY statement attribute can be SQL_CONCUR_VALUES for a static cursor.)
+    // SQL_CA2_SENSITIVITY_ADDITIONS = Added rows are visible to a static cursor; the cursor can scroll to those rows. (Where these rows are added to the cursor is driver-dependent.)
+    // SQL_CA2_SENSITIVITY_DELETIONS = Deleted rows are no longer available to a static cursor, and do not leave a "hole" in the result set; after the static cursor scrolls from a deleted row, it cannot return to that row.
+    // SQL_CA2_SENSITIVITY_UPDATES = Updates to rows are visible to a static cursor; if the static cursor scrolls from and returns to an updated row, the data returned by the cursor is the updated data, not the original data.
+    // SQL_CA2_MAX_ROWS_SELECT = The SQL_ATTR_MAX_ROWS statement attribute affects SELECT statements when the cursor is a static cursor.
+    // SQL_CA2_MAX_ROWS_INSERT = The SQL_ATTR_MAX_ROWS statement attribute affects INSERT statements when the cursor is a static cursor.
+    // SQL_CA2_MAX_ROWS_DELETE = The SQL_ATTR_MAX_ROWS statement attribute affects DELETE statements when the cursor is a static cursor.
+    // SQL_CA2_MAX_ROWS_UPDATE = The SQL_ATTR_MAX_ROWS statement attribute affects UPDATE statements when the cursor is a static cursor.
+    // SQL_CA2_MAX_ROWS_CATALOG = The SQL_ATTR_MAX_ROWS statement attribute affects CATALOG result sets when the cursor is a static cursor.
+    // SQL_CA2_MAX_ROWS_AFFECTS_ALL = The SQL_ATTR_MAX_ROWS statement attribute affects SELECT, INSERT, DELETE, and UPDATE statements, and CATALOG result sets, when the cursor is a static cursor.
+    // SQL_CA2_CRC_EXACT = The exact row count is available in the SQL_DIAG_CURSOR_ROW_COUNT diagnostic field when the cursor is a static cursor.
+    // SQL_CA2_CRC_APPROXIMATE = An approximate row count is available in the SQL_DIAG_CURSOR_ROW_COUNT diagnostic field when the cursor is a static cursor.
+    // SQL_CA2_SIMULATE_NON_UNIQUE = The driver does not guarantee that simulated positioned update or delete statements will affect only one row when the cursor is a static cursor; it is the application's responsibility to guarantee this. (If a statement affects more than one row, SQLExecute or SQLExecDirect returns SQLSTATE 01001 [Cursor operation conflict].) To set this behavior, the application calls SQLSetStmtAttr with the SQL_ATTR_SIMULATE_CURSOR attribute set to SQL_SC_NON_UNIQUE.
+    // SQL_CA2_SIMULATE_TRY_UNIQUE = The driver tries to guarantee that simulated positioned update or delete statements will affect only one row when the cursor is a static cursor. The driver always executes such statements, even if they might affect more than one row, such as when there is no unique key. (If a statement affects more than one row, SQLExecute or SQLExecDirect returns SQLSTATE 01001 [Cursor operation conflict].) To set this behavior, the application calls SQLSetStmtAttr with the SQL_ATTR_SIMULATE_CURSOR attribute set to SQL_SC_TRY_UNIQUE.
+    // SQL_CA2_SIMULATE_UNIQUE = The driver guarantees that simulated positioned update or delete statements will affect only one row when the cursor is a static cursor. If the driver cannot guarantee this for a given statement, SQLExecDirect or SQLPrepare return SQLSTATE 01001 (Cursor operation conflict). To set this behavior, the application calls SQLSetStmtAttr with the SQL_ATTR_SIMULATE_CURSOR attribute set to SQL_SC_UNIQUE.
+    // TODO PLAT-5473 make these limitations stricter
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_CA2_CRC_EXACT |
+                                                SQL_CA2_READ_ONLY_CONCURRENCY |
+                                                SQL_CA2_MAX_ROWS_SELECT |
+                                                SQL_CA2_MAX_ROWS_INSERT |
+                                                SQL_CA2_MAX_ROWS_DELETE |
+                                                SQL_CA2_MAX_ROWS_UPDATE, StringLengthPtr);
     break;
   case SQL_STRING_FUNCTIONS:
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_FN_STR_ASCII | SQL_FN_STR_BIT_LENGTH |
@@ -1709,6 +1982,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                                                 SQL_FN_SYS_USERNAME, StringLengthPtr);
     break;
   case SQL_TABLE_TERM:
+    // SQL_TABLE_TERM is a character string with the data source vendor's name for a table.
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr,
                                       BUFFER_CHAR_LEN(BufferLength, isWChar), 
                                      "table", SQL_NTS, &Dbc->Error);
@@ -1737,9 +2011,16 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                       StringLengthPtr);
     break;
   case SQL_TXN_CAPABLE:
+    // SQL_TXN_CAPABLE describes the transaction support in the driver or data source.
+    // SQL_TC_DDL_COMMIT = Transactions can contain only DML statements.
+    // DDL statements (CREATE TABLE, DROP INDEX, and so on) encountered in a transaction cause the transaction to be committed.
+    // TODO PLAT-5414
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_TC_DDL_COMMIT, StringLengthPtr);
     break;
   case SQL_TXN_ISOLATION_OPTION:
+    // SQL_TXN_ISOLATION_OPTION enumerates the transaction isolation levels available from the driver or data source.
+    // SQL_TXN_READ_COMMITTED = Dirty reads are not possible. Non-repeatable reads and phantoms are possible.
+    // TODO PLAT-5414
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_TXN_READ_COMMITTED, StringLengthPtr);
     break;
   case SQL_UNION:
@@ -1747,6 +2028,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
   case SQL_USER_NAME:
   {
+    // SQL_USER_NAME is a character string with the name used in a particular database, which can be different from the login name.
     const char *User= "";
     if (Dbc->mariadb)
     {
@@ -1763,6 +2045,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                                      "1992", SQL_NTS, &Dbc->Error);
     break;
   case SQL_DATA_SOURCE_READ_ONLY:
+    // SQL_DATA_SOURCE_READ_ONLY is a character string "Y" if the data source is set to READ ONLY mode, "N" if it is otherwise.
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr,
                                      BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "N", SQL_NTS, &Dbc->Error);

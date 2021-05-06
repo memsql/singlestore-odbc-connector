@@ -1148,7 +1148,7 @@ void cleanup()
     const char *errorMessage = NULL;
     char buff[1024];
 
-    printf(stdout, "Running cleanup...\n");
+    printf("Running cleanup...\n");
 
     MYSQL* mysql = mysql_init(NULL);
     if (!mysql)
