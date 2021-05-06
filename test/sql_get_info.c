@@ -406,6 +406,7 @@ ODBC_TEST(data_source_information)
   CHECK_CHAR(Connection, SQL_USER_NAME, "root");
 
   SQLFreeHandle(SQL_HANDLE_DBC, Hdbc);
+  
   return OK;
 }
 
