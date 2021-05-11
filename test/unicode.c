@@ -1560,7 +1560,7 @@ MA_ODBC_TESTS my_tests[]=
     {t_bug28168,        "t_bug28168",         NORMAL, UNICODE_DRIVER},
     {t_bug14363601,     "t_bug14363601",      NORMAL, ALL_DRIVERS},
     {t_odbc19,          "test_issue_odbc19",  NORMAL, ALL_DRIVERS},
-    {t_odbc72,          "odbc72_surrogate_pairs",  NORMAL, ALL_DRIVERS},
+    {t_odbc72,          "odbc72_surrogate_pairs",  TO_FIX, ALL_DRIVERS}, // TODO PLAT-5421
     {t_odbc203,         "t_odbc203",          NORMAL, ALL_DRIVERS},
     {t_odbc253,         "t_odbc253_empty_str_crash", NORMAL, ALL_DRIVERS},
     {NULL, NULL, NORMAL, ALL_DRIVERS}
