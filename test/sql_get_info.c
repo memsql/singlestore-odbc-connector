@@ -496,12 +496,152 @@ ODBC_TEST(supported_sql)
   return OK;
 }
 
+ODBC_TEST(sql_limits)
+{
+  CHECK_U_INTEGER(Connection, SQL_MAX_BINARY_LITERAL_LEN, 0);
+  CHECK_U_SMALL_INT(Connection, SQL_MAX_CATALOG_NAME_LEN, 60*4);
+  CHECK_U_INTEGER(Connection, SQL_MAX_CHAR_LITERAL_LEN, 0);
+  CHECK_U_SMALL_INT(Connection, SQL_MAX_COLUMN_NAME_LEN, 64*4);
+  CHECK_U_SMALL_INT(Connection, SQL_MAX_COLUMNS_IN_GROUP_BY, 0);
+  CHECK_U_SMALL_INT(Connection, SQL_MAX_COLUMNS_IN_GROUP_BY, 0);
+  CHECK_U_SMALL_INT(Connection, SQL_MAX_COLUMNS_IN_ORDER_BY, 0);
+  CHECK_U_SMALL_INT(Connection, SQL_MAX_COLUMNS_IN_SELECT, 0);
+  CHECK_U_SMALL_INT(Connection, SQL_MAX_COLUMNS_IN_TABLE, 4096);
+  CHECK_U_SMALL_INT(Connection, SQL_MAX_CURSOR_NAME_LEN, 64 * 3 + 1);
+  CHECK_U_SMALL_INT(Connection, SQL_MAX_IDENTIFIER_LEN, 64*4);
+  CHECK_U_INTEGER(Connection, SQL_MAX_INDEX_SIZE, 0);
+  CHECK_U_SMALL_INT(Connection, SQL_MAX_PROCEDURE_NAME_LEN, 64*4);
+  CHECK_U_INTEGER(Connection, SQL_MAX_ROW_SIZE, 1<<26);
+  CHECK_CHAR(Connection, SQL_MAX_ROW_SIZE_INCLUDES_LONG,"N");
+  CHECK_U_SMALL_INT(Connection, SQL_MAX_SCHEMA_NAME_LEN, 0);
+  CHECK_U_INTEGER(Connection, SQL_MAX_STATEMENT_LEN, 1073741824);
+  CHECK_U_SMALL_INT(Connection, SQL_MAX_TABLE_NAME_LEN, 64*4);
+  CHECK_U_SMALL_INT(Connection, SQL_MAX_TABLES_IN_SELECT, 253);
+  CHECK_U_SMALL_INT(Connection, SQL_MAX_USER_NAME_LEN, 32*4);
+
+  return OK;
+}
+
+ODBC_TEST(scalar_functions_information)
+{
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_FUNCTIONS, SQL_FN_CVT_CONVERT);
+  CHECK_U_INTEGER(Connection, SQL_NUMERIC_FUNCTIONS, SQL_FN_NUM_ABS | SQL_FN_NUM_ACOS | SQL_FN_NUM_ASIN |
+                                                     SQL_FN_NUM_ATAN | SQL_FN_NUM_ATAN2 | SQL_FN_NUM_CEILING |
+                                                     SQL_FN_NUM_COS | SQL_FN_NUM_COT | SQL_FN_NUM_EXP |
+                                                     SQL_FN_NUM_FLOOR | SQL_FN_NUM_LOG | SQL_FN_NUM_MOD |
+                                                     SQL_FN_NUM_SIGN | SQL_FN_NUM_SIN | SQL_FN_NUM_SQRT |
+                                                     SQL_FN_NUM_TAN | SQL_FN_NUM_PI | SQL_FN_NUM_RAND |
+                                                     SQL_FN_NUM_DEGREES | SQL_FN_NUM_LOG10 | SQL_FN_NUM_POWER |
+                                                     SQL_FN_NUM_RADIANS | SQL_FN_NUM_ROUND | SQL_FN_NUM_TRUNCATE);
+  CHECK_U_INTEGER(Connection, SQL_STRING_FUNCTIONS, SQL_FN_STR_ASCII | SQL_FN_STR_BIT_LENGTH |
+                                                    SQL_FN_STR_CHAR | SQL_FN_STR_CHAR_LENGTH | SQL_FN_STR_CHARACTER_LENGTH |
+                                                    SQL_FN_STR_CONCAT | SQL_FN_STR_INSERT |
+                                                    SQL_FN_STR_LCASE | SQL_FN_STR_LEFT |
+                                                    SQL_FN_STR_LENGTH | SQL_FN_STR_LOCATE |
+                                                    SQL_FN_STR_LOCATE_2 | SQL_FN_STR_LTRIM |
+                                                    SQL_FN_STR_OCTET_LENGTH | SQL_FN_STR_POSITION |
+                                                    SQL_FN_STR_REPEAT | SQL_FN_STR_REPLACE |
+                                                    SQL_FN_STR_RIGHT | SQL_FN_STR_RTRIM | SQL_FN_STR_SPACE |
+                                                    SQL_FN_STR_SUBSTRING | SQL_FN_STR_UCASE);
+  CHECK_U_INTEGER(Connection, SQL_SYSTEM_FUNCTIONS, SQL_FN_SYS_DBNAME | SQL_FN_SYS_IFNULL |
+                                                    SQL_FN_SYS_USERNAME);
+  CHECK_U_INTEGER(Connection, SQL_TIMEDATE_ADD_INTERVALS, SQL_FN_TSI_FRAC_SECOND | SQL_FN_TSI_SECOND | SQL_FN_TSI_MINUTE |
+                                                          SQL_FN_TSI_HOUR | SQL_FN_TSI_DAY | SQL_FN_TSI_WEEK | SQL_FN_TSI_MONTH | SQL_FN_TSI_QUARTER |
+                                                          SQL_FN_TSI_YEAR);
+  CHECK_U_INTEGER(Connection, SQL_TIMEDATE_DIFF_INTERVALS, SQL_FN_TSI_FRAC_SECOND | SQL_FN_TSI_SECOND | SQL_FN_TSI_MINUTE |
+                                                           SQL_FN_TSI_HOUR | SQL_FN_TSI_DAY | SQL_FN_TSI_WEEK | SQL_FN_TSI_MONTH | SQL_FN_TSI_QUARTER |
+                                                           SQL_FN_TSI_YEAR);
+  CHECK_U_INTEGER(Connection, SQL_TIMEDATE_FUNCTIONS, SQL_FN_TD_CURDATE | SQL_FN_TD_CURRENT_DATE |
+                                                      SQL_FN_TD_CURRENT_TIME | SQL_FN_TD_CURRENT_TIMESTAMP |
+                                                      SQL_FN_TD_CURTIME | SQL_FN_TD_DAYNAME |
+                                                      SQL_FN_TD_DAYOFMONTH | SQL_FN_TD_DAYOFWEEK |
+                                                      SQL_FN_TD_DAYOFYEAR | SQL_FN_TD_EXTRACT |
+                                                      SQL_FN_TD_HOUR | SQL_FN_TD_MINUTE |
+                                                      SQL_FN_TD_MONTH | SQL_FN_TD_MONTHNAME |
+                                                      SQL_FN_TD_NOW | SQL_FN_TD_QUARTER |
+                                                      SQL_FN_TD_SECOND | SQL_FN_TD_TIMESTAMPADD |
+                                                      SQL_FN_TD_TIMESTAMPDIFF | SQL_FN_TD_WEEK | SQL_FN_TD_YEAR);
+  return OK;
+}
+
+ODBC_TEST(conversion_information)
+{
+  SQLUINTEGER conversions = SQL_CVT_BIGINT | SQL_CVT_BINARY | SQL_CVT_BIT | SQL_CVT_CHAR | SQL_CVT_DATE |
+                                    SQL_CVT_DECIMAL | SQL_CVT_DOUBLE | SQL_CVT_FLOAT |
+                                    SQL_CVT_INTEGER | SQL_CVT_LONGVARBINARY | SQL_CVT_LONGVARCHAR | SQL_CVT_NUMERIC |
+                                    SQL_CVT_REAL | SQL_CVT_SMALLINT | SQL_CVT_TIME | SQL_CVT_TIMESTAMP |
+                                    SQL_CVT_TINYINT | SQL_CVT_VARBINARY | SQL_CVT_VARCHAR | SQL_CVT_WCHAR |
+                                    SQL_CVT_WLONGVARCHAR | SQL_CVT_WVARCHAR;
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_BIGINT, conversions);
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_BINARY, conversions);
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_BIT, conversions);
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_CHAR, conversions);
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_GUID, 0);
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_DATE, conversions);
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_DECIMAL, conversions);
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_DOUBLE, conversions);
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_FLOAT, conversions);
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_INTEGER, conversions);
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_INTERVAL_YEAR_MONTH, 0);
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_INTERVAL_DAY_TIME, 0);
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_LONGVARBINARY, conversions);
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_LONGVARCHAR, conversions);
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_NUMERIC, conversions);
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_REAL, conversions);
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_SMALLINT, conversions);
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_TIME, conversions);
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_TIMESTAMP, conversions);
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_TINYINT, conversions);
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_VARBINARY, conversions);
+  CHECK_U_INTEGER(Connection, SQL_CONVERT_VARCHAR, conversions);
+  return OK;
+}
+
+ODBC_TEST(sql92)
+{
+  CHECK_U_INTEGER(Connection, SQL_SQL92_DATETIME_FUNCTIONS, SQL_SDF_CURRENT_DATE | SQL_SDF_CURRENT_TIME |
+                                                            SQL_SDF_CURRENT_TIMESTAMP);
+  CHECK_U_INTEGER(Connection, SQL_SQL92_FOREIGN_KEY_DELETE_RULE, 0);
+  CHECK_U_INTEGER(Connection, SQL_SQL92_FOREIGN_KEY_UPDATE_RULE, 0);
+  CHECK_U_INTEGER(Connection, SQL_SQL92_GRANT, SQL_SG_DELETE_TABLE | SQL_SG_INSERT_COLUMN |
+                                               SQL_SG_INSERT_TABLE | SQL_SG_SELECT_TABLE |
+                                               SQL_SG_UPDATE_COLUMN | SQL_SG_UPDATE_TABLE |
+                                               SQL_SG_WITH_GRANT_OPTION);
+  CHECK_U_INTEGER(Connection, SQL_SQL92_NUMERIC_VALUE_FUNCTIONS, SQL_SNVF_CHARACTER_LENGTH |
+                                                                 SQL_SNVF_CHAR_LENGTH | SQL_SNVF_EXTRACT |
+                                                                 SQL_SNVF_OCTET_LENGTH | SQL_SNVF_POSITION);
+  CHECK_U_INTEGER(Connection, SQL_SQL92_PREDICATES, SQL_SP_BETWEEN | SQL_SP_COMPARISON |
+                                                    SQL_SP_EXISTS | SQL_SP_IN | SQL_SP_ISNOTNULL |
+                                                    SQL_SP_ISNULL | SQL_SP_LIKE | SQL_SP_QUANTIFIED_COMPARISON);
+  CHECK_U_INTEGER(Connection, SQL_SQL92_RELATIONAL_JOIN_OPERATORS, SQL_SRJO_CROSS_JOIN | SQL_SRJO_FULL_OUTER_JOIN | SQL_SRJO_INNER_JOIN |
+                                                                   SQL_SRJO_LEFT_OUTER_JOIN | SQL_SRJO_RIGHT_OUTER_JOIN |
+                                                                   SQL_SRJO_NATURAL_JOIN);
+  CHECK_U_INTEGER(Connection, SQL_SQL92_REVOKE, SQL_SR_DELETE_TABLE | SQL_SR_INSERT_COLUMN |
+                                                SQL_SR_INSERT_TABLE | SQL_SR_SELECT_TABLE |
+                                                SQL_SR_UPDATE_COLUMN | SQL_SR_UPDATE_TABLE);
+  CHECK_U_INTEGER(Connection, SQL_SQL92_ROW_VALUE_CONSTRUCTOR, SQL_SRVC_DEFAULT | SQL_SRVC_NULL |
+                                                               SQL_SRVC_ROW_SUBQUERY | SQL_SRVC_VALUE_EXPRESSION);
+  CHECK_U_INTEGER(Connection, SQL_SQL92_STRING_FUNCTIONS, SQL_SSF_CONVERT | SQL_SSF_LOWER |
+                                                          SQL_SSF_SUBSTRING | SQL_SSF_TRIM_BOTH |
+                                                          SQL_SSF_TRIM_LEADING | SQL_SSF_TRIM_TRAILING |
+                                                          SQL_SSF_UPPER);
+  CHECK_U_INTEGER(Connection, SQL_SQL92_VALUE_EXPRESSIONS, SQL_SVE_CASE | SQL_SVE_CAST | SQL_SVE_COALESCE |
+                                                           SQL_SVE_NULLIF);
+  CHECK_U_INTEGER(Connection, SQL_DATETIME_LITERALS, SQL_DL_SQL92_DATE | SQL_DL_SQL92_TIME |
+                                                     SQL_DL_SQL92_TIMESTAMP);
+  return OK;
+}
+
 MA_ODBC_TESTS my_tests[]=
 {
   {driver_information, "driver_information", NORMAL, ALL_DRIVERS},
   {dbms_product_information, "dbms_product_information", NORMAL, ALL_DRIVERS},
   {data_source_information, "data_source_information", NORMAL, ALL_DRIVERS},
   {supported_sql, "supported_sql", NORMAL, ALL_DRIVERS},
+  {sql_limits, "sql_limits", NORMAL, ALL_DRIVERS},
+  {scalar_functions_information, "scalar_functions_information", NORMAL, ALL_DRIVERS},
+  {conversion_information, "conversion_information", NORMAL, ALL_DRIVERS},
+  {sql92, "sql92", NORMAL, ALL_DRIVERS},
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 

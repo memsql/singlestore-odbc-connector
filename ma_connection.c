@@ -1147,83 +1147,109 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_CB_NULL, StringLengthPtr);
     break;
   case SQL_CONVERT_BIGINT:
+    // SQL_CONVERT_BIGINT indicates the conversions supported by the data source with the CONVERT scalar function for data of the type BIGINT
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_BINARY:
+    // SQL_CONVERT_BINARY indicates the conversions supported by the data source with the CONVERT scalar function for data of the type BINARY
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_BIT:
+    // SQL_CONVERT_BIT indicates the conversions supported by the data source with the CONVERT scalar function for data of the type BIT
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_CHAR:
+    // SQL_CONVERT_CHAR indicates the conversions supported by the data source with the CONVERT scalar function for data of the type CHAR
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_WCHAR:
+    // SQL_CONVERT_WCHAR indicates the conversions supported by the data source with the CONVERT scalar function for data of the type WCHAR
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
 #ifdef SQL_CONVERT_GUID
   case SQL_CONVERT_GUID:
+    // SQL_CONVERT_GUID indicates the conversions supported by the data source with the CONVERT scalar function for data of the type GUID
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
 #endif
   case SQL_CONVERT_DATE:
+    // SQL_CONVERT_DATE indicates the conversions supported by the data source with the CONVERT scalar function for data of the type DATE
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_DECIMAL:
+    // SQL_CONVERT_DECIMAL indicates the conversions supported by the data source with the CONVERT scalar function for data of the type DECIMAL
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_DOUBLE:
+    // SQL_CONVERT_DOUBLE indicates the conversions supported by the data source with the CONVERT scalar function for data of the type DOUBLE
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_FLOAT:
+    // SQL_CONVERT_FLOAT indicates the conversions supported by the data source with the CONVERT scalar function for data of the type FLOAT
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_INTEGER:
+    // SQL_CONVERT_INTEGER indicates the conversions supported by the data source with the CONVERT scalar function for data of the type INTEGER
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_INTERVAL_YEAR_MONTH:
+    // SQL_CONVERT_INTERVAL_YEAR_MONTH indicates the conversions supported by the data source with the CONVERT scalar function for data of the type INTERVAL_YEAR_MONTH
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_CONVERT_INTERVAL_DAY_TIME:
+    // SQL_CONVERT_INTERVAL_DAY_TIME indicates the conversions supported by the data source with the CONVERT scalar function for data of the type INTERVAL_DAY_TIME
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_CONVERT_LONGVARBINARY:
+    // SQL_CONVERT_LONGVARBINARY indicates the conversions supported by the data source with the CONVERT scalar function for data of the type LONGVARBINARY
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_LONGVARCHAR:
+    // SQL_CONVERT_LONGVARCHAR indicates the conversions supported by the data source with the CONVERT scalar function for data of the type LONGVARCHAR
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_WLONGVARCHAR:
+    // SQL_CONVERT_WLONGVARCHAR indicates the conversions supported by the data source with the CONVERT scalar function for data of the type WLONGVARCHAR
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_NUMERIC:
+    // SQL_CONVERT_NUMERIC indicates the conversions supported by the data source with the CONVERT scalar function for data of the type NUMERIC
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_REAL:
+    // SQL_CONVERT_REAL indicates the conversions supported by the data source with the CONVERT scalar function for data of the type REAL
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_SMALLINT:
+    // SQL_CONVERT_SMALLINT indicates the conversions supported by the data source with the CONVERT scalar function for data of the type SMALLINT
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_TIME:
+    // SQL_CONVERT_TIME indicates the conversions supported by the data source with the CONVERT scalar function for data of the type TIME
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_TIMESTAMP:
+    // SQL_CONVERT_TIMESTAMP indicates the conversions supported by the data source with the CONVERT scalar function for data of the type TIMESTAMP
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_TINYINT:
+    // SQL_CONVERT_TINYINT indicates the conversions supported by the data source with the CONVERT scalar function for data of the type TINYINT
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_VARBINARY:
+    // SQL_CONVERT_VARBINARY indicates the conversions supported by the data source with the CONVERT scalar function for data of the type VARBINARY
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_VARCHAR:
+    // SQL_CONVERT_VARCHAR indicates the conversions supported by the data source with the CONVERT scalar function for data of the type VARCHAR
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_WVARCHAR:
+    // SQL_CONVERT_WVARCHAR indicates the conversions supported by the data source with the CONVERT scalar function for data of the type WVARCHAR
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, MADB_SUPPORTED_CONVERSIONS, StringLengthPtr);
     break;
   case SQL_CONVERT_FUNCTIONS:
+    // SQL_CONVERT_FUNCTIONS enumerates the scalar conversion functions supported by the driver and associated data source.
     // CAST is not supported for all datatypes, while CONVERT is expected to arrive in the escape syntax form,
     // in which case we fully support it.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_FN_CVT_CONVERT, StringLengthPtr);
@@ -1327,6 +1353,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     return MADB_Dbc_GetCurrentDB(Dbc, InfoValuePtr, BufferLength, (SQLSMALLINT *)StringLengthPtr, isWChar);
     break;
   case SQL_DATETIME_LITERALS:
+    // SQL_DATETIME_LITERALS enumerating the SQL-92 datetime literals supported by the data source.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_DL_SQL92_DATE | SQL_DL_SQL92_TIME |
                                                 SQL_DL_SQL92_TIMESTAMP, StringLengthPtr);
     break;
@@ -1695,31 +1722,42 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_MAX_BINARY_LITERAL_LEN:
+    // SQL_MAX_BINARY_LITERAL_LEN specifies the maximum length (number of hexadecimal characters, excluding the literal prefix and suffix returned by SQLGetTypeInfo)
+    // of a binary literal in an SQL statement.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_MAX_CATALOG_NAME_LEN:
+    // SQL_MAX_CATALOG_NAME_LEN specifies the maximum length of a catalog name in the data source.
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, 60 * SYSTEM_MB_MAX_CHAR_LENGTH, StringLengthPtr);
     break;
   case SQL_MAX_CHAR_LITERAL_LEN:
+    // SQL_MAX_CHAR_LITERAL_LEN specifies the maximum length (number of characters, excluding the literal prefix and suffix returned by SQLGetTypeInfo)
+    // of a character literal in an SQL statement.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_MAX_COLUMN_NAME_LEN:
+    // SQL_MAX_COLUMN_NAME_LEN pecifies the maximum length of a column name in the data source.
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, NAME_CHAR_LEN * SYSTEM_MB_MAX_CHAR_LENGTH, StringLengthPtr);
     break;
   case SQL_MAX_COLUMNS_IN_GROUP_BY:
+    // SQL_MAX_COLUMNS_IN_GROUP_BY pecifies the maximum number of columns allowed in a GROUP BY clause.
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_MAX_COLUMNS_IN_INDEX:
+    // SQL_MAX_COLUMNS_IN_INDEX specifies the maximum number of columns allowed in an index.
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, 32, StringLengthPtr);
     break;
   case SQL_MAX_COLUMNS_IN_ORDER_BY:
+    // SQL_MAX_COLUMNS_IN_ORDER_BY specifies the maximum number of columns allowed in an ORDER BY clause.
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_MAX_COLUMNS_IN_SELECT:
+    // SQL_MAX_COLUMNS_IN_SELECT specifies the maximum number of columns allowed in a select list.
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_MAX_COLUMNS_IN_TABLE:
-    MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, 0, StringLengthPtr);
+    // SQL_MAX_COLUMNS_IN_TABLE specifies the maximum number of columns allowed in a table.
+    MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, 4096, StringLengthPtr);
     break;
   case SQL_MAX_CONCURRENT_ACTIVITIES:
     // SQL_MAX_CONCURRENT_ACTIVITIES specifies the maximum number of active statements that the driver can support for a connection.
@@ -1728,6 +1766,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_MAX_CURSOR_NAME_LEN:
+    // SQL_MAX_CURSOR_NAME_LEN specifies the maximum length of a cursor name in the data source.
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, MADB_MAX_CURSOR_NAME, StringLengthPtr);
     break;
   case SQL_MAX_DRIVER_CONNECTIONS:
@@ -1736,39 +1775,51 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_MAX_IDENTIFIER_LEN:
+    // SQL_MAX_IDENTIFIER_LEN indicates the maximum size in characters that the data source supports for user-defined names.
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, NAME_CHAR_LEN * SYSTEM_MB_MAX_CHAR_LENGTH, StringLengthPtr);
     break;
   case SQL_MAX_INDEX_SIZE:
-    MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, 3072, StringLengthPtr);
+    // SQL_MAX_INDEX_SIZE specifies the maximum number of bytes allowed in the combined fields of an index.
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_MAX_PROCEDURE_NAME_LEN:
+    // SQL_MAX_PROCEDURE_NAME_LEN specifies the maximum length of a procedure name in the data source.
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, NAME_CHAR_LEN * SYSTEM_MB_MAX_CHAR_LENGTH, StringLengthPtr);
     break;
   case SQL_MAX_ROW_SIZE:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
+    // SQL_MAX_ROW_SIZE specifies the maximum length of a single row in a table.
+    // In SingleStore this limit is 64KB
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 1<<26, StringLengthPtr);
     break;
+    // SQL_MAX_ROW_SIZE_INCLUDES_LONG is a character string: "Y" if the maximum row size returned for the SQL_MAX_ROW_SIZE information type
+    // includes the length of all SQL_LONGVARCHAR and SQL_LONGVARBINARY columns in the row; "N" otherwise.
   case SQL_MAX_ROW_SIZE_INCLUDES_LONG:
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
-                                     "Y", SQL_NTS, &Dbc->Error);
+                                     "N", SQL_NTS, &Dbc->Error);
     break;
   case SQL_MAX_SCHEMA_NAME_LEN:
+    // SQL_MAX_SCHEMA_NAME_LEN specifies the maximum length of a schema name in the data source.
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_MAX_STATEMENT_LEN:
     {
+      // SQL_MAX_STATEMENT_LEN specifies the maximum length (number of characters, including white space) of an SQL statement.
       size_t max_packet_size;
       mariadb_get_infov(Dbc->mariadb, MARIADB_MAX_ALLOWED_PACKET, (void*)&max_packet_size);
       MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, (SQLUINTEGER)max_packet_size, StringLengthPtr);
     }
     break;
   case SQL_MAX_TABLE_NAME_LEN:
-     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, NAME_CHAR_LEN * SYSTEM_MB_MAX_CHAR_LENGTH, StringLengthPtr);
+    // SQL_MAX_TABLE_NAME_LEN specifies the maximum length of a table name in the data source.
+    MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, NAME_CHAR_LEN * SYSTEM_MB_MAX_CHAR_LENGTH, StringLengthPtr);
     break;
   case SQL_MAX_TABLES_IN_SELECT:
-     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, 63, StringLengthPtr);
+    // SQL_MAX_TABLES_IN_SELECT specifies the maximum number of tables allowed in the FROM clause of a SELECT statement.
+    MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, 253, StringLengthPtr);
     break;
   case SQL_MAX_USER_NAME_LEN:
-     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, USERNAME_LENGTH, StringLengthPtr);
+    // SQL_MAX_USER_NAME_LEN specifies the maximum length of a user name in the data source.
+    MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, 32 * SYSTEM_MB_MAX_CHAR_LENGTH, StringLengthPtr);
     break;
   case SQL_MULT_RESULT_SETS:
     // SQL_MULT_RESULT_SETS is a character string: "Y" if the data source supports multiple result sets, "N" if it does not.
@@ -1799,6 +1850,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_NC_LOW, StringLengthPtr);
     break;
   case SQL_NUMERIC_FUNCTIONS:
+    // SQL_NUMERIC_FUNCTIONS enumerates the scalar numeric functions supported by the driver and associated data source.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_FN_NUM_ABS | SQL_FN_NUM_ACOS | SQL_FN_NUM_ASIN |
                                                 SQL_FN_NUM_ATAN | SQL_FN_NUM_ATAN2 | SQL_FN_NUM_CEILING |
                                                 SQL_FN_NUM_COS | SQL_FN_NUM_COT | SQL_FN_NUM_EXP |
@@ -1941,64 +1993,75 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SC_SQL92_INTERMEDIATE, StringLengthPtr);
     break;
   case SQL_SQL92_DATETIME_FUNCTIONS:
-     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SDF_CURRENT_DATE | SQL_SDF_CURRENT_TIME |
+    // SQL_SQL92_DATETIME_FUNCTIONS enumerates the datetime scalar functions that are supported by the driver and the associated data source, as defined in SQL-92.
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SDF_CURRENT_DATE | SQL_SDF_CURRENT_TIME |
                                                  SQL_SDF_CURRENT_TIMESTAMP, StringLengthPtr);
     break;
   case SQL_SQL92_FOREIGN_KEY_DELETE_RULE:
-     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
+    // SQL_SQL92_FOREIGN_KEY_DELETE_RULE enumerates the rules supported for a foreign key in a DELETE statement, as defined in SQL-92.
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_SQL92_FOREIGN_KEY_UPDATE_RULE:
+    // SQL_SQL92_FOREIGN_KEY_UPDATE_RULE enumerates the rules supported for a foreign key in an UPDATE statement, as defined in SQL-92.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_SQL92_GRANT:
+    // SQL_SQL92_GRANT enumerates the clauses supported in the GRANT statement, as defined in SQL-92.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SG_DELETE_TABLE | SQL_SG_INSERT_COLUMN |
-                                                SQL_SG_INSERT_TABLE | SQL_SG_REFERENCES_COLUMN |
-                                                SQL_SG_REFERENCES_TABLE | SQL_SG_SELECT_TABLE |
+                                                SQL_SG_INSERT_TABLE | SQL_SG_SELECT_TABLE |
                                                 SQL_SG_UPDATE_COLUMN | SQL_SG_UPDATE_TABLE |
                                                 SQL_SG_WITH_GRANT_OPTION, StringLengthPtr);
     break;
   case SQL_SQL92_NUMERIC_VALUE_FUNCTIONS:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SNVF_BIT_LENGTH | SQL_SNVF_CHARACTER_LENGTH |
+    // SQL_SQL92_NUMERIC_VALUE_FUNCTIONS enumerates the numeric value scalar functions that are supported by the driver and the associated data source, as defined in SQL-92.
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SNVF_CHARACTER_LENGTH |
                                                 SQL_SNVF_CHAR_LENGTH | SQL_SNVF_EXTRACT |
                                                 SQL_SNVF_OCTET_LENGTH | SQL_SNVF_POSITION,
                      StringLengthPtr);
     break;
   case SQL_SQL92_PREDICATES:
+    // SQL_SQL92_PREDICATES enumerates the predicates supported in a SELECT statement, as defined in SQL-92.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SP_BETWEEN | SQL_SP_COMPARISON |
                                                 SQL_SP_EXISTS | SQL_SP_IN | SQL_SP_ISNOTNULL |
                                                 SQL_SP_ISNULL | SQL_SP_LIKE | SQL_SP_QUANTIFIED_COMPARISON,
                      StringLengthPtr);
     break;
   case SQL_SQL92_RELATIONAL_JOIN_OPERATORS:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SRJO_CROSS_JOIN | SQL_SRJO_INNER_JOIN |
+    // SQL_SQL92_RELATIONAL_JOIN_OPERATORS enumerates the relational join operators supported in a SELECT statement, as defined in SQL-92.
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SRJO_CROSS_JOIN | SQL_SRJO_FULL_OUTER_JOIN | SQL_SRJO_INNER_JOIN |
                                                 SQL_SRJO_LEFT_OUTER_JOIN | SQL_SRJO_RIGHT_OUTER_JOIN |
                                                 SQL_SRJO_NATURAL_JOIN,
                      StringLengthPtr);
     break;
   case SQL_SQL92_REVOKE:
+    // SQL_SQL92_REVOKE enumerates the clauses supported in the REVOKE statement, as defined in SQL-92, supported by the data source.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SR_DELETE_TABLE | SQL_SR_INSERT_COLUMN |
-                                                SQL_SR_INSERT_TABLE | SQL_SR_REFERENCES_COLUMN |
-                                                SQL_SR_REFERENCES_TABLE | SQL_SR_SELECT_TABLE |
+                                                SQL_SR_INSERT_TABLE | SQL_SR_SELECT_TABLE |
                                                 SQL_SR_UPDATE_COLUMN | SQL_SR_UPDATE_TABLE,
                      StringLengthPtr);
     break;
   case SQL_SQL92_ROW_VALUE_CONSTRUCTOR:
+    // SQL_SQL92_ROW_VALUE_CONSTRUCTOR enumerates the row value constructor expressions supported in a SELECT statement, as defined in SQL-92.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SRVC_DEFAULT | SQL_SRVC_NULL |
                                                  SQL_SRVC_ROW_SUBQUERY | SQL_SRVC_VALUE_EXPRESSION,
                      StringLengthPtr);
     break;
   case SQL_SQL92_STRING_FUNCTIONS:
+    // SQL_SQL92_STRING_FUNCTIONS enumerates the string scalar functions that are supported by the driver and the associated data source, as defined in SQL-92.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SSF_CONVERT | SQL_SSF_LOWER |
-                                                SQL_SSF_SUBSTRING | SQL_SSF_TRANSLATE |
-                                                SQL_SSF_TRIM_BOTH | SQL_SSF_TRIM_LEADING |
-                                                SQL_SSF_TRIM_TRAILING | SQL_SSF_UPPER,
+                                                  SQL_SSF_SUBSTRING | SQL_SSF_TRIM_BOTH |
+                                                  SQL_SSF_TRIM_LEADING | SQL_SSF_TRIM_TRAILING |
+                                                  SQL_SSF_UPPER,
                      StringLengthPtr);
     break;
   case SQL_SQL92_VALUE_EXPRESSIONS:
+    // SQL_SQL92_VALUE_EXPRESSIONS enumerates the value expressions supported, as defined in SQL-92.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SVE_CASE | SQL_SVE_CAST | SQL_SVE_COALESCE |
                                                 SQL_SVE_NULLIF, StringLengthPtr);
     break;
   case SQL_STANDARD_CLI_CONFORMANCE:
+    // SQL_STANDARD_CLI_CONFORMANCE enumerates the CLI standard or standards to which the driver conforms.
+    // SQL_SCC_ISO92_CLI: The driver complies with the ISO 92 CLI.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SCC_ISO92_CLI, StringLengthPtr);
     break;
   case SQL_STATIC_CURSOR_ATTRIBUTES1:
@@ -2062,6 +2125,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                                                 SQL_CA2_MAX_ROWS_UPDATE, StringLengthPtr);
     break;
   case SQL_STRING_FUNCTIONS:
+    // SQL_STRING_FUNCTIONS enumerates the scalar string functions supported by the driver and associated data source.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_FN_STR_ASCII | SQL_FN_STR_BIT_LENGTH |
                                                 SQL_FN_STR_CHAR | SQL_FN_STR_CHAR_LENGTH | SQL_FN_STR_CHARACTER_LENGTH |
                                                 SQL_FN_STR_CONCAT | SQL_FN_STR_INSERT | 
@@ -2081,6 +2145,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                      StringLengthPtr);
     break;
   case SQL_SYSTEM_FUNCTIONS:
+    // SQL_SYSTEM_FUNCTIONS enumerates the scalar system functions supported by the driver and associated data source.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_FN_SYS_DBNAME | SQL_FN_SYS_IFNULL |
                                                 SQL_FN_SYS_USERNAME, StringLengthPtr);
     break;
@@ -2091,16 +2156,19 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                                      "table", SQL_NTS, &Dbc->Error);
     break;
   case SQL_TIMEDATE_ADD_INTERVALS:
+    // SQL_TIMEDATE_ADD_INTERVALS enumerates the timestamp intervals supported by the driver and associated data source for the TIMESTAMPADD scalar function.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_FN_TSI_FRAC_SECOND | SQL_FN_TSI_SECOND | SQL_FN_TSI_MINUTE |
                      SQL_FN_TSI_HOUR | SQL_FN_TSI_DAY | SQL_FN_TSI_WEEK | SQL_FN_TSI_MONTH | SQL_FN_TSI_QUARTER |
                      SQL_FN_TSI_YEAR, StringLengthPtr);
     break;
   case SQL_TIMEDATE_DIFF_INTERVALS:
+    // SQL_TIMEDATE_DIFF_INTERVALS enumerating the timestamp intervals supported by the driver and associated data source for the TIMESTAMPDIFF scalar function.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_FN_TSI_FRAC_SECOND | SQL_FN_TSI_SECOND | SQL_FN_TSI_MINUTE |
                      SQL_FN_TSI_HOUR | SQL_FN_TSI_DAY | SQL_FN_TSI_WEEK | SQL_FN_TSI_MONTH | SQL_FN_TSI_QUARTER |
                      SQL_FN_TSI_YEAR, StringLengthPtr);
     break;
   case SQL_TIMEDATE_FUNCTIONS:
+    // SQL_TIMEDATE_FUNCTIONS enumerates the scalar date and time functions supported by the driver and associated data source.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_FN_TD_CURDATE | SQL_FN_TD_CURRENT_DATE | 
                                                 SQL_FN_TD_CURRENT_TIME | SQL_FN_TD_CURRENT_TIMESTAMP | 
                                                 SQL_FN_TD_CURTIME | SQL_FN_TD_DAYNAME |
@@ -2146,6 +2214,8 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
   }
   case SQL_XOPEN_CLI_YEAR:
+    // SQL_XOPEN_CLI_YEAR is a character string that indicates the year of publication
+    // of the Open Group specification with which the version of the ODBC Driver Manager fully complies.
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr,
                                      BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "1992", SQL_NTS, &Dbc->Error);
