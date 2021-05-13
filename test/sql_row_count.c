@@ -22,35 +22,15 @@
 #include <sql.h>
 
 ODBC_TEST(t_sqlrowcnt_select) {
-    SQLHANDLE henv1, Connection1, Stmt1;
     SQLLEN rc = 0;
-    SQLCHAR conn[512];
 
-    sprintf((char *) conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s",
-            my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr);
-
-    CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
-    CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
-                                      (SQLPOINTER) SQL_OV_ODBC3, SQL_IS_INTEGER));
-    CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &Connection1));
-    CHECK_DBC_RC(Connection1,
-                 SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
-                                  NULL, SQL_DRIVER_NOPROMPT));
-
-    CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
-
-    OK_SIMPLE_STMT(Stmt1, "DROP TABLE IF EXISTS test_rowcount_values");
-    OK_SIMPLE_STMT(Stmt1, "CREATE TABLE test_rowcount_values (id INT, text VARCHAR(16))");
-    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (1, 'a'), (2, 'b')");
-    OK_SIMPLE_STMT(Stmt1, "SELECT * FROM test_rowcount_values");
-    CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
+    OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS test_rowcount_values");
+    OK_SIMPLE_STMT(Stmt, "CREATE TABLE test_rowcount_values (id INT, text VARCHAR(16))");
+    OK_SIMPLE_STMT(Stmt, "INSERT INTO test_rowcount_values VALUES (1, 'a'), (2, 'b')");
+    OK_SIMPLE_STMT(Stmt, "SELECT * FROM test_rowcount_values");
+    CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
 
     FAIL_IF_NE_INT(rc, 2, "SQLRowCount should return row count for select statement");
-
-    CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
-    CHECK_DBC_RC(Connection1, SQLDisconnect(Connection1));
-    CHECK_DBC_RC(Connection1, SQLFreeHandle(SQL_HANDLE_DBC, Connection1));
-    CHECK_ENV_RC(henv1, SQLFreeHandle(SQL_HANDLE_ENV, henv1));
 
     return OK;
 }
@@ -91,41 +71,21 @@ ODBC_TEST(t_sqlrowcnt_select_nocache) {
 }
 
 ODBC_TEST(t_sqlrowcnt_update) {
-    SQLHANDLE henv1, Connection1, Stmt1;
     SQLLEN rc;
-    SQLCHAR conn[512];
 
-    sprintf((char *) conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s",
-            my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr);
+    OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS test_rowcount_values");
+    OK_SIMPLE_STMT(Stmt, "CREATE TABLE test_rowcount_values (id INT, text VARCHAR(16))");
+    OK_SIMPLE_STMT(Stmt, "INSERT INTO test_rowcount_values VALUES (1, 'a'), (2, 'b'), (3, 'a')");
 
-    CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
-    CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
-                                      (SQLPOINTER) SQL_OV_ODBC3, SQL_IS_INTEGER));
-    CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &Connection1));
-    CHECK_DBC_RC(Connection1,
-                 SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
-                                  NULL, SQL_DRIVER_NOPROMPT));
-
-    CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
-
-    OK_SIMPLE_STMT(Stmt1, "DROP TABLE IF EXISTS test_rowcount_values");
-    OK_SIMPLE_STMT(Stmt1, "CREATE TABLE test_rowcount_values (id INT, text VARCHAR(16))");
-    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (1, 'a'), (2, 'b'), (3, 'a')");
-
-    OK_SIMPLE_STMT(Stmt1, "UPDATE test_rowcount_values SET id=4 WHERE text='a'");
-    CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
+    OK_SIMPLE_STMT(Stmt, "UPDATE test_rowcount_values SET id=4 WHERE text='a'");
+    CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
 
     FAIL_IF_NE_INT(rc, 2, "SQLRowCount should return updated rows count for update query");
 
-    OK_SIMPLE_STMT(Stmt1, "UPDATE test_rowcount_values SET id=5 WHERE text='c'");
-    CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
+    OK_SIMPLE_STMT(Stmt, "UPDATE test_rowcount_values SET id=5 WHERE text='c'");
+    CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
 
     FAIL_IF_NE_INT(rc, 0, "SQLRowCount should return updated rows count for update query");
-
-    CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
-    CHECK_DBC_RC(Connection1, SQLDisconnect(Connection1));
-    CHECK_DBC_RC(Connection1, SQLFreeHandle(SQL_HANDLE_DBC, Connection1));
-    CHECK_ENV_RC(henv1, SQLFreeHandle(SQL_HANDLE_ENV, henv1));
 
     return OK;
 }
@@ -136,207 +96,127 @@ ODBC_TEST(t_sqlrowcnt_update) {
 #define INSERT_CNT 3
 
 ODBC_TEST(t_sqlrowcnt_insert) {
-    SQLHANDLE henv1, Connection1, Stmt1;
     SQLLEN rc;
-    SQLCHAR conn[512];
 
-    sprintf((char *) conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s",
-            my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr);
+    OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS test_rowcount_values");
+    OK_SIMPLE_STMT(Stmt, "CREATE TABLE test_rowcount_values (id INT PRIMARY KEY, text VARCHAR(16))");
+    OK_SIMPLE_STMT(Stmt, "INSERT INTO test_rowcount_values VALUES (1, 'a'), (2, 'b')");
 
-    CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
-    CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
-                                      (SQLPOINTER) SQL_OV_ODBC3, SQL_IS_INTEGER));
-    CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &Connection1));
-    CHECK_DBC_RC(Connection1,
-                 SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
-                                  NULL, SQL_DRIVER_NOPROMPT));
-
-    CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
-
-    OK_SIMPLE_STMT(Stmt1, "DROP TABLE IF EXISTS test_rowcount_values");
-    OK_SIMPLE_STMT(Stmt1, "CREATE TABLE test_rowcount_values (id INT PRIMARY KEY, text VARCHAR(16))");
-    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (1, 'a'), (2, 'b')");
-
-    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (3, 'c'), (4, 'd')");
-    CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
+    OK_SIMPLE_STMT(Stmt, "INSERT INTO test_rowcount_values VALUES (3, 'c'), (4, 'd')");
+    CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
 
     FAIL_IF_NE_INT(rc, 2 * UPDATE_NEW_ROW_INSERTED, "SQLRowCount should return inserted rows count for insert query");
 
-    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (2, 'b'), (5, 'a') ON DUPLICATE KEY UPDATE text = VALUES(text)");
-    CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
+    OK_SIMPLE_STMT(Stmt, "INSERT INTO test_rowcount_values VALUES (2, 'b'), (5, 'a') ON DUPLICATE KEY UPDATE text = VALUES(text)");
+    CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
 
     // SingleStore return 0 if column value is not changed
     FAIL_IF_NE_INT(rc, UPDATE_NO_EXISTING_ROW_CHANGED  + UPDATE_NEW_ROW_INSERTED,
                    "SQLRowCount should return inserted rows count for insert query when column is not changed");
 
-    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (2, 'c'), (6, 'a') ON DUPLICATE KEY UPDATE text = VALUES(text)");
-    CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
+    OK_SIMPLE_STMT(Stmt, "INSERT INTO test_rowcount_values VALUES (2, 'c'), (6, 'a') ON DUPLICATE KEY UPDATE text = VALUES(text)");
+    CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
 
     // SingleStore return 2 if column value is not updated
     FAIL_IF_NE_INT(rc, UPDATE_EXISTING_ROW_UPDATED  + UPDATE_NEW_ROW_INSERTED,
                    "SQLRowCount should return inserted rows count for insert query when column is updated");
 
-    CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
-    CHECK_DBC_RC(Connection1, SQLDisconnect(Connection1));
-    CHECK_DBC_RC(Connection1, SQLFreeHandle(SQL_HANDLE_DBC, Connection1));
-    CHECK_ENV_RC(henv1, SQLFreeHandle(SQL_HANDLE_ENV, henv1));
-
     return OK;
 }
 
 ODBC_TEST(t_sqlrowcnt_delete) {
-    SQLHANDLE henv1, Connection1, Stmt1;
     SQLLEN rc;
-    SQLCHAR conn[512];
 
-    sprintf((char *) conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s",
-            my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr);
+    OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS test_rowcount_values;");
+    OK_SIMPLE_STMT(Stmt, "CREATE TABLE test_rowcount_values (id INT PRIMARY KEY, text VARCHAR(16));");
+    OK_SIMPLE_STMT(Stmt, "INSERT INTO test_rowcount_values VALUES (1, 'a'), (2, 'b');");
 
-    CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
-    CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
-                                      (SQLPOINTER) SQL_OV_ODBC3, SQL_IS_INTEGER));
-    CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &Connection1));
-    CHECK_DBC_RC(Connection1,
-                 SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
-                                  NULL, SQL_DRIVER_NOPROMPT));
-
-    CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
-
-    OK_SIMPLE_STMT(Stmt1, "DROP TABLE IF EXISTS test_rowcount_values;");
-    OK_SIMPLE_STMT(Stmt1, "CREATE TABLE test_rowcount_values (id INT PRIMARY KEY, text VARCHAR(16));");
-    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (1, 'a'), (2, 'b');");
-
-    OK_SIMPLE_STMT(Stmt1, "DELETE FROM test_rowcount_values WHERE id=2;");
-    CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
+    OK_SIMPLE_STMT(Stmt, "DELETE FROM test_rowcount_values WHERE id=2;");
+    CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
 
     FAIL_IF_NE_INT(rc, 1, "SQLRowCount should return deleted rows count for delete query");
 
-    OK_SIMPLE_STMT(Stmt1, "DELETE FROM test_rowcount_values WHERE id=2;");
-    CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
+    OK_SIMPLE_STMT(Stmt, "DELETE FROM test_rowcount_values WHERE id=2;");
+    CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
 
     FAIL_IF_NE_INT(rc, 0, "SQLRowCount should return deleted rows count for delete query");
-
-    CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
-    CHECK_DBC_RC(Connection1, SQLDisconnect(Connection1));
-    CHECK_DBC_RC(Connection1, SQLFreeHandle(SQL_HANDLE_DBC, Connection1));
-    CHECK_ENV_RC(henv1, SQLFreeHandle(SQL_HANDLE_ENV, henv1));
 
     return OK;
 }
 
 ODBC_TEST(t_sqlrowcnt_bulk_operation) {
-    SQLHANDLE henv1, Connection1, Stmt1;
     SQLLEN rc;
-    SQLCHAR conn[512];
     SQLINTEGER ids[INSERT_CNT] = {1, 2, 3};
     SQLCHAR texts[INSERT_CNT][16] = {"a", "b", "c"};
 
-    sprintf((char *) conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s",
-            my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr);
-
-    CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
-    CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
-                                      (SQLPOINTER) SQL_OV_ODBC3, SQL_IS_INTEGER));
-    CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &Connection1));
-    CHECK_DBC_RC(Connection1,
-                 SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
-                                  NULL, SQL_DRIVER_NOPROMPT));
-
-    CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
-
-    CHECK_STMT_RC(Stmt1, SQLSetStmtAttr(Stmt1, SQL_ATTR_CURSOR_TYPE,
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
                                        (SQLPOINTER)SQL_CURSOR_FORWARD_ONLY, 0));
-    CHECK_STMT_RC(Stmt1, SQLSetStmtAttr(Stmt1, SQL_ATTR_ROW_ARRAY_SIZE,
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE,
                                        (SQLPOINTER)INSERT_CNT, 0));
 
-    OK_SIMPLE_STMT(Stmt1, "DROP TABLE IF EXISTS test_rowcount_values;");
-    OK_SIMPLE_STMT(Stmt1, "CREATE TABLE test_rowcount_values (id INT PRIMARY KEY, text VARCHAR(16));");
+    OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS test_rowcount_values;");
+    OK_SIMPLE_STMT(Stmt, "CREATE TABLE test_rowcount_values (id INT PRIMARY KEY, text VARCHAR(16));");
 
-    CHECK_STMT_RC(Stmt1, SQLBindCol(Stmt1, 1, SQL_C_LONG, ids, 0, NULL));
-    CHECK_STMT_RC(Stmt1, SQLBindCol(Stmt1, 2, SQL_C_CHAR, texts, sizeof(texts[0]), NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, ids, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_CHAR, texts, sizeof(texts[0]), NULL));
 
-    OK_SIMPLE_STMT(Stmt1, "SELECT id, text FROM test_rowcount_values");
+    OK_SIMPLE_STMT(Stmt, "SELECT id, text FROM test_rowcount_values");
 
-    FAIL_IF(SQLFetchScroll(Stmt1, SQL_FETCH_NEXT, 0)!= SQL_NO_DATA_FOUND, "SQL_NO_DATA_FOUND expected");
+    FAIL_IF(SQLFetchScroll(Stmt, SQL_FETCH_NEXT, 0)!= SQL_NO_DATA_FOUND, "SQL_NO_DATA_FOUND expected");
 
-    CHECK_STMT_RC(Stmt1, SQLBulkOperations(Stmt1, SQL_ADD));
+    CHECK_STMT_RC(Stmt, SQLBulkOperations(Stmt, SQL_ADD));
 
-    CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
+    CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
 
     FAIL_IF_NE_INT(rc, INSERT_CNT, "SQLRowCount should return inserted rows count for SQLBulkOperations with SQL_ADD");
-
-    CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
-    CHECK_DBC_RC(Connection1, SQLDisconnect(Connection1));
-    CHECK_DBC_RC(Connection1, SQLFreeHandle(SQL_HANDLE_DBC, Connection1));
-    CHECK_ENV_RC(henv1, SQLFreeHandle(SQL_HANDLE_ENV, henv1));
 
     return OK;
 }
 
 ODBC_TEST(t_sqlrowcnt_batch) {
-    SQLHANDLE henv1, Connection1, Stmt1;
     SQLLEN rc;
-    SQLCHAR conn[512];
     SQLINTEGER ids[INSERT_CNT] = {4, 5, 6};
     SQLCHAR texts[INSERT_CNT][16] = {"a", "b", "c"};
 
-    sprintf((char *) conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s;OPTIONS=%lu",
-            my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr, my_options);
-
-    CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
-    CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
-                                      (SQLPOINTER) SQL_OV_ODBC3, SQL_IS_INTEGER));
-    CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &Connection1));
-    CHECK_DBC_RC(Connection1,
-                 SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
-                                  NULL, SQL_DRIVER_NOPROMPT));
-
-    CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
-
-    OK_SIMPLE_STMT(Stmt1, "DROP TABLE IF EXISTS test_rowcount_values");
-    OK_SIMPLE_STMT(Stmt1, "CREATE TABLE test_rowcount_values (id INT PRIMARY KEY, text VARCHAR(16))");
+    OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS test_rowcount_values");
+    OK_SIMPLE_STMT(Stmt, "CREATE TABLE test_rowcount_values (id INT PRIMARY KEY, text VARCHAR(16))");
 
     SQLCHAR *multiStmt = "INSERT INTO test_rowcount_values VALUES (1, 'a');"
                          "INSERT INTO test_rowcount_values VALUES (2, 'b');"
                          "INSERT INTO test_rowcount_values VALUES (3, 'c')";
 
-    CHECK_STMT_RC(Stmt1, SQLPrepare(Stmt1, multiStmt, strlen(multiStmt)));
-    CHECK_STMT_RC(Stmt1, SQLExecute(Stmt1));
-    CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
+    CHECK_STMT_RC(Stmt, SQLPrepare(Stmt, multiStmt, strlen(multiStmt)));
+    CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
+    CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
 
     // We only return row count for last statement
     FAIL_IF_NE_INT(rc, 1, "SQLRowCount should return last statement inserted rows count for explicit batch insert");
 
     SQLCHAR *insStmt = "INSERT INTO test_rowcount_values VALUES (?, ?)";
-    CHECK_STMT_RC(Stmt1, SQLPrepare(Stmt1, insStmt, strlen(insStmt)));
+    CHECK_STMT_RC(Stmt, SQLPrepare(Stmt, insStmt, strlen(insStmt)));
 
-    CHECK_STMT_RC(Stmt1, SQLBindParameter(Stmt1, 1, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 0, 0, ids, 0, NULL));
-    CHECK_STMT_RC(Stmt1, SQLBindParameter(Stmt1, 2, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR, 16, 0, texts, sizeof(texts[0]), NULL));
+    CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 0, 0, ids, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 2, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR, 16, 0, texts, sizeof(texts[0]), NULL));
 
-    CHECK_STMT_RC(Stmt1, SQLExecute(Stmt1));
+    CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
 
-    CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
+    CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
 
     // We only return row count for last statement
     FAIL_IF_NE_INT(rc, 1, "SQLRowCount should return last statement inserted rows count for bulk insert query");
 
-    OK_SIMPLE_STMT(Stmt1, "DROP PROCEDURE IF EXISTS t_sqlrowcnt_batch")
-    OK_SIMPLE_STMT(Stmt1, " CREATE PROCEDURE t_sqlrowcnt_batch () AS BEGIN "
+    OK_SIMPLE_STMT(Stmt, "DROP PROCEDURE IF EXISTS t_sqlrowcnt_batch")
+    OK_SIMPLE_STMT(Stmt, " CREATE PROCEDURE t_sqlrowcnt_batch () AS BEGIN "
                           "INSERT INTO test_rowcount_values VALUES (7, 'd');"
                           "INSERT INTO test_rowcount_values VALUES (8, 'e');"
                           "END;"
                   );
-    OK_SIMPLE_STMT(Stmt1, "CALL t_sqlrowcnt_batch();")
+    OK_SIMPLE_STMT(Stmt, "CALL t_sqlrowcnt_batch();")
 
-    CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
+    CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
 
     // We don't support row count for procedures
     FAIL_IF_NE_INT(rc, 0, "SQLRowCount should return 0 for stored procedures");
-
-    CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
-    CHECK_DBC_RC(Connection1, SQLDisconnect(Connection1));
-    CHECK_DBC_RC(Connection1, SQLFreeHandle(SQL_HANDLE_DBC, Connection1));
-    CHECK_ENV_RC(henv1, SQLFreeHandle(SQL_HANDLE_ENV, henv1));
 
     return OK;
 }
