@@ -98,7 +98,11 @@ int CheckUInteger(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, SQLUINTEGER CorrectValu
   return OK;
 }
 
+<<<<<<< HEAD
 #define BUF_LEN 16382
+=======
+#define BUF_LEN 32767
+>>>>>>> Updated SQL_KEYWORDS value
 int CheckChar(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, char *CorrectValue) {
   SQLCHAR string_value[BUF_LEN];
   SQLWCHAR stringw_value[BUF_LEN];
