@@ -25,6 +25,7 @@
 */
 
 #include "tap.h"
+#include <unistd.h>
 
 ODBC_TEST(basic_connect) {
   HSTMT hdbc;
@@ -100,7 +101,7 @@ ODBC_TEST(driver_connect_simple) {
   is_num(conn_out_len, strlen((char*)conn));
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
-  CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, sizeof(conn_out),
+  CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, sizeof(conn),
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
   is_num(conn_out_len, sizeof(conn_out));
@@ -119,6 +120,15 @@ ODBC_TEST(driver_connect_simple) {
                                       SQL_DRIVER_COMPLETE_REQUIRED));
   is_num(conn_out_len, strlen((char*)conn));
   IS_STR(conn, conn_out, conn_out_len);
+  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+
+#ifndef _WIN32
+  sprintf((char*)conn, "DSN=%s;", my_dsn);
+  FAIL_IF(SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
+                                       conn_out, sizeof(conn_out), &conn_out_len,
+                                       SQL_DRIVER_PROMPT) != SQL_ERROR, "Can't use SQL_DRIVER_PROMPT on Unix");
+  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "HY092");
+#endif
 
   return OK;
 }
@@ -131,13 +141,7 @@ ODBC_TEST(driver_connect_savefile) {
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc));
   OK_SIMPLE_STMT(Stmt, "DROP USER IF EXISTS driver_connect_savefile");
   OK_SIMPLE_STMT(Stmt, "CREATE USER driver_connect_savefile@'%' IDENTIFIED BY 's3cureP@ss'")
-  if (!SQL_SUCCEEDED(SQLExecDirect(Stmt,
-      (SQLCHAR*)"GRANT ALL ON odbc_test.* TO driver_connect_savefile@'%'", SQL_NTS))) {
-    if (get_native_errcode(Stmt) == 1142) {
-      skip("test user does not have permissions to run this test (GRANT)");
-    }
-    return FAIL;
-  }
+  OK_SIMPLE_STMT(Stmt, "GRANT ALL ON odbc_test.* TO driver_connect_savefile@'%'");
 
   sprintf((char*)conn, "SAVEFILE=driver_connect;DSN=%s;DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s",
             my_dsn, my_drivername, "driver_connect_savefile", "s3cureP@ss", my_servername, my_port, my_schema);
@@ -157,6 +161,75 @@ ODBC_TEST(driver_connect_savefile) {
   FAIL_IF(SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                            conn_out, sizeof(conn_out), &conn_out_len,
                            SQL_DRIVER_NOPROMPT) != SQL_ERROR, "saved dsn file should not include password");
+  return OK;
+}
+
+ODBC_TEST(driver_connect_ssl) {
+  HSTMT hdbc;
+  SQLCHAR conn[1024], conn_out[1024];
+  SQLSMALLINT conn_out_len;
+
+  CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc));
+  sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;SSLCERT=%s;SSLKEY=%s;",
+      my_drivername, my_uid, my_pwd, my_servername, my_port, my_schema,
+      "scripts/ssl/test-memsql-cert.pem", "scripts/ssl/test-memsql-key.pem");
+  CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
+                                      conn_out, sizeof(conn_out), &conn_out_len,
+                                      SQL_DRIVER_NOPROMPT));
+  is_num(conn_out_len, strlen((char*)conn));
+  IS_STR(conn, conn_out, conn_out_len);
+  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+
+  OK_SIMPLE_STMT(Stmt, "DROP USER IF EXISTS driver_connect_ssl");
+  OK_SIMPLE_STMT(Stmt, "CREATE USER driver_connect_ssl@'%' REQUIRE SSL")
+  OK_SIMPLE_STMT(Stmt, "GRANT ALL ON odbc_test.* TO driver_connect_ssl@'%'");
+
+  sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;SSLCERT=%s;SSLKEY=%s;",
+          my_drivername, "driver_connect_ssl", "", my_servername, my_port, my_schema,
+          "scripts/ssl/test-memsql-cert.pem",
+          "scripts/ssl/test-memsql-key.pem");
+  CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
+                                      conn_out, sizeof(conn_out), &conn_out_len,
+                                      SQL_DRIVER_NOPROMPT));
+  is_num(conn_out_len, strlen((char*)conn));
+  IS_STR(conn, conn_out, conn_out_len);
+
+
+  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+
+  sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;SSLCA=%s;",
+          my_drivername, "driver_connect_ssl", "", my_servername, my_port, my_schema,
+          "scripts/ssl/test-ca-cert.pem");
+  CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
+                                      conn_out, sizeof(conn_out), &conn_out_len,
+                                      SQL_DRIVER_NOPROMPT));
+  is_num(conn_out_len, strlen((char*)conn));
+  IS_STR(conn, conn_out, conn_out_len);
+
+  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+
+  sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;SSLCERT=%s;SSLKEY=%s;SSLCA=%s;",
+          my_drivername, "driver_connect_ssl", "", my_servername, my_port, my_schema,
+          "scripts/ssl/test-memsql-cert.pem",
+          "scripts/ssl/test-memsql-key.pem",
+          "scripts/ssl/test-ca-cert.pem");
+  CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
+                                      conn_out, sizeof(conn_out), &conn_out_len,
+                                      SQL_DRIVER_NOPROMPT));
+  is_num(conn_out_len, strlen((char*)conn));
+  IS_STR(conn, conn_out, conn_out_len);
+
+  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+
+  sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;",
+          my_drivername, "driver_connect_ssl", "", my_servername, my_port, my_schema);
+  FAIL_IF(SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
+                           conn_out, sizeof(conn_out), &conn_out_len,
+                           SQL_DRIVER_NOPROMPT) != SQL_ERROR, "Should not be able to connect without SSL for "
+                                                              "SSL required user");
+  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "HY000");
+
+  return OK;
 }
 
 MA_ODBC_TESTS my_tests[]=
@@ -164,6 +237,7 @@ MA_ODBC_TESTS my_tests[]=
   {basic_connect, "basic_connect",     NORMAL, ALL_DRIVERS},
   {driver_connect_simple, "driver_connect_simple",     NORMAL, ALL_DRIVERS},
   {driver_connect_savefile, "driver_connect_savefile",     TO_FIX, ALL_DRIVERS},
+  {driver_connect_ssl, "driver_connect_ssl",     NORMAL, ALL_DRIVERS},
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
