@@ -1040,7 +1040,6 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
 #endif
   case SQL_BATCH_ROW_COUNT:
-    // TODO PLAT-5419 check if this value is actually correct
     // SQL_BATCH_ROW_COUNT enumerates the behavior of the driver with respect to the availability of row counts.
     // SQL_BRC_ROLLED_UP = row counts for consecutive INSERT, DELETE, or UPDATE statements are rolled up into one.
     // In this driver, row counts are available for each statement.
@@ -1754,7 +1753,6 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     // SQL_PARC_NO_BATCH = There is only one row count available, which is the cumulative row count resulting from the execution of the statement for the entire array of parameters.
     // This is conceptually equivalent to treating the statement together with the complete parameter array as one atomic unit.
     // Errors are handled the same as if one statement were executed.
-    // TODO PLAT-5419 check that this value is actually correct
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_PARC_NO_BATCH, StringLengthPtr);
     break;
   case SQL_PARAM_ARRAY_SELECTS:
