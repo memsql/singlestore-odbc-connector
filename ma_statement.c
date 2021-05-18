@@ -51,7 +51,6 @@ SQLRETURN MADB_StmtInit(MADB_Dbc *Connection, SQLHANDLE *pHStmt)
   UNLOCK_MARIADB(Connection);
   Stmt->PutParam= -1;
   Stmt->Methods= &MADB_StmtMethods;
-  /* default behaviour is SQL_CURSOR_STATIC. But should be SQL_CURSOR_FORWARD_ONLY according to specs(see bug ODBC-290) */
   Stmt->Options.CursorType= SQL_CURSOR_FORWARD_ONLY;
   Stmt->Options.UseBookmarks= SQL_UB_OFF;
   Stmt->Options.MetadataId= Connection->MetadataId;
@@ -1411,9 +1410,17 @@ SQLRETURN MADB_InsertParam(MADB_Stmt* Stmt, MADB_DescRecord* ApdRecord, MADB_Des
                     BOOL isTime;
 
                     /* Enforcing constraints on date/time values */
-                    RETURN_ERROR_OR_CONTINUE(MADB_Str2Ts(DataPtr, Length, &Tm, FALSE, &Stmt->Error, &isTime));
+                    SQLRETURN rc = MADB_Str2Ts(DataPtr, Length, &Tm, FALSE, &Stmt->Error, &isTime);
+                    if (!SQL_SUCCEEDED(rc)) {
+                        MADB_DynstrFree(&data);
+                        return rc;
+                    }
                     MADB_CopyMadbTimeToOdbcTs(&Tm, &Ts);
-                    RETURN_ERROR_OR_CONTINUE(MADB_TsConversionIsPossible(&Ts, IpdRecord->ConciseType, &Stmt->Error, MADB_ERR_22018, isTime));
+                    rc = MADB_TsConversionIsPossible(&Ts, IpdRecord->ConciseType, &Stmt->Error, MADB_ERR_22018, isTime);
+                    if (!SQL_SUCCEEDED(rc)) {
+                        MADB_DynstrFree(&data);
+                        return rc;
+                    }
                     // if everything is ok, fall below and append a char* DataPtr.
                 }
                 default:
@@ -5083,19 +5090,36 @@ SQLRETURN MADB_SetCursorName(MADB_Stmt *Stmt, char *Buffer, SQLINTEGER BufferLen
     MADB_SetError(&Stmt->Error, MADB_ERR_HY009, NULL, 0);
     return SQL_ERROR;
   }
-  if (BufferLength== SQL_NTS)
-    BufferLength= (SQLINTEGER)strlen(Buffer);
+  ADJUST_LENGTH(Buffer, BufferLength);
   if (BufferLength < 0)
   {
     MADB_SetError(&Stmt->Error, MADB_ERR_HY090, NULL, 0);
     return SQL_ERROR;
   }
-  if ((BufferLength > 5 && strncmp(Buffer, "SQLCUR", 6) == 0) ||
-      (BufferLength > 6 && strncmp(Buffer, "SQL_CUR", 7) == 0))
+  if (BufferLength == 0)
+  {
+    MADB_SetError(&Stmt->Error, MADB_ERR_34000, "Empty cursor name is not allowed.", 0);
+    return SQL_ERROR;
+  }
+  if (isspace((int)Buffer[0]) || isspace((int)Buffer[BufferLength - 1]))
+  {
+    MADB_SetError(&Stmt->Error, MADB_ERR_34000, "Cursor name with leading or trailing spaces is not allowed.", 0);
+    return SQL_ERROR;
+  }
+  if ((BufferLength > 5 && _strnicmp(Buffer, "SQLCUR", 6) == 0) ||
+      (BufferLength > 6 && _strnicmp(Buffer, "SQL_CUR", 7) == 0))
   {
     MADB_SetError(&Stmt->Error, MADB_ERR_34000, NULL, 0);
     return SQL_ERROR;
   }
+  /* check if cursor name length is valid */
+  if (BufferLength > MADB_MAX_CURSOR_NAME) {
+    char error_msg[64];
+    sprintf(error_msg, "Cursor name exceeded maximal allowed length (%d).", MADB_MAX_CURSOR_NAME);
+    MADB_SetError(&Stmt->Error, MADB_ERR_34000, error_msg, 0);
+    return SQL_ERROR;
+  }
+
   /* check if cursor name is unique */
   for (LStmt= Stmt->Connection->Stmts; LStmt; LStmt= LStmtNext)
   {
@@ -5103,7 +5127,8 @@ SQLRETURN MADB_SetCursorName(MADB_Stmt *Stmt, char *Buffer, SQLINTEGER BufferLen
     LStmtNext= LStmt->next;
 
     if (Stmt != (MADB_Stmt *)LStmt->data &&
-        Cursor->Name && strncmp(Cursor->Name, Buffer, BufferLength) == 0)
+        Cursor->Name && strlen(Cursor->Name) == BufferLength &&
+        _strnicmp(Cursor->Name, Buffer, BufferLength) == 0)
     {
       MADB_SetError(&Stmt->Error, MADB_ERR_3C000, NULL, 0);
       return SQL_ERROR;
@@ -5335,12 +5360,6 @@ SQLRETURN MADB_StmtSetPos(MADB_Stmt *Stmt, SQLSETPOSIROW RowNumber, SQLUSMALLINT
       Stmt->DaeStmt= NULL;
     }
     break;
-  case SQL_UPDATE:
-    {
-      // TODO(PLAT-5080): Support positioned updates.
-      MADB_SetError(&Stmt->Error, MADB_ERR_HYC00, "UPDATE clause is not supported for a positioned command", 0);
-      return Stmt->Error.ReturnValue;
-    }
   case SQL_DELETE:
     {
       MADB_DynString DynamicStmt;
@@ -5410,11 +5429,8 @@ SQLRETURN MADB_StmtSetPos(MADB_Stmt *Stmt, SQLSETPOSIROW RowNumber, SQLUSMALLINT
       }
     }
     break;
-  case SQL_REFRESH:
-    /* todo*/
-    break;
   default:
-    MADB_SetError(&Stmt->Error, MADB_ERR_HYC00, "Only SQL_POSITION and SQL_REFRESH Operations are supported", 0);
+    MADB_SetError(&Stmt->Error, MADB_ERR_HYC00, "Operation is not supported", 0);
     return Stmt->Error.ReturnValue;
   }
   return SQL_SUCCESS;

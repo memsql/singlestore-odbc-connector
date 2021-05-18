@@ -1,0 +1,414 @@
+/*************************************************************************************
+  Copyright (c) 2021 SingleStore, Inc.
+
+  This library is free software; you can redistribute it and/or
+  modify it under the terms of the GNU Library General Public
+  License as published by the Free Software Foundation; either
+  version 2.1 of the License, or (at your option) any later version.
+
+  This library is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  Library General Public License for more details.
+
+  You should have received a copy of the GNU Library General Public
+  License along with this library; if not see <http://www.gnu.org/licenses>
+  or write to the Free Software Foundation, Inc.,
+  51 Franklin St., Fifth Floor, Boston, MA 02110, USA
+*************************************************************************************/
+
+#include "tap.h"
+
+int CheckUSmallInt(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, SQLUSMALLINT CorrectValue) {
+  SQLUSMALLINT small_int_value = 0;
+  SQLSMALLINT length = 0;
+
+  // ANSI functions
+  CHECK_DBC_RC(Connection,SQLGetInfo(Hdbc, InfoType, NULL, 0, NULL));
+
+  CHECK_DBC_RC(Connection,SQLGetInfo(Hdbc, InfoType, NULL, 0, &length));
+  is_num(length, sizeof(SQLUSMALLINT));
+  length = 0;
+
+  CHECK_DBC_RC(Connection,SQLGetInfo(Hdbc, InfoType, &small_int_value, 0, NULL));
+  is_num(small_int_value, CorrectValue);
+  small_int_value = 0;
+
+  CHECK_DBC_RC(Connection,SQLGetInfo(Hdbc, InfoType, &small_int_value, 0, &length));
+  is_num(small_int_value, CorrectValue);
+  is_num(length, sizeof(SQLUSMALLINT));
+  small_int_value = 0;
+  length = 0;
+
+  // UNICODE functions
+  CHECK_DBC_RC(Connection,SQLGetInfoW(Hdbc, InfoType, NULL, 0, NULL));
+
+  CHECK_DBC_RC(Connection,SQLGetInfoW(Hdbc, InfoType, NULL, 0, &length));
+  is_num(length, sizeof(SQLUSMALLINT));
+  length = 0;
+
+  CHECK_DBC_RC(Connection,SQLGetInfoW(Hdbc, InfoType, &small_int_value, 0, NULL));
+  is_num(small_int_value, CorrectValue);
+  small_int_value = 0;
+
+  CHECK_DBC_RC(Connection,SQLGetInfoW(Hdbc, InfoType, &small_int_value, 0, &length));
+  is_num(small_int_value, CorrectValue);
+  is_num(length, sizeof(SQLUSMALLINT));
+
+  return OK;
+}
+
+int CheckUInteger(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, SQLUINTEGER CorrectValue) {
+  SQLUINTEGER int_value = 0;
+  SQLSMALLINT length = 0;
+
+  // ANSI functions
+  CHECK_DBC_RC(Connection,SQLGetInfo(Hdbc, InfoType, NULL, 0, NULL));
+
+  CHECK_DBC_RC(Connection,SQLGetInfo(Hdbc, InfoType, NULL, 0, &length));
+  is_num(length, sizeof(SQLUINTEGER));
+  length = 0;
+
+  CHECK_DBC_RC(Connection,SQLGetInfo(Hdbc, InfoType, &int_value, 0, NULL));
+  is_num(int_value, CorrectValue);
+  int_value = 0;
+
+  CHECK_DBC_RC(Connection,SQLGetInfo(Hdbc, InfoType, &int_value, 0, &length));
+  is_num(int_value, CorrectValue);
+  is_num(length, sizeof(SQLUINTEGER));
+  int_value = 0;
+  length = 0;
+
+  // UNICODE functions
+  CHECK_DBC_RC(Connection,SQLGetInfoW(Hdbc, InfoType, NULL, 0, NULL));
+
+  CHECK_DBC_RC(Connection,SQLGetInfoW(Hdbc, InfoType, NULL, 0, &length));
+  is_num(length, sizeof(SQLUINTEGER));
+  length = 0;
+
+  CHECK_DBC_RC(Connection,SQLGetInfoW(Hdbc, InfoType, &int_value, 0, NULL));
+  is_num(int_value, CorrectValue);
+  int_value = 0;
+
+  CHECK_DBC_RC(Connection,SQLGetInfoW(Hdbc, InfoType, &int_value, 0, &length));
+  is_num(int_value, CorrectValue);
+  is_num(length, sizeof(SQLUINTEGER));
+
+  return OK;
+}
+
+#define BUF_LEN 1024
+int CheckChar(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, char *CorrectValue) {
+  SQLCHAR string_value[BUF_LEN];
+  SQLWCHAR stringw_value[BUF_LEN];
+  SQLSMALLINT length = 0;
+
+  CHECK_DBC_RC(Hdbc, SQLGetInfo(Hdbc, InfoType, string_value, BUF_LEN, &length));
+  is_num(length, strlen(CorrectValue));
+  IS_STR(string_value, CorrectValue, length + 1);
+
+  CHECK_DBC_RC(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, BUF_LEN, &length));
+  is_num(length, strlen(CorrectValue)*sizeof(SQLWCHAR));
+  IS_STR(string_value, CorrectValue, length/sizeof(SQLWCHAR) + 1);
+
+  return OK;
+}
+
+int GetVersion(const char *query, char *buff) {
+  char internal_buff[1024];
+  int major, minor, patch;
+
+  CHECK_STMT_RC(Stmt, SQLExecDirect(Stmt, (SQLCHAR *)query, SQL_NTS));
+  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+  my_fetch_str(Stmt, (SQLCHAR *)internal_buff, 1);
+  CHECK_STMT_RC(Stmt, SQLCloseCursor(Stmt));
+
+  if (sscanf(internal_buff, "%d.%d.%d", &major, &minor, &patch) != 3) {
+    printf("Wrong version returned: %s\n", internal_buff);
+    return FAIL;
+  }
+
+  if (major < 5 || (major == 5 && minor < 6)) {
+    major = 5;
+    minor = 6;
+    patch = 0;
+  }
+
+  sprintf(buff, "%02d.%02d.%04d", major, minor, patch);
+  return OK;
+}
+
+#define CHECK_U_SMALL_INT(Hdbc, InfoType, CorrectValue)\
+do {\
+  if (CheckUSmallInt(Hdbc, InfoType, CorrectValue) != OK)\
+  {\
+    return FAIL;\
+  }\
+} while(0)
+
+#define CHECK_U_INTEGER(Hdbc, InfoType, CorrectValue)\
+do {\
+  if (CheckUInteger(Hdbc, InfoType, CorrectValue) != OK)\
+  {\
+    return FAIL;\
+  }\
+} while(0)
+
+#define CHECK_CHAR(Hdbc, InfoType, CorrectValue)\
+do {\
+  if (CheckChar(Hdbc, InfoType, CorrectValue) != OK)\
+  {\
+    return FAIL;\
+  }\
+} while(0)
+
+#define GET_VERSION(query, buff)\
+do {\
+  if (GetVersion(query, buff) != OK)\
+  {\
+    return FAIL;\
+  }\
+} while(0)
+
+ODBC_TEST(driver_information)
+{
+  SQLHDBC Hdbc;
+  SQLCHAR conn[1024];
+
+  CHECK_ENV_RC(Env, SQLAllocHandle(SQL_HANDLE_DBC, Env, &Hdbc));
+
+  CHECK_U_SMALL_INT(Connection, SQL_ACTIVE_ENVIRONMENTS, 0);
+  // CHECK_U_INTEGER(Connection, SQL_ASYNC_DBC_FUNCTIONS, SQL_ASYNC_DBC_NOT_CAPABLE); TODO PLAT-5465
+  CHECK_U_INTEGER(Connection, SQL_ASYNC_MODE, SQL_AM_NONE);
+  // CHECK_U_INTEGER(Connection, SQL_ASYNC_NOTIFICATION, SQL_ASYNC_NOTIFICATION_NOT_CAPABLE); // TODO PLAT-5465
+  CHECK_U_INTEGER(Connection, SQL_BATCH_ROW_COUNT, SQL_BRC_EXPLICIT); // TODO PLAT-5419 check if this value is actually correct
+  CHECK_U_INTEGER(Connection, SQL_BATCH_SUPPORT, SQL_BS_SELECT_EXPLICIT |
+                                                   SQL_BS_ROW_COUNT_EXPLICIT |
+                                                   SQL_BS_SELECT_PROC |
+                                                   SQL_BS_ROW_COUNT_PROC);
+
+  // check SQL_DATA_SOURCE_NAME when connecting with SQLConnect
+  CHECK_DBC_RC(Hdbc, SQLConnect(Hdbc, my_dsn, SQL_NTS, my_uid, SQL_NTS, my_pwd, SQL_NTS));
+  CHECK_CHAR(Hdbc, SQL_DATA_SOURCE_NAME, (char *)my_dsn);
+  CHECK_DBC_RC(Hdbc, SQLDisconnect(Hdbc));
+
+  // check SQL_DATA_SOURCE_NAME when connecting with SQLDriverConnect and with DSN keyword in the connection string
+  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s", my_dsn, my_uid, my_pwd);
+  CHECK_DBC_RC(Hdbc, SQLDriverConnect(Hdbc, NULL, conn, strlen((char *)conn), NULL, 0, NULL, SQL_DRIVER_NOPROMPT));
+  CHECK_CHAR(Hdbc, SQL_DATA_SOURCE_NAME, (char *)my_dsn);
+  CHECK_DBC_RC(Hdbc, SQLDisconnect(Hdbc));
+
+  // check SQL_DATA_SOURCE_NAME when connecting with SQLDriverConnect and with DRIVER keyword in the connection string
+  sprintf((char *)conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;%s;%s",
+          my_drivername, my_servername, my_uid, my_pwd, ma_strport, add_connstr);
+  CHECK_DBC_RC(Hdbc, SQLDriverConnect(Hdbc, NULL, conn, strlen((char *)conn), NULL, 0, NULL, SQL_DRIVER_NOPROMPT));
+  CHECK_CHAR(Hdbc, SQL_DATA_SOURCE_NAME, "");
+  CHECK_DBC_RC(Hdbc, SQLDisconnect(Hdbc));
+
+  CHECK_CHAR(Connection, SQL_DRIVER_NAME, WindowsDM(Connection) ? (is_unicode_driver() ? "ssodbcw.so" : "ssodbca.so") : (is_unicode_driver() ? "libssodbcw.so" : "libssodbca.so"));
+  CHECK_CHAR(Connection, SQL_DRIVER_ODBC_VER, "03.51");
+  CHECK_CHAR(Connection, SQL_DRIVER_VER, "00.08.0002");
+  // CHECK_U_INTEGER(Connection, SQL_DRIVER_AWARE_POOLING_SUPPORTED, SQL_DRIVER_AWARE_POOLING_NOT_CAPABLE); // TODO PLAT-5465
+  CHECK_U_INTEGER(Connection, SQL_DYNAMIC_CURSOR_ATTRIBUTES1, SQL_CA1_NEXT |
+                                                                SQL_CA1_ABSOLUTE |
+                                                                SQL_CA1_RELATIVE |
+                                                                // SQL_CA1_BOOKMARK | TODO PLAT-5471
+                                                                SQL_CA1_LOCK_NO_CHANGE |
+                                                                SQL_CA1_POS_POSITION |
+                                                                // SQL_CA1_POS_UPDATE | TODO PLAT-5080
+                                                                SQL_CA1_POS_DELETE |
+                                                                // SQL_CA1_POS_REFRESH | TODO PLAT-5466
+                                                                // SQL_CA1_POSITIONED_UPDATE | TODO PLAT-5080
+                                                                SQL_CA1_POSITIONED_DELETE |
+                                                                SQL_CA1_BULK_ADD);
+  CHECK_U_INTEGER(Connection, SQL_DYNAMIC_CURSOR_ATTRIBUTES2, SQL_CA2_READ_ONLY_CONCURRENCY |
+                                                                SQL_CA2_SENSITIVITY_ADDITIONS |
+                                                                SQL_CA2_SENSITIVITY_DELETIONS |
+                                                                SQL_CA2_SENSITIVITY_UPDATES |
+                                                                SQL_CA2_MAX_ROWS_SELECT |
+                                                                SQL_CA2_MAX_ROWS_INSERT |
+                                                                SQL_CA2_MAX_ROWS_DELETE |
+                                                                SQL_CA2_MAX_ROWS_UPDATE |
+                                                                SQL_CA2_CRC_EXACT |
+                                                                SQL_CA2_SIMULATE_TRY_UNIQUE);
+  CHECK_U_INTEGER(Connection, SQL_FORWARD_ONLY_CURSOR_ATTRIBUTES1, SQL_CA1_NEXT |
+                                                                   SQL_CA1_LOCK_NO_CHANGE |
+                                                                   SQL_CA1_POS_POSITION |
+                                                                   // SQL_CA1_POS_UPDATE | TODO PLAT-5080
+                                                                   SQL_CA1_POS_DELETE |
+                                                                   // SQL_CA1_POS_REFRESH | TODO PLAT-5466
+                                                                   // SQL_CA1_POSITIONED_UPDATE | TODO PLAT-5466
+                                                                   SQL_CA1_POSITIONED_DELETE |
+                                                                   SQL_CA1_BULK_ADD);
+  CHECK_U_INTEGER(Connection, SQL_FORWARD_ONLY_CURSOR_ATTRIBUTES2, SQL_CA2_CRC_EXACT |
+                                                                     SQL_CA2_READ_ONLY_CONCURRENCY |
+                                                                     SQL_CA2_MAX_ROWS_SELECT |
+                                                                     SQL_CA2_MAX_ROWS_INSERT |
+                                                                     SQL_CA2_MAX_ROWS_DELETE |
+                                                                     SQL_CA2_MAX_ROWS_UPDATE);
+  // check SQL_FORWARD_ONLY_CURSOR_ATTRIBUTES with NO_CACHE option
+  sprintf((char *)conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;NO_CACHE=1;%s;%s",
+          my_drivername, my_servername, my_uid, my_pwd, ma_strport, add_connstr);
+  CHECK_DBC_RC(Hdbc, SQLDriverConnect(Hdbc, NULL, conn, strlen((char *)conn), NULL, 0, NULL, SQL_DRIVER_NOPROMPT));
+  CHECK_U_INTEGER(Hdbc, SQL_FORWARD_ONLY_CURSOR_ATTRIBUTES1, SQL_CA1_NEXT);
+  CHECK_U_INTEGER(Hdbc, SQL_FORWARD_ONLY_CURSOR_ATTRIBUTES2, SQL_CA2_READ_ONLY_CONCURRENCY |
+                                                                   SQL_CA2_MAX_ROWS_SELECT |
+                                                                   SQL_CA2_MAX_ROWS_INSERT |
+                                                                   SQL_CA2_MAX_ROWS_DELETE |
+                                                                   SQL_CA2_MAX_ROWS_UPDATE);
+  CHECK_DBC_RC(Hdbc, SQLDisconnect(Hdbc));
+
+  CHECK_U_SMALL_INT(Connection, SQL_FILE_USAGE, SQL_FILE_NOT_SUPPORTED);
+  CHECK_U_INTEGER(Connection, SQL_GETDATA_EXTENSIONS, SQL_GD_ANY_COLUMN |
+                                                        SQL_GD_ANY_ORDER |
+                                                        SQL_GD_BLOCK |
+                                                        SQL_GD_BOUND);
+  CHECK_U_INTEGER(Connection, SQL_INFO_SCHEMA_VIEWS, SQL_ISV_CHARACTER_SETS |
+                                                       SQL_ISV_COLLATIONS |
+                                                       SQL_ISV_COLUMNS |
+                                                       SQL_ISV_COLUMN_PRIVILEGES |
+                                                       SQL_ISV_KEY_COLUMN_USAGE |
+                                                       SQL_ISV_REFERENTIAL_CONSTRAINTS |
+                                                       SQL_ISV_SCHEMATA |
+                                                       SQL_ISV_TABLES |
+                                                       SQL_ISV_TABLE_PRIVILEGES |
+                                                       SQL_ISV_TABLE_CONSTRAINTS |
+                                                       SQL_ISV_VIEWS);
+  CHECK_U_INTEGER(Connection, SQL_KEYSET_CURSOR_ATTRIBUTES1, 0);
+  CHECK_U_INTEGER(Connection, SQL_KEYSET_CURSOR_ATTRIBUTES2, 0);
+  CHECK_U_INTEGER(Connection, SQL_MAX_ASYNC_CONCURRENT_STATEMENTS, 0); // TODO PLAT-5472
+  CHECK_U_SMALL_INT(Connection, SQL_MAX_CONCURRENT_ACTIVITIES, 0); // TODO PLAT-5472
+  CHECK_U_SMALL_INT(Connection, SQL_MAX_DRIVER_CONNECTIONS, 0);
+  CHECK_U_SMALL_INT(Connection, SQL_ODBC_INTERFACE_CONFORMANCE, SQL_OIC_CORE);
+  CHECK_CHAR(Connection, SQL_ROW_UPDATES, "N");
+  CHECK_CHAR(Connection, SQL_SEARCH_PATTERN_ESCAPE, "\\");
+  CHECK_CHAR(Connection, SQL_SERVER_NAME, (char *)my_servername);
+  CHECK_U_INTEGER(Connection, SQL_PARAM_ARRAY_ROW_COUNTS, SQL_PARC_NO_BATCH);
+  CHECK_U_INTEGER(Connection, SQL_PARAM_ARRAY_SELECTS, SQL_PAS_NO_BATCH);
+  CHECK_U_INTEGER(Connection, SQL_STATIC_CURSOR_ATTRIBUTES1, SQL_CA1_NEXT |
+                                                             SQL_CA1_LOCK_NO_CHANGE |
+                                                             SQL_CA1_POS_POSITION |
+                                                             // SQL_CA1_POS_UPDATE | TODO PLAT-5080
+                                                             SQL_CA1_POS_DELETE |
+                                                             // SQL_CA1_POS_REFRESH | TODO PLAT-5466
+                                                             // SQL_CA1_POSITIONED_UPDATE | TODO PLAT-5466
+                                                             SQL_CA1_POSITIONED_DELETE |
+                                                             SQL_CA1_BULK_ADD);
+  CHECK_U_INTEGER(Connection, SQL_STATIC_CURSOR_ATTRIBUTES2, SQL_CA2_CRC_EXACT |
+                                                             SQL_CA2_READ_ONLY_CONCURRENCY |
+                                                             SQL_CA2_MAX_ROWS_SELECT |
+                                                             SQL_CA2_MAX_ROWS_INSERT |
+                                                             SQL_CA2_MAX_ROWS_DELETE |
+                                                             SQL_CA2_MAX_ROWS_UPDATE);
+
+  CHECK_DBC_RC(Hdbc, SQLFreeHandle(SQL_HANDLE_DBC, Hdbc));
+
+  return OK;
+}
+
+ODBC_TEST(dbms_product_information)
+{
+  SQLHDBC Hdbc;
+  SQLCHAR conn[1024];
+  char version[1024];
+  SQLAllocHandle(SQL_HANDLE_DBC, Env, &Hdbc);
+
+  CHECK_CHAR(Connection, SQL_DATABASE_NAME, (char *)my_schema);
+
+  // check SQL_DATABASE_NAME when no database specified
+  sprintf((char *)conn, "DRIVER=%s;SERVER=%s;UID=%s;PWD=%s;PORT=%d;%s", my_drivername,
+          my_servername, my_uid, my_pwd, my_port, add_connstr);
+  CHECK_DBC_RC(Hdbc, SQLDriverConnect(Hdbc, NULL, conn, strlen((char *)conn), NULL, 0, NULL, SQL_DRIVER_NOPROMPT));
+  CHECK_CHAR(Hdbc, SQL_DATABASE_NAME, "null");
+  CHECK_DBC_RC(Hdbc, SQLDisconnect(Hdbc));
+
+  // check SQL_DBMS_NAME and SQL_DBMS_VER without COMPAT_MODE
+  CHECK_CHAR(Connection, SQL_DBMS_NAME, "SingleStore");
+  GET_VERSION("SELECT @@memsql_version", version);
+  CHECK_CHAR(Connection, SQL_DBMS_VER, version);
+
+  // check SQL_DBMS_NAME and SQL_DBMS_VER with COMPAT_MODE
+  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;COMPAT_MODE=1", my_dsn, my_uid, my_pwd);
+  CHECK_DBC_RC(Hdbc, SQLDriverConnect(Hdbc, NULL, conn, strlen((char *)conn), NULL, 0, NULL, SQL_DRIVER_NOPROMPT));
+  CHECK_CHAR(Hdbc, SQL_DBMS_NAME, "MySQL");
+  GET_VERSION("SELECT @@version", version);
+  CHECK_CHAR(Hdbc, SQL_DBMS_VER, version);
+  CHECK_DBC_RC(Hdbc, SQLDisconnect(Hdbc));
+
+  SQLFreeHandle(SQL_HANDLE_DBC, Hdbc);
+  return OK;
+}
+
+ODBC_TEST(data_source_information)
+{
+  SQLHDBC Hdbc;
+  SQLCHAR conn[1024];
+  SQLAllocHandle(SQL_HANDLE_DBC, Env, &Hdbc);
+
+
+  CHECK_CHAR(Connection, SQL_ACCESSIBLE_PROCEDURES, "N");
+  CHECK_CHAR(Connection, SQL_ACCESSIBLE_TABLES, "N");
+  CHECK_U_INTEGER(Connection, SQL_BOOKMARK_PERSISTENCE, 0); // TODO PLAT-5471
+  CHECK_CHAR(Connection, SQL_CATALOG_TERM, "database");
+  CHECK_CHAR(Connection, SQL_COLLATION_SEQ, "utf8_general_ci");
+  CHECK_U_SMALL_INT(Connection, SQL_CONCAT_NULL_BEHAVIOR, SQL_CB_NULL);
+  CHECK_U_SMALL_INT(Connection, SQL_CURSOR_COMMIT_BEHAVIOR, SQL_CB_PRESERVE);
+  CHECK_U_SMALL_INT(Connection, SQL_CURSOR_ROLLBACK_BEHAVIOR, SQL_CB_PRESERVE);
+  CHECK_CHAR(Connection, SQL_DATA_SOURCE_READ_ONLY, "N");
+  CHECK_U_INTEGER(Connection, SQL_DEFAULT_TXN_ISOLATION, SQL_TXN_READ_COMMITTED);
+  CHECK_CHAR(Connection, SQL_DESCRIBE_PARAMETER, "N");
+  CHECK_CHAR(Connection, SQL_MULT_RESULT_SETS, "Y");
+  CHECK_CHAR(Connection, SQL_MULTIPLE_ACTIVE_TXN, "Y");
+  CHECK_CHAR(Connection, SQL_NEED_LONG_DATA_LEN, "N");
+  CHECK_U_SMALL_INT(Connection, SQL_NULL_COLLATION, SQL_NC_LOW);
+  CHECK_CHAR(Connection, SQL_PROCEDURE_TERM, "procedure");
+  CHECK_CHAR(Connection, SQL_SCHEMA_TERM, "");
+
+  // check SQL_SCROLL_OPTIONS when MADB_OPT_FLAG_DYNAMIC_CURSOR option is set and MADB_OPT_FLAG_FORWARD_CURSOR is not set
+  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;OPTION=32", my_dsn, my_uid, my_pwd);
+  CHECK_DBC_RC(Hdbc, SQLDriverConnect(Hdbc, NULL, conn, strlen((char *)conn), NULL, 0, NULL, SQL_DRIVER_NOPROMPT));
+  CHECK_U_INTEGER(Hdbc, SQL_SCROLL_OPTIONS, SQL_SO_FORWARD_ONLY|SQL_SO_STATIC|SQL_SO_DYNAMIC);
+  CHECK_DBC_RC(Hdbc, SQLDisconnect(Hdbc));
+
+  // check SQL_SCROLL_OPTIONS when MADB_OPT_FLAG_DYNAMIC_CURSOR option is not set and and MADB_OPT_FLAG_FORWARD_CURSOR is not set
+  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;", my_dsn, my_uid, my_pwd);
+  CHECK_DBC_RC(Hdbc, SQLDriverConnect(Hdbc, NULL, conn, strlen((char *)conn), NULL, 0, NULL, SQL_DRIVER_NOPROMPT));
+  CHECK_U_INTEGER(Hdbc, SQL_SCROLL_OPTIONS, SQL_SO_FORWARD_ONLY|SQL_SO_STATIC);
+  CHECK_DBC_RC(Hdbc, SQLDisconnect(Hdbc));
+
+  // check SQL_SCROLL_OPTIONS when MADB_OPT_FLAG_DYNAMIC_CURSOR option is set and MADB_OPT_FLAG_FORWARD_CURSOR is set
+  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;OPTION=2097184", my_dsn, my_uid, my_pwd);
+  CHECK_DBC_RC(Hdbc, SQLDriverConnect(Hdbc, NULL, conn, strlen((char *)conn), NULL, 0, NULL, SQL_DRIVER_NOPROMPT));
+  CHECK_U_INTEGER(Hdbc, SQL_SCROLL_OPTIONS, SQL_SO_FORWARD_ONLY|SQL_SO_DYNAMIC);
+  CHECK_DBC_RC(Hdbc, SQLDisconnect(Hdbc));
+
+  // check SQL_SCROLL_OPTIONS when MADB_OPT_FLAG_DYNAMIC_CURSOR option is not set and and MADB_OPT_FLAG_FORWARD_CURSOR is set
+  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;OPTION=2097152", my_dsn, my_uid, my_pwd);
+  CHECK_DBC_RC(Hdbc, SQLDriverConnect(Hdbc, NULL, conn, strlen((char *)conn), NULL, 0, NULL, SQL_DRIVER_NOPROMPT));
+  CHECK_U_INTEGER(Hdbc, SQL_SCROLL_OPTIONS, SQL_SO_FORWARD_ONLY);
+  CHECK_DBC_RC(Hdbc, SQLDisconnect(Hdbc));
+
+  CHECK_CHAR(Connection, SQL_TABLE_TERM, "table");
+  CHECK_U_SMALL_INT(Connection, SQL_TXN_CAPABLE, SQL_TC_DDL_COMMIT);
+  CHECK_U_INTEGER(Connection, SQL_TXN_ISOLATION_OPTION, SQL_TXN_READ_COMMITTED);
+  CHECK_CHAR(Connection, SQL_USER_NAME, "root");
+
+  SQLFreeHandle(SQL_HANDLE_DBC, Hdbc);
+  return OK;
+}
+
+MA_ODBC_TESTS my_tests[]=
+{
+  {driver_information, "driver_information", NORMAL, ALL_DRIVERS},
+  {dbms_product_information, "dbms_product_information", NORMAL, ALL_DRIVERS},
+  { data_source_information, "data_source_information", NORMAL, ALL_DRIVERS},
+  { NULL, NULL, NORMAL, ALL_DRIVERS}
+};
+
+int main(int argc, char **argv)
+{
+  int tests= sizeof(my_tests)/sizeof(MA_ODBC_TESTS) - 1;
+  get_options(argc, argv);
+  plan(tests);
+  return run_tests(my_tests);
+}

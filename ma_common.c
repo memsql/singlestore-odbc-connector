@@ -85,7 +85,7 @@ char* trim(char *Str)
   Str= ltrim(Str);
 
   end= Str + strlen(Str) - 1;
-  while (iswspace(*end))
+  while (end >= Str && iswspace(*end))
     *end--= 0;
   return Str;
 }

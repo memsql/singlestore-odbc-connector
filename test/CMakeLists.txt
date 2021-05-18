@@ -23,7 +23,7 @@ SET (ODBC_TESTS
         "curext" "relative" "unicode" "cursor" "dyn_cursor"
         "error" "escape_sequences" "param" "result1" "result2" "multistatement"
         "sqlcolumns" "sql_procedure_columns" "sqltypeinfo" "sql_special_columns"
-        "client_side" "sql_row_count")
+        "client_side" "sql_get_info" "sql_row_count")
 SET(COMMON_TEST_SOURCES tap.h)
 
 # Interactive makes sense on WIN32 only atm

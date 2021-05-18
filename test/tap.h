@@ -1068,7 +1068,7 @@ int reset_changed_server_variables(void)
 }
 
 
-int connect_and_run_tests(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
+int connect_and_run_tests(MA_ODBC_TESTS *tests, BOOL ProvideWConnection, BOOL NoSSPS)
 {
     int         rc, i=1, all_tests = 0, failed=0;
     SQLWCHAR   *buff_before_test;
@@ -1102,7 +1102,8 @@ int connect_and_run_tests(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
             rc = 1;
         }
         else {
-            rc= tests->my_test();
+            int expected_to_fail = tests->test_type & (NoSSPS ? CSPS_FAIL | CSPS_TO_FIX : SSPS_FAIL | SSPS_TO_FIX);
+            rc = expected_to_fail ? expected_to_fail : tests->my_test();
         }
         comment[0] = '\0';
         if (rc!= SKIP && !test_expected_to_succeed(tests->test_type, NoSsps))
@@ -1151,7 +1152,7 @@ void cleanup()
     const char *errorMessage = NULL;
     char buff[1024];
 
-    printf(stdout, "Running cleanup...\n");
+    printf("Running cleanup...\n");
 
     MYSQL* mysql = mysql_init(NULL);
     if (!mysql)
@@ -1229,14 +1230,14 @@ int run_tests_ex(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
 
   fprintf(stdout, "Running tests in the client-side prepared statements mode...\n");
   NoSsps = 1;
-  int csps_fail = connect_and_run_tests(tests, ProvideWConnection);
+  int csps_fail = connect_and_run_tests(tests, ProvideWConnection, NoSsps);
   fprintf(stdout, "Tests %s in the client-side prepared statements mode!\n\n", csps_fail ? "failed" : "passed");
 
   cleanup();
 
   fprintf(stdout, "Running tests in the server-side prepared statements mode...\n");
   NoSsps = 0;
-  int ssps_fail = connect_and_run_tests(tests, ProvideWConnection);
+  int ssps_fail = connect_and_run_tests(tests, ProvideWConnection, NoSsps);
   fprintf(stdout, "Tests %s in the server-side prepared statements mode!\n\n", ssps_fail ? "failed" : "passed");
 
   return csps_fail || ssps_fail;
