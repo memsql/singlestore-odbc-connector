@@ -1046,7 +1046,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     // SQL_BRC_PROCEDURES = row counts, if any, are available when a batch is executed in a stored procedure.
     // SQL_BRC_EXPLICIT = row counts, if any, are available when a batch is executed directly by calling SQLExecute or SQLExecDirect.
     //
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_BRC_EXPLICIT | SQL_BRC_ROLLED_UP, StringLengthPtr);
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_BRC_EXPLICIT, StringLengthPtr);
     break;
   case SQL_BATCH_SUPPORT:
     // SQL_BATCH_SUPPORT enumerating the driver's support for batches.
