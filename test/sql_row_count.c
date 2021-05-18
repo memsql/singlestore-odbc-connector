@@ -62,7 +62,6 @@ ODBC_TEST(t_sqlrowcnt_select_nocache) {
     CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
     CHECK_DBC_RC(Connection1, SQLDisconnect(Connection1));
     CHECK_DBC_RC(Connection1, SQLFreeHandle(SQL_HANDLE_DBC, Connection1));
-    CHECK_ENV_RC(Env, SQLFreeHandle(SQL_HANDLE_ENV, Env));
 
     return OK;
 }
