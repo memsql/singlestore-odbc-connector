@@ -24,6 +24,7 @@
 #include <odbc_3_api.h>
 
 /* {{{ SQLBrowseConnect */
+// TODO PLAT-5515
 SQLRETURN SQL_API SQLBrowseConnect(SQLHDBC ConnectionHandle,
                                    SQLCHAR *InConnectionString,
                                    SQLSMALLINT StringLength1,
@@ -675,6 +676,7 @@ SQLRETURN SQL_API SQLSetDescField(SQLHDESC DescriptorHandle,
 /* }}} */
 
 /* {{{ SQLSetDescRec */
+// TODO PLAT-5516
 SQLRETURN SQL_API SQLSetDescRec(SQLHDESC DescriptorHandle,
                                 SQLSMALLINT RecNumber,
                                 SQLSMALLINT Type,
