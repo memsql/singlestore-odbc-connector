@@ -179,6 +179,7 @@ ODBC_TEST(t_sqlrowcnt_batch) {
     SQLLEN rc;
     SQLINTEGER ids[INSERT_CNT] = {4, 5, 6};
     SQLCHAR texts[INSERT_CNT][16] = {"a", "b", "c"};
+    SQLLEN  textsInd[]= {SQL_NTS, SQL_NTS, SQL_NTS}, idsInd[]= {4, 4, 4};
 
     OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS test_rowcount_values");
     OK_SIMPLE_STMT(Stmt, "CREATE TABLE test_rowcount_values (id INT PRIMARY KEY, text VARCHAR(16))");
@@ -199,15 +200,16 @@ ODBC_TEST(t_sqlrowcnt_batch) {
     SQLCHAR *insStmt = "INSERT INTO test_rowcount_values VALUES (?, ?)";
     CHECK_STMT_RC(Stmt, SQLPrepare(Stmt, insStmt, strlen(insStmt)));
 
-    CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 0, 0, ids, 0, NULL));
-    CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 2, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR, 16, 0, texts, sizeof(texts[0]), NULL));
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_PARAMSET_SIZE,
+                                       (SQLPOINTER)3, 0));
+    CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 0, 0, ids, 0, idsInd));
+    CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 2, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0, texts, sizeof(texts[0]), textsInd));
 
     CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
 
     CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
-
     // We only return row count for last statement
-    FAIL_IF_NE_INT(rc, 1, "SQLRowCount should return last statement inserted rows count for bulk insert query");
+    FAIL_IF_NE_INT(rc, 3, "SQLRowCount should return sum of inserted rows count for bulk insert query");
 
     OK_SIMPLE_STMT(Stmt, "DROP PROCEDURE IF EXISTS t_sqlrowcnt_batch")
     OK_SIMPLE_STMT(Stmt, " CREATE PROCEDURE t_sqlrowcnt_batch () AS BEGIN "

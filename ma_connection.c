@@ -1040,14 +1040,13 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
 #endif
   case SQL_BATCH_ROW_COUNT:
-    // TODO PLAT-5419 check if this value is actually correct
     // SQL_BATCH_ROW_COUNT enumerates the behavior of the driver with respect to the availability of row counts.
     // SQL_BRC_ROLLED_UP = row counts for consecutive INSERT, DELETE, or UPDATE statements are rolled up into one.
     // In this driver, row counts are available for each statement.
     // SQL_BRC_PROCEDURES = row counts, if any, are available when a batch is executed in a stored procedure.
     // SQL_BRC_EXPLICIT = row counts, if any, are available when a batch is executed directly by calling SQLExecute or SQLExecDirect.
     //
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_BRC_EXPLICIT, StringLengthPtr);
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_BRC_EXPLICIT | SQL_BRC_ROLLED_UP, StringLengthPtr);
     break;
   case SQL_BATCH_SUPPORT:
     // SQL_BATCH_SUPPORT enumerating the driver's support for batches.
