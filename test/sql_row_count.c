@@ -36,17 +36,14 @@ ODBC_TEST(t_sqlrowcnt_select) {
 }
 
 ODBC_TEST(t_sqlrowcnt_select_nocache) {
-    SQLHANDLE henv1, Connection1, Stmt1;
+    SQLHANDLE Connection1, Stmt1;
     SQLLEN rc;
     SQLCHAR conn[512];
 
     sprintf((char *) conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s;NO_CACHE=1",
             my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr);
 
-    CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
-    CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
-                                      (SQLPOINTER) SQL_OV_ODBC3, SQL_IS_INTEGER));
-    CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &Connection1));
+    CHECK_ENV_RC(Env, SQLAllocHandle(SQL_HANDLE_DBC, Env, &Connection1));
     CHECK_DBC_RC(Connection1,
                  SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
                                   NULL, SQL_DRIVER_NOPROMPT));
@@ -65,7 +62,7 @@ ODBC_TEST(t_sqlrowcnt_select_nocache) {
     CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
     CHECK_DBC_RC(Connection1, SQLDisconnect(Connection1));
     CHECK_DBC_RC(Connection1, SQLFreeHandle(SQL_HANDLE_DBC, Connection1));
-    CHECK_ENV_RC(henv1, SQLFreeHandle(SQL_HANDLE_ENV, henv1));
+    CHECK_ENV_RC(Env, SQLFreeHandle(SQL_HANDLE_ENV, Env));
 
     return OK;
 }
@@ -169,7 +166,6 @@ ODBC_TEST(t_sqlrowcnt_bulk_operation) {
     CHECK_STMT_RC(Stmt, SQLBulkOperations(Stmt, SQL_ADD));
 
     CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
-
     FAIL_IF_NE_INT(rc, INSERT_CNT, "SQLRowCount should return inserted rows count for SQLBulkOperations with SQL_ADD");
 
     return OK;
