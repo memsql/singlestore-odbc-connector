@@ -1753,7 +1753,6 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     // SQL_PARC_NO_BATCH = There is only one row count available, which is the cumulative row count resulting from the execution of the statement for the entire array of parameters.
     // This is conceptually equivalent to treating the statement together with the complete parameter array as one atomic unit.
     // Errors are handled the same as if one statement were executed.
-    // TODO PLAT-5419 check that this value is actually correct
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_PARC_NO_BATCH, StringLengthPtr);
     break;
   case SQL_PARAM_ARRAY_SELECTS:
