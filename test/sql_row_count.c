@@ -184,15 +184,17 @@ ODBC_TEST(t_sqlrowcnt_batch) {
     OK_SIMPLE_STMT(Stmt, "CREATE TABLE test_rowcount_values (id INT PRIMARY KEY, text VARCHAR(16))");
 
     SQLCHAR *multiStmt = "INSERT INTO test_rowcount_values VALUES (1, 'a');"
-                         "INSERT INTO test_rowcount_values VALUES (2, 'b');"
-                         "INSERT INTO test_rowcount_values VALUES (3, 'c')";
+                         "INSERT INTO test_rowcount_values VALUES (2, 'b'), (3, 'c');";
 
     CHECK_STMT_RC(Stmt, SQLPrepare(Stmt, multiStmt, strlen(multiStmt)));
     CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
-    CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
 
-    // We only return row count for last statement
-    FAIL_IF_NE_INT(rc, 1, "SQLRowCount should return last statement inserted rows count for explicit batch insert");
+    CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
+    FAIL_IF_NE_INT(rc, 1, "SQLRowCount should return each statement inserted rows count for explicit batch insert");
+
+    CHECK_STMT_RC(Stmt, SQLMoreResults(Stmt));
+    CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
+    FAIL_IF_NE_INT(rc, 2, "SQLRowCount should return each statement inserted rows count for explicit batch insert");
 
     SQLCHAR *insStmt = "INSERT INTO test_rowcount_values VALUES (?, ?)";
     CHECK_STMT_RC(Stmt, SQLPrepare(Stmt, insStmt, strlen(insStmt)));
