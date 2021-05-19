@@ -62,7 +62,7 @@ do {                             \
 
 SQLRETURN BindColumnWithDescriptor(SQLHANDLE Stmt1, SQLUSMALLINT colNumber, SQLSMALLINT targetType, SQLPOINTER *targetValue, SQLLEN *cpSize) {
     unsigned long length = 0;
-    int rc = SQLColAttributeW(Stmt1, colNumber, SQL_DESC_LENGTH, NULL, 0, NULL, (SQLPOINTER) &length);
+    int rc = SQLColAttribute(Stmt1, colNumber, SQL_DESC_LENGTH, NULL, 0, NULL, (SQLPOINTER) &length);
     if (!SQL_SUCCEEDED(rc)) { return rc; }
     return SQLBindCol(Stmt1, colNumber, targetType, targetValue, length, cpSize);
 }
@@ -96,22 +96,36 @@ int compare( const void* a, const void* b)
     MADB_TypeInfo ti_a = * ( (MADB_TypeInfo*) a );
     MADB_TypeInfo ti_b = * ( (MADB_TypeInfo*) b );
 
-    if (ti_a.DataType == ti_b.DataType) return strcmp(ti_a.TypeName, ti_b.TypeName);
-    else if (ti_a.DataType < ti_b.DataType) return -1;
-    else return 1;
+    if (ti_a.DataType == ti_b.DataType)
+    {
+      return strcmp(ti_a.TypeName, ti_b.TypeName);
+    } else return ti_a.DataType - ti_b.DataType;
 }
 
-int run_sql_get_type_info(SQLHANDLE Stmt1, MADB_TypeInfo *ExpTypeInfo) {
+int run_sql_get_type_info(SQLHANDLE Stmt1, SQLSMALLINT DataType, MADB_TypeInfo *CorrectTypeInfos) {
     SQLLEN cpSize;
     MADB_TypeInfo recTypeInfo;
+    MADB_TypeInfo ExpTypeInfo[TYPES_COUNT];
     INIT_TYPE_INFO(&recTypeInfo);
-    int rc, numOfRowsFetched = 0, numResultCols = 0;
+    int rc, i, numOfRowsFetched = 0, numResultCols = 0, expTypeInfoCount = 0;
 
-    CHECK_STMT_RC(Stmt1, SQLGetTypeInfo(Stmt1, SQL_ALL_TYPES));
+    for (i = 0; i < TYPES_COUNT; i++)
+    {
+        if (DataType == SQL_ALL_TYPES || CorrectTypeInfos[i].DataType == DataType)
+        {
+            ExpTypeInfo[expTypeInfoCount++] = CorrectTypeInfos[i];
+        }
+    }
+    // TODO PLAT-5526
+    if (expTypeInfoCount == 0) {
+        return OK;
+    }
+
+    CHECK_STMT_RC(Stmt1, SQLGetTypeInfo(Stmt1, DataType));
     if ((rc = bind_type_info(Stmt1, &recTypeInfo, &cpSize)) != OK) {
         return rc;
     }
-    qsort(ExpTypeInfo, TYPES_COUNT, sizeof(MADB_TypeInfo), compare);
+    qsort(ExpTypeInfo, expTypeInfoCount, sizeof(MADB_TypeInfo), compare);
     CHECK_STMT_RC(Stmt1, SQLNumResultCols(Stmt1, &numResultCols));
     FAIL_IF_NE_INT(TYPE_INFO_FIELDS_COUNT, numResultCols, "Wrong number of result columns returned");
     while (SQL_SUCCEEDED(SQLFetch(Stmt1))) {
@@ -121,12 +135,12 @@ int run_sql_get_type_info(SQLHANDLE Stmt1, MADB_TypeInfo *ExpTypeInfo) {
         numOfRowsFetched++;
     }
     diag("Fetched %d rows", numOfRowsFetched);
-    FAIL_IF_NE_INT(TYPES_COUNT, numOfRowsFetched, "Wrong number of rows fetched");
+    FAIL_IF_NE_INT(expTypeInfoCount, numOfRowsFetched, "Wrong number of rows fetched");
 
     return OK;
 }
 
-#define CURSORS_CNT 5
+#define CURSORS_CNT 3
 const SQLPOINTER cursorTypes[CURSORS_CNT] = {(SQLPOINTER)SQL_CURSOR_DYNAMIC, (SQLPOINTER)SQL_CURSOR_FORWARD_ONLY,
                                              (SQLPOINTER)SQL_CURSOR_STATIC,};
 
@@ -150,7 +164,7 @@ ODBC_TEST(t_sqlgettypeinfo2) {
     CHECK_DBC_RC(DynCursorConnection,
                  SQLDriverConnect(DynCursorConnection, NULL, dynCursorConn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
                                   NULL, SQL_DRIVER_NOPROMPT));
-    int i, rc;
+    int i, j, rc;
     for(i = 0; i < CURSORS_CNT; i++) {
         if (i == 0) { // DynamicCursor
             CHECK_DBC_RC(DynCursorConnection, SQLAllocHandle(SQL_HANDLE_STMT, DynCursorConnection, &Stmt1));
@@ -159,13 +173,16 @@ ODBC_TEST(t_sqlgettypeinfo2) {
         }
         CHECK_STMT_RC(Stmt1, SQLSetStmtAttr(Stmt1, SQL_ATTR_CURSOR_TYPE, cursorTypes[i], 0));
 
-        if((rc = run_sql_get_type_info(Stmt1, TypeInfoV2)) != OK)
+        for (j = 0; j < SQL_DATA_TYPES_COUNT; j++)
         {
-            diag("Error running SQLGetTypeInfo for cursor type %d", cursorTypes[i]);
-            return rc;
+            if((rc = run_sql_get_type_info(Stmt1, sqlDataTypes[j], TypeInfoV2)) != OK)
+            {
+                diag("Error running SQLGetTypeInfo for cursor type %d and SQL data type %d", cursorTypes[i], sqlDataTypes[j]);
+                return rc;
+            }
+            CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
         }
 
-        CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
         CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
     }
     CHECK_DBC_RC(Connection1, SQLDisconnect(Connection1));
@@ -196,7 +213,7 @@ ODBC_TEST(t_sqlgettypeinfo3) {
     CHECK_DBC_RC(DynCursorConnection,
                  SQLDriverConnect(DynCursorConnection, NULL, dynCursorConn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
                                   NULL, SQL_DRIVER_NOPROMPT));
-    int i, rc;
+    int i, j, rc;
     for(i = 0; i < CURSORS_CNT; i++) {
         if (i == 0) { // DynamicCursor
             CHECK_DBC_RC(DynCursorConnection, SQLAllocHandle(SQL_HANDLE_STMT, DynCursorConnection, &Stmt1));
@@ -205,10 +222,14 @@ ODBC_TEST(t_sqlgettypeinfo3) {
         }
         CHECK_STMT_RC(Stmt1, SQLSetStmtAttr(Stmt1, SQL_ATTR_CURSOR_TYPE, cursorTypes[i], 0));
 
-        if((rc = run_sql_get_type_info(Stmt1, TypeInfoV3)) != OK)
+        for (j = 0; j < SQL_DATA_TYPES_COUNT; j++)
         {
-            diag("Error running SQLGetTypeInfo for cursor type %d", cursorTypes[i]);
-            return rc;
+            if((rc = run_sql_get_type_info(Stmt1, sqlDataTypes[j], TypeInfoV3)) != OK)
+            {
+                diag("Error running SQLGetTypeInfo for cursor type %d and SQL data type %d", cursorTypes[i], sqlDataTypes[j]);
+                return rc;
+            }
+            CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
         }
 
         CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
@@ -239,8 +260,8 @@ ODBC_TEST(t_sqlgettypeinfo_sequential) {
 
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
-    CHECK_STMT_RC(Stmt1, run_sql_get_type_info(Stmt1, TypeInfoV3));
-    CHECK_STMT_RC(Stmt1, run_sql_get_type_info(Stmt1, TypeInfoV3));
+    CHECK_STMT_RC(Stmt1, run_sql_get_type_info(Stmt1, SQL_ALL_TYPES, TypeInfoV3));
+    CHECK_STMT_RC(Stmt1, run_sql_get_type_info(Stmt1, SQL_ALL_TYPES, TypeInfoV3));
 
     SQLCHAR *sql = "SELECT 1";
     CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
@@ -249,7 +270,7 @@ ODBC_TEST(t_sqlgettypeinfo_sequential) {
     CHECK_STMT_RC(Stmt1, SQLFetch(Stmt1));
 
     CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
-    CHECK_STMT_RC(Stmt1, run_sql_get_type_info(Stmt1, TypeInfoV3));
+    CHECK_STMT_RC(Stmt1, run_sql_get_type_info(Stmt1, SQL_ALL_TYPES, TypeInfoV3));
 
 
     CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
@@ -380,6 +401,7 @@ ODBC_TEST(t_sqlgettypeinfo_fetchscroll) {
     CHECK_DBC_RC(DynCursorConnection, SQLDisconnect(DynCursorConnection));
     CHECK_DBC_RC(DynCursorConnection, SQLFreeHandle(SQL_HANDLE_DBC, DynCursorConnection));
     CHECK_ENV_RC(henv1, SQLFreeHandle(SQL_HANDLE_ENV, henv1));
+
     return OK;
 }
 
@@ -586,23 +608,24 @@ ODBC_TEST(t_sqlgettypeinfo_stmtattributes) {
     CHECK_DBC_RC(Connection1, SQLDisconnect(Connection1));
     CHECK_DBC_RC(Connection1, SQLFreeHandle(SQL_HANDLE_DBC, Connection1));
     CHECK_ENV_RC(henv1, SQLFreeHandle(SQL_HANDLE_ENV, henv1));
+
     return OK;
 }
 
 MA_ODBC_TESTS my_tests[] =
-    {
-        {t_sqlgettypeinfo2, "t_sqlgettypeinfo2", NORMAL, ALL_DRIVERS},
-        {t_sqlgettypeinfo3, "t_sqlgettypeinfo3", NORMAL, ALL_DRIVERS},
-        {t_sqlgettypeinfo_sequential, "t_sqlgettypeinfo_sequential", NORMAL, ALL_DRIVERS},
-        {t_sqlgettypeinfo_no_bind, "t_sqlgettypeinfo_no_bind", NORMAL, ALL_DRIVERS},
-        {t_sqlgettypeinfo_fetchscroll, "t_sqlgettypeinfo_fetchscroll", NORMAL, ALL_DRIVERS},
-        {t_sqlgettypeinfo_getdata, "t_sqlgettypeinfo_getdata", NORMAL, ALL_DRIVERS},
-        {t_sqlgettypeinfo_closecursor, "t_sqlgettypeinfo_closecursor", NORMAL, ALL_DRIVERS},
-        {t_sqlgettypeinfo_colattribute, "t_sqlgettypeinfo_colattribute", NORMAL, ALL_DRIVERS},
-        {t_sqlgettypeinfo_describecol, "t_sqlgettypeinfo_describecol", NORMAL, ANSI_DRIVER},
-        {t_sqlgettypeinfo_stmtattributes, "t_sqlgettypeinfo_stmtattributes", NORMAL, ALL_DRIVERS},
-        {NULL, NULL, NORMAL, ALL_DRIVERS}
-    };
+{
+    {t_sqlgettypeinfo2, "t_sqlgettypeinfo2", NORMAL, ALL_DRIVERS},
+    {t_sqlgettypeinfo3, "t_sqlgettypeinfo3", NORMAL, ALL_DRIVERS},
+    {t_sqlgettypeinfo_sequential, "t_sqlgettypeinfo_sequential", NORMAL, ALL_DRIVERS},
+    {t_sqlgettypeinfo_no_bind, "t_sqlgettypeinfo_no_bind", NORMAL, ALL_DRIVERS},
+    {t_sqlgettypeinfo_fetchscroll, "t_sqlgettypeinfo_fetchscroll", NORMAL, ALL_DRIVERS},
+    {t_sqlgettypeinfo_getdata, "t_sqlgettypeinfo_getdata", NORMAL, ALL_DRIVERS},
+    {t_sqlgettypeinfo_closecursor, "t_sqlgettypeinfo_closecursor", NORMAL, ALL_DRIVERS},
+    {t_sqlgettypeinfo_colattribute, "t_sqlgettypeinfo_colattribute", NORMAL, ALL_DRIVERS},
+    {t_sqlgettypeinfo_describecol, "t_sqlgettypeinfo_describecol", NORMAL, ANSI_DRIVER},
+    {t_sqlgettypeinfo_stmtattributes, "t_sqlgettypeinfo_stmtattributes", NORMAL, ALL_DRIVERS},
+    {NULL, NULL, NORMAL, ALL_DRIVERS}
+};
 
 
 int main(int argc, char **argv) {

@@ -22,7 +22,7 @@ SET (ODBC_TESTS
         "use_result" "scroll" "bulk" "prepare" "datetime" "keys"
         "curext" "relative" "unicode" "cursor" "dyn_cursor"
         "error" "escape_sequences" "param" "result1" "result2" "multistatement"
-        "sqlcolumns" "sql_procedure_columns" "sqltypeinfo" "sql_special_columns"
+        "sqlcolumns" "sql_procedure_columns" "sql_get_type_info" "sql_special_columns"
         "client_side" "sql_get_info" "sql_row_count" "sql_get_functions")
 SET(COMMON_TEST_SOURCES tap.h)
 
