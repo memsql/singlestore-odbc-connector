@@ -2014,7 +2014,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
   case SQL_SQL92_NUMERIC_VALUE_FUNCTIONS:
     // SQL_SQL92_NUMERIC_VALUE_FUNCTIONS enumerates the numeric value scalar functions that are supported by the driver and the associated data source, as defined in SQL-92.
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SNVF_CHARACTER_LENGTH |
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SNVF_BIT_LENGTH | SQL_SNVF_CHARACTER_LENGTH |
                                                 SQL_SNVF_CHAR_LENGTH | SQL_SNVF_EXTRACT |
                                                 SQL_SNVF_OCTET_LENGTH | SQL_SNVF_POSITION,
                      StringLengthPtr);

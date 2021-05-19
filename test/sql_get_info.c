@@ -98,11 +98,7 @@ int CheckUInteger(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, SQLUINTEGER CorrectValu
   return OK;
 }
 
-<<<<<<< HEAD
 #define BUF_LEN 16382
-=======
-#define BUF_LEN 32767
->>>>>>> Updated SQL_KEYWORDS value
 int CheckChar(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, char *CorrectValue) {
   SQLCHAR string_value[BUF_LEN];
   SQLWCHAR stringw_value[BUF_LEN];
@@ -607,7 +603,7 @@ ODBC_TEST(sql92)
                                                SQL_SG_INSERT_TABLE | SQL_SG_SELECT_TABLE |
                                                SQL_SG_UPDATE_COLUMN | SQL_SG_UPDATE_TABLE |
                                                SQL_SG_WITH_GRANT_OPTION);
-  CHECK_U_INTEGER(Connection, SQL_SQL92_NUMERIC_VALUE_FUNCTIONS, SQL_SNVF_CHARACTER_LENGTH |
+  CHECK_U_INTEGER(Connection, SQL_SQL92_NUMERIC_VALUE_FUNCTIONS, SQL_SNVF_BIT_LENGTH | SQL_SNVF_CHARACTER_LENGTH |
                                                                  SQL_SNVF_CHAR_LENGTH | SQL_SNVF_EXTRACT |
                                                                  SQL_SNVF_OCTET_LENGTH | SQL_SNVF_POSITION);
   CHECK_U_INTEGER(Connection, SQL_SQL92_PREDICATES, SQL_SP_BETWEEN | SQL_SP_COMPARISON |
