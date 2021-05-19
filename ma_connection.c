@@ -17,8 +17,8 @@
    or write to the Free Software Foundation, Inc., 
    51 Franklin St., Fifth Floor, Boston, MA 02110, USA
 *************************************************************************************/
+#include <keywords/keywords.hpp>
 #include <ma_odbc.h>
-
 extern const char* DefaultPluginLocation;
 
 struct st_madb_isolation MADB_IsolationLevel[] =
@@ -949,6 +949,7 @@ int IsStringInfoType(SQLSMALLINT InfoType)
     case SQL_MULT_RESULT_SETS:
     case SQL_MULTIPLE_ACTIVE_TXN:
     case SQL_NEED_LONG_DATA_LEN:
+    case SQL_OUTER_JOINS:
     case SQL_ORDER_BY_COLUMNS_IN_SELECT:
     case SQL_PROCEDURE_TERM:
     case SQL_PROCEDURES:
@@ -1011,16 +1012,38 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_AGGREGATE_FUNCTIONS:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_AF_ALL | SQL_AF_AVG | SQL_AF_COUNT | SQL_AF_DISTINCT |
-                                                SQL_AF_MAX | SQL_AF_MIN | SQL_AF_SUM, StringLengthPtr);
+    // SQL_AGGREGATE_FUNCTIONS enumerates support for aggregation functions.
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_AF_AVG | SQL_AF_COUNT |
+                                                  SQL_AF_MAX | SQL_AF_MIN | SQL_AF_SUM |
+                                                  SQL_AF_ALL | SQL_AF_DISTINCT, StringLengthPtr);
     break;
   case SQL_ALTER_DOMAIN:
+    // SQL_ALTER_DOMAIN enumerates the clauses in the ALTER DOMAIN statement, as defined in SQL-92, supported by the data source.
+    // A return value of "0" means that the ALTER DOMAIN statement is not supported.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_ALTER_TABLE:
+    // SQL_ALTER_TABLE enumerates the clauses in the ALTER TABLE statement supported by the data source.
+    // SQL_AT_ADD_COLUMN_COLLATION = <add column> clause is supported, with facility to specify column collation (Full level) (ODBC 3.0)
+    // SQL_AT_ADD_COLUMN_DEFAULT = <add column> clause is supported, with facility to specify column defaults (FIPS Transitional level) (ODBC 3.0)
+    // SQL_AT_ADD_COLUMN_SINGLE = <add column> is supported (FIPS Transitional level) (ODBC 3.0)
+    // SQL_AT_ADD_CONSTRAINT = <add column> clause is supported, with facility to specify column constraints (FIPS Transitional level) (ODBC 3.0)
+    // SQL_AT_ADD_TABLE_CONSTRAINT = <add table constraint> clause is supported (FIPS Transitional level) (ODBC 3.0)
+    // SQL_AT_CONSTRAINT_NAME_DEFINITION = <constraint name definition> is supported for naming column and table constraints (Intermediate level) (ODBC 3.0)
+    // SQL_AT_DROP_COLUMN_CASCADE = <drop column> CASCADE is supported (FIPS Transitional level) (ODBC 3.0)
+    // SQL_AT_DROP_COLUMN_DEFAULT = <alter column> <drop column default clause> is supported (Intermediate level) (ODBC 3.0)
+    // SQL_AT_DROP_COLUMN_RESTRICT = <drop column> RESTRICT is supported (FIPS Transitional level) (ODBC 3.0)
+    // SQL_AT_DROP_TABLE_CONSTRAINT_CASCADE (ODBC 3.0)
+    // SQL_AT_DROP_TABLE_CONSTRAINT_RESTRICT = <drop column> RESTRICT is supported (FIPS Transitional level) (ODBC 3.0)
+    // SQL_AT_SET_COLUMN_DEFAULT = <alter column> <set column default clause> is supported (Intermediate level) (ODBC 3.0)
+    //
+    // The following bits specify the support <constraint attributes> if specifying column or table constraints is supported (the SQL_AT_ADD_CONSTRAINT bit is set):
+    // SQL_AT_CONSTRAINT_INITIALLY_DEFERRED (Full level) (ODBC 3.0)
+    // SQL_AT_CONSTRAINT_INITIALLY_IMMEDIATE (Full level) (ODBC 3.0)
+    // SQL_AT_CONSTRAINT_DEFERRABLE (Full level) (ODBC 3.0)
+    // SQL_AT_CONSTRAINT_NON_DEFERRABLE (Full level) (ODBC 3.0)
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_AT_ADD_COLUMN | SQL_AT_DROP_COLUMN | SQL_AT_ADD_CONSTRAINT |
-                     SQL_AT_ADD_COLUMN_SINGLE | SQL_AT_ADD_COLUMN_DEFAULT | SQL_AT_ADD_COLUMN_COLLATION |
-                     SQL_AT_SET_COLUMN_DEFAULT, StringLengthPtr);
+                     SQL_AT_ADD_COLUMN_SINGLE | SQL_AT_ADD_COLUMN_DEFAULT, StringLengthPtr);
     break;
 // TODO PLAT-5465
 #ifdef SQL_ASYNC_DBC_FUNCTIONS
@@ -1066,15 +1089,19 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_CATALOG_LOCATION:
+    // SQL_CATALOG_LOCATION indicates the position of the catalog in a qualified table name
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_CL_START, StringLengthPtr);
     break;
   case SQL_CATALOG_NAME:
+    // SQL_CATALOG_NAME is a character string: "Y" if the server supports catalog names, or "N" if it does not.
     /* Todo: MyODBC Driver has a DSN configuration for disabling catalog usage:
        but it's not implemented in MAODBC */
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, 
                                      (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), "Y", SQL_NTS, &Dbc->Error);
     break;
   case SQL_CATALOG_NAME_SEPARATOR:
+    // SQL_CATALOG_NAME_SEPARATOR is a character string: the character or characters that the data source defines as the separator
+    // between a catalog name and the qualified name element that follows or precedes it.
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, 
                                      (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), ".", SQL_NTS, &Dbc->Error);
     break;
@@ -1085,6 +1112,12 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                                      (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), "database", SQL_NTS, &Dbc->Error);
     break;
   case SQL_CATALOG_USAGE:
+    // SQL_CATALOG_USAGE enumerates the statements in which catalogs can be used.
+    // SQL_CU_DML_STATEMENTS = Catalogs are supported in all Data Manipulation Language statements: SELECT, INSERT, UPDATE, DELETE, and if supported, SELECT FOR UPDATE and positioned update and delete statements.
+    // SQL_CU_PROCEDURE_INVOCATION = Catalogs are supported in the ODBC procedure invocation statement.
+    // SQL_CU_TABLE_DEFINITION = Catalogs are supported in all table definition statements: CREATE TABLE, CREATE VIEW, ALTER TABLE, DROP TABLE, and DROP VIEW.
+    // SQL_CU_INDEX_DEFINITION = Catalogs are supported in all index definition statements: CREATE INDEX and DROP INDEX.
+    // SQL_CU_PRIVILEGE_DEFINITION = Catalogs are supported in all privilege definition statements: GRANT and REVOKE.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_CU_DML_STATEMENTS | 
                                                 SQL_CU_INDEX_DEFINITION |
                                                 SQL_CU_PROCEDURE_INVOCATION | 
@@ -1103,6 +1136,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
   }
   case SQL_COLUMN_ALIAS:
+    // SQL_COLUMN_ALIAS is a character string: "Y" if the data source supports column aliases; otherwise, "N".
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, 
                            (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), "Y", SQL_NTS, &Dbc->Error);
     break;
@@ -1195,35 +1229,71 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_FN_CVT_CONVERT, StringLengthPtr);
     break;
   case SQL_CORRELATION_NAME:
+    // SQL_CORRELATION_NAME indicates whether table correlation names are supported.
+    // SQL_CN_ANY = Correlation names are supported and can be any valid user-defined name.
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_CN_ANY, StringLengthPtr);
     break;
   case SQL_CREATE_ASSERTION:
+    // SQL_CREATE_ASSERTION enumerates the clauses in the CREATE ASSERTION statement, as defined in SQL-92, supported by the data source.
+    // A return value of "0" means that the CREATE ASSERTION statement is not supported.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_CREATE_CHARACTER_SET:
+    // SQL_CREATE_CHARACTER_SET enumerates the clauses in the CREATE CHARACTER SET statement, as defined in SQL-92, supported by the data source.
+    // A return value of "0" means that the CREATE CHARACTER SET statement is not supported.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_CREATE_COLLATION:
+    // SQL_CREATE_COLLATION enumerates the clauses in the CREATE DOMAIN statement, as defined in SQL-92, supported by the data source.
+    // A return value of "0" means that the CREATE DOMAIN statement is not supported.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_CREATE_DOMAIN:
+    // SQL_CREATE_DOMAIN enumerates the clauses in the CREATE DOMAIN statement, as defined in SQL-92, supported by the data source.
+    // A return value of "0" means that the CREATE DOMAIN statement is not supported.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_CREATE_SCHEMA:
+    // SQL_CREATE_SCHEMA enumerates the clauses in the CREATE SCHEMA statement, as defined in SQL-92, supported by the data source.
+    // A return value of "0" means that the CREATE SCHEMA statement is not supported.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_CREATE_TABLE:
+    // SQL_CREATE_TABLE enumerates the clauses in the CREATE TABLE statement, as defined in SQL-92, supported by the data source.
+    // The following bitmasks are used to determine which clauses are supported:
+    // SQL_CT_CREATE_TABLE = The CREATE TABLE statement is supported. (Entry level)
+    // SQL_CT_TABLE_CONSTRAINT = Specifying table constraints is supported (FIPS Transitional level)
+    // SQL_CT_CONSTRAINT_NAME_DEFINITION = The <constraint name definition> clause is supported for naming column and table constraints (Intermediate level)
+    //
+    // The following bits specify the ability to create temporary tables:
+    // SQL_CT_COMMIT_PRESERVE = Deleted rows are preserved on commit. (Full level)
+    // SQL_CT_COMMIT_DELETE = Deleted rows are deleted on commit. (Full level)
+    // SQL_CT_GLOBAL_TEMPORARY = Global temporary tables can be created. (Full level)
+    // SQL_CT_LOCAL_TEMPORARY = Local temporary tables can be created. (Full level)
+    //
+    // The following bits specify the ability to create column constraints:
+    // SQL_CT_COLUMN_CONSTRAINT = Specifying column constraints is supported (FIPS Transitional level)
+    // SQL_CT_COLUMN_DEFAULT = Specifying column defaults is supported (FIPS Transitional level)
+    // SQL_CT_COLUMN_COLLATION = Specifying column collation is supported (Full level)
+    //
+    // The following bits specify the supported constraint attributes if specifying column or table constraints is supported:
+    // SQL_CT_CONSTRAINT_INITIALLY_DEFERRED (Full level)
+    // SQL_CT_CONSTRAINT_INITIALLY_IMMEDIATE (Full level)
+    // SQL_CT_CONSTRAINT_DEFERRABLE (Full level)
+    // SQL_CT_CONSTRAINT_NON_DEFERRABLE (Full level)
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_CT_COLUMN_COLLATION | SQL_CT_COLUMN_DEFAULT | SQL_CT_COLUMN_CONSTRAINT |
-                                                SQL_CT_COMMIT_DELETE | SQL_CT_CREATE_TABLE | SQL_CT_TABLE_CONSTRAINT |
+                                                SQL_CT_COMMIT_DELETE | SQL_CT_CREATE_TABLE | SQL_CT_TABLE_CONSTRAINT | SQL_CT_GLOBAL_TEMPORARY |
                                                 SQL_CT_LOCAL_TEMPORARY | SQL_CT_CONSTRAINT_NAME_DEFINITION,
                      StringLengthPtr);
     break;
   case SQL_CREATE_TRANSLATION:
+    // SQL_CREATE_TRANSLATION enumerates the clauses in the CREATE TRANSLATION statement, as defined in SQL-92, supported by the data source.
+    // A return value of "0" means that the CREATE TRANSLATION statement is not supported.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_CREATE_VIEW:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_CV_CASCADED | SQL_CV_CHECK_OPTION |
-                                                SQL_CV_CREATE_VIEW, StringLengthPtr);
+    // SQL_CREATE_VIEW enumerates the clauses in the CREATE VIEW statement, as defined in SQL-92, supported by the data source.
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_CV_CREATE_VIEW, StringLengthPtr);
     break;
   case SQL_CURSOR_COMMIT_BEHAVIOR:
     // SQL_CURSOR_COMMIT_BEHAVIOR indicates how a COMMIT operation affects cursors and prepared statements in the data source
@@ -1289,7 +1359,8 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     }
     break;
   case SQL_DDL_INDEX:
-     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_DI_CREATE_INDEX | SQL_DI_DROP_INDEX, StringLengthPtr);
+    // SQL_DDL_INDEX indicates support for creation and dropping of indexes:
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_DI_CREATE_INDEX | SQL_DI_DROP_INDEX, StringLengthPtr);
     break;
   case SQL_DEFAULT_TXN_ISOLATION:
     // SQL_DEFAULT_TXN_ISOLATION ndicates the default transaction isolation level supported by the driver or data source.
@@ -1345,27 +1416,41 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
     /*******************************/
   case SQL_DROP_ASSERTION:
+    // SQL_DROP_ASSERTION enumerates the clauses in the DROP ASSERTION statement, as defined in SQL-92, supported by the data source.
+    // A return value of "0" means that the DROP ASSERTION statement is not supported.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_DROP_CHARACTER_SET:
+    // SQL_DROP_CHARACTER_SET enumerates the clauses in the DROP CHARACTER SET statement, as defined in SQL-92, supported by the data source.
+    // A return value of "0" means that the DROP CHARACTER_SET statement is not supported.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_DROP_COLLATION:
+    // SQL_DROP_COLLATION enumerating the clauses in the DROP COLLATION statement, as defined in SQL-92, supported by the data source.
+    // A return value of "0" means that the DROP COLLATION statement is not supported.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_DROP_DOMAIN:
+    // SQL_DROP_COLLATION enumerates the clauses in the DROP DOMAIN statement, as defined in SQL-92, supported by the data source.
+    // A return value of "0" means that the DROP DOMAIN statement is not supported.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_DROP_SCHEMA:
+    // SQL_DROP_SCHEMA enumerates the clauses in the DROP SCHEMA statement, as defined in SQL-92, supported by the data source.
+    // A return value of "0" means that the DROP SCHEMA statement is not supported.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_DROP_TABLE:
+    // SQL_DROP_TABLE enumerates the clauses in the DROP TABLE statement, as defined in SQL-92, supported by the data source.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_DT_DROP_TABLE, StringLengthPtr);
     break;
   case SQL_DROP_TRANSLATION:
+    // SQL_DROP_TRANSLATION enumerates the clauses in the DROP TRANSLATION statement, as defined in SQL-92, supported by the data source.
+    // A return value of "0" means that the DROP TRANSLATION statement is not supported.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_DROP_VIEW:
+    // SQL_DROP_VIEW enumerating the clauses in the DROP VIEW statement, as defined in SQL-92, supported by the data source.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_DV_DROP_VIEW, StringLengthPtr);
     break;
   case SQL_DYNAMIC_CURSOR_ATTRIBUTES1:
@@ -1434,6 +1519,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                                                   SQL_CA2_SIMULATE_TRY_UNIQUE, StringLengthPtr);
     break;
   case SQL_EXPRESSIONS_IN_ORDERBY:
+    // SQL_EXPRESSIONS_IN_ORDERBY is a character string: "Y" if the data source supports expressions in the ORDER BY list; "N" if it does not.
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
                                      "Y", SQL_NTS, &Dbc->Error);
     break;
@@ -1517,16 +1603,25 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
   }
   case SQL_GROUP_BY:
-    MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_GB_GROUP_BY_CONTAINS_SELECT, StringLengthPtr);
+    // SQL_GROUP_BY specifies the relationship between the columns in the GROUP BY clause and the nonaggregated columns in the select list:
+    // SQL_GB_NO_RELATION = The columns in the GROUP BY clause and the select list are not related.
+    // The meaning of nongrouped, nonaggregated columns in the select list is data source-dependent.
+    // For example, SELECT DEPT, SALARY FROM EMPLOYEE GROUP BY DEPT, AGE. (ODBC 2.0)
+    MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_GB_NO_RELATION, StringLengthPtr);
     break;
   case SQL_IDENTIFIER_CASE:
-    MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_IC_MIXED, StringLengthPtr);
+    // SQL_IC_SENSITIVE = Identifiers in SQL are case sensitive and are stored in mixed case in system catalog.
+    MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_IC_SENSITIVE, StringLengthPtr);
     break;
   case SQL_IDENTIFIER_QUOTE_CHAR:
+    // SQL_IDENTIFIER_QUOTE_CHAR is the character string that is used as the starting and ending delimiter of a quoted (delimited) identifier in SQL statements.
+    // TODO DB-46842
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),"`", SQL_NTS, &Dbc->Error);
     break;
   case SQL_INDEX_KEYWORDS:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_IK_NONE, StringLengthPtr);
+    // SQL_INDEX_KEYWORDS enumerates keywords in the CREATE INDEX statement that are supported by the driver.
+    // SQL_IK_ALL = All keywords are supported.
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_IK_ALL, StringLengthPtr);
     break;
   case SQL_INFO_SCHEMA_VIEWS:
     // SQL_INFO_SCHEMA_VIEWS enumerates the views in the INFORMATION_SCHEMA that are supported by the driver.
@@ -1560,11 +1655,13 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                                                 SQL_ISV_TABLE_CONSTRAINTS | SQL_ISV_VIEWS, StringLengthPtr);
     break;
   case SQL_INSERT_STATEMENT:
+    // SQL_INSERT_STATEMENT indicates support for INSERT statements.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_IS_INSERT_LITERALS | SQL_IS_INSERT_SEARCHED |
                                                 SQL_IS_SELECT_INTO, StringLengthPtr);
     break;
   case SQL_INTEGRITY:
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
+    // SQL_INTEGRITY is a character string: "Y" if the data source supports the Integrity Enhancement Facility; "N" if it does not.
+    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "N", SQL_NTS, &Dbc->Error);
     break;
   case SQL_KEYSET_CURSOR_ATTRIBUTES1:
@@ -1578,26 +1675,16 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_KEYWORDS:
+    // SQL_KEYWORDS is a character string that contains a comma-separated list of all data source-specific keywords.
+    // This list does not contain keywords specific to ODBC or keywords used by both the data source and ODBC.
+    // This list represents all the reserved keywords; interoperable applications should not use these words in object names.
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
-                                     "ACCESSIBLE,ANALYZE,ASENSITIVE,BEFORE,BIGINT,BINARY,BLOB,CALL,"
-                                     "CHANGE,CONDITION,DATABASE,DATABASES,DAY_HOUR,DAY_MICROSECOND,"
-                                     "DAY_MINUTE,DAY_SECOND,DELAYED,DETERMINISTIC,DISTINCTROW,DIV,"
-                                     "DUAL,EACH,ELSEIF,ENCLOSED,ESCAPED,EXIT,EXPLAIN,FLOAT4,FLOAT8,"
-                                     "FORCE,FULLTEXT,HIGH_PRIORITY,HOUR_MICROSECOND,HOUR_MINUTE,"
-                                     "HOUR_SECOND,IF,IGNORE,INFILE,INOUT,INT1,INT2,INT3,INT4,INT8,"
-                                     "ITERATE,KEY,KEYS,KILL,LEAVE,LIMIT,LINES,LOAD,LOCALTIME,"
-                                     "LOCALTIMESTAMP,LOCK,LONG,LONGBLOB,LONGTEXT,LOOP,LOW_PRIORITY,"
-                                     "MEDIUMBLOB,MEDIUMINT,MEDIUMTEXT,MIDDLEINT,MINUTE_MICROSECOND,"
-                                     "MINUTE_SECOND,MOD,MODIFIES,NO_WRITE_TO_BINLOG,OPTIMIZE,OPTIONALLY,"
-                                     "OUT,OUTFILE,PURGE,RANGE,READS,REGEXP,RELEASE,"
-                                     "RENAME,REPEAT,REPLACE,REQUIRE,RETURN,RLIKE,SCHEMAS,"
-                                     "SECOND_MICROSECOND,SENSITIVE,SEPARATOR,SHOW,SPATIAL,SPECIFIC,"
-                                     "SQLEXCEPTION,SQL_BIG_RESULT,SQL_CALC_FOUND_ROWS,SQL_SMALL_RESULT,"
-                                     "SSL,STARTING,STRAIGHT_JOIN,TERMINATED,TINYBLOB,TINYINT,TINYTEXT,"
-                                     "TRIGGER,UNDO,UNLOCK,UNSIGNED,USE,UTC_DATE,UTC_TIME,UTC_TIMESTAMP,"
-                                     "VARBINARY,VARCHARACTER,WHILE,XOR,YEAR_MONTH,MAXVALUE,SIGNAL", SQL_NTS, &Dbc->Error);
+                                        SINGLESTORE_KEYWORDS, SQL_NTS, &Dbc->Error);
     break;
   case SQL_LIKE_ESCAPE_CLAUSE:
+    // SQL_LIKE_ESCAPE_CLAUSE is a character string: "Y" if the data source supports an escape character for the percent character (%)
+    // and underscore character (_) in a LIKE predicate and the driver supports the ODBC syntax for defining a LIKE predicate escape character.
+    // "N" otherwise.
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
                                      "Y", SQL_NTS, &Dbc->Error);
     break;
@@ -1703,6 +1790,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                                      "N", SQL_NTS, &Dbc->Error);
     break;
   case SQL_NON_NULLABLE_COLUMNS:
+    // SQL_NON_NULLABLE_COLUMNS specifies whether the data source supports NOT NULL in columns.
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_NNC_NON_NULL, StringLengthPtr);
     break;
   case SQL_NULL_COLLATION:
@@ -1741,10 +1829,19 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                                      (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), "Y", SQL_NTS, &Dbc->Error);
     break;
   case SQL_OJ_CAPABILITIES:
+    // SQL_OJ_CAPABILITIES enumerates the types of outer joins supported by the driver and data source.
+    // SQL_OJ_LEFT = Left outer joins are supported.
+    // SQL_OJ_RIGHT = Right outer joins are supported.
+    // SQL_OJ_FULL = Full outer joins are supported.
+    // SQL_OJ_NESTED = Nested outer joins are supported.
+    // SQL_OJ_NOT_ORDERED = The column names in the ON clause of the outer join do not have to be in the same order as their respective table names in the OUTER JOIN clause.
+    // SQL_OJ_INNER = The inner table (the right table in a left outer join or the left table in a right outer join) can also be used in an inner join. This does not apply to full outer joins, which do not have an inner table.
+    // SQL_OJ_ALL_COMPARISON_OPS = The comparison operator in the ON clause can be any of the ODBC comparison operators. If this bit is not set, only the equals (=) comparison operator can be used in outer joins.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr,  SQL_OJ_LEFT | SQL_OJ_RIGHT | SQL_OJ_FULL | SQL_OJ_NESTED |
         SQL_OJ_NOT_ORDERED | SQL_OJ_INNER | SQL_OJ_ALL_COMPARISON_OPS, StringLengthPtr);
     break;
   case SQL_ORDER_BY_COLUMNS_IN_SELECT:
+    // SQL_ORDER_BY_COLUMNS_IN_SELECT is a character string: "Y" if the columns in the ORDER BY clause must be in the select list; otherwise, "N".
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
                                      "N", SQL_NTS, &Dbc->Error);
     break;
@@ -1767,10 +1864,12 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                                      "procedure", SQL_NTS, &Dbc->Error);
     break;
   case SQL_PROCEDURES:
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
+    // SQL_PROCEDURES is a character string: "Y" if the data source supports procedures and the driver supports the ODBC procedure invocation syntax; "N" otherwise.
+    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "Y", SQL_NTS, &Dbc->Error);
     break;
-  case SQL_QUOTED_IDENTIFIER_CASE:  
+  case SQL_QUOTED_IDENTIFIER_CASE:
+    // SQL_IC_SENSITIVE = Quoted identifiers in SQL are case sensitive and are stored in mixed case in the system catalog.
     MADB_SET_NUM_VAL(SQLUSMALLINT, InfoValuePtr, SQL_IC_SENSITIVE, StringLengthPtr);
     break;
   case SQL_ROW_UPDATES:
@@ -1789,6 +1888,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                                      "", SQL_NTS, &Dbc->Error);
     break;
   case SQL_SCHEMA_USAGE:
+    // SQL_SCHEMA_USAGE enumerates the statements in which schemas can be used:
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, 0, StringLengthPtr);
     break;
   case SQL_SCROLL_OPTIONS:
@@ -1829,12 +1929,16 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
   }
   case SQL_SPECIAL_CHARACTERS:
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, 
+    // SQL_SPECIAL_CHARACTERS A character string that contains all special characters
+    // (that is, all characters except a through z, A through Z, 0 through 9, and underscore)
+    // that can be used in an identifier name, such as a table name, column name, or index name, on the data source.
+    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr,
                                       BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "\"\\/!@#$%^&*()-=+<>|:;,.%?", SQL_NTS, &Dbc->Error);
     break;
   case SQL_SQL_CONFORMANCE:
-     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SC_SQL92_INTERMEDIATE, StringLengthPtr);
+    // SQL_SQL_CONFORMANCE indicates the level of SQL-92 supported by the driver
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SC_SQL92_INTERMEDIATE, StringLengthPtr);
     break;
   case SQL_SQL92_DATETIME_FUNCTIONS:
      MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SDF_CURRENT_DATE | SQL_SDF_CURRENT_TIME |
@@ -1971,8 +2075,9 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                      StringLengthPtr);
     break;
   case SQL_SUBQUERIES:
-    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SQ_COMPARISON | SQL_SQ_CORRELATED_SUBQUERIES | 
-                                                SQL_SQ_EXISTS | SQL_SQ_IN | SQL_SQ_QUANTIFIED,
+    // SQL_SUBQUERIES enumerates the predicates that support subqueries.
+    MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_SQ_COMPARISON | SQL_SQ_CORRELATED_SUBQUERIES |
+                                                SQL_SQ_EXISTS | SQL_SQ_IN,
                      StringLengthPtr);
     break;
   case SQL_SYSTEM_FUNCTIONS:
@@ -2022,6 +2127,9 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_TXN_READ_COMMITTED, StringLengthPtr);
     break;
   case SQL_UNION:
+    // SQL_UNION enumerates the support for the UNION clause
+    // SQL_U_UNION = The data source supports the UNION clause.
+    // SQL_U_UNION_ALL = The data source supports the ALL keyword in the UNION clause.
     MADB_SET_NUM_VAL(SQLUINTEGER, InfoValuePtr, SQL_U_UNION | SQL_U_UNION_ALL, StringLengthPtr);
     break;
   case SQL_USER_NAME:

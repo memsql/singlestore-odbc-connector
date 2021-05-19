@@ -18,6 +18,7 @@
 *************************************************************************************/
 
 #include "tap.h"
+#include <keywords/keywords.hpp>
 
 int CheckUSmallInt(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, SQLUSMALLINT CorrectValue) {
   SQLUSMALLINT small_int_value = 0;
@@ -97,7 +98,7 @@ int CheckUInteger(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, SQLUINTEGER CorrectValu
   return OK;
 }
 
-#define BUF_LEN 1024
+#define BUF_LEN 32767
 int CheckChar(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, char *CorrectValue) {
   SQLCHAR string_value[BUF_LEN];
   SQLWCHAR stringw_value[BUF_LEN];
@@ -397,12 +398,95 @@ ODBC_TEST(data_source_information)
   return OK;
 }
 
+ODBC_TEST(supported_sql)
+{
+  CHECK_U_INTEGER(Connection, SQL_AGGREGATE_FUNCTIONS, SQL_AF_AVG | SQL_AF_COUNT |
+                                                       SQL_AF_MAX | SQL_AF_MIN | SQL_AF_SUM |
+                                                       SQL_AF_ALL | SQL_AF_DISTINCT);
+  CHECK_U_INTEGER(Connection, SQL_ALTER_DOMAIN, 0);
+  CHECK_U_INTEGER(Connection, SQL_ALTER_TABLE, SQL_AT_ADD_COLUMN |
+                                                 SQL_AT_DROP_COLUMN |
+                                                 SQL_AT_ADD_CONSTRAINT |
+                                                 SQL_AT_ADD_COLUMN_SINGLE |
+                                                 SQL_AT_ADD_COLUMN_DEFAULT);
+  CHECK_U_SMALL_INT(Connection, SQL_CATALOG_LOCATION, SQL_CL_START);
+  CHECK_CHAR(Connection, SQL_CATALOG_NAME, "Y");
+  CHECK_CHAR(Connection, SQL_CATALOG_NAME_SEPARATOR, ".");
+  CHECK_U_INTEGER(Connection, SQL_CATALOG_USAGE, SQL_CU_DML_STATEMENTS |
+                                            SQL_CU_INDEX_DEFINITION |
+                                            SQL_CU_PROCEDURE_INVOCATION |
+                                            SQL_CU_PRIVILEGE_DEFINITION |
+                                            SQL_CU_TABLE_DEFINITION);
+  CHECK_CHAR(Connection, SQL_COLUMN_ALIAS, "Y");
+  CHECK_U_SMALL_INT(Connection, SQL_CORRELATION_NAME, SQL_CN_ANY);
+  CHECK_U_INTEGER(Connection, SQL_CREATE_ASSERTION, 0);
+  CHECK_U_INTEGER(Connection, SQL_CREATE_CHARACTER_SET, 0);
+  CHECK_U_INTEGER(Connection, SQL_CREATE_COLLATION, 0);
+  CHECK_U_INTEGER(Connection, SQL_CREATE_DOMAIN, 0);
+  CHECK_U_INTEGER(Connection, SQL_CREATE_SCHEMA, 0);
+  CHECK_U_INTEGER(Connection, SQL_CREATE_TABLE, SQL_CT_COLUMN_COLLATION |
+                                                  SQL_CT_COLUMN_DEFAULT |
+                                                  SQL_CT_COLUMN_CONSTRAINT |
+                                                  SQL_CT_COMMIT_DELETE |
+                                                  SQL_CT_CREATE_TABLE |
+                                                  SQL_CT_TABLE_CONSTRAINT |
+                                                  SQL_CT_GLOBAL_TEMPORARY |
+                                                  SQL_CT_LOCAL_TEMPORARY |
+                                                  SQL_CT_CONSTRAINT_NAME_DEFINITION);
+  CHECK_U_INTEGER(Connection, SQL_CREATE_VIEW, SQL_CV_CREATE_VIEW);
+  CHECK_U_INTEGER(Connection, SQL_CREATE_TRANSLATION, 0);
+  CHECK_U_INTEGER(Connection, SQL_DDL_INDEX, SQL_DI_CREATE_INDEX |
+                                                        SQL_DI_DROP_INDEX);
+  CHECK_U_INTEGER(Connection, SQL_DROP_ASSERTION, 0);
+  CHECK_U_INTEGER(Connection, SQL_DROP_CHARACTER_SET, 0);
+  CHECK_U_INTEGER(Connection, SQL_DROP_COLLATION, 0);
+  CHECK_U_INTEGER(Connection, SQL_DROP_DOMAIN, 0);
+  CHECK_U_INTEGER(Connection, SQL_DROP_SCHEMA, 0);
+  CHECK_U_INTEGER(Connection, SQL_DROP_TABLE, SQL_DT_DROP_TABLE);
+  CHECK_U_INTEGER(Connection, SQL_DROP_TRANSLATION, 0);
+  CHECK_U_INTEGER(Connection, SQL_DROP_VIEW, SQL_DV_DROP_VIEW);
+  CHECK_CHAR(Connection, SQL_EXPRESSIONS_IN_ORDERBY, "Y");
+  CHECK_U_SMALL_INT(Connection, SQL_GROUP_BY, SQL_GB_NO_RELATION);
+  CHECK_U_SMALL_INT(Connection, SQL_IDENTIFIER_CASE, SQL_IC_SENSITIVE);
+  CHECK_CHAR(Connection, SQL_IDENTIFIER_QUOTE_CHAR, "`");
+  CHECK_U_INTEGER(Connection, SQL_INDEX_KEYWORDS, SQL_IK_ALL);
+  CHECK_U_INTEGER(Connection, SQL_INSERT_STATEMENT, SQL_IS_INSERT_LITERALS |
+                                                        SQL_IS_INSERT_SEARCHED |
+                                                        SQL_IS_SELECT_INTO);
+  CHECK_CHAR(Connection, SQL_INTEGRITY, "N");
+  CHECK_CHAR(Connection, SQL_KEYWORDS, SINGLESTORE_KEYWORDS);
+  CHECK_CHAR(Connection, SQL_LIKE_ESCAPE_CLAUSE, "Y");
+  CHECK_U_SMALL_INT(Connection, SQL_NON_NULLABLE_COLUMNS, SQL_NNC_NON_NULL);
+  CHECK_U_INTEGER(Connection, SQL_OJ_CAPABILITIES, SQL_OJ_LEFT |
+                                                     SQL_OJ_RIGHT |
+                                                     SQL_OJ_FULL |
+                                                     SQL_OJ_NESTED |
+                                                     SQL_OJ_NOT_ORDERED |
+                                                     SQL_OJ_INNER |
+                                                     SQL_OJ_ALL_COMPARISON_OPS);
+  CHECK_CHAR(Connection, SQL_ORDER_BY_COLUMNS_IN_SELECT, "N");
+  CHECK_CHAR(Connection, SQL_OUTER_JOINS, "Y");
+  CHECK_CHAR(Connection, SQL_PROCEDURES, "Y");
+  CHECK_U_SMALL_INT(Connection, SQL_QUOTED_IDENTIFIER_CASE, SQL_IC_SENSITIVE);
+  CHECK_U_INTEGER(Connection, SQL_SCHEMA_USAGE, 0);
+  CHECK_CHAR(Connection, SQL_SPECIAL_CHARACTERS, "\"\\/!@#$%^&*()-=+<>|:;,.%?");
+  CHECK_U_INTEGER(Connection, SQL_SQL_CONFORMANCE, SQL_SC_SQL92_INTERMEDIATE);
+  CHECK_U_INTEGER(Connection, SQL_SUBQUERIES, SQL_SQ_COMPARISON |
+                                                SQL_SQ_CORRELATED_SUBQUERIES |
+                                                SQL_SQ_EXISTS |
+                                                SQL_SQ_IN);
+  CHECK_U_INTEGER(Connection, SQL_UNION, SQL_U_UNION | SQL_U_UNION_ALL);
+
+  return OK;
+}
+
 MA_ODBC_TESTS my_tests[]=
 {
   {driver_information, "driver_information", NORMAL, ALL_DRIVERS},
   {dbms_product_information, "dbms_product_information", NORMAL, ALL_DRIVERS},
-  { data_source_information, "data_source_information", NORMAL, ALL_DRIVERS},
-  { NULL, NULL, NORMAL, ALL_DRIVERS}
+  {data_source_information, "data_source_information", NORMAL, ALL_DRIVERS},
+  {supported_sql, "supported_sql", NORMAL, ALL_DRIVERS},
+  {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
 int main(int argc, char **argv)
