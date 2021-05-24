@@ -132,6 +132,8 @@ SQLINTEGER SqlwcsOctetLen(const SQLWCHAR *str, SQLINTEGER *CharLen)
   {
     while (inChars > 0 || (inChars < 0 && *str))
     {
+      printf("DEBUGING OUTPUT: %d\n", DmUnicodeCs->mb_charlen(*str));
+      fflush(stdout);
       result+= DmUnicodeCs->mb_charlen(*str);
       --inChars;
       str+= DmUnicodeCs->mb_charlen(*str)/sizeof(SQLWCHAR);
@@ -209,6 +211,8 @@ char *MADB_ConvertFromWChar(const SQLWCHAR *Ptr, SQLINTEGER PtrLength, SQLULEN *
   }
   else
   {
+    printf("DEBUGING OUTPUT: %d\n", PtrLength);
+    fflush(stdout);
     /* PtrLength is in characters. MADB_ConvertString(iconv) needs bytes */
     PtrOctetLen= SqlwcsOctetLen(Ptr, &PtrLength);
     AscLen= PtrLength*cc->cs_info->char_maxlen;
