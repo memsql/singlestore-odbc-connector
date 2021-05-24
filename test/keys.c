@@ -139,8 +139,8 @@ void t_strstr()
 
 MA_ODBC_TESTS my_tests[]=
 {
-  {my_no_keys, "my_no_keys", ALL_DRIVERS},
-  {foreign_keys_error, "foreign_keys_error", ALL_DRIVERS},
+  {my_no_keys, "my_no_keys", NORMAL, ALL_DRIVERS},
+  {foreign_keys_error, "foreign_keys_error", NORMAL, ALL_DRIVERS},
   {NULL, NULL}
 };
 

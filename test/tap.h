@@ -150,7 +150,7 @@ char          ma_strport[12]= "PORT=5506";
 static int Travis= 0, TravisOnOsx= 0;
 
 /* To use in tests for conversion of strings to (sql)wchar strings */
-SQLWCHAR  sqlwchar_buff[8192], sqlwchar_empty[]= {0};
+SQLWCHAR  sqlwchar_buff[1048576], sqlwchar_empty[]= {0};
 SQLWCHAR *buff_pos= sqlwchar_buff;
 
 /* Copied from C/C(+ added utf32le). Otherwise we would need to link libmariadb.
@@ -1103,7 +1103,7 @@ int connect_and_run_tests(MA_ODBC_TESTS *tests, BOOL ProvideWConnection, BOOL No
         }
         else {
             int expected_to_fail = tests->test_type & (NoSSPS ? CSPS_FAIL | CSPS_TO_FIX : SSPS_FAIL | SSPS_TO_FIX);
-            rc = expected_to_fail ? expected_to_fail : tests->my_test();
+            rc = expected_to_fail ? FAIL : tests->my_test();
         }
         comment[0] = '\0';
         if (rc!= SKIP && !test_expected_to_succeed(tests->test_type, NoSsps))

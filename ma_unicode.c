@@ -24,24 +24,6 @@
 
 extern Client_Charset utf8;
 
-/* {{{ SQLBrowseConnectW */
-SQLRETURN SQL_API SQLBrowseConnectW(SQLHDBC ConnectionHandle,
-                                    SQLWCHAR *InConnectionString,
-                                    SQLSMALLINT StringLength1,
-                                    SQLWCHAR *OutConnectionString,
-                                    SQLSMALLINT BufferLength,
-                                    SQLSMALLINT *StringLength2Ptr)
-{
-    MADB_Dbc *Dbc= (MADB_Dbc *)ConnectionHandle;
-    SQLRETURN ret;
-    MDBUG_C_ENTER(Dbc, SQLBrowseConnectW);
-    MADB_SetError(&Dbc->Error, MADB_ERR_IM001, NULL, 0);
-    ret= Dbc->Error.ReturnValue;
-
-    MDBUG_C_RETURN(Dbc, ret, &Dbc->Error);
-}
-/* }}} */
-
 /* {{{ SQLColAttributeW */
 SQLRETURN SQL_API SQLColAttributeW (SQLHSTMT StatementHandle,
                                     SQLUSMALLINT ColumnNumber,
@@ -396,31 +378,6 @@ SQLRETURN SQL_API SQLExecDirectW(SQLHSTMT StatementHandle,
     MADB_FREE(CpStmt);
 
     MDBUG_C_RETURN(Stmt->Connection, ret, &Stmt->Error);
-}
-/* }}} */
-
-/* {{{ SQLForeignKeysW */
-SQLRETURN SQL_API SQLForeignKeysW(SQLHSTMT StatementHandle,
-                                  SQLWCHAR *PKCatalogName,
-                                  SQLSMALLINT NameLength1,
-                                  SQLWCHAR *PKSchemaName,
-                                  SQLSMALLINT NameLength2,
-                                  SQLWCHAR *PKTableName,
-                                  SQLSMALLINT NameLength3,
-                                  SQLWCHAR *FKCatalogName,
-                                  SQLSMALLINT NameLength4,
-                                  SQLWCHAR *FKSchemaName,
-                                  SQLSMALLINT NameLength5,
-                                  SQLWCHAR *FKTableName,
-                                  SQLSMALLINT NameLength6)
-{
-    MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
-
-    if(!Stmt)
-        return SQL_INVALID_HANDLE;
-    MADB_CLEAR_ERROR(&Stmt->Error);
-
-    return MADB_SetError(&Stmt->Error,  MADB_ERR_IM001, "Foreign keys are not supported", 0);
 }
 /* }}} */
 

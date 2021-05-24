@@ -98,11 +98,12 @@ int CheckUInteger(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, SQLUINTEGER CorrectValu
   return OK;
 }
 
-#define BUF_LEN 32767
+#define BUF_LEN 16382
 int CheckChar(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, char *CorrectValue) {
   SQLCHAR string_value[BUF_LEN];
   SQLWCHAR stringw_value[BUF_LEN];
   SQLSMALLINT length = 0;
+  SQLSMALLINT cmpLength;
 
   CHECK_DBC_RC(Hdbc, SQLGetInfo(Hdbc, InfoType, string_value, BUF_LEN, &length));
   is_num(length, strlen(CorrectValue));
@@ -110,7 +111,17 @@ int CheckChar(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, char *CorrectValue) {
 
   CHECK_DBC_RC(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, BUF_LEN, &length));
   is_num(length, strlen(CorrectValue)*sizeof(SQLWCHAR));
-  IS_STR(string_value, CorrectValue, length/sizeof(SQLWCHAR) + 1);
+  cmpLength = strlen(CorrectValue);
+  // SQL_KEYWORDS length is bigger then 17k
+  // We can't bigger BUF_LEN, because when Unicode driver is used,
+  // Driver Manager limits BufferLength to 16382
+  // If we pass bigger value, it overflows and becomes negative
+  // So we will check only prefix if the buffer is too small
+  if (BUF_LEN/sizeof(SQLWCHAR)-1 < cmpLength)
+  {
+    cmpLength = BUF_LEN/sizeof(SQLWCHAR)-1;
+  }
+  IS_WSTR(stringw_value, CW(CorrectValue), cmpLength);
 
   return OK;
 }

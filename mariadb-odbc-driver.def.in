@@ -7,7 +7,6 @@ SQLAllocHandle
 SQLAllocStmt
 SQLBindCol
 SQLBindParameter
-SQLBrowseConnect@WIDECHARCALL@
 SQLBulkOperations
 SQLCancel
 SQLCloseCursor
@@ -28,7 +27,6 @@ SQLExecute
 SQLExtendedFetch
 SQLFetch
 SQLFetchScroll
-SQLForeignKeys@WIDECHARCALL@
 SQLFreeConnect
 SQLFreeEnv
 SQLFreeHandle

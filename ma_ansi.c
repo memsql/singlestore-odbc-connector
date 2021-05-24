@@ -23,25 +23,6 @@
 #include <ma_parse.h>
 #include <odbc_3_api.h>
 
-/* {{{ SQLBrowseConnect */
-// TODO PLAT-5515
-SQLRETURN SQL_API SQLBrowseConnect(SQLHDBC ConnectionHandle,
-                                   SQLCHAR *InConnectionString,
-                                   SQLSMALLINT StringLength1,
-                                   SQLCHAR *OutConnectionString,
-                                   SQLSMALLINT BufferLength,
-                                   SQLSMALLINT *StringLength2Ptr)
-{
-    MADB_Dbc *Dbc= (MADB_Dbc *)ConnectionHandle;
-    SQLRETURN ret;
-    MDBUG_C_ENTER(Dbc, "SQLBrowseConnect");
-    MADB_SetError(&Dbc->Error, MADB_ERR_IM001, NULL, 0);
-    ret= Dbc->Error.ReturnValue;
-
-    MDBUG_C_RETURN(Dbc, ret, &Dbc->Error);
-}
-/* }}} */
-
 /* {{{ SQLColAttribute */
 SQLRETURN SQL_API SQLColAttribute (SQLHSTMT StatementHandle,
                                    SQLUSMALLINT ColumnNumber,
@@ -284,31 +265,6 @@ SQLRETURN SQL_API SQLExecDirect(SQLHSTMT StatementHandle,
         ret= Stmt->Methods->ExecDirect(Stmt, (char *)StatementText, TextLength);
 
     MDBUG_C_RETURN(Stmt->Connection, ret, &Stmt->Error);
-}
-/* }}} */
-
-/* {{{ SQLForeignKeys */
-SQLRETURN SQL_API SQLForeignKeys(SQLHSTMT StatementHandle,
-                                 SQLCHAR *PKCatalogName,
-                                 SQLSMALLINT NameLength1,
-                                 SQLCHAR *PKSchemaName,
-                                 SQLSMALLINT NameLength2,
-                                 SQLCHAR *PKTableName,
-                                 SQLSMALLINT NameLength3,
-                                 SQLCHAR *FKCatalogName,
-                                 SQLSMALLINT NameLength4,
-                                 SQLCHAR *FKSchemaName,
-                                 SQLSMALLINT NameLength5,
-                                 SQLCHAR *FKTableName,
-                                 SQLSMALLINT NameLength6)
-{
-    MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
-
-    if(!Stmt)
-        return SQL_INVALID_HANDLE;
-    MADB_CLEAR_ERROR(&Stmt->Error);
-
-    return MADB_SetError(&Stmt->Error,  MADB_ERR_IM001, "Foreign keys are not supported", 0);
 }
 /* }}} */
 
@@ -693,6 +649,7 @@ SQLRETURN SQL_API SQLSetDescRec(SQLHDESC DescriptorHandle,
 }
 /* }}} */
 
+/* {{{ SQLSetStmtAttr */
 SQLRETURN SQL_API SQLSetStmtAttr(SQLHSTMT StatementHandle,
                                  SQLINTEGER Attribute,
                                  SQLPOINTER ValuePtr,

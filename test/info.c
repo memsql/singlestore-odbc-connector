@@ -705,9 +705,9 @@ ODBC_TEST(odbc123odbc277)
   CHECK_DBC_RC(Connection, SQLGetInfo(Connection, SQL_CATALOG_LOCATION, &Info, 0, NULL));
   is_num(Info, SQL_CL_START);
   CHECK_DBC_RC(Connection, SQLGetInfo(Connection, SQL_GROUP_BY, &Info, 0, NULL));
-  is_num(Info, SQL_GB_GROUP_BY_CONTAINS_SELECT);
+  is_num(Info, SQL_GB_NO_RELATION);
   CHECK_DBC_RC(Connection, SQLGetInfo(Connection, SQL_IDENTIFIER_CASE, &Info, 0, NULL));
-  is_num(Info, SQL_IC_MIXED);
+  is_num(Info, SQL_IC_SENSITIVE);
 
   return OK;
 }
