@@ -1442,7 +1442,7 @@ SQLRETURN MADB_InsertParam(MADB_Stmt* Stmt, MADB_DescRecord* ApdRecord, MADB_Des
                 // This is not a DAE parameter, so we'll need to calculate the length and convert to UTF8.
                 Length = MADB_CalculateLength(Stmt, OctetLengthPtr, ApdRecord, DataPtr);
                 SQLULEN convertedLen;
-                char *converted = MADB_ConvertFromWChar((SQLWCHAR *) DataPtr, Length, &convertedLen,
+                char *converted = MADB_ConvertFromWChar((SQLWCHAR *) DataPtr, Length/sizeof(SQLWCHAR), &convertedLen,
                                                         &Stmt->Connection->Charset, &ret);
                 if (!SQL_SUCCEEDED(ret))
                 {

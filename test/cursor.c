@@ -818,9 +818,9 @@ ODBC_TEST(t_cursor_name)
   SQLCHAR curName[512];
   char nameToSet[512];
   SQLSMALLINT nLen;
-  SQLINTEGER maxCursorNameLength;
+  SQLUSMALLINT maxCursorNameLength;
   SQLGetInfo(Connection, SQL_MAX_CURSOR_NAME_LEN, &maxCursorNameLength, 0, NULL);
-
+  
   CHECK_DBC_RC(Connection, SQLAllocHandle(SQL_HANDLE_STMT,Connection,&hstmt1));
   CHECK_DBC_RC(Connection, SQLAllocHandle(SQL_HANDLE_STMT,Connection,&hstmt2));
 
@@ -960,7 +960,7 @@ ODBC_TEST(t_cursor_name_unicode)
   SQLWCHAR curName[512];
   char nameToSet[512];
   SQLSMALLINT nLen;
-  SQLINTEGER maxCursorNameLength;
+  SQLUSMALLINT maxCursorNameLength;
   SQLGetInfo(Connection, SQL_MAX_CURSOR_NAME_LEN, &maxCursorNameLength, 0, NULL);
 
   CHECK_DBC_RC(Connection, SQLAllocHandle(SQL_HANDLE_STMT,Connection,&hstmt1));
@@ -2438,14 +2438,14 @@ ODBC_TEST(my_setpos_upd_pk_order1)
 
 ODBC_TEST(tmy_cursor1)
 {
-  SQLCHAR getCurName[20];
+  SQLCHAR getCurName[256];
   SQLSMALLINT getLen;
 
   CHECK_STMT_RC(Stmt, SQLSetCursorName(Stmt, (SQLCHAR *)"MYSQL", 5));
   CHECK_STMT_RC(Stmt, SQLGetCursorName(Stmt, getCurName, 20, &getLen));
   IS_STR(getCurName, "MYSQL", 5);
 
-  CHECK_STMT_RC(Stmt, SQLSetCursorName(Stmt, (SQLCHAR *)"MYSQL", 10));
+  CHECK_STMT_RC(Stmt, SQLSetCursorName(Stmt, (SQLCHAR *)"MYSQL", SQL_NTS));
   CHECK_STMT_RC(Stmt, SQLGetCursorName(Stmt, getCurName, 20, &getLen));
   IS_STR(getCurName, "MYSQL", 5);
 
@@ -3722,7 +3722,6 @@ MA_ODBC_TESTS my_tests[]=
   {t_pos_column_ignore, "t_pos_column_ignore",     TO_FIX, ALL_DRIVERS}, // TODO(PLAT-5080): positioned updates are not yet supported.
   {t_pos_datetime_delete, "t_pos_datetime_delete",     NORMAL, ALL_DRIVERS},
   {t_pos_datetime_delete1, "t_pos_datetime_delete1",     NORMAL, ALL_DRIVERS},
-
   {t_default_cursor, "t_default_cursor",     NORMAL, ALL_DRIVERS},
   {t_default_cursor_unicode, "t_default_cursor_unicode",     NORMAL, UNICODE_DRIVER},
   {t_cursor_name, "t_cursor_name",     NORMAL, ALL_DRIVERS},

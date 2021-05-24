@@ -141,6 +141,10 @@ unsigned int GetMultiStatements(MADB_Stmt *Stmt, BOOL ExecDirect)
 
   if (MaxParams)
   {
+    if (Stmt->params)
+    {
+      MADB_FREE(Stmt->params);
+    }
     Stmt->params= (MYSQL_BIND *)MADB_CALLOC(sizeof(MYSQL_BIND) * MaxParams);
   }
 

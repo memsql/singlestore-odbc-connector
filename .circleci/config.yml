@@ -306,7 +306,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC 0.8.1-beta Unicode Driver
+                - SingleStore ODBC 0.8.2-beta Unicode Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
               with_sanitizer:
@@ -411,7 +411,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC 0.8.1-beta Unicode Driver
+                - SingleStore ODBC 0.8.2-beta Unicode Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
               with_sanitizer:
