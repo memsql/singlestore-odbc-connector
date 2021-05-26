@@ -3,24 +3,22 @@
 @TEST_DSN2@ = @DRIVER_LIB_DESCRIPTION2@ Test
 
 [@TEST_DSN1@]
-Driver      = @TEST_DRIVER1@
-DESCRIPTION = @DRIVER_LIB_DESCRIPTION1@
-SERVER      = @TEST_SERVER@
-PORT        = @TEST_PORT@
-DATABASE    = @TEST_SCHEMA@
-UID         = @TEST_UID@
-PASSWORD    = @TEST_PASSWORD@
+Driver      = @DRIVER_LIB_LOCATION1@
+Server      = @TEST_SERVER@
+Port        = @TEST_PORT@
+Database    = @TEST_SCHEMA@
+User         = @TEST_UID@
+Password    = @TEST_PASSWORD@
 # To turn on connectors log(slows execution significantly)
 #OPTIONS     =4
 
 [@TEST_DSN2@]
-Driver      = @TEST_DRIVER2@
-DESCRIPTION = @DRIVER_LIB_DESCRIPTION2@
-SERVER      = @TEST_SERVER@
-PORT        = @TEST_PORT@
-DATABASE    = @TEST_SCHEMA@
-UID         = @TEST_UID@
-PASSWORD    = @TEST_PASSWORD@
+Driver      = @DRIVER_LIB_LOCATION2@
+Server      = @TEST_SERVER@
+Port        = @TEST_PORT@
+Database    = @TEST_SCHEMA@
+User         = @TEST_UID@
+Password    = @TEST_PASSWORD@
 # To turn on connectors log(slows execution significantly)
 #OPTIONS     =4
 
