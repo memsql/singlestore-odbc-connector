@@ -960,7 +960,7 @@ ODBC_TEST(t_cursor_name_unicode)
   SQLWCHAR curName[512];
   char nameToSet[512];
   SQLSMALLINT nLen;
-  SQLINTEGER maxCursorNameLength;
+  SQLUSMALLINT maxCursorNameLength;
   SQLGetInfo(Connection, SQL_MAX_CURSOR_NAME_LEN, &maxCursorNameLength, 0, NULL);
 
   CHECK_DBC_RC(Connection, SQLAllocHandle(SQL_HANDLE_STMT,Connection,&hstmt1));
