@@ -2438,14 +2438,14 @@ ODBC_TEST(my_setpos_upd_pk_order1)
 
 ODBC_TEST(tmy_cursor1)
 {
-  SQLCHAR getCurName[20];
+  SQLCHAR getCurName[256];
   SQLSMALLINT getLen;
 
   CHECK_STMT_RC(Stmt, SQLSetCursorName(Stmt, (SQLCHAR *)"MYSQL", 5));
   CHECK_STMT_RC(Stmt, SQLGetCursorName(Stmt, getCurName, 20, &getLen));
   IS_STR(getCurName, "MYSQL", 5);
 
-  CHECK_STMT_RC(Stmt, SQLSetCursorName(Stmt, (SQLCHAR *)"MYSQL", 10));
+  CHECK_STMT_RC(Stmt, SQLSetCursorName(Stmt, (SQLCHAR *)"MYSQL", SQL_NTS));
   CHECK_STMT_RC(Stmt, SQLGetCursorName(Stmt, getCurName, 20, &getLen));
   IS_STR(getCurName, "MYSQL", 5);
 
