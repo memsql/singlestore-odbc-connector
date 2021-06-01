@@ -1368,7 +1368,7 @@ SQLWCHAR *dup_char_as_sqlwchar(SQLCHAR *from)
 
 
 /* It can be utf8 or something, but the function does not recode to utf16 - simply copies each byte to SQLWCHAR */
-SQLWCHAR* latin_as_sqlwchar(char *str, SQLWCHAR *buffer)
+SQLWCHAR* latin_as_sqlwchar(const char *str, SQLWCHAR *buffer)
 {
   SQLWCHAR *res= buffer;
 
@@ -1434,7 +1434,7 @@ SQLWCHAR * str2sqlwchar_on_gbuff(const char *str, size_t len, MARIADB_CHARSET_IN
 #define CW(str) str2sqlwchar_on_gbuff((const char*)(str), strlen((const char*)(str))+1, utf8, DmUnicode)
 
 /* @n[in] - number of characters to compare. Negative means treating of strings as null-terminated */
-int sqlwcharcmp(SQLWCHAR *s1, SQLWCHAR *s2, int n)
+int sqlwcharcmp(const SQLWCHAR *s1, const SQLWCHAR *s2, int n)
 {
   if(s1 == NULL || s2 == NULL)
   {
