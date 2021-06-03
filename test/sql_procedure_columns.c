@@ -343,13 +343,11 @@ ODBC_TEST(t_procedurecolumns2A) {
 
 
 #define NUM_PROC_FIELDS 8
-#define ONE_MASK 0x07
-#define TWO_MASK 0x18
-#define THREE_MASK 0xE0
-#define FULL_MASK (ONE_MASK | TWO_MASK | THREE_MASK)
+#define ONE_MASK 0x07		/* all parameters for the first procedure in the expected results table */
+#define TWO_MASK 0x18		/* all parameters for the second procedure in the expected results table */
+#define THREE_MASK 0xE0		/* all parameters for the third procedure in the expected results table */
+#define FULL_MASK (ONE_MASK | TWO_MASK | THREE_MASK)	/* all procedures in the table */
 
-
-#define LENGTHOF(arr) (sizeof(arr) / sizeof(arr[0]))
 
 typedef uint8_t Mask;
 
@@ -374,7 +372,7 @@ static const ProcData c_proc_expected[NUM_PROC_FIELDS] = {
     {"odbc_test", "test_get_name", "test_input_width", SQL_PARAM_INPUT},
     {"odbc_test", "test_get_name", "RESULT", SQL_RETURN_VALUE},
     {"odbc_test", "TEST_GET_PRECISION_AND_ROUND_UP", "TEST_IN", SQL_PARAM_INPUT},
-    {"odbc_test", "TEST_GET_PRECISION_AND_ROUND_UP", "TEST_OUT", SQL_PARAM_OUTPUT},
+    {"odbc_test", "TEST_GET_PRECISION_AND_ROUND_UP", "TEST_OUT", SQL_PARAM_INPUT},
     {"odbc_test", "test set and get precision", "test precision", SQL_PARAM_INPUT},
     {"odbc_test", "test set and get precision", "precision result", SQL_RESULT_COL},
     {"odbc_test", "test set and get precision", "test precision", SQL_RESULT_COL}
@@ -387,12 +385,12 @@ static const QueryDesc c_queries_with_id_off[] = {
     // Ordinary argument: bug PLAT-5553
     {"odbc_test", NULL, NULL, FULL_MASK},
     {"ODBC_TEST", NULL, NULL, FULL_MASK},
-    //{"odbc_test ", NULL, NULL, 0},
+    //{"odbc_test ", NULL, NULL, 0},				TODO: PLAT-5553
     {"`odbc_test`", NULL, NULL, 0},
     // Pattern value arguments - full search: bug PLAT-5551
     {"", NULL, NULL, 0},
-    //{"odbc_test", "", NULL, 0},
-    //{NULL, "", NULL, 0},
+    //{"odbc_test", "", NULL, 0},					TODO: PLAT-5551
+    //{NULL, "", NULL, 0},							TODO: PLAT-5551
     {NULL, NULL, "", 0},
     {"%_%", NULL, NULL, 0},
     {NULL, "%_%", "TEST_IN", 0x08},
@@ -441,35 +439,74 @@ static const QueryDesc c_queries_with_id_on[] = {
     {NULL, "test set and get precision", "test precision", 0x20},
     // Remove trailing blanks in unquoted: bugs PLAT-5550, PLAT-5553
     {"odbc_test ", NULL, NULL, FULL_MASK},
-    //{"odbc_test \t", NULL, NULL, FULL_MASK},
-    //{"odbc_test \r", NULL, NULL, FULL_MASK},
-    //{"odbc_test \n", NULL, NULL, FULL_MASK},
-    //{"odbc_test \t\r\n\t ", NULL, NULL, FULL_MASK},
+    //{"odbc_test \t", NULL, NULL, FULL_MASK},													TODO: PLAT-5550
+    //{"odbc_test \r", NULL, NULL, FULL_MASK},													TODO: PLAT-5550
+    //{"odbc_test \n", NULL, NULL, FULL_MASK},													TODO: PLAT-5550
+    //{"odbc_test \t\r\n\t ", NULL, NULL, FULL_MASK},											TODO: PLAT-5550
     {" odbc_test \t", NULL, NULL, 0},
     {" odbc_test", NULL, NULL, 0},
     {" odbc_test ", NULL, NULL, 0},
-    //{NULL, "test_get_name ", NULL, ONE_MASK},
+    //{NULL, "test_get_name ", NULL, ONE_MASK},													TODO: PLAT-5550, PLAT-5553
     {NULL, " test_get_name", NULL, 0},
-    //{NULL, NULL, "test_input_number  " , 0x01},
+    //{NULL, NULL, "test_input_number  " , 0x01},												TODO: PLAT-5550, PLAT-5553
     {NULL, NULL, " test_input_number", 0},
-    //{"odbc_test \t\r\n\t ", "test_get_name \t\r\n\t ", "test_input_number \t\r\n\t ", 0x01},
+    //{"odbc_test \t\r\n\t ", "test_get_name \t\r\n\t ", "test_input_number \t\r\n\t ", 0x01},	TODO: PLAT-5550, PLAT-5553
     // Remove leading and trailing blanks in quoted - not tested because ` is not escapable
     {NULL, "`test set and get precision`", "`test precision`", 0},
     {" `odbc_test` ", NULL, NULL, 0},
     {"` odbc_test `", NULL, NULL, 0},
     // Escape sequences: bugs PLAT-5551, PLAT-5553
     {"", NULL, NULL, 0},
-    //{"odbc_test", "", NULL, 0},
-    //{NULL, "", NULL, 0},
+    //{"odbc_test", "", NULL, 0},																TODO: PLAT-5551
+    //{NULL, "", NULL, 0},																		TODO: PLAT-5551
     {NULL, NULL, "", 0},
     {"%_%", NULL, NULL, 0},
-    //{NULL, "%_%", "TEST_IN", 0},
-    //{NULL, NULL, "%_%", 0},
+    //{NULL, "%_%", "TEST_IN", 0},																TODO: PLAT-5553
+    //{NULL, NULL, "%_%", 0},																	TODO: PLAT-5553
     {"odbc_test", "test_get_name", "", 0},
     {"%e%", NULL, NULL, 0},
-    //{NULL, "%e%", NULL, 0},
-    //{NULL, NULL, "%e%", 0},
+    //{NULL, "%e%", NULL, 0},																	TODO: PLAT-5553
+    //{NULL, NULL, "%e%", 0},																	TODO: PLAT-5553
 };
+
+static const ProcData c_proc_expected_non_ascii[NUM_PROC_FIELDS] = {
+    {"odbc_test", "узнать_имя_васи", "вася_пупкин", SQL_PARAM_INPUT},
+    {"odbc_test", "узнать_имя_васи", "петя_васин", SQL_PARAM_INPUT},
+    {"odbc_test", "узнать_имя_васи", "RESULT", SQL_RETURN_VALUE},
+    {"odbc_test", "НАЙТИ_ПЕТЮ_И_ОКРУГЛИТЬ", "ПЕТЯ", SQL_PARAM_INPUT},
+    {"odbc_test", "НАЙТИ_ПЕТЮ_И_ОКРУГЛИТЬ", "НЕ_ПЕТЯ", SQL_PARAM_INPUT},
+    {"odbc_test", "взять и положить кого-то куда-то", "кто-то там", SQL_PARAM_INPUT},
+    {"odbc_test", "взять и положить кого-то куда-то", "не там", SQL_RESULT_COL},
+    {"odbc_test", "взять и положить кого-то куда-то", "кто-то там", SQL_RESULT_COL}
+};
+
+static const QueryDesc c_queries_non_ascii_with_id_off[] = {
+    // Get all fields
+    {NULL, NULL, NULL, FULL_MASK},
+    // Case insensitive
+    {NULL, "НАЙТИ_ПЕТЮ_И_ОКРУГЛИТЬ", NULL, TWO_MASK},
+    {NULL, "найти_петю_и_округлить", NULL, TWO_MASK},
+    {NULL, "найти\\_петю\\_и\\_округлить", NULL, TWO_MASK},
+    {NULL, NULL, "ВАСЯ\\_ПУПКИН", 0x01},
+    // Search patterns
+    {NULL, "%", NULL, FULL_MASK},
+    {NULL, NULL, "%", FULL_MASK},
+    {"odbc_test", "% и %", NULL, THREE_MASK},
+    {"odbc_test", NULL, "%-то %", 0x20},
+    {"odbc_test", "%\\____\\_%", NULL, ONE_MASK},
+    {"odbc_test", NULL, "___ПЕТЯ", 0x10},
+};
+
+static const QueryDesc c_queries_non_ascii_with_id_on[] = {
+    // Get all fields
+    {NULL, NULL, NULL, FULL_MASK},
+    // Case insensitive
+    {NULL, "найти_петю_и_округлить", NULL, TWO_MASK},
+    {NULL, NULL, "ВАСЯ_ПУПКИН", 0x01},
+    // Remove trailing blanks
+    //{"odbc_test  ", "узнать_имя_васи  ", "петя_васин  ", 0x02},		TODO: PLAT-5550, PLAT-5553
+};
+
 
 static int query_and_check_N(const char* const catalog, const char* const procedure, const char* const column, const Mask mask) {
     typedef struct {
@@ -513,11 +550,11 @@ static int query_and_check_N(const char* const catalog, const char* const proced
 
     for(i = 0; i < numrows; ++i) {
         for(j = 0; j < NUM_PROC_FIELDS; ++j) {
-            FAIL_IF_NE_INT(result[i].column_type, SQL_PARAM_INPUT, "Driver turns all params into SQL_PARAM_INPUT");
             if(remaining & (1 << j)) {
                 if(!strcmp(result[i].catalog, c_proc_expected[j].catalog)
                     && !strcmp(result[i].procedure, c_proc_expected[j].procedure)
-                    && !strcmp(result[i].column_name, c_proc_expected[j].column_name)) {
+                    && !strcmp(result[i].column_name, c_proc_expected[j].column_name)
+					&& result[i].column_type == c_proc_expected[j].column_type) {
                     is_num(strlen(c_proc_expected[j].catalog), result[i].catLen);
                     is_num(strlen(c_proc_expected[j].procedure), result[i].procLen);
                     is_num(strlen(c_proc_expected[j].column_name), result[i].colLen);
@@ -528,13 +565,14 @@ static int query_and_check_N(const char* const catalog, const char* const proced
         }
         printf("QUERY %s %s %s %02X\n", catalog, procedure, column, mask);
         printf("RESULT%d %s %s %s %d\n", i, result[i].catalog, result[i].procedure, result[i].column_name, result[i].column_type);
-        FAIL_IF(1, "Unexpected SQLProcedureColumns result ^^");
+        FAIL_IF(1, "Unexpected SQLProcedureColumns result ^^\n");
 query_and_check_n_found:
         continue;
     }
     IS(!remaining);
 
     CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+    CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
     return OK;
 }
 
@@ -596,11 +634,11 @@ static int query_and_check_W(const char* const catalog, const char* const proced
 
     for(i = 0; i < numrows; ++i) {
         for(j = 0; j < NUM_PROC_FIELDS; ++j) {
-            FAIL_IF_NE_INT(result[i].column_type, SQL_PARAM_INPUT, "Driver turns all params into SQL_PARAM_INPUT");
             if(remaining & (1 << j)) {
                 if(!sqlwcharcmp(result[i].catalog, CW(c_proc_expected[j].catalog), -1)
                    && !sqlwcharcmp(result[i].procedure, CW(c_proc_expected[j].procedure), -1)
-                   && !sqlwcharcmp(result[i].column_name, CW(c_proc_expected[j].column_name), -1)) {
+                   && !sqlwcharcmp(result[i].column_name, CW(c_proc_expected[j].column_name), -1)
+				   && result[i].column_type == c_proc_expected[j].column_type) {
                     is_num(strlen(c_proc_expected[j].catalog) * sizeof(SQLWCHAR), result[i].catLen);
                     is_num(strlen(c_proc_expected[j].procedure) * sizeof(SQLWCHAR), result[i].procLen);
                     is_num(strlen(c_proc_expected[j].column_name) * sizeof(SQLWCHAR), result[i].colLen);
@@ -617,13 +655,14 @@ static int query_and_check_W(const char* const catalog, const char* const proced
         printf(" ");
         printHex((char*)result[i].column_name, result[i].colLen);
         printf("\n");
-        FAIL_IF(1, "Unexpected SQLProcedureColumns (W) result ^^");
+        FAIL_IF(1, "Unexpected SQLProcedureColumns (W) result ^^\n");
 query_and_check_w_found:
         continue;
     }
     IS(!remaining);
 
     CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+    CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
     return OK;
 }
 
@@ -683,11 +722,11 @@ static int query_and_check_WN(const char* const catalog, const char* const proce
 
     for(i = 0; i < numrows; ++i) {
         for(j = 0; j < NUM_PROC_FIELDS; ++j) {
-            FAIL_IF_NE_INT(result[i].column_type, SQL_PARAM_INPUT, "Driver turns all params into SQL_PARAM_INPUT");
             if(remaining & (1 << j)) {
                 if(!strcmp(result[i].catalog, c_proc_expected[j].catalog)
                    && !sqlwcharcmp(result[i].procedure, CW(c_proc_expected[j].procedure), -1)
-                   && !strcmp(result[i].column_name, c_proc_expected[j].column_name)) {
+                   && !strcmp(result[i].column_name, c_proc_expected[j].column_name)
+				   && result[i].column_type == c_proc_expected[j].column_type) {
                     is_num(strlen(c_proc_expected[j].catalog), result[i].catLen);
                     remaining &= ~(1 << j);
                     goto query_and_check_wn_found;
@@ -698,13 +737,14 @@ static int query_and_check_WN(const char* const catalog, const char* const proce
         printf("RESULT%d %s ", i, result[i].catalog);
         printHex((char*)result[i].procedure, sizeof(result[i].procedure));
         printf(" %s\n", result[i].catalog);
-        FAIL_IF(1, "Unexpected SQLProcedureColumns (W) result ^^");
+        FAIL_IF(1, "Unexpected SQLProcedureColumns (W) result ^^\n");
 query_and_check_wn_found:
         continue;
     }
     IS(!remaining);
 
     CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+    CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
     return OK;
 }
 
@@ -749,11 +789,11 @@ static int query_and_check_NW(const char* const catalog, const char* const proce
 
     for(i = 0; i < numrows; ++i) {
         for(j = 0; j < NUM_PROC_FIELDS; ++j) {
-            FAIL_IF_NE_INT(result[i].column_type, SQL_PARAM_INPUT, "Driver turns all params into SQL_PARAM_INPUT");
             if(remaining & (1 << j)) {
                 if(!sqlwcharcmp(result[i].catalog, CW(c_proc_expected[j].catalog), -1)
                    && !strcmp(result[i].procedure, c_proc_expected[j].procedure)
-                   && !sqlwcharcmp(result[i].column_name, CW(c_proc_expected[j].column_name), -1)) {
+                   && !sqlwcharcmp(result[i].column_name, CW(c_proc_expected[j].column_name), -1)
+				   && result[i].column_type == c_proc_expected[j].column_type) {
                     is_num(strlen(c_proc_expected[j].procedure), result[i].procLen);
                     is_num(strlen(c_proc_expected[j].column_name) * sizeof(SQLWCHAR), result[i].colLen);
                     remaining &= ~(1 << j);
@@ -767,20 +807,176 @@ static int query_and_check_NW(const char* const catalog, const char* const proce
         printf(" %s ", result[i].procedure);
         printHex((char*)result[i].column_name, result[i].colLen);
         printf("\n");
-        FAIL_IF(1, "Unexpected SQLProcedureColumns result ^^");
+        FAIL_IF(1, "Unexpected SQLProcedureColumns result ^^\n");
 query_and_check_nw_found:
         continue;
     }
     IS(!remaining);
 
     CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+    CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
     return OK;
 }
 
-ODBC_TEST(metadata_id_for_procedurecolumns) {
+static int query_and_check_non_ascii_N(const char* const catalog, const char* const procedure, const char* const column, const Mask mask) {
+    typedef struct {
+        SQLCHAR catalog[50];
+        SQLCHAR procedure[100];
+        SQLCHAR column_name[100];
+        SQLSMALLINT column_type;
+        SQLLEN catLen;
+        SQLLEN procLen;
+        SQLLEN colLen;
+    } ProcDataN;
+
+    static ProcDataN result[NUM_PROC_FIELDS + 1];
+    SQLULEN numrows;
+    SQLRETURN fetched;
+    Mask remaining = (mask & c_implemented_mask);
+    size_t i, j;
+
+    memset(result, 0, sizeof(result));
+
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, (SQLCHAR*)catalog, SQL_NTS, NULL, 0, (SQLCHAR*)procedure, SQL_NTS, (SQLCHAR*)column, SQL_NTS));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_CHAR, result[0].catalog, sizeof(result[0].catalog), &result[0].catLen));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_CHAR, result[0].procedure, sizeof(result[0].procedure), &result[0].procLen));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_C_CHAR, result[0].column_name, sizeof(result[0].column_name), &result[0].colLen));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 5, SQL_C_SHORT, &result[0].column_type, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_BIND_TYPE, (SQLPOINTER)sizeof(result[0]), 0));
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)(NUM_PROC_FIELDS + 1), 0));
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROWS_FETCHED_PTR, &numrows, 0));
+    fetched = SQLFetch(Stmt);
+    if(!remaining) {
+        if(fetched == SQL_NO_DATA) {
+            return OK;
+        }
+
+        CHECK_STMT_RC(Stmt, fetched);
+
+        printf("Fetched %d rows, expected 0\n", numrows);
+        return FAIL;
+    }
+    CHECK_STMT_RC(Stmt, fetched);
+
+    for(i = 0; i < numrows; ++i) {
+        for(j = 0; j < NUM_PROC_FIELDS; ++j) {
+            if(remaining & (1 << j)) {
+                if(!strcmp(result[i].catalog, c_proc_expected_non_ascii[j].catalog)
+                   && !strcmp(result[i].procedure, c_proc_expected_non_ascii[j].procedure)
+                   && !strcmp(result[i].column_name, c_proc_expected_non_ascii[j].column_name)
+				   && result[i].column_type == c_proc_expected[j].column_type) {
+                    is_num(strlen(c_proc_expected_non_ascii[j].catalog), result[i].catLen);
+                    is_num(strlen(c_proc_expected_non_ascii[j].procedure), result[i].procLen);
+                    is_num(strlen(c_proc_expected_non_ascii[j].column_name), result[i].colLen);
+                    remaining &= ~(1 << j);
+                    goto query_and_check_n_found;
+                }
+            }
+        }
+        printf("QUERY %s %s %s %02X\n", catalog, procedure, column, mask);
+        printf("RESULT%d %s %s %s %d\n", i, result[i].catalog, result[i].procedure, result[i].column_name, result[i].column_type);
+        FAIL_IF(1, "Unexpected SQLProcedureColumns result ^^\n");
+        query_and_check_n_found:
+        continue;
+    }
+    IS(!remaining);
+
+    CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+    CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
+    return OK;
+}
+
+static int query_and_check_non_ascii_W(const char* const catalog, const char* const procedure, const char* const column, const Mask mask) {
+    typedef struct {
+        SQLWCHAR catalog[50];
+        SQLWCHAR procedure[100];
+        SQLWCHAR column_name[100];
+        SQLSMALLINT column_type;
+        SQLLEN catLen;
+        SQLLEN procLen;
+        SQLLEN colLen;
+    } ProcDataW;
+
+    static ProcDataW result[NUM_PROC_FIELDS + 1];
+    SQLWCHAR cat[50];
+    SQLWCHAR proc[100];
+    SQLWCHAR col[100];
+    SQLWCHAR *pCat = NULL, *pProc = NULL, *pCol = NULL;
+    SQLULEN numrows;
+    SQLRETURN fetched;
+    Mask remaining = (mask & c_implemented_mask);
+    size_t i, j;
+
+    memset(result, 0, sizeof(result));
+    if(catalog) {
+        pCat = CW(catalog);
+    }
+    if(procedure) {
+        pProc = CW(procedure);
+    }
+    if(column) {
+        pCol = CW(column);
+    }
+
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, pCat, SQL_NTS, NULL, 0, pProc, SQL_NTS, pCol, SQL_NTS));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_WCHAR, result[0].catalog, sizeof(result[0].catalog), &result[0].catLen));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_WCHAR, result[0].procedure, sizeof(result[0].procedure), &result[0].procLen));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_C_WCHAR, result[0].column_name, sizeof(result[0].column_name), &result[0].colLen));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 5, SQL_C_SHORT, &result[0].column_type, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttrW(Stmt, SQL_ATTR_ROW_BIND_TYPE, (SQLPOINTER)sizeof(result[0]), 0));
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttrW(Stmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)(NUM_PROC_FIELDS + 1), 0));
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttrW(Stmt, SQL_ATTR_ROWS_FETCHED_PTR, &numrows, 0));
+    fetched = SQLFetch(Stmt);
+    if(!remaining) {
+        if(fetched == SQL_NO_DATA) {
+            return OK;
+        }
+
+        CHECK_STMT_RC(Stmt, fetched);
+
+        printf("Fetched %d rows, expected 0\n", numrows);
+        return FAIL;
+    }
+    CHECK_STMT_RC(Stmt, fetched);
+
+    for(i = 0; i < numrows; ++i) {
+        for(j = 0; j < NUM_PROC_FIELDS; ++j) {
+            if(remaining & (1 << j)) {
+                if(!sqlwcharcmp(result[i].catalog, CW(c_proc_expected_non_ascii[j].catalog), -1)
+                   && !sqlwcharcmp(result[i].procedure, CW(c_proc_expected_non_ascii[j].procedure), -1)
+                   && !sqlwcharcmp(result[i].column_name, CW(c_proc_expected_non_ascii[j].column_name), -1)
+				   && result[i].column_type == c_proc_expected[j].column_type) {
+                    is_num(sqlwcharlen(CW(c_proc_expected_non_ascii[j].catalog)) * sizeof(SQLWCHAR), result[i].catLen);
+                    is_num(sqlwcharlen(CW(c_proc_expected_non_ascii[j].procedure)) * sizeof(SQLWCHAR), result[i].procLen);
+                    is_num(sqlwcharlen(CW(c_proc_expected_non_ascii[j].column_name)) * sizeof(SQLWCHAR), result[i].colLen);
+                    remaining &= ~(1 << j);
+                    goto query_and_check_w_found;
+                }
+            }
+        }
+        printf("QUERY %s %s %s %02X\n", catalog, procedure, column, mask);
+        printf("RESULT%d ", i);
+        printHex((char*)result[i].catalog, result[i].catLen);
+        printf(" ");
+        printHex((char*)result[i].procedure, result[i].procLen);
+        printf(" ");
+        printHex((char*)result[i].column_name, result[i].colLen);
+        printf("\n");
+        FAIL_IF(1, "Unexpected SQLProcedureColumns (W) result ^^\n");
+        query_and_check_w_found:
+        continue;
+    }
+    IS(!remaining);
+
+    CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+    CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
+    return OK;
+}
+
 #define NUM_FUNCS 3
 #define BUF_SIZE 1024
 
+ODBC_TEST(metadata_id_for_procedurecolumns) {
     static const char *const c_func_types[NUM_FUNCS] = {
         "FUNCTION",
         "PROCEDURE",
@@ -851,9 +1047,154 @@ ODBC_TEST(metadata_id_for_procedurecolumns) {
     }
 
     return OK;
+}
 
-#undef BUF_SIZE
-#undef NUM_FUNCS
+ODBC_TEST(procedurecolumns_non_ascii_N) {
+    static const char *const c_func_types[NUM_FUNCS] = {
+        "FUNCTION",
+        "PROCEDURE",
+        "FUNCTION"
+    };
+    static const char *const c_func_names[NUM_FUNCS] = {
+        "узнать_имя_васи",
+        "НАЙТИ_ПЕТЮ_И_ОКРУГЛИТЬ",
+        "`взять и положить кого-то куда-то`"
+    };
+    static const char *const c_create_funcs[NUM_FUNCS] = {
+        "CREATE OR REPLACE %s %s (вася_пупкин INT, петя_васин INT) RETURNS VARCHAR(256) AS BEGIN RETURN CONVERT(вася_пупкин, CHAR(256)); END",
+        "CREATE OR REPLACE %s %s (ПЕТЯ INT, НЕ_ПЕТЯ INT) AS BEGIN SET НЕ_ПЕТЯ = ПЕТЯ; END",
+        "CREATE OR REPLACE %s %s (`кто-то там` INT) RETURNS TABLE AS RETURN SELECT 0 AS `не там`, `кто-то там`"
+    };
+    static const char *const c_delete_cmd = "DROP %s %s";
+
+    char buffer[BUF_SIZE];
+    size_t i, j;
+
+    const struct {
+        ProcColWorkerFn fn;
+        const char* mode;
+    } functions[] = {
+        {query_and_check_non_ascii_N, "N"},
+        {query_and_check_non_ascii_W, "W"},
+    };
+
+    // Init env
+    OK_SIMPLE_STMT(Stmt, "DROP FUNCTION IF EXISTS test_procedure_columns");
+    OK_SIMPLE_STMT(Stmt, "DROP PROCEDURE IF EXISTS test_procedure_columns");
+    OK_SIMPLE_STMT(Stmt, "DROP FUNCTION IF EXISTS test_get_name");
+    OK_SIMPLE_STMT(Stmt, "DROP PROCEDURE IF EXISTS TEST_GET_PRECISION_AND_ROUND_UP");
+    OK_SIMPLE_STMT(Stmt, "DROP FUNCTION IF EXISTS `test set and get precision`");
+    for (i = 0; i < NUM_FUNCS; ++i) {
+        _snprintf(buffer, BUF_SIZE, c_create_funcs[i], c_func_types[i], c_func_names[i]);
+        OK_SIMPLE_STMT(Stmt, buffer);
+    }
+
+    // The testing is below
+    for (i = 0; i < LENGTHOF(functions); ++i) {
+        // With id mode OFF query strings are treated as patterns
+        CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_METADATA_ID, (SQLPOINTER) SQL_FALSE, SQL_IS_UINTEGER));
+        for(j = 0; j < LENGTHOF(c_queries_non_ascii_with_id_off); ++j) {
+            const QueryDesc* const q = c_queries_non_ascii_with_id_off + j;
+            if(functions[i].fn(q->catalog, q->procedure, q->column, q->mask) != OK) {
+                printf("Failed query {%s} {%s} {%s} with mode=%s id=OFF mask=%02X\n",
+                       q->catalog, q->procedure, q->column, functions[i].mode, q->mask);
+                return FAIL;
+            }
+        }
+
+        // With id mode ON query strings are treated as identifiers
+        CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_METADATA_ID, (SQLPOINTER) SQL_TRUE, SQL_IS_UINTEGER));
+        for(j = 0; j < LENGTHOF(c_queries_non_ascii_with_id_on); ++j) {
+            const QueryDesc* const q = c_queries_non_ascii_with_id_on + j;
+            if(functions[i].fn(q->catalog, q->procedure, q->column, q->mask) != OK) {
+                printf("Failed query {%s} {%s} {%s} with mode=%s id=ON mask=%02X\n",
+                       q->catalog, q->procedure, q->column, functions[i].mode, q->mask);
+                return FAIL;
+            }
+        }
+    }
+
+    // Clean up env
+    for(i = 0; i < NUM_FUNCS; ++i) {
+        _snprintf(buffer, BUF_SIZE, c_delete_cmd, c_func_types[i], c_func_names[i]);
+        OK_SIMPLE_STMT(Stmt, buffer);
+    }
+
+    return OK;
+}
+
+ODBC_TEST(procedurecolumns_non_ascii_W) {
+    static const char *const c_func_types[NUM_FUNCS] = {
+        "FUNCTION",
+        "PROCEDURE",
+        "FUNCTION"
+    };
+    static const char *const c_func_names[NUM_FUNCS] = {
+        "узнать_имя_васи",
+        "НАЙТИ_ПЕТЮ_И_ОКРУГЛИТЬ",
+        "`взять и положить кого-то куда-то`"
+    };
+    static const char *const c_create_funcs[NUM_FUNCS] = {
+        "CREATE OR REPLACE %s %s (вася_пупкин INT, петя_васин INT) RETURNS VARCHAR(256) AS BEGIN RETURN CONVERT(вася_пупкин, CHAR(256)); END",
+        "CREATE OR REPLACE %s %s (ПЕТЯ INT, НЕ_ПЕТЯ INT) AS BEGIN SET НЕ_ПЕТЯ = ПЕТЯ; END",
+        "CREATE OR REPLACE %s %s (`кто-то там` INT) RETURNS TABLE AS RETURN SELECT 0 AS `не там`, `кто-то там`"
+    };
+    static const char *const c_delete_cmd = "DROP %s %s";
+
+    char buffer[BUF_SIZE];
+    size_t i, j;
+
+    const struct {
+        ProcColWorkerFn fn;
+        const char* mode;
+    } functions[] = {
+        //{query_and_check_non_ascii_N, "N"},
+        {query_and_check_non_ascii_W, "W"},
+    };
+
+    // Init env
+    OK_SIMPLE_STMT(Stmt, "DROP FUNCTION IF EXISTS test_procedure_columns");
+    OK_SIMPLE_STMT(Stmt, "DROP PROCEDURE IF EXISTS test_procedure_columns");
+    OK_SIMPLE_STMT(Stmt, "DROP FUNCTION IF EXISTS test_get_name");
+    OK_SIMPLE_STMT(Stmt, "DROP PROCEDURE IF EXISTS TEST_GET_PRECISION_AND_ROUND_UP");
+    OK_SIMPLE_STMT(Stmt, "DROP FUNCTION IF EXISTS `test set and get precision`");
+    for (i = 0; i < NUM_FUNCS; ++i) {
+        _snprintf(buffer, BUF_SIZE, c_create_funcs[i], c_func_types[i], c_func_names[i]);
+        OK_SIMPLE_STMTW(Stmt, CW(buffer));
+    }
+
+    // The testing is below
+    for (i = 0; i < LENGTHOF(functions); ++i) {
+        // With id mode OFF query strings are treated as patterns
+        CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_METADATA_ID, (SQLPOINTER) SQL_FALSE, SQL_IS_UINTEGER));
+        for(j = 0; j < LENGTHOF(c_queries_non_ascii_with_id_off); ++j) {
+            const QueryDesc* const q = c_queries_non_ascii_with_id_off + j;
+            if(functions[i].fn(q->catalog, q->procedure, q->column, q->mask) != OK) {
+                printf("Failed query {%s} {%s} {%s} with mode=%s id=OFF mask=%02X\n",
+                       q->catalog, q->procedure, q->column, functions[i].mode, q->mask);
+                return FAIL;
+            }
+        }
+
+        // With id mode ON query strings are treated as identifiers
+        CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_METADATA_ID, (SQLPOINTER) SQL_TRUE, SQL_IS_UINTEGER));
+        for(j = 0; j < LENGTHOF(c_queries_non_ascii_with_id_on); ++j) {
+            const QueryDesc* const q = c_queries_non_ascii_with_id_on + j;
+            if(functions[i].fn(q->catalog, q->procedure, q->column, q->mask) != OK) {
+                printf("Failed query {%s} {%s} {%s} with mode=%s id=ON mask=%02X\n",
+                       q->catalog, q->procedure, q->column, functions[i].mode, q->mask);
+                return FAIL;
+            }
+        }
+    }
+
+    // Clean up env
+    for(i = 0; i < NUM_FUNCS; ++i) {
+        _snprintf(buffer, BUF_SIZE, c_delete_cmd, c_func_types[i], c_func_names[i]);
+        OK_SIMPLE_STMTW(Stmt, CW(buffer));
+    }
+
+    return OK;
 }
 
 MA_ODBC_TESTS my_tests[] =
@@ -863,6 +1204,8 @@ MA_ODBC_TESTS my_tests[] =
                 {t_procedurecolumns2U, "t_procedurecolumns2U", NORMAL, UNICODE_DRIVER},
                 {t_procedurecolumns2A, "t_procedurecolumns2A", NORMAL, ANSI_DRIVER},
                 {metadata_id_for_procedurecolumns, "metadata_id_for_procedurecolumns", NORMAL, ALL_DRIVERS},
+                {procedurecolumns_non_ascii_N, "procedurecolumns_non_ascii_N", KNOWN_FAILURE, ALL_DRIVERS},	// TODO: PLAT-5560, PLAT-5561, PLAT-5562
+                {procedurecolumns_non_ascii_W, "procedurecolumns_non_ascii_W", KNOWN_FAILURE, ALL_DRIVERS},	// TODO: PLAT-5560, PLAT-5561, PLAT-5562
                 {NULL, NULL, NORMAL, ALL_DRIVERS}
         };
 

@@ -49,6 +49,8 @@ char* strcasestr(const char* HayStack, const char* Needle)
 # include "ma_conv_charset.h"
 # include "ma_odbc_version.h"
 
+#define LENGTHOF(arr) (sizeof(arr) / sizeof(arr[0]))
+
 /* Mimicking of VS' _snprintf */
 int _snprintf(char *buffer, size_t count, const char *format, ...)
 {
@@ -436,8 +438,12 @@ void odbc_print_error(SQLSMALLINT HandleType, SQLHANDLE Handle)
   SQLCHAR SQLMessage[SQL_MAX_MESSAGE_LENGTH];
   SQLSMALLINT TextLengthPtr;
 
-  SQLGetDiagRec(HandleType, Handle, 1, SQLState, &NativeError, SQLMessage, SQL_MAX_MESSAGE_LENGTH, &TextLengthPtr);
-  fprintf(stdout, "[%s] (%d) %s\n", SQLState, NativeError, SQLMessage);
+  const SQLRETURN result = SQLGetDiagRec(HandleType, Handle, 1, SQLState, &NativeError, SQLMessage, SQL_MAX_MESSAGE_LENGTH, &TextLengthPtr);
+  if(result == SQL_SUCCESS || result == SQL_SUCCESS_WITH_INFO) {
+    fprintf(stdout, "[%s] (%d) %s\n", SQLState, NativeError, SQLMessage);
+  } else {
+	fprintf(stdout, "Error %d getting diagnostic records with SQLGetDiagRec()\n", result);
+  }
 }
 
 
@@ -1447,6 +1453,13 @@ int sqlwcharcmp(const SQLWCHAR *s1, const SQLWCHAR *s2, int n)
   }
 
   return n != 0 && *s1!=*s2;
+}
+
+size_t sqlwcharlen(const SQLWCHAR *s)
+{
+    size_t i;
+    for(i = 0; s[i]; ++i) {}
+    return i;
 }
 
 
