@@ -651,6 +651,376 @@ ODBC_TEST(t_odbc149)
 }
 #undef MAODBC_ROWS
 
+#define NUM_ROWS 3
+#define BUFF_SIZE 10
+#define NUM_CURSOR_TYPES 3
+ODBC_TEST(bulk_insert_all_datatypes)
+{
+  SQLPOINTER  cursorTypes[NUM_CURSOR_TYPES] = {SQL_CURSOR_FORWARD_ONLY, SQL_CURSOR_STATIC, SQL_CURSOR_DYNAMIC};
+  int currentCursorIndex;
+  for (currentCursorIndex = 0; currentCursorIndex < NUM_CURSOR_TYPES; currentCursorIndex++)
+  {
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
+                                       (SQLPOINTER)cursorTypes[currentCursorIndex], 0));
+
+    typedef struct Row {
+      SQLSMALLINT id;
+
+      SQLCHAR c_char[BUFF_SIZE];
+      SQLLEN c_char_len;
+
+      SQLWCHAR c_wchar[BUFF_SIZE];
+      SQLLEN c_wchar_len;
+
+      SQLSMALLINT c_sshort;
+      SQLUSMALLINT c_ushort;
+      SQLINTEGER c_slong;
+      SQLUINTEGER c_ulong;
+      SQLREAL c_float;
+      SQLDOUBLE c_double;
+      SQLCHAR c_bit;
+      SQLSCHAR c_stinyint;
+      SQLCHAR c_utinyint;
+      SQLBIGINT c_sbigint;
+      SQLUBIGINT c_ubigint;
+
+      SQLCHAR c_binary[BUFF_SIZE];
+      SQLLEN c_binary_len;
+
+      SQL_DATE_STRUCT c_type_date;
+      SQL_TIME_STRUCT c_type_time;
+      SQL_TIMESTAMP_STRUCT c_type_timestamp;
+      SQL_NUMERIC_STRUCT c_numeric;
+    } Row;
+
+    int i;
+    SQLHDESC ard;
+    SQLINTEGER rowsFetched;
+    SQLUSMALLINT rowStatusArray[NUM_ROWS];
+    Row rowsSelect[NUM_ROWS];
+    Row rowsInsert[NUM_ROWS] = {
+      {0, "asd", 3, {1, 2, 3, 0}, 3, -1, 1, 100, 100, 0.3, 0.3333, 1, 10, 10, 100, 100, "abc", 3, {2001, 11, 1}, {5, 23, 59}, {2001, 11, 1, 5, 23, 59, 100001}},
+      {1, "bcd", 3, {2, 3, 4, 0}, 3, 2, 2, 10, 10, 0.5, 0.555, 1, 20, 20, 200, 200, "sdf", 3, {2005, 10, 6}, {7, 13, 29}, {2005, 10, 6, 7, 13, 29, 101}},
+      {2, "", 0, {0}, 0, 3, 3, -20, 20, -10.2, -100.222, 0, -30, 30, -300, 300, "", 0, {2002, 12, 1}, {0, 0, 0}, {2002, 12, 1, 0, 0, 0, 0}},
+    };
+
+    // Init rowsInsert[0].c_numeric with 123.45
+    rowsInsert[0].c_numeric.sign = 1;
+    memset (rowsInsert[0].c_numeric.val, 0, 16);
+    rowsInsert[0].c_numeric.val[0] = 0x39;
+    rowsInsert[0].c_numeric.val[1] = 0x30;
+    rowsInsert[0].c_numeric.precision = 5;
+    rowsInsert[0].c_numeric.scale = 2;
+
+    // Init rowsInsert[1].c_numeric with -123.45
+    rowsInsert[1].c_numeric = rowsInsert[0].c_numeric;
+    rowsInsert[1].c_numeric.sign = 0;
+
+    // Init rowsInsert[2].c_numeric with 0
+    rowsInsert[2].c_numeric.sign = 1;
+    memset (rowsInsert[2].c_numeric.val, 0, 16);
+    rowsInsert[2].c_numeric.precision = 1;
+    rowsInsert[2].c_numeric.scale = 0;
+
+    // Prepare a table
+    OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS bulk_insert_all_datatypes");
+    OK_SIMPLE_STMT(Stmt, "CREATE TABLE bulk_insert_all_datatypes(id INT, c_char CHAR(10), c_wchar VARCHAR(10), "
+                         "c_sshort SMALLINT, c_ushort SMALLINT UNSIGNED, c_slong INT, c_ulong INT UNSIGNED, c_float FLOAT, "
+                         "c_double DOUBLE, c_bit BIT(64), c_stinyint TINYINT, c_utinyint TINYINT UNSIGNED, "
+                         "c_sbigint BIGINT, c_ubigint BIGINT UNSIGNED, c_binary BINARY(10), c_type_date DATE, "
+                         "c_type_time TIME, c_type_timestamp TIMESTAMP(6), c_numeric DECIMAL(5, 2))");
+
+    OK_SIMPLE_STMT(Stmt, "SELECT * FROM bulk_insert_all_datatypes");
+
+    // Prepare statement attributes that are needed for row-wise binding
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_BIND_TYPE, (SQLPOINTER)sizeof(Row), 0));
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)NUM_ROWS, 0));
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_STATUS_PTR, rowStatusArray, 0));
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROWS_FETCHED_PTR, &rowsFetched, 0));
+
+    // Precision and scale Ard should be provided via descriptor API: SQLSetDescField.
+    // SQLSetDescField for all required fields must be called before the SQLBindCol, otherwise the column will be unbound.
+    CHECK_STMT_RC(Stmt, SQLGetStmtAttr(Stmt, SQL_ATTR_APP_ROW_DESC, &ard, SQL_IS_POINTER, NULL));
+    CHECK_STMT_RC(ard, SQLSetDescField(ard, 19, SQL_DESC_PRECISION, (SQLPOINTER)5, 0));
+    CHECK_STMT_RC(ard, SQLSetDescField(ard, 19, SQL_DESC_SCALE, (SQLPOINTER)2, 0));
+
+    // Bind columns
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_SSHORT, &rowsInsert[0].id, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_CHAR, rowsInsert[0].c_char, BUFF_SIZE, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_WCHAR, rowsInsert[0].c_wchar, BUFF_SIZE*sizeof(SQLWCHAR), NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_C_SSHORT, &rowsInsert[0].c_sshort, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 5, SQL_C_USHORT, &rowsInsert[0].c_ushort, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 6, SQL_C_SLONG, &rowsInsert[0].c_slong, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 7, SQL_C_ULONG, &rowsInsert[0].c_ulong, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 8, SQL_C_FLOAT, &rowsInsert[0].c_float, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 9, SQL_C_DOUBLE, &rowsInsert[0].c_double, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 10, SQL_C_BIT, &rowsInsert[0].c_bit, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 11, SQL_C_STINYINT, &rowsInsert[0].c_stinyint, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 12, SQL_C_UTINYINT, &rowsInsert[0].c_utinyint, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 13, SQL_C_SBIGINT, &rowsInsert[0].c_sbigint, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 14, SQL_C_UBIGINT, &rowsInsert[0].c_ubigint, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 15, SQL_C_BINARY, &rowsInsert[0].c_binary, BUFF_SIZE, &rowsInsert[0].c_binary_len));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 16, SQL_C_TYPE_DATE, &rowsInsert[0].c_type_date, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 17, SQL_C_TYPE_TIME, &rowsInsert[0].c_type_time, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 18, SQL_C_TYPE_TIMESTAMP, &rowsInsert[0].c_type_timestamp, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 19, SQL_C_NUMERIC, &rowsInsert[0].c_numeric, 0, NULL));
+
+    // Perform buk insert. It should insert NUM_ROWS new rows to the table
+    CHECK_STMT_RC(Stmt, SQLBulkOperations(Stmt, SQL_ADD));
+    /*
+    is_num(rowsFetched, NUM_ROWS);
+    for (i = 0; i < NUM_ROWS; i++) {
+      is_num(rowStatusArray[i], SQL_ROW_SUCCESS); // TODO PLAT-5555
+    }*/
+
+    // Free the statement
+    SQLFreeStmt(Stmt, SQL_CLOSE);
+    SQLFreeStmt(Stmt, SQL_UNBIND);
+
+    // check that table contains correct content
+    OK_SIMPLE_STMT(Stmt, "SELECT * FROM bulk_insert_all_datatypes ORDER BY id");
+
+    CHECK_STMT_RC(Stmt, SQLGetStmtAttr(Stmt, SQL_ATTR_APP_ROW_DESC, &ard, SQL_IS_POINTER, NULL));
+    CHECK_STMT_RC(ard, SQLSetDescField(ard, 19, SQL_DESC_PRECISION, (SQLPOINTER)5, 0));
+    CHECK_STMT_RC(ard, SQLSetDescField(ard, 19, SQL_DESC_SCALE, (SQLPOINTER)2, 0));
+
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_SSHORT, &rowsSelect[0].id, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_CHAR, &rowsSelect[0].c_char, BUFF_SIZE, &rowsSelect[0].c_char_len));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_WCHAR, rowsSelect[0].c_wchar, BUFF_SIZE*sizeof(SQLWCHAR), &rowsSelect[0].c_wchar_len));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_C_SSHORT, &rowsSelect[0].c_sshort, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 5, SQL_C_USHORT, &rowsSelect[0].c_ushort, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 6, SQL_C_SLONG, &rowsSelect[0].c_slong, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 7, SQL_C_ULONG, &rowsSelect[0].c_ulong, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 8, SQL_C_FLOAT, &rowsSelect[0].c_float, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 9, SQL_C_DOUBLE, &rowsSelect[0].c_double, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 10, SQL_C_BIT, &rowsSelect[0].c_bit, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 11, SQL_C_STINYINT, &rowsSelect[0].c_stinyint, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 12, SQL_C_UTINYINT, &rowsSelect[0].c_utinyint, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 13, SQL_C_SBIGINT, &rowsSelect[0].c_sbigint, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 14, SQL_C_UBIGINT, &rowsSelect[0].c_ubigint, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 15, SQL_C_BINARY, &rowsSelect[0].c_binary, BUFF_SIZE, &rowsSelect[0].c_binary_len));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 16, SQL_C_TYPE_DATE, &rowsSelect[0].c_type_date, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 17, SQL_C_TYPE_TIME, &rowsSelect[0].c_type_time, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 18, SQL_C_TYPE_TIMESTAMP, &rowsSelect[0].c_type_timestamp, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 19, SQL_C_NUMERIC, &rowsSelect[0].c_numeric, 0, NULL));
+
+    CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+    is_num(rowsFetched, NUM_ROWS);
+    for (i = 0; i < NUM_ROWS; i++) {
+      is_num(rowStatusArray[i], SQL_ROW_SUCCESS);
+    }
+
+    for (i = 0; i < NUM_ROWS; i++)
+    {
+      printf("Checking row #%d\n", i);
+
+      is_num(rowsSelect[i].id, rowsInsert[i].id);
+
+      is_num(rowsSelect[i].c_char_len, rowsInsert[i].c_char_len);
+      IS_STR(rowsSelect[i].c_char, rowsInsert[i].c_char, rowsSelect[i].c_char_len+1);
+
+      is_num(rowsSelect[i].c_wchar_len, rowsInsert[i].c_wchar_len*sizeof(SQLWCHAR));
+      IS_STR(rowsSelect[i].c_wchar, rowsInsert[i].c_wchar, rowsSelect[i].c_wchar_len+1);
+
+      is_num(rowsSelect[i].c_sshort, rowsInsert[i].c_sshort);
+      is_num(rowsSelect[i].c_ushort, rowsInsert[i].c_ushort);
+      is_num(rowsSelect[i].c_slong, rowsInsert[i].c_slong);
+      is_num(rowsSelect[i].c_ulong, rowsInsert[i].c_ulong);
+      // is_double(rowsSelect[i].c_float, rowsInsert[i].c_float); TODO PLAT-5554
+      is_num(rowsSelect[i].c_double, rowsInsert[i].c_double);
+      is_num(rowsSelect[i].c_bit, rowsInsert[i].c_bit);
+      // is_num(rowsSelect[i].c_stinyint, rowsInsert[i].c_stinyint); TODO PLAT-5554
+      is_num(rowsSelect[i].c_utinyint, rowsInsert[i].c_utinyint);
+      is_num(rowsSelect[i].c_sbigint, rowsInsert[i].c_sbigint);
+      is_num(rowsSelect[i].c_ubigint, rowsInsert[i].c_ubigint);
+
+      // In the table, we created BINARY(10) column
+      // SingleStore adds zero bytes to the result
+      is_num(rowsSelect[i].c_binary_len, 10);
+      IS_STR(rowsSelect[i].c_binary, rowsInsert[i].c_binary, rowsInsert[i].c_binary_len+1);
+
+      is_num(rowsSelect[i].c_type_date.year, rowsInsert[i].c_type_date.year);
+      is_num(rowsSelect[i].c_type_date.month, rowsInsert[i].c_type_date.month);
+      is_num(rowsSelect[i].c_type_date.day, rowsInsert[i].c_type_date.day);
+
+      is_num(rowsSelect[i].c_type_time.hour, rowsInsert[i].c_type_time.hour);
+      is_num(rowsSelect[i].c_type_time.minute, rowsInsert[i].c_type_time.minute);
+      is_num(rowsSelect[i].c_type_time.second, rowsInsert[i].c_type_time.second);
+
+      is_num(rowsSelect[i].c_type_timestamp.year, rowsInsert[i].c_type_timestamp.year);
+      is_num(rowsSelect[i].c_type_timestamp.month, rowsInsert[i].c_type_timestamp.month);
+      is_num(rowsSelect[i].c_type_timestamp.day, rowsInsert[i].c_type_timestamp.day);
+      is_num(rowsSelect[i].c_type_timestamp.hour, rowsInsert[i].c_type_timestamp.hour);
+      is_num(rowsSelect[i].c_type_timestamp.minute, rowsInsert[i].c_type_timestamp.minute);
+      is_num(rowsSelect[i].c_type_timestamp.second, rowsInsert[i].c_type_timestamp.second);
+      // is_num(rowsSelect[i].c_type_timestamp.fraction, rowsInsert[i].c_type_timestamp.fraction); TODO PLAT-5554
+
+      is_num(rowsSelect[i].c_numeric.precision, rowsInsert[i].c_numeric.precision);
+      is_num(rowsSelect[i].c_numeric.scale, rowsInsert[i].c_numeric.scale);
+      is_num(rowsSelect[i].c_numeric.sign, rowsInsert[i].c_numeric.sign);
+      IS_STR(rowsSelect[i].c_numeric.val, rowsInsert[i].c_numeric.val, SQL_MAX_NUMERIC_LEN);
+    }
+
+    FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA, "No data expected");
+    CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+    CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
+  }
+
+  return OK;
+}
+#undef NUM_ROWS
+#undef BUFF_SIZE
+
+ODBC_TEST(unsupported_bulk_operations)
+{
+  OK_SIMPLE_STMT(Stmt, "SELECT 1");
+
+  EXPECT_STMT(Stmt, SQLBulkOperations(Stmt, SQL_UPDATE_BY_BOOKMARK), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "HYC00");
+  EXPECT_STMT(Stmt, SQLBulkOperations(Stmt, SQL_DELETE_BY_BOOKMARK), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "HYC00");
+  EXPECT_STMT(Stmt, SQLBulkOperations(Stmt, SQL_FETCH_BY_BOOKMARK), SQL_ERROR);
+  CHECK_SQLSTATE(Stmt, "HYC00");
+
+  return OK;
+}
+
+#define BUFF_SIZE 10
+ODBC_TEST(bulk_load_data)
+{
+  SQLCHAR col1InsPart1[5] = "abcd";
+  SQLCHAR col1InsPart2[3] = "ef";
+  SQLCHAR col2Ins [4] = "abc";
+  // We are returning "N" for SQL_NEED_LONG_DATA_LEN
+  // This means that we can place any nonnegative value to the SQL_LEN_DATA_AT_EXEC macro
+  // and the value will be ignored
+  SQLLEN colInsLen = SQL_LEN_DATA_AT_EXEC(0);
+  int colId1;
+  int colId2;
+  int i;
+
+  SQLCHAR col1Sel[BUFF_SIZE];
+  SQLCHAR col2Sel[BUFF_SIZE];
+  SQLLEN col1SelLen;
+  SQLLEN col2SelLen;
+
+
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS bulk_load_data");
+  OK_SIMPLE_STMT(Stmt, "CREATE TABLE bulk_load_data(text1 CHAR(10), text2 CHAR(10))");
+
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM bulk_load_data");
+
+  // bind columns
+  CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_CHAR, &colId1, 0, &colInsLen));
+  CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_CHAR, &colId2, 0, &colInsLen));
+
+  // insert one row
+  EXPECT_STMT(Stmt,SQLBulkOperations(Stmt, SQL_ADD), SQL_NEED_DATA);
+
+  // add data at execution parameters
+  SQLPOINTER colId;
+  for (i = 0; i < 2; i++) {
+    EXPECT_STMT(Stmt, SQLParamData(Stmt, &colId), SQL_NEED_DATA);
+    if (colId == &colId1)
+    {
+      CHECK_STMT_RC(Stmt, SQLPutData(Stmt, col1InsPart1, SQL_NTS));
+      CHECK_STMT_RC(Stmt, SQLPutData(Stmt, col1InsPart2, SQL_NTS));
+    } else if (colId == &colId2)
+    {
+      CHECK_STMT_RC(Stmt, SQLPutData(Stmt, col2Ins, SQL_NTS));
+    } else
+    {
+      return FAIL;
+    }
+  }
+  CHECK_STMT_RC(Stmt, SQLParamData(Stmt, &colId));
+
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+
+  // check that row is inserted correctly
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM bulk_load_data");
+  CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_CHAR, col1Sel, BUFF_SIZE, &col1SelLen));
+  CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_CHAR, col2Sel, BUFF_SIZE, &col2SelLen));
+  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+
+  // check first column
+  is_num(col1SelLen, strlen((char *)col1InsPart1) + strlen((char *)col1InsPart2));
+  IS_STR(col1Sel, col1InsPart1, strlen((char *)col1InsPart1));
+  IS_STR(col1Sel+strlen((char *)col1InsPart1), col1InsPart2, strlen((char *)col1InsPart2)+1);
+
+  // check second column
+  is_num(col2SelLen, strlen((char *)col2Ins));
+  IS_STR(col2Sel, col2Ins, strlen((char *)col2Ins));
+  return OK;
+}
+#undef BUFF_SIZE
+
+ODBC_TEST(bulk_ignore_column)
+{
+  SQLINTEGER a, b, c;
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS bulk_ignore_column");
+  OK_SIMPLE_STMT(Stmt, "CREATE TABLE bulk_ignore_column(a INT DEFAULT 7, b INT DEFAULT 8, c INT default -1)");
+
+  // insert one row with all default columns
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM bulk_ignore_column");
+  SQLLEN len = SQL_COLUMN_IGNORE;
+  CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, NULL, 0, &len));
+  CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_LONG, NULL, 0, &len));
+  CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_LONG, NULL, 0, &len));
+  CHECK_STMT_RC(Stmt, SQLBulkOperations(Stmt, SQL_ADD));
+
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
+
+  // check the content of the table
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM bulk_ignore_column");
+  CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, &a, 0, NULL));
+  CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_LONG, &b, 0, NULL));
+  CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_LONG, &c, 0, NULL));
+
+  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+  is_num(a, 7);
+  is_num(b, 8);
+  is_num(c, -1);
+  EXPECT_STMT(Stmt, SQLFetch(Stmt), SQL_NO_DATA);
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
+
+  // truncate the table
+  OK_SIMPLE_STMT(Stmt, "TRUNCATE bulk_ignore_column");
+
+  // insert one row with one default column and two specified in the bound columns
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM bulk_ignore_column");
+  b = 4;
+  c = 5;
+  CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, NULL, 0, &len));
+  CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_LONG, &b, 0, NULL));
+  CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_LONG, &c, 0, NULL));
+  CHECK_STMT_RC(Stmt, SQLBulkOperations(Stmt, SQL_ADD));
+
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
+
+  // check the content of the table
+  OK_SIMPLE_STMT(Stmt, "SELECT * FROM bulk_ignore_column");
+  a = 0;
+  b = 0;
+  c = 0;
+  CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, &a, 0, NULL));
+  CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_LONG, &b, 0, NULL));
+  CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_LONG, &c, 0, NULL));
+
+  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+  is_num(a, 7);
+  is_num(b, 4);
+  is_num(c, 5);
+  EXPECT_STMT(Stmt, SQLFetch(Stmt), SQL_NO_DATA);
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
+
+  return OK;
+}
 
 MA_ODBC_TESTS my_tests[]=
 {
@@ -663,6 +1033,10 @@ MA_ODBC_TESTS my_tests[]=
   {t_odbc90, "odbc90_insert_with_ts_col", NORMAL, ALL_DRIVERS},
   {t_bulk_delete, "t_bulk_delete", NORMAL, ALL_DRIVERS},
   {t_odbc149, "odbc149_ts_col_insert" , NORMAL, ALL_DRIVERS},
+  {bulk_insert_all_datatypes, "bulk_insert_all_datatypes" , NORMAL, ALL_DRIVERS},
+  {unsupported_bulk_operations, "unsupported_bulk_operations" , NORMAL, ALL_DRIVERS},
+  {bulk_load_data, "bulk_load_data" , CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
+  {bulk_ignore_column, "bulk_ignore_column" , NORMAL, ALL_DRIVERS},
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
@@ -671,6 +1045,5 @@ int main(int argc, char **argv)
   int tests= sizeof(my_tests)/sizeof(MA_ODBC_TESTS) - 1;
   get_options(argc, argv);
   plan(tests);
-  mark_all_tests_normal(my_tests);
   return run_tests(my_tests);
 }

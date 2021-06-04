@@ -740,6 +740,16 @@ do {\
   }\
 } while(0)
 
+#define is_double(A,B) \
+do {\
+  double local_a= (double)(A), local_b= (double)(B);\
+  if (local_a - local_b > 1e-7 || local_a - local_b < -1e-7)\
+  {\
+    diag("%s %d: %s(%lf)!=%s(%lf)", __FILE__, __LINE__, #A, local_a, #B, local_b);\
+    return FAIL;\
+  }\
+} while(0)
+
 #define EXPECT_DBC(_Dbc, _Function, _Expected)\
 do {\
   SQLRETURN ret= (_Function);\

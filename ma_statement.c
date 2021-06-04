@@ -120,9 +120,9 @@ SQLRETURN MADB_StmtBulkOperations(MADB_Stmt *Stmt, SQLSMALLINT Operation)
   switch(Operation)
   {
   case SQL_ADD:
-     return Stmt->Methods->SetPos(Stmt, 0, SQL_ADD, SQL_LOCK_NO_CHANGE, 0);
+    return Stmt->Methods->SetPos(Stmt, 0, SQL_ADD, SQL_LOCK_NO_CHANGE, 0);
   default:
-    return SQL_ERROR;
+    return MADB_SetError(&Stmt->Error, MADB_ERR_HYC00, "Operation is not supported", 0);
   }
 }
 /* }}} */
@@ -5323,8 +5323,30 @@ SQLRETURN MADB_StmtSetPos(MADB_Stmt *Stmt, SQLSETPOSIROW RowNumber, SQLUSMALLINT
 
         if (Rec->inUse && MADB_ColumnIgnoredInAllRows(Stmt->Ard, Rec) == FALSE)
         {
+          SQLULEN ColumnSize;
+          switch (Rec->Type)
+          {
+            case SQL_BINARY:
+            case SQL_VARBINARY:
+            case SQL_LONGVARBINARY:
+            case SQL_CHAR:
+            case SQL_VARCHAR:
+            case SQL_LONGVARCHAR:
+            case SQL_WCHAR:
+            case SQL_WLONGVARCHAR:
+            case SQL_WVARCHAR:
+              ColumnSize = Rec->DescLength;
+              break;
+            case SQL_FLOAT:
+            case SQL_REAL:
+            case SQL_DOUBLE:
+            case SQL_DECIMAL:
+            case SQL_NUMERIC:
+              ColumnSize = Rec->Precision;
+              break;
+          }
           Stmt->DaeStmt->Methods->BindParam(Stmt->DaeStmt, param + 1, SQL_PARAM_INPUT, Rec->ConciseType, Rec->Type,
-            Rec->DisplaySize, Rec->Scale, Rec->DataPtr, Rec->OctetLength, Rec->OctetLengthPtr);
+                                            ColumnSize, Rec->Scale, Rec->DataPtr, Rec->OctetLength, Rec->OctetLengthPtr);
         }
         else
         {
