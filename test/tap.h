@@ -47,6 +47,7 @@ char* strcasestr(const char* HayStack, const char* Needle)
 # include <errno.h>
 # include <wchar.h>
 # include "ma_conv_charset.h"
+# include "ma_odbc_version.h"
 
 /* Mimicking of VS' _snprintf */
 int _snprintf(char *buffer, size_t count, const char *format, ...)
