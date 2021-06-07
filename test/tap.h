@@ -706,7 +706,7 @@ do {\
   long long local_exp = (exp), local_got = (got);\
   if (local_exp != local_got)\
     {\
-        fprintf(stdout, "%s(exp: %d, got: %d) (File: %s Line: %d)\n", message, local_exp, local_got, __FILE__, __LINE__);\
+        fprintf(stdout, "%s(exp: %lld, got: %lld) (File: %s Line: %d)\n", message, local_exp, local_got, __FILE__, __LINE__);\
         return FAIL;\
     }\
 } while(0)
