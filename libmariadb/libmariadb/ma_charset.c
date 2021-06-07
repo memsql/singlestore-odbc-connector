@@ -128,6 +128,7 @@ static unsigned int check_mb_utf8mb3_sequence(const char *start, const char *end
 }
 
 
+#if 0
 static unsigned int check_mb_utf8_sequence(const char *start, const char *end)
 {
   uchar  c;
@@ -199,6 +200,7 @@ static unsigned int check_mb_utf8_sequence(const char *start, const char *end)
   }
   return 0;
 }
+#endif
 
 static unsigned int check_mb_utf8mb3_valid(const char *start, const char *end)
 {
@@ -206,11 +208,13 @@ static unsigned int check_mb_utf8mb3_valid(const char *start, const char *end)
   return (len > 1)? len:0;
 }
 
+#if 0
 static unsigned int check_mb_utf8_valid(const char *start, const char *end)
 {
   unsigned int len = check_mb_utf8_sequence(start, end);
   return (len > 1)? len:0;
 }
+#endif
 
 
 static unsigned int mysql_mbcharlen_utf8mb3(unsigned int utf8)
@@ -231,6 +235,7 @@ static unsigned int mysql_mbcharlen_utf8mb3(unsigned int utf8)
 }
 
 
+#if 0
 static unsigned int mysql_mbcharlen_utf8(unsigned int utf8)
 {
   if (utf8 < 0x80) {
@@ -259,6 +264,7 @@ static unsigned int mysql_mbcharlen_utf8(unsigned int utf8)
               (0xA1 <= (unsigned int)(c) && (unsigned int)(c) <= 0xFE))
 
 #define isbig5code(c,d) (isbig5head(c) && isbig5tail(d))
+
 
 static unsigned int check_mb_big5(const char *start, const char *end)
 {
@@ -535,6 +541,7 @@ static unsigned int check_mb_gb18030_valid(const char * start, const char * end)
 	return 0;
 }
 /* }}} */
+#endif
 
 /*
   The server compiles sometimes the full utf-8 (the mb4) as utf8m4, and the old as utf8,

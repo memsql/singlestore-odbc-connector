@@ -432,8 +432,6 @@ int mthd_stmt_fetch_to_bind_fake(MYSQL_STMT *stmt, unsigned char **row)
         if (!stmt->bind_result_done ||
             stmt->bind[i].flags & MADB_BIND_DUMMY)
         {
-            unsigned long length;
-
             if (!stmt->bind[i].length)
                 stmt->bind[i].length= &stmt->bind[i].length_value;
             if (row[i] != NULL) {

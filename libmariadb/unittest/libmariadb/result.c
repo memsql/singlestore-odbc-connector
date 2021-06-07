@@ -1075,7 +1075,7 @@ static int test_DB46528(MYSQL *mysql)
     unsigned short value;
     int rc;
     unsigned short expValues[2] = {0, 2020};
-    char *stmt = "select a from year_table order by a";
+    const char *stmt = "select a from year_table order by a";
 
     rc = mysql_query(mysql, "drop table if exists year_table");
     check_mysql_rc(rc, mysql);
