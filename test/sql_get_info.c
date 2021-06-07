@@ -190,9 +190,9 @@ ODBC_TEST(driver_information)
   CHECK_ENV_RC(Env, SQLAllocHandle(SQL_HANDLE_DBC, Env, &Hdbc));
 
   CHECK_U_SMALL_INT(Connection, SQL_ACTIVE_ENVIRONMENTS, 0);
-  // CHECK_U_INTEGER(Connection, SQL_ASYNC_DBC_FUNCTIONS, SQL_ASYNC_DBC_NOT_CAPABLE); TODO PLAT-5465
+  // CHECK_U_INTEGER(Connection, SQL_ASYNC_DBC_FUNCTIONS, SQL_ASYNC_DBC_NOT_CAPABLE); //TODO PLAT-5514
   CHECK_U_INTEGER(Connection, SQL_ASYNC_MODE, SQL_AM_NONE);
-  // CHECK_U_INTEGER(Connection, SQL_ASYNC_NOTIFICATION, SQL_ASYNC_NOTIFICATION_NOT_CAPABLE); // TODO PLAT-5465
+  // CHECK_U_INTEGER(Connection, SQL_ASYNC_NOTIFICATION, SQL_ASYNC_NOTIFICATION_NOT_CAPABLE); // TODO PLAT-5514
   CHECK_U_INTEGER(Connection, SQL_BATCH_ROW_COUNT, SQL_BRC_EXPLICIT);
   CHECK_U_INTEGER(Connection, SQL_BATCH_SUPPORT, SQL_BS_SELECT_EXPLICIT |
                                                    SQL_BS_ROW_COUNT_EXPLICIT |
@@ -220,7 +220,7 @@ ODBC_TEST(driver_information)
   CHECK_CHAR(Connection, SQL_DRIVER_NAME, WindowsDM(Connection) ? (is_unicode_driver() ? "ssodbcw.so" : "ssodbca.so") : (is_unicode_driver() ? "libssodbcw.so" : "libssodbca.so"));
   CHECK_CHAR(Connection, SQL_DRIVER_ODBC_VER, "03.51");
   CHECK_CHAR(Connection, SQL_DRIVER_VER, "00.08.0002");
-  // CHECK_U_INTEGER(Connection, SQL_DRIVER_AWARE_POOLING_SUPPORTED, SQL_DRIVER_AWARE_POOLING_NOT_CAPABLE); // TODO PLAT-5465
+  CHECK_U_INTEGER(Connection, SQL_DRIVER_AWARE_POOLING_SUPPORTED, SQL_DRIVER_AWARE_POOLING_NOT_CAPABLE);
   CHECK_U_INTEGER(Connection, SQL_DYNAMIC_CURSOR_ATTRIBUTES1, SQL_CA1_NEXT |
                                                                 SQL_CA1_ABSOLUTE |
                                                                 SQL_CA1_RELATIVE |
