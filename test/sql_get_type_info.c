@@ -107,7 +107,8 @@ int run_sql_get_type_info(SQLHANDLE Stmt1, SQLSMALLINT DataType, MADB_TypeInfo *
     MADB_TypeInfo recTypeInfo;
     MADB_TypeInfo ExpTypeInfo[TYPES_COUNT];
     INIT_TYPE_INFO(&recTypeInfo);
-    int rc, i, numOfRowsFetched = 0, numResultCols = 0, expTypeInfoCount = 0;
+    SQLSMALLINT numOfRowsFetched = 0, numResultCols = 0, expTypeInfoCount = 0;
+    int rc, i;
 
     for (i = 0; i < TYPES_COUNT; i++)
     {

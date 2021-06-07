@@ -678,7 +678,7 @@ ODBC_TEST(sqlwchar)
   /* Note: this is an SQLCHAR, so it is 'ANSI' data. */
   SQLCHAR data[]= "S\xe3o Paulo", buff[30];
   SQLWCHAR wbuff[30]= {0};
-  SQLWCHAR wcdata[]= {'S','\x00e3', 'o', 'P', 'a', 'o', 'l', 'o'};
+  SQLWCHAR wcdata[]= {'S','\x00e3', 'o', 'P', 'a', 'o', 'l', 'o', 0};
 
   diag((const char*)data);
 

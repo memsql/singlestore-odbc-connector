@@ -22,7 +22,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-struct ASTNode *newLeaf(char *lexeme)
+struct ASTNode *newLeaf(const char* const lexeme)
 {
   struct ASTNode* x = malloc( sizeof( struct ASTNode ));
   if (x == NULL)

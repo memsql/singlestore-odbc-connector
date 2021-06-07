@@ -174,7 +174,10 @@ const char *appropriateSingleStoreIntervals[] =
 
 const int odbcIntervalsSize = sizeof odbcIntervals / sizeof odbcIntervals[0];
 
-char *matchValue(const char **inputVar, const char **outputVar, size_t length, char *conversion)
+static const char *matchValue(	const char *const *const inputVar,
+								const char *const *const outputVar,
+								size_t length,
+								const char *const conversion)
 {
 	int correctMatchedIndex = -1;
 	int i;
@@ -196,12 +199,12 @@ char *matchValue(const char **inputVar, const char **outputVar, size_t length, c
 	return outputVar[correctMatchedIndex];
 }
 
-char *getSingleStoreInterval(char *interval)
+static const char *getSingleStoreInterval(const char *interval)
 {
 	return matchValue(odbcIntervals, appropriateSingleStoreIntervals, odbcIntervalsSize, interval);
 }
 
-char *getSingleStoreDataType(char *dataType)
+static const char *getSingleStoreDataType(const char *dataType)
 {
 	return matchValue(supportedForConversionDataTypes,
 		appropriateSingleStoreDataTypes,

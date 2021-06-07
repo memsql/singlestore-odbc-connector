@@ -1449,6 +1449,13 @@ int sqlwcharcmp(SQLWCHAR *s1, SQLWCHAR *s2, int n)
   return n != 0 && *s1!=*s2;
 }
 
+size_t sqlwcharlen(const SQLWCHAR *s)
+{
+    size_t i;
+    for(i = 0; s[i]; ++i) {}
+    return i;
+}
+
 
 BOOL ServerNotOlderThan(SQLHDBC Conn, unsigned int major, unsigned int minor, unsigned int patch)
 {
