@@ -1211,6 +1211,8 @@ SQLRETURN MADB_ConvertCharToInteger(MYSQL_BIND* Dest, char* Src, unsigned int fi
             }
             Dest->buffer_length = sizeof(SQLBIGINT);
             break;
+        default:
+        	break;
     }
 
     return rc;

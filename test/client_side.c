@@ -34,7 +34,7 @@ ODBC_TEST(client_side_show)
 ODBC_TEST(client_side_prepare)
 {
     SQLWCHAR aParam[20] = {0x441, 0x442, 0x43E}; // сто
-    SQLLEN aParamLen = sqlwcharlen(aParam);
+    SQLLEN aParamLen = sqlwcharlen(aParam) * sizeof(SQLWCHAR);
     SQLCHAR bParam[10] = "hundred";
     SQLLEN bParamLen = strlen(bParam);
     SQL_NUMERIC_STRUCT cParam = {0, 0, 1, "\xff\xa0"}; // With scale=3 should be equal to 41.215
@@ -728,7 +728,7 @@ ODBC_TEST(client_side_get_data_buffered)
 ODBC_TEST(client_side_get_data_many_types)
 {
     SQLWCHAR aParam[20] = {0x441, 0x442, 0x43E}; // сто
-    SQLLEN aParamLen = sqlwcharlen(aParam);
+    SQLLEN aParamLen = sqlwcharlen(aParam) * sizeof(SQLWCHAR);
     SQLCHAR bParam[10] = "hundred";
     SQLLEN bParamLen = strlen(bParam);
     SQL_NUMERIC_STRUCT cParam = {0, 0, 1, "\xff\xa0"}; // With scale=3 should be equal to 41.215

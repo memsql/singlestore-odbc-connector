@@ -699,7 +699,7 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
         // TODO: even though this is a rare use-case, consider optimizing it.
         unsigned long len = strlen(STMT_STRING(Stmt));
         char *tmp = MADB_CALLOC(len + 40);
-        strncpy(tmp, STMT_STRING(Stmt), len);
+        memcpy(tmp, STMT_STRING(Stmt), len);
         _snprintf(tmp + len, 40, " LIMIT %zd", Stmt->Options.MaxRows);
 
         MADB_DeleteQuery(&Stmt->Query);
@@ -2919,7 +2919,7 @@ SQLRETURN MADB_FetchCsps(MADB_Stmt *Stmt)
         }
 
         *Stmt->stmt->bind[i].is_null = 0;
-        Stmt->stmt->bind[i].u.row_ptr = row[i];
+        Stmt->stmt->bind[i].u.row_ptr = (unsigned char*)row[i];
 
         if (Stmt->stmt->bind[i].flags & MADB_BIND_DUMMY)
         {
