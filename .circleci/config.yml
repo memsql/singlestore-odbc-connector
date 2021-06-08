@@ -292,6 +292,13 @@ jobs:
 
 workflows:
   test:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
     jobs:
       - build-ubuntu:
           name: build-ubuntu-sanitizer-unicode-7.3.2-<< matrix.build_type >>
@@ -384,13 +391,6 @@ workflows:
               test_driver:
                 - SingleStore ODBC 0.8.2-beta ANSI Driver
   daily:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - master
     jobs:
       - build-ubuntu:
           name: build-ubuntu-sanitizer-unicode-7.3.2-<< matrix.build_type >>

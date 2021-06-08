@@ -435,7 +435,7 @@ int mthd_stmt_fetch_to_bind_fake(MYSQL_STMT *stmt, unsigned char **row)
             if (!stmt->bind[i].length)
                 stmt->bind[i].length= &stmt->bind[i].length_value;
             if (row[i] != NULL) {
-                *stmt->bind[i].length = strlen((char *) row[i]);
+                *stmt->bind[i].length = (unsigned long)strlen((char *) row[i]);
             } else {
                 *stmt->bind[i].length = 0;
             }

@@ -19,13 +19,6 @@
 *************************************************************************************/
 #include <ma_odbc.h>
 
-#ifdef SQL_SEARCHABLE
-#if SQL_SEARCHABLE != (SQL_PRED_CHAR | SQL_PRED_BASIC)
-#error Incompatible system SQL headers
-#endif
-#else /*SQL_SEARCHABLE*/
-#define SQL_SEARCHABLE (SQL_PRED_CHAR | SQL_PRED_BASIC)
-#endif
 #define TYPE_INFO_FIELDS_COUNT 19
 #define TYPES_COUNT 56
 

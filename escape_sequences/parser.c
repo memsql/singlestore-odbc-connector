@@ -174,7 +174,7 @@ const char *appropriateSingleStoreIntervals[] =
 
 const int odbcIntervalsSize = sizeof odbcIntervals / sizeof odbcIntervals[0];
 
-static const char *matchValue(	const char *const *const inputVar,
+static const char *matchValue(const char *const *const inputVar,
 								const char *const *const outputVar,
 								size_t length,
 								const char *const conversion)
