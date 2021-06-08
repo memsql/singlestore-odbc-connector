@@ -695,7 +695,7 @@ ODBC_TEST(bulk_insert_all_datatypes)
 
     int i;
     SQLHDESC ard;
-    SQLINTEGER rowsFetched;
+    SQLULEN rowsFetched;
     SQLUSMALLINT rowStatusArray[NUM_ROWS];
     Row rowsSelect[NUM_ROWS];
     Row rowsInsert[NUM_ROWS] = {
