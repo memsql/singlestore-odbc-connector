@@ -195,17 +195,17 @@ MYSQL *my_test_connect(MYSQL *mysql,
                        const char *unix_socket,
                        unsigned long clientflag);
 
-static const char* schema = "c_test";
-static const char* hostname = "127.0.0.1";
-static const char* password = "";
+static const char *schema = "c_test";
+static char *hostname = "127.0.0.1";
+static char *password = "";
 static unsigned int port = 5506;
 static unsigned int ssl_port = 5506;
-static const char* socketname = 0;
-static const char* username = "root";
+static char *socketname = 0;
+static char *username = "root";
 static int force_tls= 0;
 static uchar is_mariadb= 0;
-static const char* this_host= 0;
-static const char* plugindir= 0;
+static char *this_host= 0;
+static char *plugindir= 0;
 static unsigned char travis_test= 0;
 /*
 static struct my_option test_options[] =
@@ -532,7 +532,6 @@ MYSQL *test_connect(struct my_tests_st *test)
   return(mysql);
 }
 
-#if 0
 static int reset_connection(MYSQL *mysql) {
   int rc;
 
@@ -546,7 +545,6 @@ static int reset_connection(MYSQL *mysql) {
 
   return OK;
 }
-#endif
 
 /*
  * function get_envvars((
@@ -600,7 +598,7 @@ void get_envvars() {
       socketname= envvar;
     else if ((envvar= getenv("MASTER_MYSOCK")))
       socketname= envvar;
-    diag("socketname: %s", socketname ? socketname : "<null>");
+    diag("socketname: %s", socketname);
   }
   if ((envvar= getenv("MYSQL_TEST_PLUGINDIR")))
     plugindir= envvar;
@@ -694,7 +692,7 @@ void run_tests(struct my_tests_st *test) {
     }
   }
   if (this_host)
-    free((void*)this_host);
+    free(this_host);
 
   if (mysql_default) {
     diag("close default");

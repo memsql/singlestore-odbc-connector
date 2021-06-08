@@ -1234,19 +1234,16 @@ void ps_fetch_bin(MYSQL_BIND *r_param,
 /* {{{ ps_fetch_bit */
 static
 void ps_fetch_bit(MYSQL_BIND *r_param,
-                  const MYSQL_FIELD *field __attribute__((unused)),
+                  const MYSQL_FIELD *field,
                   unsigned char **row)
 {
     ulong field_length = net_field_length(row);
     uchar reverseBit[8];
+    memset(reverseBit, 0, sizeof(reverseBit));
     // We expect the field_length to be 8, but if (in a very unlikely case) this is not true, let's pick the smallest
     // 8 bytes from the field or all of them if there are less than 8.
     ulong curPos = field_length >= 8 ? field_length - 8 : 0;
     ulong revPos = 0;
-    uchar *current_pos= reverseBit + r_param->offset, *end= reverseBit + MIN(8, field_length);
-    size_t copylen= 0;
-
-    memset(reverseBit, 0, sizeof(reverseBit));
 
     // reverse the BIT value.
     // we cannot do that in-place because this may be called multiple times and we don't want to re-reverse the value.
@@ -1257,6 +1254,8 @@ void ps_fetch_bit(MYSQL_BIND *r_param,
         revPos++;
     }
 
+    uchar *current_pos= reverseBit + r_param->offset, *end= reverseBit + MIN(8, field_length);
+    size_t copylen= 0;
     if (current_pos < end)
     {
         copylen= end - current_pos;

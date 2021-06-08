@@ -1387,7 +1387,7 @@ static int test_bug27592(MYSQL *mysql)
 /*
   Bug#28934: server crash when receiving malformed com_execute packets
 */
-/*
+
 static int test_bug28934(MYSQL *mysql)
 {
   my_bool error= 0;
@@ -1427,7 +1427,6 @@ static int test_bug28934(MYSQL *mysql)
   check_mysql_rc(rc, mysql);
   return OK;
 }
-*/
 
 static int test_bug3035(MYSQL *mysql)
 {

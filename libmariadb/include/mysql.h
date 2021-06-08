@@ -37,11 +37,8 @@ extern "C" {
 
 #if !defined (_global_h) && !defined (MY_GLOBAL_INCLUDED) /* If not standard header */
 #include <sys/types.h>
-#ifndef MY_TYPES_DEFINED
 typedef char my_bool;
 typedef unsigned long long my_ulonglong;
-#define MY_TYPES_DEFINED
-#endif /*MY_TYPES_DEFINED*/
 
 #if !defined(_WIN32)
 #define STDCALL
