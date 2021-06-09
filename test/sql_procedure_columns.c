@@ -377,7 +377,7 @@ static const ProcData c_proc_expected[NUM_PROC_FIELDS] = {
     {"odbc_test", "test set and get precision", "precision result", SQL_RESULT_COL},
     {"odbc_test", "test set and get precision", "test precision", SQL_RESULT_COL}
 };
-static const Mask c_implemented_mask = 0x3B;   // SQL_PARAM_OUTPUT and SQL_RESULT_COL are not implemented by the driver
+static const Mask c_implemented_mask = 0x3B;   // SQL_RETURN_VALUE and SQL_RESULT_COL are not implemented by the driver
 
 static const QueryDesc c_queries_with_id_off[] = {
     // Get all fields

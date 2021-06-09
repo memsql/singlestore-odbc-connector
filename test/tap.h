@@ -442,7 +442,7 @@ void odbc_print_error(SQLSMALLINT HandleType, SQLHANDLE Handle)
   if(result == SQL_SUCCESS || result == SQL_SUCCESS_WITH_INFO) {
     fprintf(stdout, "[%s] (%d) %s\n", SQLState, NativeError, SQLMessage);
   } else {
-	fprintf(stdout, "Error %d getting diagnostic records with SQLGetDiagRec()\n", result);
+    fprintf(stdout, "Error %d getting diagnostic records with SQLGetDiagRec()\n", result);
   }
 }
 
