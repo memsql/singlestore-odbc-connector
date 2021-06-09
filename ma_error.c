@@ -356,12 +356,13 @@ SQLRETURN MADB_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
   case SQL_DIAG_DYNAMIC_FUNCTION:
     if (!Stmt)
       return SQL_ERROR;
-    /* Todo */
+    // TODO PLAT-5589
     break;
   case SQL_DIAG_DYNAMIC_FUNCTION_CODE:
     if (!Stmt)
       return SQL_ERROR;
     *(SQLINTEGER *)DiagInfoPtr= 0;
+    // TODO PLAT-5589
     break;
   case SQL_DIAG_NUMBER:
     *(SQLINTEGER *)DiagInfoPtr= 1;

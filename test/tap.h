@@ -757,6 +757,15 @@ do {\
   }\
 } while(0)
 
+#define EXPECT_ENV(_Env, _Function, _Expected)\
+do {\
+  SQLRETURN ret= (_Function);\
+  if (ret != (_Expected))\
+  {\
+    CHECK_ENV_RC(_Env, ret);\
+  }\
+} while(0)
+
 #define EXPECT_DBC(_Dbc, _Function, _Expected)\
 do {\
   SQLRETURN ret= (_Function);\
