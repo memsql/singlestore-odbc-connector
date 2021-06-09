@@ -292,13 +292,6 @@ jobs:
 
 workflows:
   test:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - master
     jobs:
       - build-ubuntu:
           name: build-ubuntu-sanitizer-unicode-7.3.2-<< matrix.build_type >>
@@ -361,6 +354,8 @@ workflows:
               driver_name:
                 - SingleStore ODBC 0.8.2-beta Unicode Driver
       - build-macos:
+          requires:
+            - build-macos-unicode-RelWithDebInfo
           name: build-macos-ansi-<< matrix.build_type >>
           matrix:
             parameters:
@@ -371,6 +366,8 @@ workflows:
               driver_name:
                 - SingleStore ODBC 0.8.2-beta ANSI Driver
       - build-windows:
+          requires:
+            - build-macos-ansi-RelWithDebInfo
           name: build-windows-unicode-<< matrix.build_type >>
           matrix:
             parameters:
@@ -381,6 +378,8 @@ workflows:
               test_driver:
                 - SingleStore ODBC 0.8.2-beta Unicode Driver
       - build-windows:
+          requires:
+            - build-windows-unicode-RelWithDebInfo
           name: build-windows-ansi-<< matrix.build_type >>
           matrix:
             parameters:
@@ -391,6 +390,13 @@ workflows:
               test_driver:
                 - SingleStore ODBC 0.8.2-beta ANSI Driver
   daily:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
     jobs:
       - build-ubuntu:
           name: build-ubuntu-sanitizer-unicode-7.3.2-<< matrix.build_type >>
@@ -519,6 +525,8 @@ workflows:
               test_driver:
                 - SingleStore ODBC 0.8.2-beta Unicode Driver
       - build-linux-in-docker:
+          requires:
+            - build-debian-8-unicode-RelWithDebInfo
           name: build-debian-8-ansi-<< matrix.build_type >>
           matrix:
             parameters:
@@ -531,6 +539,8 @@ workflows:
               test_driver:
                 - SingleStore ODBC 0.8.2-beta ANSI Driver
       - build-linux-in-docker:
+          requires:
+            - build-debian-8-ansi-RelWithDebInfo
           name: build-debian-9-unicode-<< matrix.build_type >>
           matrix:
             parameters:
@@ -543,6 +553,8 @@ workflows:
               test_driver:
                 - SingleStore ODBC 0.8.2-beta Unicode Driver
       - build-linux-in-docker:
+          requires:
+            - build-debian-9-unicode-RelWithDebInfo
           name: build-debian-9-ansi-<< matrix.build_type >>
           matrix:
             parameters:
@@ -555,6 +567,8 @@ workflows:
               test_driver:
                 - SingleStore ODBC 0.8.2-beta ANSI Driver
       - build-linux-in-docker:
+          requires:
+            - build-debian-9-ansi-RelWithDebInfo
           name: build-debian-10-unicode-<< matrix.build_type >>
           matrix:
             parameters:
@@ -567,6 +581,8 @@ workflows:
               test_driver:
                 - SingleStore ODBC 0.8.2-beta Unicode Driver
       - build-linux-in-docker:
+          requires:
+            - build-debian-10-unicode-RelWithDebInfo
           name: build-debian-10-ansi-<< matrix.build_type >>
           matrix:
             parameters:
@@ -579,6 +595,8 @@ workflows:
               test_driver:
                 - SingleStore ODBC 0.8.2-beta ANSI Driver
       - build-linux-in-docker:
+          requires:
+            - build-debian-10-ansi-RelWithDebInfo
           name: build-centos-7-unicode-<< matrix.build_type >>
           matrix:
             parameters:
@@ -591,6 +609,8 @@ workflows:
               test_driver:
                 - SingleStore ODBC 0.8.2-beta Unicode Driver
       - build-linux-in-docker:
+          requires:
+            - build-centos-7-unicode-RelWithDebInfo
           name: build-centos-7-ansi-<< matrix.build_type >>
           matrix:
             parameters:
@@ -603,6 +623,8 @@ workflows:
               test_driver:
                 - SingleStore ODBC 0.8.2-beta ANSI Driver
       - build-linux-in-docker:
+          requires:
+            - build-centos-7-ansi-RelWithDebInfo
           name: build-centos-8-unicode-<< matrix.build_type >>
           matrix:
             parameters:
@@ -615,6 +637,8 @@ workflows:
               test_driver:
                 - SingleStore ODBC 0.8.2-beta Unicode Driver
       - build-linux-in-docker:
+          requires:
+            - build-centos-8-unicode-RelWithDebInfo
           name: build-centos-8-ansi-<< matrix.build_type >>
           matrix:
             parameters:
@@ -627,6 +651,8 @@ workflows:
               test_driver:
                 - SingleStore ODBC 0.8.2-beta ANSI Driver
       - build-macos:
+          requires:
+            - build-centos-8-ansi-RelWithDebInfo
           name: build-macos-unicode-<< matrix.build_type >>
           matrix:
             parameters:
@@ -637,6 +663,8 @@ workflows:
               driver_name:
                 - SingleStore ODBC 0.8.2-beta Unicode Driver
       - build-macos:
+          requires:
+            - build-macos-unicode-RelWithDebInfo
           name: build-macos-ansi-<< matrix.build_type >>
           matrix:
             parameters:
@@ -647,6 +675,8 @@ workflows:
               driver_name:
                 - SingleStore ODBC 0.8.2-beta ANSI Driver
       - build-windows:
+          requires:
+            - build-macos-ansi-RelWithDebInfo
           name: build-windows-unicode-<< matrix.build_type >>
           matrix:
             parameters:
@@ -657,6 +687,8 @@ workflows:
               test_driver:
                 - SingleStore ODBC 0.8.2-beta Unicode Driver
       - build-windows:
+          requires:
+            - build-windows-unicode-RelWithDebInfo
           name: build-windows-ansi-<< matrix.build_type >>
           matrix:
             parameters:
