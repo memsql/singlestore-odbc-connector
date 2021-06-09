@@ -63,7 +63,7 @@ BOOL VerifyOptionFields(MADB_Dsn *Dsn)
 char* ltrim(char* Str)
 {
   /* I am not sure using iswspace, and not isspace makes any sense here. But probably does not hurt either */
-  while (Str && isspace(Str[0]))
+  while (Str[0] && isspace(Str[0]))
     ++Str;
   return Str;
 }

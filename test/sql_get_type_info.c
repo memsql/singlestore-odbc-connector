@@ -149,7 +149,7 @@ ODBC_TEST(t_sqlgettypeinfo2) {
     SQLHANDLE henv1;
     SQLHANDLE Connection1, DynCursorConnection;
     SQLHANDLE Stmt1;
-    SQLCHAR conn[512], dynCursorConn[600];
+    SQLCHAR conn[512], dynCursorConn[600]; /* dynCursorConn should be larger than conn to make sure sprintf does not corrupt memory */
 
     get_conn_string((char *) conn);
     sprintf((char *) dynCursorConn, "%s;OPTION=67108898", conn);
@@ -198,7 +198,7 @@ ODBC_TEST(t_sqlgettypeinfo3) {
     SQLHANDLE henv1;
     SQLHANDLE Connection1, DynCursorConnection;
     SQLHANDLE Stmt1;
-    SQLCHAR conn[512], dynCursorConn[600];
+    SQLCHAR conn[512], dynCursorConn[600]; /* dynCursorConn should be larger than conn to make sure sprintf does not corrupt memory */
 
     get_conn_string((char *) conn);
     sprintf((char *) dynCursorConn, "%s;OPTION=67108898", conn);
@@ -315,7 +315,7 @@ ODBC_TEST(t_sqlgettypeinfo_fetchscroll) {
     SQLHANDLE henv1;
     SQLHANDLE Connection1, DynCursorConnection;
     SQLHANDLE Stmt1;
-    SQLCHAR conn[512], dynCursorConn[600];
+    SQLCHAR conn[512], dynCursorConn[600]; /* dynCursorConn should be larger than conn to make sure sprintf does not corrupt memory */
     SQLLEN cpSize;
     MADB_TypeInfo recTypeInfo, *expTypeInfo = TypeInfoV3;
     int rc, i;
