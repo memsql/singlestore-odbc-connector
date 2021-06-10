@@ -107,7 +107,8 @@ int run_sql_get_type_info(SQLHANDLE Stmt1, SQLSMALLINT DataType, MADB_TypeInfo *
     MADB_TypeInfo recTypeInfo;
     MADB_TypeInfo ExpTypeInfo[TYPES_COUNT];
     INIT_TYPE_INFO(&recTypeInfo);
-    int rc, i, numOfRowsFetched = 0, numResultCols = 0, expTypeInfoCount = 0;
+    SQLSMALLINT numOfRowsFetched = 0, numResultCols = 0, expTypeInfoCount = 0;
+    int rc, i;
 
     for (i = 0; i < TYPES_COUNT; i++)
     {
@@ -148,7 +149,7 @@ ODBC_TEST(t_sqlgettypeinfo2) {
     SQLHANDLE henv1;
     SQLHANDLE Connection1, DynCursorConnection;
     SQLHANDLE Stmt1;
-    SQLCHAR conn[512], dynCursorConn[512];
+    SQLCHAR conn[512], dynCursorConn[600]; /* dynCursorConn should be larger than conn to make sure sprintf does not corrupt memory */
 
     get_conn_string((char *) conn);
     sprintf((char *) dynCursorConn, "%s;OPTION=67108898", conn);
@@ -197,7 +198,7 @@ ODBC_TEST(t_sqlgettypeinfo3) {
     SQLHANDLE henv1;
     SQLHANDLE Connection1, DynCursorConnection;
     SQLHANDLE Stmt1;
-    SQLCHAR conn[512], dynCursorConn[512];
+    SQLCHAR conn[512], dynCursorConn[600]; /* dynCursorConn should be larger than conn to make sure sprintf does not corrupt memory */
 
     get_conn_string((char *) conn);
     sprintf((char *) dynCursorConn, "%s;OPTION=67108898", conn);
@@ -314,7 +315,7 @@ ODBC_TEST(t_sqlgettypeinfo_fetchscroll) {
     SQLHANDLE henv1;
     SQLHANDLE Connection1, DynCursorConnection;
     SQLHANDLE Stmt1;
-    SQLCHAR conn[512], dynCursorConn[512];
+    SQLCHAR conn[512], dynCursorConn[600]; /* dynCursorConn should be larger than conn to make sure sprintf does not corrupt memory */
     SQLLEN cpSize;
     MADB_TypeInfo recTypeInfo, *expTypeInfo = TypeInfoV3;
     int rc, i;

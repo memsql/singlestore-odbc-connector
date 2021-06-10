@@ -34,14 +34,14 @@ ODBC_TEST(client_side_show)
 ODBC_TEST(client_side_prepare)
 {
     SQLWCHAR aParam[20] = {0x441, 0x442, 0x43E}; // сто
-    SQLLEN aParamLen = strlen(aParam);
+    SQLLEN aParamLen = sqlwcharlen(aParam) * sizeof(SQLWCHAR);
     SQLCHAR bParam[10] = "hundred";
     SQLLEN bParamLen = strlen(bParam);
     SQL_NUMERIC_STRUCT cParam = {0, 0, 1, "\xff\xa0"}; // With scale=3 should be equal to 41.215
     SQLLEN cParamLen;
     SQLINTEGER dParam = -193;
     SQLLEN dParamLen;
-    SQLUBIGINT eParam = 18446744073709551615;
+    SQLUBIGINT eParam = 18446744073709551615ULL;
     SQLLEN eParamLen;
     SQL_TIMESTAMP_STRUCT fParam = {2020, 11, 20, 19, 5, 31};
     SQLLEN fParamLen;
@@ -728,14 +728,14 @@ ODBC_TEST(client_side_get_data_buffered)
 ODBC_TEST(client_side_get_data_many_types)
 {
     SQLWCHAR aParam[20] = {0x441, 0x442, 0x43E}; // сто
-    SQLLEN aParamLen = strlen(aParam);
+    SQLLEN aParamLen = sqlwcharlen(aParam) * sizeof(SQLWCHAR);
     SQLCHAR bParam[10] = "hundred";
     SQLLEN bParamLen = strlen(bParam);
     SQL_NUMERIC_STRUCT cParam = {0, 0, 1, "\xff\xa0"}; // With scale=3 should be equal to 41.215
     SQLLEN cParamLen;
     SQLINTEGER dParam = -193;
     SQLLEN dParamLen;
-    SQLUBIGINT eParam = 18446744073709551615;
+    SQLUBIGINT eParam = 18446744073709551615ULL;
     SQLLEN eParamLen;
     SQL_TIMESTAMP_STRUCT fParam = {2020, 11, 20, 19, 5, 31, 123456000};
     SQLLEN fParamLen;

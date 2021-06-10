@@ -30,7 +30,7 @@ struct ASTNode
   char *lexeme;
 };
 
-struct ASTNode *newLeaf(char *lexeme);
+struct ASTNode *newLeaf(const char* const lexeme);
 struct ASTNode *newNode(int childrenCount, va_list children);
 struct ASTNode *copyTree(struct ASTNode *root);
 void appendToString(MADB_DynString *res, struct ASTNode *x);

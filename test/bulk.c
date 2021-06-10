@@ -656,7 +656,7 @@ ODBC_TEST(t_odbc149)
 #define NUM_CURSOR_TYPES 3
 ODBC_TEST(bulk_insert_all_datatypes)
 {
-  SQLPOINTER  cursorTypes[NUM_CURSOR_TYPES] = {SQL_CURSOR_FORWARD_ONLY, SQL_CURSOR_STATIC, SQL_CURSOR_DYNAMIC};
+  SQLULEN  cursorTypes[NUM_CURSOR_TYPES] = {SQL_CURSOR_FORWARD_ONLY, SQL_CURSOR_STATIC, SQL_CURSOR_DYNAMIC};
   int currentCursorIndex;
   for (currentCursorIndex = 0; currentCursorIndex < NUM_CURSOR_TYPES; currentCursorIndex++)
   {
