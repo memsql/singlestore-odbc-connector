@@ -699,8 +699,7 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
         // TODO: even though this is a rare use-case, consider optimizing it.
         unsigned long len = strlen(STMT_STRING(Stmt));
         char *tmp = MADB_CALLOC(len + 40);
-        memcpy(tmp, STMT_STRING(Stmt), len);
-        _snprintf(tmp + len, 40, " LIMIT %zd", Stmt->Options.MaxRows);
+        _snprintf(tmp, len + 40, "%s LIMIT %zd", STMT_STRING(Stmt), Stmt->Options.MaxRows);
 
         MADB_DeleteQuery(&Stmt->Query);
         Stmt->Query.RefinedText = tmp;
