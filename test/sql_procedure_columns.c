@@ -21,6 +21,7 @@
 #include <stdint.h>
 
 #define SQL_COLUMNS_BUFFER_LEN 256
+#define PROC_ON_FUNC_NATIVE_ERR_CODE 1347
 
 #define CREATE_ROUTINE_TEMPLATE \
 "CREATE %s test_procedure_columns(a TINYINT , b SMALLINT NOT NULL, c MEDIUMINT UNSIGNED , d INT NOT NULL, e BIGINT UNSIGNED , f DOUBLE NOT NULL, g FLOAT ,"\
@@ -30,17 +31,79 @@
 "ac JSON DEFAULT '{}', ad GEOGRAPHY NOT NULL DEFAULT 'POINT(1, 1)', ae GEOGRAPHYPOINT DEFAULT 'POINT(1, 1)', af ENUM('e') NOT NULL DEFAULT 'e', ag SET('s') DEFAULT 's') "\
 "RETURNS INT AS BEGIN RETURN 0; END"
 
-#define DROP_ROUTINE_TEMPLATE "DROP %s IF EXISTS test_procedure_columns"
+
+static int process_drop_error(const char* const command) {
+    SQLCHAR SQLState[6];
+    SQLINTEGER NativeError;
+    SQLCHAR SQLMessage[SQL_MAX_MESSAGE_LENGTH];
+    SQLSMALLINT TextLengthPtr;
+
+    const SQLRETURN result = SQLGetDiagRec(SQL_HANDLE_STMT, Stmt, 1, SQLState, &NativeError, SQLMessage, SQL_MAX_MESSAGE_LENGTH, &TextLengthPtr);
+    if(result == SQL_SUCCESS || result == SQL_SUCCESS_WITH_INFO) {
+        if(NativeError == PROC_ON_FUNC_NATIVE_ERR_CODE) {
+            /* [HY000] (1347) [ss-0.8.2][7.1.12]Cannot DROP PROCEDURE on FUNCTION `test_procedure_columns` */
+            return OK;
+        }
+        fprintf(stdout, "[%s] (%d) %s\n", SQLState, NativeError, SQLMessage);
+    } else {
+        fprintf(stdout, "Error %d getting diagnostic records with SQLGetDiagRec()\n", result);
+    }
+
+    return FAIL;
+}
+
+static int try_drop_check_error(const char* const command) {
+    if(!SQL_SUCCEEDED(SQLExecDirect(Stmt, (SQLCHAR*)(command), (SQLINTEGER)strlen(command))))
+    {
+        IS_OK(process_drop_error(command));
+    }
+    /*	TODO: PLAT-5561
+    if(!SQL_SUCCEEDED(SQLExecDirectW(Stmt, CW(command), SQL_NTS)))
+    {
+        IS_OK(process_drop_error(command));
+    }
+    */
+    return OK;
+}
+
+/* This should delete all the procedures created by tests in this file so that test failures do not chain up.
+ * Call at the beginning of each test.
+ */
+static int run_cleanup() {
+    const char* const c_proc_names[] = {
+        "test_procedure_columns",
+        "TEST_GET_PRECISION_AND_ROUND_UP",
+        "НАЙТИ_ПЕТЮ_И_ОКРУГЛИТЬ"
+    };
+    const char* const c_func_names[] = {
+        "test_procedure_columns",
+        "test_get_name",
+        "`test set and get precision`",
+        "узнать_имя_васи",
+        "`взять и положить кого-то куда-то`"
+    };
+    char buffer[1000];
+    unsigned i;
+
+    for(i = 0; i < LENGTHOF(c_func_names); ++i) {
+        _snprintf(buffer, sizeof(buffer), "DROP FUNCTION IF EXISTS %s", c_func_names[i]);
+        IS_OK(try_drop_check_error(buffer));
+    }
+    for(i = 0; i < LENGTHOF(c_proc_names); ++i) {
+        _snprintf(buffer, sizeof(buffer), "DROP PROCEDURE IF EXISTS %s", c_proc_names[i]);
+        IS_OK(try_drop_check_error(buffer));
+    }
+
+    return OK;
+}
 
 int run_sql_procedurecolumns_routine_type(SQLHANDLE Stmt, const SQLSMALLINT *ExpDataType, const SQLSMALLINT *ExpSqlDataType, const char* RoutineType) {
     const int ExpNumOfRowsFetched = 33;
     SQLCHAR *ExpTableCat = my_schema;
     SQLCHAR *ExpRoutineName = "test_procedure_columns";
-    char createStmtStr[1024], dropStmtStr[128];
+    char createStmtStr[1024];
     unsigned long crLength = strlen(CREATE_ROUTINE_TEMPLATE) + strlen(RoutineType) + 1;
-    unsigned long drLength = strlen(DROP_ROUTINE_TEMPLATE) + strlen(RoutineType) + 1;
     _snprintf(createStmtStr, crLength, CREATE_ROUTINE_TEMPLATE, RoutineType);
-    _snprintf(dropStmtStr, drLength, DROP_ROUTINE_TEMPLATE, RoutineType);
 
     char *ExpTypeName[33] = {"tinyint", "smallint", "mediumint unsigned", "int", "bigint unsigned", "double", "float",
                              "newdecimal", "date", "time", "datetime", "datetime", "timestamp", "timestamp", "year",
@@ -63,7 +126,7 @@ int run_sql_procedurecolumns_routine_type(SQLHANDLE Stmt, const SQLSMALLINT *Exp
                             "", "", "", "", "", "", "", "", "", "", "", "", "", "",
                             "'{}'", "'POINT(1, 1)'", "'POINT(1, 1)'", "'e'", "'s'"};
 
-    OK_SIMPLE_STMT(Stmt, dropStmtStr);
+    IS_OK(run_cleanup());
     OK_SIMPLE_STMT(Stmt, createStmtStr);
 
     CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLProcedureColumns(Stmt, ExpTableCat, SQL_NTS, NULL, 0,
@@ -140,7 +203,6 @@ int run_sql_procedurecolumns_routine_type(SQLHANDLE Stmt, const SQLSMALLINT *Exp
     FAIL_IF(numOfRowsFetched != ExpNumOfRowsFetched, "wrong number of rows fetched");
 
     CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
-    OK_SIMPLE_STMT(Stmt, dropStmtStr);
 
     return OK;
 }
@@ -377,7 +439,12 @@ static const ProcData c_proc_expected[NUM_PROC_FIELDS] = {
     {"odbc_test", "test set and get precision", "precision result", SQL_RESULT_COL},
     {"odbc_test", "test set and get precision", "test precision", SQL_RESULT_COL}
 };
-static const Mask c_implemented_mask = 0x3B;   // SQL_RETURN_VALUE and SQL_RESULT_COL are not implemented by the driver
+static const uint8_t c_proc_expected_sorting[NUM_PROC_FIELDS] = {5, 6, 7, 2, 0, 1, 3, 4};
+/*
+ * SQL_RETURN_VALUE and SQL_RESULT_COL are not implemented by the driver.
+ * TODO: remove the use of the mask after PLAT-5588
+ */
+static const Mask c_implemented_mask = 0x3B;
 
 static const QueryDesc c_queries_with_id_off[] = {
     // Get all fields
@@ -479,6 +546,7 @@ static const ProcData c_proc_expected_non_ascii[NUM_PROC_FIELDS] = {
     {"odbc_test", "взять и положить кого-то куда-то", "не там", SQL_RESULT_COL},
     {"odbc_test", "взять и положить кого-то куда-то", "кто-то там", SQL_RESULT_COL}
 };
+static const uint8_t c_proc_expected_non_ascii_sorting[NUM_PROC_FIELDS] = {5, 6, 7, 3, 4, 2, 0, 1};
 
 static const QueryDesc c_queries_non_ascii_with_id_off[] = {
     // Get all fields
@@ -508,6 +576,24 @@ static const QueryDesc c_queries_non_ascii_with_id_on[] = {
 };
 
 
+static int check_sorting(const uint8_t* const order, const size_t numitems, const size_t cur, const size_t prev) {
+    size_t i;
+
+    if(prev == numitems)
+        return OK;
+
+    /* previous value should be in the sorted data before the current value */
+    for(i = 0; i < numitems; ++i) {
+        if(prev == order[i])
+            return OK;
+        if(cur == order[i])
+            return FAIL;
+    }
+
+    assert(0);	/* inputs were not found in the sorted array */
+    return FAIL;
+}
+
 static int query_and_check_N(const char* const catalog, const char* const procedure, const char* const column, const Mask mask) {
     typedef struct {
         SQLCHAR catalog[20];
@@ -524,6 +610,7 @@ static int query_and_check_N(const char* const catalog, const char* const proced
     SQLRETURN fetched;
     Mask remaining = (mask & c_implemented_mask);
     size_t i, j;
+    size_t prev = NUM_PROC_FIELDS;
 
     memset(result, 0, sizeof(result));
 
@@ -554,11 +641,13 @@ static int query_and_check_N(const char* const catalog, const char* const proced
                 if(!strcmp(result[i].catalog, c_proc_expected[j].catalog)
                     && !strcmp(result[i].procedure, c_proc_expected[j].procedure)
                     && !strcmp(result[i].column_name, c_proc_expected[j].column_name)
-					&& result[i].column_type == c_proc_expected[j].column_type) {
+                    && result[i].column_type == c_proc_expected[j].column_type) {
                     is_num(strlen(c_proc_expected[j].catalog), result[i].catLen);
                     is_num(strlen(c_proc_expected[j].procedure), result[i].procLen);
                     is_num(strlen(c_proc_expected[j].column_name), result[i].colLen);
                     remaining &= ~(1 << j);
+                    IS_OK(check_sorting(c_proc_expected_sorting, NUM_PROC_FIELDS, j, prev));
+                    prev = j;
                     goto query_and_check_n_found;
                 }
             }
@@ -596,6 +685,7 @@ static int query_and_check_W(const char* const catalog, const char* const proced
     SQLRETURN fetched;
     Mask remaining = (mask & c_implemented_mask);
     size_t i, j;
+    size_t prev = NUM_PROC_FIELDS;
 
     memset(result, 0, sizeof(result));
     if(catalog) {
@@ -638,11 +728,13 @@ static int query_and_check_W(const char* const catalog, const char* const proced
                 if(!sqlwcharcmp(result[i].catalog, CW(c_proc_expected[j].catalog), -1)
                    && !sqlwcharcmp(result[i].procedure, CW(c_proc_expected[j].procedure), -1)
                    && !sqlwcharcmp(result[i].column_name, CW(c_proc_expected[j].column_name), -1)
-				   && result[i].column_type == c_proc_expected[j].column_type) {
+                   && result[i].column_type == c_proc_expected[j].column_type) {
                     is_num(strlen(c_proc_expected[j].catalog) * sizeof(SQLWCHAR), result[i].catLen);
                     is_num(strlen(c_proc_expected[j].procedure) * sizeof(SQLWCHAR), result[i].procLen);
                     is_num(strlen(c_proc_expected[j].column_name) * sizeof(SQLWCHAR), result[i].colLen);
                     remaining &= ~(1 << j);
+                    IS_OK(check_sorting(c_proc_expected_sorting, NUM_PROC_FIELDS, j, prev));
+                    prev = j;
                     goto query_and_check_w_found;
                 }
             }
@@ -684,6 +776,7 @@ static int query_and_check_WN(const char* const catalog, const char* const proce
     SQLRETURN fetched;
     Mask remaining = (mask & c_implemented_mask);
     size_t i, j;
+    size_t prev = NUM_PROC_FIELDS;
 
     memset(result, 0, sizeof(result));
     if(catalog) {
@@ -726,9 +819,11 @@ static int query_and_check_WN(const char* const catalog, const char* const proce
                 if(!strcmp(result[i].catalog, c_proc_expected[j].catalog)
                    && !sqlwcharcmp(result[i].procedure, CW(c_proc_expected[j].procedure), -1)
                    && !strcmp(result[i].column_name, c_proc_expected[j].column_name)
-				   && result[i].column_type == c_proc_expected[j].column_type) {
+                   && result[i].column_type == c_proc_expected[j].column_type) {
                     is_num(strlen(c_proc_expected[j].catalog), result[i].catLen);
                     remaining &= ~(1 << j);
+                    IS_OK(check_sorting(c_proc_expected_sorting, NUM_PROC_FIELDS, j, prev));
+                    prev = j;
                     goto query_and_check_wn_found;
                 }
             }
@@ -763,6 +858,7 @@ static int query_and_check_NW(const char* const catalog, const char* const proce
     SQLRETURN fetched;
     Mask remaining = (mask & c_implemented_mask);
     size_t i, j;
+    size_t prev = NUM_PROC_FIELDS;
 
     memset(result, 0, sizeof(result));
 
@@ -793,10 +889,12 @@ static int query_and_check_NW(const char* const catalog, const char* const proce
                 if(!sqlwcharcmp(result[i].catalog, CW(c_proc_expected[j].catalog), -1)
                    && !strcmp(result[i].procedure, c_proc_expected[j].procedure)
                    && !sqlwcharcmp(result[i].column_name, CW(c_proc_expected[j].column_name), -1)
-				   && result[i].column_type == c_proc_expected[j].column_type) {
+                   && result[i].column_type == c_proc_expected[j].column_type) {
                     is_num(strlen(c_proc_expected[j].procedure), result[i].procLen);
                     is_num(strlen(c_proc_expected[j].column_name) * sizeof(SQLWCHAR), result[i].colLen);
                     remaining &= ~(1 << j);
+                    IS_OK(check_sorting(c_proc_expected_sorting, NUM_PROC_FIELDS, j, prev));
+                    prev = j;
                     goto query_and_check_nw_found;
                 }
             }
@@ -834,6 +932,7 @@ static int query_and_check_non_ascii_N(const char* const catalog, const char* co
     SQLRETURN fetched;
     Mask remaining = (mask & c_implemented_mask);
     size_t i, j;
+    size_t prev = NUM_PROC_FIELDS;
 
     memset(result, 0, sizeof(result));
 
@@ -864,11 +963,13 @@ static int query_and_check_non_ascii_N(const char* const catalog, const char* co
                 if(!strcmp(result[i].catalog, c_proc_expected_non_ascii[j].catalog)
                    && !strcmp(result[i].procedure, c_proc_expected_non_ascii[j].procedure)
                    && !strcmp(result[i].column_name, c_proc_expected_non_ascii[j].column_name)
-				   && result[i].column_type == c_proc_expected[j].column_type) {
+                   && result[i].column_type == c_proc_expected[j].column_type) {
                     is_num(strlen(c_proc_expected_non_ascii[j].catalog), result[i].catLen);
                     is_num(strlen(c_proc_expected_non_ascii[j].procedure), result[i].procLen);
                     is_num(strlen(c_proc_expected_non_ascii[j].column_name), result[i].colLen);
                     remaining &= ~(1 << j);
+                    IS_OK(check_sorting(c_proc_expected_non_ascii_sorting, NUM_PROC_FIELDS, j, prev));
+                    prev = j;
                     goto query_and_check_n_found;
                 }
             }
@@ -906,6 +1007,7 @@ static int query_and_check_non_ascii_W(const char* const catalog, const char* co
     SQLRETURN fetched;
     Mask remaining = (mask & c_implemented_mask);
     size_t i, j;
+    size_t prev = NUM_PROC_FIELDS;
 
     memset(result, 0, sizeof(result));
     if(catalog) {
@@ -945,11 +1047,13 @@ static int query_and_check_non_ascii_W(const char* const catalog, const char* co
                 if(!sqlwcharcmp(result[i].catalog, CW(c_proc_expected_non_ascii[j].catalog), -1)
                    && !sqlwcharcmp(result[i].procedure, CW(c_proc_expected_non_ascii[j].procedure), -1)
                    && !sqlwcharcmp(result[i].column_name, CW(c_proc_expected_non_ascii[j].column_name), -1)
-				   && result[i].column_type == c_proc_expected[j].column_type) {
+                   && result[i].column_type == c_proc_expected[j].column_type) {
                     is_num(sqlwcharlen(CW(c_proc_expected_non_ascii[j].catalog)) * sizeof(SQLWCHAR), result[i].catLen);
                     is_num(sqlwcharlen(CW(c_proc_expected_non_ascii[j].procedure)) * sizeof(SQLWCHAR), result[i].procLen);
                     is_num(sqlwcharlen(CW(c_proc_expected_non_ascii[j].column_name)) * sizeof(SQLWCHAR), result[i].colLen);
                     remaining &= ~(1 << j);
+                    IS_OK(check_sorting(c_proc_expected_non_ascii_sorting, NUM_PROC_FIELDS, j, prev));
+                    prev = j;
                     goto query_and_check_w_found;
                 }
             }
@@ -977,24 +1081,11 @@ static int query_and_check_non_ascii_W(const char* const catalog, const char* co
 #define BUF_SIZE 1024
 
 ODBC_TEST(metadata_id_for_procedurecolumns) {
-    static const char *const c_func_types[NUM_FUNCS] = {
-        "FUNCTION",
-        "PROCEDURE",
-        "FUNCTION"
-    };
-    static const char *const c_func_names[NUM_FUNCS] = {
-        "test_get_name",
-        "TEST_GET_PRECISION_AND_ROUND_UP",
-        "`test set and get precision`"
-    };
     static const char *const c_create_funcs[NUM_FUNCS] = {
-        "CREATE OR REPLACE %s %s (test_input_number INT, test_input_width INT) RETURNS VARCHAR(256) AS BEGIN RETURN CONVERT(test_input_number, CHAR(256)); END",
-        "CREATE OR REPLACE %s %s (TEST_IN INT, TEST_OUT INT) AS BEGIN SET TEST_OUT = TEST_IN; END",
-        "CREATE OR REPLACE %s %s (`test precision` INT) RETURNS TABLE AS RETURN SELECT 0 AS `precision result`, `test precision`"
+        "CREATE FUNCTION test_get_name (test_input_number INT, test_input_width INT) RETURNS VARCHAR(256) AS BEGIN RETURN CONVERT(test_input_number, CHAR(256)); END",
+        "CREATE PROCEDURE TEST_GET_PRECISION_AND_ROUND_UP (TEST_IN INT, TEST_OUT INT) AS BEGIN SET TEST_OUT = TEST_IN; END",
+        "CREATE FUNCTION `test set and get precision` (`test precision` INT) RETURNS TABLE AS RETURN SELECT 0 AS `precision result`, `test precision`"
     };
-    static const char *const c_delete_cmd = "DROP %s %s";
-
-    char buffer[BUF_SIZE];
     size_t i, j;
 
     const struct {
@@ -1008,11 +1099,9 @@ ODBC_TEST(metadata_id_for_procedurecolumns) {
     };
 
     // Init env
-    OK_SIMPLE_STMT(Stmt, "DROP FUNCTION IF EXISTS test_procedure_columns");
-    OK_SIMPLE_STMT(Stmt, "DROP PROCEDURE IF EXISTS test_procedure_columns");
+    IS_OK(run_cleanup());
     for (i = 0; i < NUM_FUNCS; ++i) {
-        _snprintf(buffer, BUF_SIZE, c_create_funcs[i], c_func_types[i], c_func_names[i]);
-        OK_SIMPLE_STMT(Stmt, buffer);
+        OK_SIMPLE_STMT(Stmt, c_create_funcs[i]);
     }
 
     // The testing is below
@@ -1040,34 +1129,15 @@ ODBC_TEST(metadata_id_for_procedurecolumns) {
         }
     }
 
-    // Clean up env
-    for(i = 0; i < NUM_FUNCS; ++i) {
-        _snprintf(buffer, BUF_SIZE, c_delete_cmd, c_func_types[i], c_func_names[i]);
-        OK_SIMPLE_STMT(Stmt, buffer);
-    }
-
     return OK;
 }
 
 ODBC_TEST(procedurecolumns_non_ascii_N) {
-    static const char *const c_func_types[NUM_FUNCS] = {
-        "FUNCTION",
-        "PROCEDURE",
-        "FUNCTION"
-    };
-    static const char *const c_func_names[NUM_FUNCS] = {
-        "узнать_имя_васи",
-        "НАЙТИ_ПЕТЮ_И_ОКРУГЛИТЬ",
-        "`взять и положить кого-то куда-то`"
-    };
     static const char *const c_create_funcs[NUM_FUNCS] = {
-        "CREATE OR REPLACE %s %s (вася_пупкин INT, петя_васин INT) RETURNS VARCHAR(256) AS BEGIN RETURN CONVERT(вася_пупкин, CHAR(256)); END",
-        "CREATE OR REPLACE %s %s (ПЕТЯ INT, НЕ_ПЕТЯ INT) AS BEGIN SET НЕ_ПЕТЯ = ПЕТЯ; END",
-        "CREATE OR REPLACE %s %s (`кто-то там` INT) RETURNS TABLE AS RETURN SELECT 0 AS `не там`, `кто-то там`"
+        "CREATE FUNCTION узнать_имя_васи (вася_пупкин INT, петя_васин INT) RETURNS VARCHAR(256) AS BEGIN RETURN CONVERT(вася_пупкин, CHAR(256)); END",
+        "CREATE PROCEDURE НАЙТИ_ПЕТЮ_И_ОКРУГЛИТЬ (ПЕТЯ INT, НЕ_ПЕТЯ INT) AS BEGIN SET НЕ_ПЕТЯ = ПЕТЯ; END",
+        "CREATE FUNCTION `взять и положить кого-то куда-то` (`кто-то там` INT) RETURNS TABLE AS RETURN SELECT 0 AS `не там`, `кто-то там`"
     };
-    static const char *const c_delete_cmd = "DROP %s %s";
-
-    char buffer[BUF_SIZE];
     size_t i, j;
 
     const struct {
@@ -1079,14 +1149,9 @@ ODBC_TEST(procedurecolumns_non_ascii_N) {
     };
 
     // Init env
-    OK_SIMPLE_STMT(Stmt, "DROP FUNCTION IF EXISTS test_procedure_columns");
-    OK_SIMPLE_STMT(Stmt, "DROP PROCEDURE IF EXISTS test_procedure_columns");
-    OK_SIMPLE_STMT(Stmt, "DROP FUNCTION IF EXISTS test_get_name");
-    OK_SIMPLE_STMT(Stmt, "DROP PROCEDURE IF EXISTS TEST_GET_PRECISION_AND_ROUND_UP");
-    OK_SIMPLE_STMT(Stmt, "DROP FUNCTION IF EXISTS `test set and get precision`");
+    IS_OK(run_cleanup());
     for (i = 0; i < NUM_FUNCS; ++i) {
-        _snprintf(buffer, BUF_SIZE, c_create_funcs[i], c_func_types[i], c_func_names[i]);
-        OK_SIMPLE_STMT(Stmt, buffer);
+        OK_SIMPLE_STMT(Stmt, c_create_funcs[i]);
     }
 
     // The testing is below
@@ -1114,34 +1179,15 @@ ODBC_TEST(procedurecolumns_non_ascii_N) {
         }
     }
 
-    // Clean up env
-    for(i = 0; i < NUM_FUNCS; ++i) {
-        _snprintf(buffer, BUF_SIZE, c_delete_cmd, c_func_types[i], c_func_names[i]);
-        OK_SIMPLE_STMT(Stmt, buffer);
-    }
-
     return OK;
 }
 
 ODBC_TEST(procedurecolumns_non_ascii_W) {
-    static const char *const c_func_types[NUM_FUNCS] = {
-        "FUNCTION",
-        "PROCEDURE",
-        "FUNCTION"
-    };
-    static const char *const c_func_names[NUM_FUNCS] = {
-        "узнать_имя_васи",
-        "НАЙТИ_ПЕТЮ_И_ОКРУГЛИТЬ",
-        "`взять и положить кого-то куда-то`"
-    };
     static const char *const c_create_funcs[NUM_FUNCS] = {
-        "CREATE OR REPLACE %s %s (вася_пупкин INT, петя_васин INT) RETURNS VARCHAR(256) AS BEGIN RETURN CONVERT(вася_пупкин, CHAR(256)); END",
-        "CREATE OR REPLACE %s %s (ПЕТЯ INT, НЕ_ПЕТЯ INT) AS BEGIN SET НЕ_ПЕТЯ = ПЕТЯ; END",
-        "CREATE OR REPLACE %s %s (`кто-то там` INT) RETURNS TABLE AS RETURN SELECT 0 AS `не там`, `кто-то там`"
+        "CREATE FUNCTION узнать_имя_васи (вася_пупкин INT, петя_васин INT) RETURNS VARCHAR(256) AS BEGIN RETURN CONVERT(вася_пупкин, CHAR(256)); END",
+        "CREATE PROCEDURE НАЙТИ_ПЕТЮ_И_ОКРУГЛИТЬ (ПЕТЯ INT, НЕ_ПЕТЯ INT) AS BEGIN SET НЕ_ПЕТЯ = ПЕТЯ; END",
+        "CREATE FUNCTION `взять и положить кого-то куда-то` (`кто-то там` INT) RETURNS TABLE AS RETURN SELECT 0 AS `не там`, `кто-то там`"
     };
-    static const char *const c_delete_cmd = "DROP %s %s";
-
-    char buffer[BUF_SIZE];
     size_t i, j;
 
     const struct {
@@ -1153,14 +1199,9 @@ ODBC_TEST(procedurecolumns_non_ascii_W) {
     };
 
     // Init env
-    OK_SIMPLE_STMT(Stmt, "DROP FUNCTION IF EXISTS test_procedure_columns");
-    OK_SIMPLE_STMT(Stmt, "DROP PROCEDURE IF EXISTS test_procedure_columns");
-    OK_SIMPLE_STMT(Stmt, "DROP FUNCTION IF EXISTS test_get_name");
-    OK_SIMPLE_STMT(Stmt, "DROP PROCEDURE IF EXISTS TEST_GET_PRECISION_AND_ROUND_UP");
-    OK_SIMPLE_STMT(Stmt, "DROP FUNCTION IF EXISTS `test set and get precision`");
+    IS_OK(run_cleanup());
     for (i = 0; i < NUM_FUNCS; ++i) {
-        _snprintf(buffer, BUF_SIZE, c_create_funcs[i], c_func_types[i], c_func_names[i]);
-        OK_SIMPLE_STMTW(Stmt, CW(buffer));
+        OK_SIMPLE_STMTW(Stmt, CW(c_create_funcs[i]));
     }
 
     // The testing is below
@@ -1188,14 +1229,9 @@ ODBC_TEST(procedurecolumns_non_ascii_W) {
         }
     }
 
-    // Clean up env
-    for(i = 0; i < NUM_FUNCS; ++i) {
-        _snprintf(buffer, BUF_SIZE, c_delete_cmd, c_func_types[i], c_func_names[i]);
-        OK_SIMPLE_STMTW(Stmt, CW(buffer));
-    }
-
     return OK;
 }
+
 
 MA_ODBC_TESTS my_tests[] =
         {
