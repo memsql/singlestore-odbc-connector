@@ -213,11 +213,38 @@ ODBC_TEST(sql_diag_record_fields)
   return OK;
 }
 
+#define BUFF_SIZE 256
+ODBC_TEST(errors)
+{
+  ERR_SIMPLE_STMT(Stmt, "Some wrong query");
+  SQLCHAR state[100];
+
+  // invalid handle
+  FAIL_IF(SQLGetDiagField(SQL_HANDLE_STMT, NULL, 1, SQL_DIAG_SQLSTATE, state, BUFF_SIZE, NULL) != SQL_INVALID_HANDLE,
+          "Expected invalid handle error");
+
+  // error
+  FAIL_IF(SQLGetDiagField(SQL_HANDLE_STMT, Stmt, 1, -1, &state, BUFF_SIZE, NULL) != SQL_ERROR,
+          "Expected error");
+  FAIL_IF(SQLGetDiagField(SQL_HANDLE_STMT, Stmt, -1, SQL_DIAG_SQLSTATE, state, BUFF_SIZE, NULL) != SQL_ERROR,
+          "Expected error");
+  FAIL_IF(SQLGetDiagField(SQL_HANDLE_STMT, Stmt, 1, SQL_DIAG_SQLSTATE, state, -1, NULL) != SQL_ERROR,
+          "Expected error");
+
+  // no data
+  FAIL_IF(SQLGetDiagField(SQL_HANDLE_STMT, Stmt, 2, SQL_DIAG_SQLSTATE, state, BUFF_SIZE, NULL) != SQL_NO_DATA,
+          "Expected no data error");
+
+  return OK;
+}
+#undef BUFF_SIZE
+
 MA_ODBC_TESTS my_tests[]=
 {
   {sql_diag_cursor_row_count, "sql_diag_cursor_row_count", NORMAL, ALL_DRIVERS},
   {sql_diag_row_count, "sql_diag_row_count", TO_FIX, ALL_DRIVERS}, // TODO PLAT-5590
   {sql_diag_record_fields, "sql_diag_record_fields", NORMAL, ALL_DRIVERS},
+  {errors, "errors", NORMAL, ALL_DRIVERS},
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
