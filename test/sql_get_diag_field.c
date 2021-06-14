@@ -1,3 +1,22 @@
+/*************************************************************************************
+  Copyright (c) 2021 SingleStore, Inc.
+
+  This library is free software; you can redistribute it and/or
+  modify it under the terms of the GNU Library General Public
+  License as published by the Free Software Foundation; either
+  version 2.1 of the License, or (at your option) any later version.
+
+  This library is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  Library General Public License for more details.
+
+  You should have received a copy of the GNU Library General Public
+  License along with this library; if not see <http://www.gnu.org/licenses>
+  or write to the Free Software Foundation, Inc.,
+  51 Franklin St., Fifth Floor, Boston, MA 02110, USA
+*************************************************************************************/
+
 #include "tap.h"
 
 ODBC_TEST(sql_diag_cursor_row_count)
@@ -179,6 +198,16 @@ ODBC_TEST(sql_diag_record_fields)
   SQLINTEGER diagRowNumber;
   SQLINTEGER diagColumnNumber;
   SQLINTEGER diagNumber;
+  char version[10];
+  char errMsg[512];
+
+
+  // get S2 version
+  OK_SIMPLE_STMT(Stmt, "SELECT @@memsql_version");
+  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+  my_fetch_str(Stmt, (SQLCHAR *)version, 1);
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+
 
   CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, 0, SQL_DIAG_NUMBER, &diagNumber, 0, NULL));
   FAIL_IF_NE_INT(diagNumber, 0,
@@ -192,7 +221,9 @@ ODBC_TEST(sql_diag_record_fields)
   IS_OK(CheckChar(SQL_HANDLE_STMT, Stmt, 1, SQL_DIAG_SQLSTATE, "42000"));
   IS_OK(CheckChar(SQL_HANDLE_STMT, Stmt, 1, SQL_DIAG_CLASS_ORIGIN, "ISO 9075"));
   // IS_OK(CheckChar(SQL_HANDLE_STMT, Stmt, 1, SQL_DIAG_SUBCLASS_ORIGIN, "ISO 9075")); TODO PLAT-5595
-  IS_OK(CheckChar(SQL_HANDLE_STMT, Stmt, 1, SQL_DIAG_MESSAGE_TEXT, "[ss-0.8.2][7.1.12]You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Some wrong query' at line 1"));
+
+  sprintf(errMsg, "[ss-0.8.2][%s]You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Some wrong query' at line 1", version);
+  IS_OK(CheckChar(SQL_HANDLE_STMT, Stmt, 1, SQL_DIAG_MESSAGE_TEXT, errMsg));
   // IS_OK(CheckChar(SQL_HANDLE_STMT, Stmt, 1, SQL_DIAG_CONNECTION_NAME, "")); TODO PLAT-5597
   // IS_OK(CheckChar(SQL_HANDLE_STMT, Stmt, 1, SQL_DIAG_SERVER_NAME, (char *)my_dsn)); TODO PLAT-5597
   CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, 0, SQL_DIAG_NUMBER, &diagNumber, 0, NULL));
@@ -260,9 +291,9 @@ ODBC_TEST(errors)
 MA_ODBC_TESTS my_tests[]=
 {
   {sql_diag_cursor_row_count, "sql_diag_cursor_row_count", NORMAL, ALL_DRIVERS},
-  //{sql_diag_row_count, "sql_diag_row_count", NORMAL, ALL_DRIVERS}, // TODO PLAT-5590
-  //{sql_diag_record_fields, "sql_diag_record_fields", NORMAL, ALL_DRIVERS},
-  //{errors, "errors", NORMAL, ALL_DRIVERS},
+  {sql_diag_row_count, "sql_diag_row_count", TO_FIX, ALL_DRIVERS}, // TODO PLAT-5590
+  {sql_diag_record_fields, "sql_diag_record_fields", NORMAL, ALL_DRIVERS},
+  {errors, "errors", NORMAL, ALL_DRIVERS},
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
