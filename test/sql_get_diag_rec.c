@@ -1,3 +1,22 @@
+/*************************************************************************************
+  Copyright (c) 2021 SingleStore, Inc.
+
+  This library is free software; you can redistribute it and/or
+  modify it under the terms of the GNU Library General Public
+  License as published by the Free Software Foundation; either
+  version 2.1 of the License, or (at your option) any later version.
+
+  This library is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  Library General Public License for more details.
+
+  You should have received a copy of the GNU Library General Public
+  License along with this library; if not see <http://www.gnu.org/licenses>
+  or write to the Free Software Foundation, Inc.,
+  51 Franklin St., Fifth Floor, Boston, MA 02110, USA
+*************************************************************************************/
+
 #include "tap.h"
 
 ODBC_TEST(errors)
@@ -41,13 +60,13 @@ int CheckRec(SQLSMALLINT handleType,
   CHECK_HANDLE_RC(handleType, handle, SQLGetDiagRec(handleType, handle, recNumber, state, &nativeError, message, BUFF_SIZE, &messageLength));
   IS_STR(state, expectedState, STATE_SIZE+1);
   is_num(nativeError, expectedNativeError);
-  //is_num(messageLength, strlen((char *)expectedMessage));
+  is_num(messageLength, strlen((char *)expectedMessage));
   IS_STR(message, expectedMessage, messageLength+1);
 
   CHECK_HANDLE_RC(handleType, handle, SQLGetDiagRecW(handleType, handle, recNumber, stateW, &nativeError, messageW, BUFF_SIZE, &messageLength));
   IS_WSTR(stateW, CW(expectedState), STATE_SIZE+1);
   is_num(nativeError, expectedNativeError);
-  //is_num(messageLength, strlen((char *)expectedMessage));
+  is_num(messageLength, strlen((char *)expectedMessage));
   IS_WSTR(messageW, CW(expectedMessage), messageLength+1);
 
   return OK;
@@ -56,6 +75,7 @@ int CheckRec(SQLSMALLINT handleType,
 
 ODBC_TEST(sql_get_diag_rec)
 {
+  SQLHANDLE Hdbc;
   SQLCHAR catalog[2];
   SQLINTEGER catalogLength;
   char version[10];
@@ -75,13 +95,20 @@ ODBC_TEST(sql_get_diag_rec)
   sprintf(errMsg, "[ss-0.8.2][%s]You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Some wrong query' at line 1", version);
   IS_OK(CheckRec(SQL_HANDLE_STMT, Stmt, 1, "42000", 1064, errMsg))
 
-
   // output buffer is too small
   FAIL_IF(SQLGetDiagRec(SQL_HANDLE_DBC, Connection, 1, NULL, NULL, NULL, 0, NULL) != SQL_NO_DATA,
           "Expected no data error")
   FAIL_IF(SQLGetConnectAttr(Connection, SQL_ATTR_CURRENT_CATALOG,
                              catalog, sizeof(catalog), &catalogLength) != SQL_SUCCESS_WITH_INFO, "expected SUCCESS_WITH_INFO");
   IS_OK(CheckRec(SQL_HANDLE_DBC, Connection, 1, "01004", 0, "[ss-0.8.2]String data, right-truncated"));
+
+  // wrong DSN
+  SQLAllocHandle(SQL_HANDLE_DBC, Env, &Hdbc);
+  FAIL_IF(SQLConnect(Hdbc, (SQLCHAR *)"Wrong DSN", SQL_NTS, my_uid, SQL_NTS, my_pwd, SQL_NTS) != SQL_ERROR, "Failure expected");
+  sprintf(errMsg, iOdbc() ? "[iODBC][Driver Manager]Data source name not found and no default driver specified. Driver could not be loaded" :
+                  UnixOdbc() ? "[unixODBC][Driver Manager]Data source name not found, and no default driver specified" :
+                  "[Microsoft][ODBC Driver Manager] Data source name not found and no default driver specified");
+  IS_OK(CheckRec(SQL_HANDLE_DBC, Hdbc, 1, "IM002", 0, errMsg));
 
   return OK;
 }
