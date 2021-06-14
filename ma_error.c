@@ -269,6 +269,8 @@ SQLRETURN MADB_GetDiagRec(MADB_Error *Err, SQLSMALLINT RecNumber,
   MADB_CLEAR_ERROR(&InternalError);
   if (RecNumber > 1)
     return SQL_NO_DATA;
+  if (BufferLength < 0)
+    return SQL_ERROR;
   
   /* check if we have to map the SQLState to ODBC version 2 state */
   if (OdbcVersion == SQL_OV_ODBC2)
