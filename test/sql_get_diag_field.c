@@ -195,7 +195,7 @@ ODBC_TEST(sql_diag_record_fields)
   SQLHANDLE Hdbc;
   SQLUSMALLINT fExists;
   SQLINTEGER nativeErrorCode;
-  SQLINTEGER diagRowNumber;
+  SQLLEN diagRowNumber;
   SQLINTEGER diagColumnNumber;
   SQLINTEGER diagNumber;
   char version[10];
