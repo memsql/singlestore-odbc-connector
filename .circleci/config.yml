@@ -294,34 +294,6 @@ workflows:
   test:
     jobs:
       - build-linux-in-docker:
-          name: build-centos-7-unicode-<< matrix.build_type >>
-          matrix:
-            parameters:
-              os_version:
-                - centos:centos7
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - ssodbc_test_w
-              test_driver:
-                - SingleStore ODBC 0.8.2-beta Unicode Driver
-      - build-linux-in-docker:
-          requires:
-            - build-centos-7-unicode-RelWithDebInfo
-          name: build-centos-7-ansi-<< matrix.build_type >>
-          matrix:
-            parameters:
-              os_version:
-                - centos:centos7
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - ssodbc_test_a
-              test_driver:
-                - SingleStore ODBC 0.8.2-beta ANSI Driver
-      - build-linux-in-docker:
-          requires:
-            - build-centos-7-ansi-RelWithDebInfo
           name: build-centos-8-unicode-<< matrix.build_type >>
           matrix:
             parameters:
