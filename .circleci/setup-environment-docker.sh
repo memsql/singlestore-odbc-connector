@@ -20,7 +20,10 @@
 if [[ $IMAGE_NAME == centos* ]]
 then
   yum update
-  yum -y install cmake make gcc openssl-devel unixODBC unixODBC-devel
+  yum -y install gcc-c++ make gcc openssl-devel unixODBC unixODBC-devel wget
+  wget https://github.com/Kitware/CMake/releases/download/v3.20.3/cmake-3.20.3-linux-x86_64.tar.gz
+  cd /usr || exit
+  tar --strip-components=1 -xzf /root/project/cmake-3.20.3-linux-x86_64.tar.gz
 else
   apt-get update
   apt-get install -y cmake make gcc libssl-dev unixodbc-dev
