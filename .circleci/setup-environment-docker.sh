@@ -25,6 +25,7 @@ then
   cd /usr || exit
   tar --strip-components=1 -xzf /root/project/cmake-3.20.3-linux-x86_64.tar.gz
 else
+  echo "deb http://deb.debian.org/debian buster main contrib non-free" >> /etc/apt/sources.list.d/tutu.list
   apt-get update
-  apt-get install -y cmake make gcc libssl-dev unixodbc-dev
+  apt-get install -y cmake make gcc libssl-dev unixodbc-dev=2.3.6-0.1
 fi
