@@ -98,6 +98,15 @@ int strcpy_s(char *dest, size_t buffer_size, const char *src)
 }
 
 
+int endswith(const char* const str, const char* const substr) {
+    const size_t len = strlen(str);
+    const size_t sub_len = strlen(substr);
+    if(len >= sub_len)
+        return !strcmp(str + (len - sub_len), substr);
+    return 0;
+}
+
+
 #define Sleep(ms) sleep(ms/1000)
 
 # ifndef TRUE
@@ -446,6 +455,33 @@ void odbc_print_error(SQLSMALLINT HandleType, SQLHANDLE Handle)
   }
 }
 
+int odbc_expect_error(SQLSMALLINT HandleType,
+                      SQLHANDLE Handle,
+                      const SQLCHAR* const state,
+                      const SQLINTEGER native,
+                      const SQLCHAR* const msg)
+{
+  SQLCHAR SQLState[6];
+  SQLINTEGER NativeError;
+  SQLCHAR SQLMessage[SQL_MAX_MESSAGE_LENGTH];
+
+  const SQLRETURN result = SQLGetDiagRec(HandleType, Handle, 1, SQLState, &NativeError, SQLMessage, SQL_MAX_MESSAGE_LENGTH, NULL);
+  if(result == SQL_SUCCESS || result == SQL_SUCCESS_WITH_INFO) {
+    if((!state || !strncmp(state, SQLState, 5))
+        && (native == -1 || native == NativeError)
+        && (!msg || endswith(SQLMessage, msg))) {
+      return OK;
+    } else {
+      fprintf(stdout, "Received: [%s] (%d) %s\n", SQLState, NativeError, SQLMessage);
+    }
+  } else {
+    fprintf(stdout, "Error %d getting diagnostic records with SQLGetDiagRec()\n", result);
+  }
+
+  fprintf(stdout, "Expected: [%s] (%d) %s\n", state, native, msg);
+  return FAIL;
+}
+
 
 char little_endian()
 {
@@ -702,10 +738,22 @@ do {\
   }\
 } while(0)
 
+#define CHECK_HANDLE_ERR(handletype, handle, rc, state, native, msg)\
+do {\
+  SQLRETURN local_rc= (rc); \
+  if (!(local_rc == SQL_ERROR && odbc_expect_error(handletype, handle, state, native, msg))) \
+  {\
+    fprintf(stdout, "Error (rc=%d) in %s:%d:\n", local_rc, __FILE__, __LINE__);\
+    return FAIL;\
+  }\
+} while(0)
+
 #define CHECK_STMT_RC(stmt,rc) CHECK_HANDLE_RC(SQL_HANDLE_STMT,stmt,rc)
 #define CHECK_DBC_RC(dbc,rc) CHECK_HANDLE_RC(SQL_HANDLE_DBC,dbc,rc)
 #define CHECK_ENV_RC(env,rc) CHECK_HANDLE_RC(SQL_HANDLE_ENV,env,rc)
 #define CHECK_DESC_RC(desc,rc) CHECK_HANDLE_RC(SQL_HANDLE_DESC,desc,rc)
+
+#define CHECK_STMT_ERR(stmt, rc, ...) CHECK_HANDLE_ERR(SQL_HANDLE_STMT, stmt, rc, __VA_ARGS__)
 
 #define FAIL_IF_NE_INT(got, exp, message) \
 do {\
@@ -793,6 +841,22 @@ do {                                                  \
     EXPECT_STMT(_Stmt, _Function, NoSsps == (_Mode) ? SQL_ERROR : SQL_SUCCESS); \
     if (NoSsps == (_Mode)) {CHECK_SQLSTATE(_Stmt, _SqlState);} \
 }while(0)
+
+// Shorthands
+#define CURSOR_STATE_ERROR    "24000", 0, "Invalid cursor state"
+
+#define PREPARE(stmt, query)                    CHECK_STMT_RC(stmt, SQLPrepare(stmt, (SQLCHAR*)query, SQL_NTS))
+#define PREPARE_CURSOR_ERR(stmt, query)         CHECK_STMT_ERR(stmt, SQLPrepare(stmt, (SQLCHAR*)query, SQL_NTS), CURSOR_STATE_ERROR)
+#define EXEC_DIRECT(stmt, query)                CHECK_STMT_RC(stmt, SQLExecDirect(stmt, (SQLCHAR*)query, SQL_NTS))
+#define EXEC_DIRECT_CURSOR_ERR(stmt, query)     CHECK_STMT_ERR(stmt, SQLExecDirect(stmt, (SQLCHAR*)query, SQL_NTS), CURSOR_STATE_ERROR)
+#define EXECUTE(stmt)                           CHECK_STMT_RC(stmt, SQLExecute(stmt))
+#define EXECUTE_CURSOR_ERR(stmt)                CHECK_STMT_ERR(stmt, SQLExecute(stmt), CURSOR_STATE_ERROR)
+#define FETCH(stmt)                             CHECK_STMT_RC(stmt, SQLFetch(stmt))
+#define FETCH_CURSOR_ERR(stmt)                  CHECK_STMT_ERR(stmt, SQLFetch(stmt), CURSOR_STATE_ERROR)
+#define CLOSE(stmt)                             CHECK_STMT_RC(stmt, SQLCloseCursor(stmt))
+#define UNBIND(stmt)                            CHECK_STMT_RC(Stmt, SQLFreeStmt(stmt, SQL_UNBIND)); \
+                                                CHECK_STMT_RC(Stmt, SQLFreeStmt(stmt, SQL_RESET_PARAMS))
+#define FREE_HANDLE(stmt)                       CHECK_STMT_RC(stmt, SQLFreeHandle(SQL_HANDLE_STMT, stmt))
 
 #define SSPS_ENABLED 0
 #define SSPS_DISABLED 1
