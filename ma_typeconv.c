@@ -920,7 +920,8 @@ SQLRETURN MADB_CspsConvertSql2C(MADB_Stmt *Stmt, MYSQL_FIELD *field, MYSQL_BIND 
                         rc = MYSQL_DATA_TRUNCATED;
                         *bind->error = 1;
                     }
-                    if (copyLen) {
+                    if (copyLen)
+                    {
                         memcpy(bind->buffer, start, copyLen);
                     }
                 }
