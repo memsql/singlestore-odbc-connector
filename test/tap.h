@@ -49,8 +49,6 @@ char* strcasestr(const char* HayStack, const char* Needle)
 # include "ma_conv_charset.h"
 # include "ma_odbc_version.h"
 
-#define LENGTHOF(arr) (sizeof(arr) / sizeof(arr[0]))
-
 /* Mimicking of VS' _snprintf */
 int _snprintf(char *buffer, size_t count, const char *format, ...)
 {
@@ -114,6 +112,8 @@ int strcpy_s(char *dest, size_t buffer_size, const char *src)
 #define _i64toa(a,b,c) longlong2str((a),(b),(c))
 
 #endif
+
+#define LENGTHOF(arr) (sizeof(arr) / sizeof(arr[0]))
 
 #include <sql.h>
 #include <sqlext.h>
