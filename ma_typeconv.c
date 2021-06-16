@@ -1126,12 +1126,12 @@ SQLRETURN MADB_ConvertDatetimeToChar(MADB_Stmt *Stmt, int SourceType, int SqlTyp
 
 /* {{{ MADB_ConvertCharToInteger
  Converts SQL char into the relevant C integer type and stores the result in the MYSQL_BIND. */
-SQLRETURN MADB_ConvertCharToInteger(MYSQL_BIND* Dest, char* Src, unsigned int fieldLen)
+SQLRETURN MADB_ConvertCharToInteger(MYSQL_BIND* const Dest, const char* const Src, const unsigned int fieldLen)
 {
     SQLRETURN rc = SQL_SUCCESS;
-    char *badPtr;
-    SQLBIGINT val = Dest->is_unsigned ? strtoull(Src, &badPtr, 10) : _strtoi64(Src, &badPtr, 10);
-    if (badPtr && badPtr - Src < fieldLen)
+    char *endPtr;
+    SQLBIGINT val = Dest->is_unsigned ? strtoull(Src, &endPtr, 10) : _strtoi64(Src, &endPtr, 10);
+    if (endPtr && endPtr - Src < fieldLen)
     {
         rc = MYSQL_DATA_TRUNCATED;
         *Dest->error = 1;
@@ -1212,7 +1212,9 @@ SQLRETURN MADB_ConvertCharToInteger(MYSQL_BIND* Dest, char* Src, unsigned int fi
             Dest->buffer_length = sizeof(SQLBIGINT);
             break;
         default:
-        	break;
+            /* the only our caller, namely MADB_CspsConvertSql2C(), has already checked Dest->buffer_type */
+            assert(0);
+            break;
     }
 
     return rc;

@@ -54,7 +54,7 @@ SQLRETURN MADB_Str2Ts(const char *Str, size_t Length, MYSQL_TIME *Tm, BOOL Inter
 SQLRETURN MADB_CspsConvertSql2C(MADB_Stmt *Stmt, MYSQL_FIELD *field, MYSQL_BIND *bind, char* val, unsigned long fieldLen);
 SQLLEN MADB_ConvertIntegerToChar(MADB_Stmt *Stmt, int SourceType, void* Src, char* Dest);
 SQLRETURN MADB_ConvertDatetimeToChar(MADB_Stmt *Stmt, int SourceType, int SqlType, void* Src, char* Dest);
-SQLRETURN MADB_ConvertCharToInteger(MYSQL_BIND* Dest, char* Src, unsigned int fieldLen);
+SQLRETURN MADB_ConvertCharToInteger(MYSQL_BIND* const Dest, const char* const Src, const unsigned int fieldLen);
 SQLRETURN MADB_ConvertBinaryToInteger(MYSQL_BIND* Dest, char* Src, unsigned int fieldLen);
 
 #endif
