@@ -20,17 +20,11 @@
 #include "tap.h"
 
 
-/* Common params: we may need next kinds of queries
- * without much care of what is inside the query:
- * - taking parameters QUERY_ARG_*
- * - returning a cursor QUERY_*_RET
- * - returning a cursor with multiple rows QUERY_MUL
- */
-#define QUERY_ARG_RET   "SELECT * FROM " TABLE " WHERE id = ?"
-#define QUERY_N_RET     "SELECT * FROM " TABLE " WHERE LEFT(text, 1) = RIGHT(text, 1)"
-#define QUERY_ARG_N     "UPDATE " TABLE " SET text = 'ca' WHERE id = ?" //TODO: change when bug PLAT-5607 is fixed
-#define QUERY_N_N       "DELETE FROM " TABLE " WHERE text LIKE '___'"   //TODO: change when bug PLAT-5607 is fixed
-#define QUERY_MUL       "SELECT * FROM " TABLE " ORDER BY id"
+#define QUERY_SELECT_WITH_PARAMS_SINGLE_ROW         "SELECT * FROM " TABLE " WHERE id = ?"
+#define QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW      "SELECT * FROM " TABLE " WHERE LEFT(text, 1) = RIGHT(text, 1)"
+#define QUERY_UPDATE_WITH_PARAMS                    "UPDATE " TABLE " SET text = 'ca' WHERE id = ?" //TODO: change when bug PLAT-5607 is fixed
+#define QUERY_DELETE_WITHOUT_PARAMS                 "DELETE FROM " TABLE " WHERE text LIKE '___'"   //TODO: change when bug PLAT-5607 is fixed
+#define QUERY_SELECT_WITHOUT_PARAMS_MULTIPLE_ROWS   "SELECT * FROM " TABLE " ORDER BY id"
 
 
 ODBC_TEST(execute_1_before_fetch_1) {
@@ -46,19 +40,19 @@ ODBC_TEST(execute_1_before_fetch_1) {
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_CHAR, &out_text, sizeof(out_text), NULL));
 
     // Syntax checks
-    PREPARE(Stmt, QUERY_ARG_RET);
-    PREPARE(Stmt, QUERY_N_RET);
-    PREPARE(Stmt, QUERY_ARG_N);
-    PREPARE(Stmt, QUERY_N_N);
+    PREPARE(Stmt, QUERY_SELECT_WITH_PARAMS_SINGLE_ROW);
+    PREPARE(Stmt, QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW);
+    PREPARE(Stmt, QUERY_UPDATE_WITH_PARAMS);
+    PREPARE(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
 
     // Smoke test: basic use case + if the cursor is not closed changes do not apply
-    PREPARE(Stmt, QUERY_ARG_RET);
+    PREPARE(Stmt, QUERY_SELECT_WITH_PARAMS_SINGLE_ROW);
     EXECUTE(Stmt);
     FETCH(Stmt);
     IS(out_id == 3 && !strcmp("ca", out_text)); out_id = 0, *out_text = 0;
     EXECUTE_CURSOR_ERR(Stmt);
-    PREPARE_CURSOR_ERR(Stmt, QUERY_N_N);
-    EXEC_DIRECT_CURSOR_ERR(Stmt, QUERY_N_N);
+    PREPARE_CURSOR_ERR(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
+    EXEC_DIRECT_CURSOR_ERR(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
     CLOSE(Stmt);
     IS(out_id == 0 && *out_text == 0);
     EXECUTE(Stmt);
@@ -67,12 +61,12 @@ ODBC_TEST(execute_1_before_fetch_1) {
     CLOSE(Stmt);
 
     // Re-executing a statement discards the results from the previous execution (SQLExecute)
-    PREPARE(Stmt, QUERY_ARG_RET);
+    PREPARE(Stmt, QUERY_SELECT_WITH_PARAMS_SINGLE_ROW);
     EXECUTE(Stmt);
-    PREPARE(Stmt, QUERY_N_N);
+    PREPARE(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
     EXECUTE(Stmt);
     FETCH_CURSOR_ERR(Stmt);
-    PREPARE(Stmt, QUERY_N_RET);
+    PREPARE(Stmt, QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW);
     EXECUTE(Stmt);
     FETCH(Stmt);
     IS(out_id == 1 && !strcmp("aa", out_text)); out_id = 0, *out_text = 0;
@@ -82,43 +76,46 @@ ODBC_TEST(execute_1_before_fetch_1) {
     FETCH(Stmt);
     IS(out_id == 1 && !strcmp("aa", out_text)); out_id = 0, *out_text = 0;
     CLOSE(Stmt);
-    /* TODO: PLAT-5605 Something wrong happens here: FTCH fails, but EXEC should have failed instead if the Stmt was overridden by EXECDIR
-    EXEC_DIRECT(Stmt, QUERY_ARG_N);
+    EXEC_DIRECT(Stmt, QUERY_UPDATE_WITH_PARAMS);
     FETCH_ERR(Stmt);
-    EXECUTE(Stmt);   <- should have failed on unprepared exec
-    FETCH(Stmt);   <- fails here
+    EXECUTE(Stmt);      // TODO: Stmt was prepared by the EXEC_DIRECT above and is QUERY_UPDATE_WITH_PARAMS, this is bug PLAT-5605
+    FETCH_ERR(Stmt);
+    EXEC_DIRECT(Stmt, QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW);
+    EXECUTE(Stmt);      // TODO: Stmt was prepared by the EXEC_DIRECT above and is QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW, this is bug PLAT-5605
+    FETCH(Stmt);
     IS(out_id == 1 && !strcmp("aa", out_text)); out_id = 0, *out_text = 0;
-    CLOSE(Stmt); */
+    CLOSE(Stmt);
 
     // Re-executing a statement discards the results from the previous execution (SQLExecDirect)
-    /* TODO: PLAT-5605 Something wrong happens here: FTCH fails, but PREP_N_N should have failed instead if the Stmt has pending results
-    EXEC_DIRECT(Stmt, QUERY_ARG_RET);
-    EXEC_DIRECT(Stmt, QUERY_N_N);
+    /* TODO: PLAT-5605 Something wrong happens here:
+     * FETCH fails, but PREPARE should have failed instead if the Stmt has pending results
+    EXEC_DIRECT(Stmt, QUERY_SELECT_WITH_PARAMS_SINGLE_ROW);
+    EXEC_DIRECT(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
     FETCH_ERR(Stmt);
-    EXEC_DIRECT(Stmt, QUERY_N_RET);
-    PREPARE(Stmt, QUERY_N_N);   <- should have failed here
-    //PREPARE_ERR(Stmt, QUERY_N_N);
-    //PREPARE(Stmt, QUERY_ARG_RET);
+    EXEC_DIRECT(Stmt, QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW);
+    PREPARE(Stmt, QUERY_DELETE_WITHOUT_PARAMS);   <- should have failed here
+    //PREPARE_ERR(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
+    //PREPARE(Stmt, QUERY_SELECT_WITH_PARAMS_SINGLE_ROW);
     FETCH(Stmt);       <- fails here
     IS(out_id == 1 && !strcmp("aa", out_text)); out_id = 0, *out_text = 0;
-    PREPARE_ERR(Stmt, QUERY_N_N);
+    PREPARE_ERR(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
     CLOSE(Stmt);
-    PREPARE(Stmt, QUERY_ARG_RET);
+    PREPARE(Stmt, QUERY_SELECT_WITH_PARAMS_SINGLE_ROW);
     EXECUTE(Stmt);
     FETCH(Stmt);
     IS(out_id == 1 && !strcmp("aa", out_text)); out_id = 0, *out_text = 0;
-    EXEC_DIRECT(Stmt, QUERY_ARG_N);
+    EXEC_DIRECT(Stmt, QUERY_UPDATE_WITH_PARAMS);
     CLOSE(Stmt);*/
 
     // A prepared non-executed statement can be reused for SQLExecDirect
-    PREPARE(Stmt, QUERY_N_N);
-    EXEC_DIRECT(Stmt, QUERY_ARG_RET);
+    PREPARE(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
+    EXEC_DIRECT(Stmt, QUERY_SELECT_WITH_PARAMS_SINGLE_ROW);
     FETCH(Stmt);
     IS(out_id == 3 && !strcmp("ca", out_text)); out_id = 0, *out_text = 0;
     CLOSE(Stmt);
-    PREPARE(Stmt, QUERY_N_RET);
-    EXEC_DIRECT(Stmt, QUERY_N_N);
-    EXECUTE(Stmt);   /* TODO: PLAT-5605 should have failed here */
+    PREPARE(Stmt, QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW);
+    EXEC_DIRECT(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
+    EXECUTE(Stmt);   /* TODO: PLAT-5605, EXECUTE repeats the statement from EXEC_DIRECT */
     FETCH_CURSOR_ERR(Stmt);
 
     UNBIND(Stmt);
@@ -147,19 +144,19 @@ ODBC_TEST(execute_2_before_fetch_1) {
     CHECK_STMT_RC(stmt2, SQLBindCol(stmt2, 2, SQL_C_CHAR, &out2_text, sizeof(out2_text), NULL));
 
     // Executing two statements does not corrupt their results (SQLExecute)
-    PREPARE(Stmt, QUERY_MUL);
-    PREPARE(stmt2, QUERY_N_N);
+    PREPARE(Stmt, QUERY_SELECT_WITHOUT_PARAMS_MULTIPLE_ROWS);
+    PREPARE(stmt2, QUERY_DELETE_WITHOUT_PARAMS);
     EXECUTE(Stmt);
     EXECUTE(stmt2);
     FETCH(Stmt);
     IS(out_id == 1 && !strcmp("aa", out_text)); out_id = 0, *out_text = 0;
-    EXEC_DIRECT(stmt2, QUERY_N_RET);
+    EXEC_DIRECT(stmt2, QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW);
     FETCH(stmt2);
     FETCH(Stmt);
     IS(out_id == 2 && !strcmp("bc", out_text)); out_id = 0, *out_text = 0;
     IS(out2_id == 1 && !strcmp("aa", out2_text)); out2_id = 0, *out2_text = 0;
     CLOSE(stmt2);
-    PREPARE(stmt2, QUERY_MUL);
+    PREPARE(stmt2, QUERY_SELECT_WITHOUT_PARAMS_MULTIPLE_ROWS);
     EXECUTE(stmt2);
     FETCH(stmt2);
     IS(out2_id == 1 && !strcmp("aa", out2_text)); out2_id = 0, *out2_text = 0;
@@ -195,12 +192,12 @@ ODBC_TEST(execute_no_data) {
     OK_SIMPLE_STMT(Stmt, "INSERT INTO execute_3_from VALUES (11, 'xy'), (12, 'yz'), (13, 'zz')");
 
     EXPECT_STMT(Stmt, SQLExecDirect(Stmt, "INSERT INTO execute_3_to SELECT * FROM execute_3_from WHERE id < 10", SQL_NTS), SQL_NO_DATA);
-    EXPECT_STMT(Stmt, SQLExecDirect(Stmt, "UPDATE execute_3_to SET id = 10 where text = 'vvv'", SQL_NTS), SQL_NO_DATA);
+    EXPECT_STMT(Stmt, SQLExecDirect(Stmt, "UPDATE execute_3_to SET id = 10 WHERE text = 'vvv'", SQL_NTS), SQL_NO_DATA);
     EXPECT_STMT(Stmt, SQLExecDirect(Stmt, "DELETE FROM execute_3_to WHERE text LIKE '___'", SQL_NTS), SQL_NO_DATA);
 
     PREPARE(Stmt, "INSERT INTO execute_3_to SELECT * FROM execute_3_from WHERE id < 10");
     EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_NO_DATA);
-    PREPARE(Stmt, "UPDATE execute_3_to SET id = 10 where text = 'vvv'");
+    PREPARE(Stmt, "UPDATE execute_3_to SET id = 10 WHERE text = 'vvv'");
     EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_NO_DATA);
     PREPARE(Stmt, "DELETE FROM execute_3_to WHERE text LIKE '___'");
     EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_NO_DATA);
@@ -242,7 +239,7 @@ int test_transaction(SQLHANDLE conn_other, SQLHANDLE stmt_other) {
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_CHAR, &out_text, sizeof(out_text), NULL));
 
     // Manual commit should not break prepared statements and cursors
-    PREPARE(Stmt, QUERY_ARG_RET);
+    PREPARE(Stmt, QUERY_SELECT_WITH_PARAMS_SINGLE_ROW);
     OK_SIMPLE_STMT(stmt_other, "INSERT INTO " TABLE " VALUES (10, 'uvw')");
     CHECK_DBC_RC(conn_other, SQLEndTran(SQL_HANDLE_DBC, conn_other, SQL_COMMIT));
     EXECUTE(Stmt);
@@ -250,14 +247,14 @@ int test_transaction(SQLHANDLE conn_other, SQLHANDLE stmt_other) {
     IS(out_id == 3 && !strcmp("ca", out_text)); out_id = 0, *out_text = 0;
     CLOSE(Stmt);
 
-    EXEC_DIRECT(Stmt, QUERY_N_RET);
+    EXEC_DIRECT(Stmt, QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW);
     OK_SIMPLE_STMT(stmt_other, "INSERT INTO " TABLE " VALUES (11, 'xyz')");
     CHECK_DBC_RC(conn_other, SQLEndTran(SQL_HANDLE_DBC, conn_other, SQL_COMMIT));
     FETCH(Stmt);
     IS(out_id == 1 && !strcmp("aa", out_text)); out_id = 0, *out_text = 0;
     CLOSE(Stmt);
 
-    EXEC_DIRECT(Stmt, QUERY_MUL);
+    EXEC_DIRECT(Stmt, QUERY_SELECT_WITHOUT_PARAMS_MULTIPLE_ROWS);
     FETCH(Stmt);
     IS(out_id == 1 && !strcmp("aa", out_text)); out_id = 0, *out_text = 0;
     OK_SIMPLE_STMT(stmt_other, "INSERT INTO " TABLE " VALUES (12, 'null')");
@@ -269,7 +266,7 @@ int test_transaction(SQLHANDLE conn_other, SQLHANDLE stmt_other) {
     CLOSE(Stmt);
 
     // Rollback should not break prepared statements and cursors
-    PREPARE(Stmt, QUERY_ARG_RET);
+    PREPARE(Stmt, QUERY_SELECT_WITH_PARAMS_SINGLE_ROW);
     OK_SIMPLE_STMT(stmt_other, "DELETE FROM " TABLE " WHERE id = 10");
     CHECK_DBC_RC(conn_other, SQLEndTran(SQL_HANDLE_DBC, conn_other, SQL_ROLLBACK));
     EXECUTE(Stmt);
@@ -277,14 +274,14 @@ int test_transaction(SQLHANDLE conn_other, SQLHANDLE stmt_other) {
     IS(out_id == 3 && !strcmp("ca", out_text)); out_id = 0, *out_text = 0;
     CLOSE(Stmt);
 
-    EXEC_DIRECT(Stmt, QUERY_N_RET);
+    EXEC_DIRECT(Stmt, QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW);
     OK_SIMPLE_STMT(stmt_other, "DELETE FROM " TABLE " WHERE id = 11");
     CHECK_DBC_RC(conn_other, SQLEndTran(SQL_HANDLE_DBC, conn_other, SQL_ROLLBACK));
     FETCH(Stmt);
     IS(out_id == 1 && !strcmp("aa", out_text)); out_id = 0, *out_text = 0;
     CLOSE(Stmt);
 
-    EXEC_DIRECT(Stmt, QUERY_MUL);
+    EXEC_DIRECT(Stmt, QUERY_SELECT_WITHOUT_PARAMS_MULTIPLE_ROWS);
     FETCH(Stmt);
     IS(out_id == 1 && !strcmp("aa", out_text)); out_id = 0, *out_text = 0;
     OK_SIMPLE_STMT(stmt_other, "DELETE FROM " TABLE " WHERE id = 12");
