@@ -138,6 +138,7 @@ SQLRETURN MADB_UnescapeQuery(MADB_Error *error, MADB_DynString *res, char **src,
 
         if (yyparse(scanner, error, res) != 0)
         {
+          MADB_DynstrFree(res);
           yy_delete_buffer(buf, scanner);
           yylex_destroy(scanner);
           return error->ReturnValue;

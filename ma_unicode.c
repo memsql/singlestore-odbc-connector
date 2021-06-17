@@ -657,29 +657,48 @@ SQLRETURN SQL_API SQLNativeSqlW(SQLHDBC ConnectionHandle,
                                 SQLINTEGER BufferLength,
                                 SQLINTEGER *TextLength2Ptr)
 {
-    MADB_Dbc  *Conn=   (MADB_Dbc *)ConnectionHandle;
-    SQLINTEGER Length= (TextLength1 == SQL_NTS) ? SqlwcsCharLen(InStatementText, (SQLLEN)-1) : TextLength1;
+    MADB_Dbc *Dbc= (MADB_Dbc *)ConnectionHandle;
+    char *InStmtStr;
+    SQLULEN InLength;
+    BOOL ConversionError;
+    char *InStatementStart, *InStatementEnd;
+    char **InStatementIterator;
+    SQLINTEGER OutLength;
 
-    if (!Conn)
+    MADB_DynString res;
+
+    if (!Dbc)
         return SQL_INVALID_HANDLE;
-    MADB_CLEAR_ERROR(&Conn->Error);
+    MADB_CLEAR_ERROR(&Dbc->Error);
 
-    if (TextLength2Ptr)
-        *TextLength2Ptr= Length;
-
-    if(OutStatementText && BufferLength < Length)
-        MADB_SetError(&Conn->Error, MADB_ERR_01004, NULL, 0);
-
-    if(OutStatementText && BufferLength < Length)
-        MADB_SetError(&Conn->Error, MADB_ERR_01004, NULL, 0);
-    Length= MIN(Length, BufferLength - 1);
-
-    if (OutStatementText && BufferLength)
+    if (!TextLength2Ptr && (!OutStatementText || !BufferLength))
     {
-        memcpy(OutStatementText, InStatementText, Length * sizeof(SQLWCHAR));
-        OutStatementText[Length]= 0;
+        MADB_SetError(&Dbc->Error, MADB_ERR_01004, NULL, 0);
+        return Dbc->Error.ReturnValue;
     }
-    return Conn->Error.ReturnValue;
+
+    InStmtStr= MADB_ConvertFromWChar(InStatementText, TextLength1, &InLength, Dbc->ConnOrSrcCharset, &ConversionError);
+    if (ConversionError)
+    {
+        MADB_SetError(&Dbc->Error, MADB_ERR_22018, NULL, 0);
+        return Dbc->Error.ReturnValue;
+    }
+
+    InStatementStart = (char *)InStmtStr;
+    InStatementEnd = InStmtStr + InLength;
+    InStatementIterator = &InStatementStart;
+    if (MADB_UnescapeQuery(&Dbc->Error, &res, InStatementIterator, &InStatementEnd, 0)) {
+        MADB_FREE(InStmtStr);
+        return Dbc->Error.ReturnValue;
+    }
+
+    OutLength= (SQLINTEGER)MADB_SetString(&Dbc->Charset, OutStatementText, BufferLength, (char *)res.str, res.length, &Dbc->Error);
+    MADB_DynstrFree(&res);
+    if (TextLength2Ptr)
+      *TextLength2Ptr= OutLength;
+
+    MADB_FREE(InStmtStr);
+    return Dbc->Error.ReturnValue;
 }
 /* }}} */
 

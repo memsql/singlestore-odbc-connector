@@ -543,6 +543,7 @@ ODBC_TEST(ansi_quotes_to_fix) {
 ODBC_TEST(sql_native_sql) {
   int i, n;
   SQLCHAR buffer[BUFFER_SIZE];
+  SQLWCHAR bufferW[BUFFER_SIZE];
   char * queries[197] = {
     "SELECT {d '2001-10-1' }",
     "SELECT {t '01:10:10' }",
@@ -947,11 +948,19 @@ ODBC_TEST(sql_native_sql) {
   for (i = 0; i < n; i++)
   {
     SQLINTEGER len;
-    CHECK_STMT_RC(Stmt, SQLNativeSql(Connection, (SQLCHAR*)queries[i], SQL_NTS, buffer, BUFFER_SIZE, &len));
-    is_num(strlen(expected_results[i]), len);
-    IS_STR(buffer, expected_results[i], len);
-  }
 
+    if (is_ansi_driver())
+    {
+      CHECK_STMT_RC(Stmt, SQLNativeSql(Connection, (SQLCHAR*)queries[i], SQL_NTS, buffer, BUFFER_SIZE, &len));
+      is_num(len, strlen(expected_results[i]));
+      IS_STR(buffer, expected_results[i], len);
+    } else
+    {
+      CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, CW(queries[i]), SQL_NTS, bufferW, BUFFER_SIZE*sizeof(SQLWCHAR), &len));
+      is_num(len, sqlwcharlen(CW(expected_results[i])));
+      IS_WSTR(bufferW, CW(expected_results[i]), len+1);
+    }
+  }
   return OK;
 }
 
@@ -1009,16 +1018,16 @@ ODBC_TEST(sql_native_sql_buffers_unicode) {
 
     // Should return the correct length even if output buffer is null
     //
-    CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, WW("SELECT 1"), SQL_NTS, NULL, 0, &len));
+    CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, CW("SELECT 1"), SQL_NTS, NULL, 0, &len));
     is_num(len, 8);
 
     // Should terminate the output buffer with null character and correctly truncate it
     //
-    CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, WW("SELECT 1"), SQL_NTS, buffer, 8, &len));
+    CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, CW("SELECT 1"), SQL_NTS, buffer, 8, &len));
     is_num(len, 8);
     IS_WSTR(buffer, CW("SELECT "), 8);
 
-    CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, WW("SELECT 1"), SQL_NTS, buffer, 3, &len));
+    CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, CW("SELECT 1"), SQL_NTS, buffer, 3, &len));
     is_num(len, 8);
     IS_WSTR(buffer, CW("SE"), 3);
 
@@ -1090,7 +1099,7 @@ MA_ODBC_TESTS my_tests[]=
   {quotes, "quotes", NORMAL, ALL_DRIVERS},
   {ansi_quotes, "ansi_quotes", NORMAL, ALL_DRIVERS},
   {ansi_quotes_to_fix, "ansi_quotes_to_fix", TO_FIX, ALL_DRIVERS},
-  {sql_native_sql, "sql_native_sql", NORMAL, ANSI_DRIVER},
+  {sql_native_sql, "sql_native_sql", NORMAL, ALL_DRIVERS},
   {sql_native_sql_buffers_ansi, "sql_native_sql_buffers_ansi", NORMAL, ANSI_DRIVER},
   {sql_native_sql_buffers_unicode, "sql_native_sql_buffers_unicode", NORMAL, UNICODE_DRIVER},
   {sql_native_sql_errors, "sql_native_sql_errors", NORMAL, ALL_DRIVERS},
