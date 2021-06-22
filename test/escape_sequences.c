@@ -966,7 +966,7 @@ ODBC_TEST(sql_native_sql) {
 
 // sql_native_sql_buffers checks that SQLNativeSql handle input and output buffers correctly
 //
-ODBC_TEST(sql_native_sql_buffers_ansi) {
+ODBC_TEST(sql_native_sql_buffers) {
   int len;
   SQLCHAR buffer[BUFFER_SIZE];
 
@@ -1107,7 +1107,7 @@ MA_ODBC_TESTS my_tests[]=
   {ansi_quotes, "ansi_quotes", NORMAL, ALL_DRIVERS},
   {ansi_quotes_to_fix, "ansi_quotes_to_fix", TO_FIX, ALL_DRIVERS},
   {sql_native_sql, "sql_native_sql", NORMAL, ALL_DRIVERS},
-  {sql_native_sql_buffers_ansi, "sql_native_sql_buffers_ansi", NORMAL, ALL_DRIVERS},
+  {sql_native_sql_buffers, "sql_native_sql_buffers_ansi", NORMAL, ALL_DRIVERS},
   {sql_native_sql_buffers_unicode, "sql_native_sql_buffers_unicode", NORMAL, UNICODE_DRIVER},
   {sql_native_sql_errors, "sql_native_sql_errors", NORMAL, ALL_DRIVERS},
   {NULL, NULL, NORMAL, ALL_DRIVERS}
