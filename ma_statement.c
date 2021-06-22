@@ -1163,6 +1163,11 @@ static void ResetInternalLength(MADB_Stmt *Stmt, unsigned int ParamOffset)
 }
 /* }}} */
 
+static int SetUnboundParameterError(MADB_Stmt* const Stmt)
+{
+    return MADB_SetError(&Stmt->Error, MADB_ERR_07002, "Parameter was not bound before calling SQLExecute", 0);
+}
+
 /* {{{ MADB_DoExecute */
 /* Actually executing on the server, doing required actions with C API, and processing execution result */
 SQLRETURN MADB_DoExecute(MADB_Stmt *Stmt)
@@ -1569,8 +1574,8 @@ SQLRETURN MADB_InsertParams(MADB_Stmt *Stmt, unsigned long QueryOffset, SQLULEN 
             // Check if parameter was bound.
             if (!ApdRecord->inUse)
             {
-                ret= MADB_SetError(&Stmt->Error, MADB_ERR_07002, "Parameter was not bound before calling SQLExecute", 0);
-                return ret;
+                ret= SetUnboundParameterError(Stmt);
+                goto error;
             }
 
             // Get the position of the current parameter in a query.
@@ -2004,7 +2009,7 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
           /* check if parameter was bound */
           if (!ApdRecord->inUse)
           {
-            ret= MADB_SetError(&Stmt->Error, MADB_ERR_07002, NULL, 0);
+            ret= SetUnboundParameterError(Stmt);
             goto end;
           }
 

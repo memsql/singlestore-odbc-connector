@@ -348,7 +348,7 @@ MA_ODBC_TESTS my_tests[] = {
    {execute_2_before_fetch_1, "execute_2_before_fetch_1", NORMAL, ALL_DRIVERS},
    {execute_async, "execute_async", NORMAL, ALL_DRIVERS},
    {execute_no_data, "execute_no_data", KNOWN_FAILURE, ALL_DRIVERS},    //TODO: bug PLAT-5607
-   {execute_unbound, "execute_unbound", KNOWN_FAILURE, ALL_DRIVERS},    //TODO: bug PLAT-5608
+   {execute_unbound, "execute_unbound", NORMAL, ALL_DRIVERS},
    {execute_transaction, "execute_transaction", NORMAL, ALL_DRIVERS},
    {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
