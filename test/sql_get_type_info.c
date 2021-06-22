@@ -118,7 +118,35 @@ int run_sql_get_type_info(SQLHANDLE Stmt1, SQLSMALLINT DataType, MADB_TypeInfo *
         }
     }
 
-    CHECK_STMT_RC(Stmt1, SQLGetTypeInfo(Stmt1, DataType));
+    rc = SQLGetTypeInfo(Stmt1, DataType);
+#ifdef _WIN32
+    /* unsupported field */
+    if(rc == SQL_ERROR && (!expTypeInfoCount || ExpTypeInfo[0].DataTypeAlias)) {
+        SQLCHAR SQLState[6];
+        SQLINTEGER NativeError;
+        SQLCHAR SQLMessage[SQL_MAX_MESSAGE_LENGTH];
+        SQLSMALLINT TextLength;
+
+        const SQLRETURN result = SQLGetDiagRec(HandleType, Handle, 1, SQLState, &NativeError, SQLMessage, SQL_MAX_MESSAGE_LENGTH, &TextLength);
+        if(result == SQL_SUCCESS || result == SQL_SUCCESS_WITH_INFO) {
+          const char* const ExpectedError = "SQL data type out of range";
+          const SQLSMALLINT ExpectedLength = strlen(ExpectedError);
+          if(!strcmp(SQLState, "S1004")
+             && NativeError == 0
+             && ExpectedLength <= TextLength
+             && !strcmp(SQLMessage + (TextLength - ExpectedLength), ExpectedError)) {
+            diag("Windows DM error on field %d", DataType);
+            return OK;
+          } else {
+            fprintf(stdout, "[%s] (%d) %s\n", SQLState, NativeError, SQLMessage);
+          }
+        } else {
+          fprintf(stdout, "Error %d getting diagnostic records with SQLGetDiagRec()\n", result);
+        }
+    }
+#endif // _WIN32
+    CHECK_STMT_RC(Stmt1, rc);
+
     if ((rc = bind_type_info(Stmt1, &recTypeInfo, &cpSize)) != OK) {
         return rc;
     }
