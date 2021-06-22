@@ -77,9 +77,9 @@ ODBC_TEST(execute_1_before_fetch_1) {
     IS(out_id == 1 && !strcmp("aa", out_text)); out_id = 0, *out_text = 0;
     CLOSE(Stmt);
     EXEC_DIRECT(Stmt, QUERY_UPDATE_WITH_PARAMS);
-    FETCH_ERR(Stmt);
+    FETCH_CURSOR_ERR(Stmt);
     EXECUTE(Stmt);      // TODO: Stmt was prepared by the EXEC_DIRECT above and is QUERY_UPDATE_WITH_PARAMS, this is bug PLAT-5605
-    FETCH_ERR(Stmt);
+    FETCH_CURSOR_ERR(Stmt);
     EXEC_DIRECT(Stmt, QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW);
     EXECUTE(Stmt);      // TODO: Stmt was prepared by the EXEC_DIRECT above and is QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW, this is bug PLAT-5605
     FETCH(Stmt);
