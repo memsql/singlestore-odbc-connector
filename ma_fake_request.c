@@ -69,6 +69,13 @@ SQLRETURN constructData(MYSQL_DATA *dest, char ***data, unsigned long dataLength
     dest->rows = dataLength;
     dest->fields = rowLength;
     dest->type = MYSQL_FAKE_RESULT;
+
+    if(!dataLength)
+    {
+        dest->data = NULL;
+        return SQL_SUCCESS;
+    }
+
     MYSQL_ROWS *cur = dest->data = (MYSQL_ROWS *) ma_alloc_root(&dest->alloc, dataLength * sizeof(MYSQL_ROWS));
     if (!cur) { return SQL_ERROR; }
 
@@ -104,9 +111,6 @@ SQLRETURN constructData(MYSQL_DATA *dest, char ***data, unsigned long dataLength
 SQLRETURN MADB_FakeRequest(MADB_Stmt *Stmt, char **fields, enum enum_field_types *fieldTypes, unsigned long fieldsLength,
                        char ***data, unsigned long dataLength)
 {
-    if (dataLength == 0) {
-        return MADB_SetError(&Stmt->Error, MADB_ERR_HY090, "Non-empty data required", 0);
-    }
     if (fieldsLength == 0) {
         return MADB_SetError(&Stmt->Error, MADB_ERR_HY090, "Non-empty fields required", 0);
     }

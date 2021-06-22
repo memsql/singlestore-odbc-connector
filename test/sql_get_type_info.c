@@ -112,14 +112,10 @@ int run_sql_get_type_info(SQLHANDLE Stmt1, SQLSMALLINT DataType, MADB_TypeInfo *
 
     for (i = 0; i < TYPES_COUNT; i++)
     {
-        if (DataType == SQL_ALL_TYPES || CorrectTypeInfos[i].DataType == DataType)
+        if (DataType == SQL_ALL_TYPES || CorrectTypeInfos[i].DataType == DataType || CorrectTypeInfos[i].DataTypeAlias == DataType)
         {
             ExpTypeInfo[expTypeInfoCount++] = CorrectTypeInfos[i];
         }
-    }
-    // TODO PLAT-5526
-    if (expTypeInfoCount == 0) {
-        return OK;
     }
 
     CHECK_STMT_RC(Stmt1, SQLGetTypeInfo(Stmt1, DataType));
@@ -130,13 +126,15 @@ int run_sql_get_type_info(SQLHANDLE Stmt1, SQLSMALLINT DataType, MADB_TypeInfo *
     CHECK_STMT_RC(Stmt1, SQLNumResultCols(Stmt1, &numResultCols));
     FAIL_IF_NE_INT(TYPE_INFO_FIELDS_COUNT, numResultCols, "Wrong number of result columns returned");
     while (SQL_SUCCEEDED(SQLFetch(Stmt1))) {
-        if ((rc = check_stmt_correct_type_info(ExpTypeInfo[numOfRowsFetched], recTypeInfo, cpSize)) != OK) {
+        if(numOfRowsFetched >= expTypeInfoCount) {
+            fprintf(stdout, "Unexpected row %s (File: %s Line: %d)\n", recTypeInfo.TypeName, __FILE__, __LINE__);
+        } else if ((rc = check_stmt_correct_type_info(ExpTypeInfo[numOfRowsFetched], recTypeInfo, cpSize)) != OK) {
             return rc;
         }
         numOfRowsFetched++;
     }
     diag("Fetched %d rows", numOfRowsFetched);
-    FAIL_IF_NE_INT(expTypeInfoCount, numOfRowsFetched, "Wrong number of rows fetched");
+    FAIL_IF_NE_INT(numOfRowsFetched, expTypeInfoCount, "Wrong number of rows fetched");
 
     return OK;
 }
