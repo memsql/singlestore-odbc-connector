@@ -96,15 +96,6 @@ int strcpy_s(char *dest, size_t buffer_size, const char *src)
 }
 
 
-int endswith(const char* const str, const char* const substr) {
-    const size_t len = strlen(str);
-    const size_t sub_len = strlen(substr);
-    if(len >= sub_len)
-        return !strcmp(str + (len - sub_len), substr);
-    return 0;
-}
-
-
 #define Sleep(ms) sleep(ms/1000)
 
 # ifndef TRUE
@@ -419,6 +410,14 @@ int myrowcount(SQLHSTMT Stmt)
   while (SQLFetch(Stmt) != SQL_NO_DATA)
     Rows++;
   return Rows;
+}
+
+int endswith(const char* const str, const char* const substr) {
+    const size_t len = strlen(str);
+    const size_t sub_len = strlen(substr);
+    if(len >= sub_len)
+        return !strcmp(str + (len - sub_len), substr);
+    return 0;
 }
 
 
