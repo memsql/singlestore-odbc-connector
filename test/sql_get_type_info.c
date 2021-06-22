@@ -127,7 +127,7 @@ int run_sql_get_type_info(SQLHANDLE Stmt1, SQLSMALLINT DataType, MADB_TypeInfo *
         SQLCHAR SQLMessage[SQL_MAX_MESSAGE_LENGTH];
         SQLSMALLINT TextLength;
 
-        const SQLRETURN result = SQLGetDiagRec(HandleType, Handle, 1, SQLState, &NativeError, SQLMessage, SQL_MAX_MESSAGE_LENGTH, &TextLength);
+        const SQLRETURN result = SQLGetDiagRec(SQL_HANDLE_STMT, Stmt1, 1, SQLState, &NativeError, SQLMessage, SQL_MAX_MESSAGE_LENGTH, &TextLength);
         if(result == SQL_SUCCESS || result == SQL_SUCCESS_WITH_INFO) {
           const char* const ExpectedError = "SQL data type out of range";
           const SQLSMALLINT ExpectedLength = strlen(ExpectedError);
