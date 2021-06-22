@@ -843,7 +843,7 @@ do {                                                  \
 }while(0)
 
 // Shorthands
-#define CURSOR_STATE_ERROR    "24000", 0, "Invalid cursor state"
+#define CURSOR_STATE_ERROR    "24000", -1, "Invalid cursor state"
 
 #define PREPARE(stmt, query)                    CHECK_STMT_RC(stmt, SQLPrepare(stmt, (SQLCHAR*)query, SQL_NTS))
 #define PREPARE_CURSOR_ERR(stmt, query)         CHECK_STMT_ERR(stmt, SQLPrepare(stmt, (SQLCHAR*)query, SQL_NTS), CURSOR_STATE_ERROR)
