@@ -112,17 +112,41 @@ int run_sql_get_type_info(SQLHANDLE Stmt1, SQLSMALLINT DataType, MADB_TypeInfo *
 
     for (i = 0; i < TYPES_COUNT; i++)
     {
-        if (DataType == SQL_ALL_TYPES || CorrectTypeInfos[i].DataType == DataType)
+        if (DataType == SQL_ALL_TYPES || CorrectTypeInfos[i].DataType == DataType || CorrectTypeInfos[i].DataTypeAlias == DataType)
         {
             ExpTypeInfo[expTypeInfoCount++] = CorrectTypeInfos[i];
         }
     }
-    // TODO PLAT-5526
-    if (expTypeInfoCount == 0) {
-        return OK;
-    }
 
-    CHECK_STMT_RC(Stmt1, SQLGetTypeInfo(Stmt1, DataType));
+    rc = SQLGetTypeInfo(Stmt1, DataType);
+#ifdef _WIN32
+    /* unsupported field */
+    if(rc == SQL_ERROR && (!expTypeInfoCount || ExpTypeInfo[0].DataTypeAlias)) {
+        SQLCHAR SQLState[6];
+        SQLINTEGER NativeError;
+        SQLCHAR SQLMessage[SQL_MAX_MESSAGE_LENGTH];
+        SQLSMALLINT TextLength;
+
+        const SQLRETURN result = SQLGetDiagRec(SQL_HANDLE_STMT, Stmt1, 1, SQLState, &NativeError, SQLMessage, SQL_MAX_MESSAGE_LENGTH, &TextLength);
+        if(result == SQL_SUCCESS || result == SQL_SUCCESS_WITH_INFO) {
+          const char* const ExpectedError = "SQL data type out of range";
+          const SQLSMALLINT ExpectedLength = strlen(ExpectedError);
+          if(!strcmp(SQLState, "S1004")
+             && NativeError == 0
+             && ExpectedLength <= TextLength
+             && !strcmp(SQLMessage + (TextLength - ExpectedLength), ExpectedError)) {
+            diag("Windows DM error on field %d", DataType);
+            return OK;
+          } else {
+            fprintf(stdout, "[%s] (%d) %s\n", SQLState, NativeError, SQLMessage);
+          }
+        } else {
+          fprintf(stdout, "Error %d getting diagnostic records with SQLGetDiagRec()\n", result);
+        }
+    }
+#endif // _WIN32
+    CHECK_STMT_RC(Stmt1, rc);
+
     if ((rc = bind_type_info(Stmt1, &recTypeInfo, &cpSize)) != OK) {
         return rc;
     }
@@ -130,13 +154,15 @@ int run_sql_get_type_info(SQLHANDLE Stmt1, SQLSMALLINT DataType, MADB_TypeInfo *
     CHECK_STMT_RC(Stmt1, SQLNumResultCols(Stmt1, &numResultCols));
     FAIL_IF_NE_INT(TYPE_INFO_FIELDS_COUNT, numResultCols, "Wrong number of result columns returned");
     while (SQL_SUCCEEDED(SQLFetch(Stmt1))) {
-        if ((rc = check_stmt_correct_type_info(ExpTypeInfo[numOfRowsFetched], recTypeInfo, cpSize)) != OK) {
+        if(numOfRowsFetched >= expTypeInfoCount) {
+            fprintf(stdout, "Unexpected row %s (File: %s Line: %d)\n", recTypeInfo.TypeName, __FILE__, __LINE__);
+        } else if ((rc = check_stmt_correct_type_info(ExpTypeInfo[numOfRowsFetched], recTypeInfo, cpSize)) != OK) {
             return rc;
         }
         numOfRowsFetched++;
     }
     diag("Fetched %d rows", numOfRowsFetched);
-    FAIL_IF_NE_INT(expTypeInfoCount, numOfRowsFetched, "Wrong number of rows fetched");
+    FAIL_IF_NE_INT(numOfRowsFetched, expTypeInfoCount, "Wrong number of rows fetched");
 
     return OK;
 }

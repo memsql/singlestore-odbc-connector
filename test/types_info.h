@@ -29,7 +29,7 @@
 
 #define TYPES_COUNT 56
 #define TYPE_INFO_FIELDS_COUNT 19
-#define SQL_DATA_TYPES_COUNT 37
+#define SQL_DATA_TYPES_COUNT 38
 
 typedef struct
 {
@@ -53,6 +53,7 @@ typedef struct
     SQLINTEGER NumPrecRadix;
     SQLSMALLINT IntervalPrecision;
     SQLSMALLINT SqlDataType;
+    SQLSMALLINT DataTypeAlias;
 } MADB_TypeInfo;
 
 char* fieldNames[TYPE_INFO_FIELDS_COUNT] = {"TYPE_NAME", "DATA_TYPE", "COLUMN_SIZE", "LITERAL_PREFIX", "LITERAL_SUFFIX",
@@ -72,10 +73,11 @@ short sqlDataTypes[SQL_DATA_TYPES_COUNT] = {
   SQL_INTEGER, SQL_REAL, SQL_FLOAT, SQL_DOUBLE, SQL_BIT, SQL_TINYINT, SQL_BIGINT, SQL_BINARY, SQL_VARBINARY, SQL_LONGVARBINARY,
   SQL_TYPE_DATE, SQL_TYPE_TIME, SQL_TYPE_TIMESTAMP, SQL_INTERVAL_MONTH, SQL_INTERVAL_YEAR, SQL_INTERVAL_YEAR_TO_MONTH,
   SQL_INTERVAL_DAY, SQL_INTERVAL_HOUR, SQL_INTERVAL_MINUTE, SQL_INTERVAL_SECOND, SQL_INTERVAL_DAY_TO_HOUR, SQL_INTERVAL_DAY_TO_MINUTE,
-  SQL_INTERVAL_DAY_TO_SECOND, SQL_INTERVAL_HOUR_TO_MINUTE, SQL_INTERVAL_HOUR_TO_SECOND, SQL_INTERVAL_MINUTE_TO_SECOND, SQL_GUID, SQL_ALL_TYPES
+  SQL_INTERVAL_DAY_TO_SECOND, SQL_INTERVAL_HOUR_TO_MINUTE, SQL_INTERVAL_HOUR_TO_SECOND, SQL_INTERVAL_MINUTE_TO_SECOND, SQL_GUID, SQL_ALL_TYPES,
+  -1234 /* garbage */
 };
 
-MADB_TypeInfo TypeInfoV3[]=
+MADB_TypeInfo TypeInfoV3[TYPES_COUNT]=
 {
     // Integer numbers
     {"bool",SQL_TINYINT,1,"","","NULL",1,1,3,0,0,0,"bool",0,0,0,0,10, SQL_BIT},
@@ -137,11 +139,10 @@ MADB_TypeInfo TypeInfoV3[]=
     {"enum",SQL_VARCHAR,65535,"\'","\'","NULL",1,0,3,0,0,0,"enum",0,0,0,0,10, SQL_VARCHAR},
     {"enum",SQL_WVARCHAR,65535,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"enum",0,0,0,0,10, SQL_WVARCHAR},
     {"set",SQL_VARCHAR,64,"\'","\'","NULL",1,0,3,0,0,0,"set",0,0,0,0,10, SQL_VARCHAR},
-    {"set",SQL_WVARCHAR,64,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"set",0,0,0,0,10, SQL_WVARCHAR},
-    {NULL,0,0,NULL,NULL,NULL,0,0,0,0,0,0,NULL,0,0,0,0,0}
+    {"set",SQL_WVARCHAR,64,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"set",0,0,0,0,10, SQL_WVARCHAR}
 };
 
-MADB_TypeInfo TypeInfoV2[]=
+MADB_TypeInfo TypeInfoV2[TYPES_COUNT]=
 {
     // Integer numbers
     {"bool",SQL_TINYINT,1,"","","NULL",1,1,3,0,0,0,"bool",0,0,0,0,10, SQL_BIT},
@@ -168,11 +169,11 @@ MADB_TypeInfo TypeInfoV2[]=
     {"dec",SQL_DECIMAL,65,"","","precision,scale",1,0,3,0,0,1,"dec",-308,308,0,0,10, SQL_DECIMAL},
     {"fixed",SQL_DECIMAL,65,"","","precision,scale",1,0,3,0,0,1,"fixed",-308,308,0,0,10, SQL_DECIMAL},
     {"numeric",SQL_NUMERIC,65,"","","precision,scale",1,0,3,0,0,1,"numeric", -308,308,0,0,10, SQL_NUMERIC}, /* Todo: ?? */
-    // Time and Date
-    {"date",SQL_DATE,10,"\'","\'","NULL",1,0,3,0,0,0,"date",0,0,0,0,10, SQL_DATETIME},
-    {"time",SQL_TIME,18,"\'","\'","NULL",1,0,3,0,0,0,"time",0,0,0,0,10, SQL_DATETIME},
-    {"datetime",SQL_TIMESTAMP,27,"\'","\'","NULL",1,0,3,0,0,0,"datetime",0,0,0,0,10, SQL_DATETIME},
-    {"timestamp",SQL_TIMESTAMP,27,"\'","\'","scale",1,0,3,0,0,0,"timestamp",0,0,0,0,10, SQL_DATETIME},
+    // Time and Date TODO: PLAT-5619
+    {"date",SQL_DATE,10,"\'","\'","NULL",1,0,3,0,0,0,"date",0,0,0,0,10, SQL_DATETIME, 0, SQL_TYPE_DATE},
+    {"time",SQL_TIME,18,"\'","\'","NULL",1,0,3,0,0,0,"time",0,0,0,0,10, SQL_DATETIME, 0, SQL_TYPE_TIME},
+    {"datetime",SQL_TIMESTAMP,27,"\'","\'","NULL",1,0,3,0,0,0,"datetime",0,0,0,0,10, SQL_DATETIME, 0, SQL_TYPE_TIMESTAMP},
+    {"timestamp",SQL_TIMESTAMP,27,"\'","\'","scale",1,0,3,0,0,0,"timestamp",0,0,0,0,10, SQL_DATETIME, 0, SQL_TYPE_TIMESTAMP},
     {"year",SQL_SMALLINT,4,"","","NULL",1,0,3,SQL_FALSE,0,1,"year",0,0,0,0,10, SQL_SMALLINT},
     // String Types
     {"binary",SQL_BINARY,255,"\'","\'","length",1,1,3,0,0,0,"binary",0,0,0,0,10, SQL_BINARY},
@@ -203,9 +204,7 @@ MADB_TypeInfo TypeInfoV2[]=
     {"enum",SQL_VARCHAR,65535,"\'","\'","NULL",1,0,3,0,0,0,"enum",0,0,0,0,10, SQL_VARCHAR},
     {"enum",SQL_WVARCHAR,65535,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"enum",0,0,0,0,10, SQL_WVARCHAR},
     {"set",SQL_VARCHAR,64,"\'","\'","NULL",1,0,3,0,0,0,"set",0,0,0,0,10, SQL_VARCHAR},
-    {"set",SQL_WVARCHAR,64,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"set",0,0,0,0,10, SQL_WVARCHAR},
-
-    {NULL,0,0,NULL,NULL,NULL,0,0,0,0,0,0,NULL,0,0,0,0,0}
+    {"set",SQL_WVARCHAR,64,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"set",0,0,0,0,10, SQL_WVARCHAR}
 };
 
 #endif //MARIADB_CONNECTOR_ODBC_TYPES_H
