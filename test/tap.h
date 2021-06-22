@@ -752,7 +752,8 @@ do {\
 #define CHECK_ENV_RC(env,rc) CHECK_HANDLE_RC(SQL_HANDLE_ENV,env,rc)
 #define CHECK_DESC_RC(desc,rc) CHECK_HANDLE_RC(SQL_HANDLE_DESC,desc,rc)
 
-#define CHECK_STMT_ERR(stmt, rc, ...) CHECK_HANDLE_ERR(SQL_HANDLE_STMT, stmt, rc, __VA_ARGS__)
+#define EXPAND(x) x
+#define CHECK_STMT_ERR(stmt, rc, ...) EXPAND(CHECK_HANDLE_ERR(SQL_HANDLE_STMT, stmt, rc, __VA_ARGS__))
 
 #define FAIL_IF_NE_INT(got, exp, message) \
 do {\
