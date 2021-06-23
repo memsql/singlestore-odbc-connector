@@ -91,6 +91,13 @@ ODBC_TEST(t_sqlrowcnt_update) {
 #define UPDATE_EXISTING_ROW_UPDATED 2
 #define INSERT_CNT 3
 
+// The difference between this and next tests is that in this test we pass CLIENT_FOUND_ROWS flag in connection string
+// and in the next one we don't. This flag affects the logic of how server calculates. From mysql docs:
+//
+// For UPDATE statements, the affected-rows value by default is the number of rows actually changed.
+// If you specify the CLIENT_FOUND_ROWS flag to mysql_real_connect() when connecting to mysqld,
+// the affected-rows value is the number of rows “found”; that is, matched by the WHERE clause.
+
 ODBC_TEST(t_sqlrowcnt_insert) {
     SQLLEN rc;
 
@@ -106,18 +113,61 @@ ODBC_TEST(t_sqlrowcnt_insert) {
     OK_SIMPLE_STMT(Stmt, "INSERT INTO test_rowcount_values VALUES (2, 'b'), (5, 'a') ON DUPLICATE KEY UPDATE text = VALUES(text)");
     CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
 
-    // TODO: PLAT-5518
-
-    // SingleStore return 0 if column value is not changed
-    // FAIL_IF_NE_INT(rc, UPDATE_NO_EXISTING_ROW_CHANGED  + UPDATE_NEW_ROW_INSERTED,
-    //               "SQLRowCount should return inserted rows count for insert query when column is not changed");
+    // When CLIENT_FOUND_ROWS is passed, SingleStore returns number of rows that were passed for insertion
+     FAIL_IF_NE_INT(rc, 2 * UPDATE_NEW_ROW_INSERTED,
+                   "SQLRowCount should return inserted rows count for insert query when column is not changed");
 
     OK_SIMPLE_STMT(Stmt, "INSERT INTO test_rowcount_values VALUES (2, 'c'), (6, 'a') ON DUPLICATE KEY UPDATE text = VALUES(text)");
     CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
 
-    // SingleStore return 2 if column value is not updated
+    // SingleStore return 2 when row value is updated + 1 when new row is inserted
     FAIL_IF_NE_INT(rc, UPDATE_EXISTING_ROW_UPDATED  + UPDATE_NEW_ROW_INSERTED,
                    "SQLRowCount should return inserted rows count for insert query when column is updated");
+
+    return OK;
+}
+
+ODBC_TEST(t_sqlrowcnt_insert_no_client_found_rows) {
+    SQLHANDLE Connection1, Stmt1;
+    SQLLEN rc;
+    SQLCHAR conn[512];
+
+    sprintf((char *) conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s;NO_CACHE=1",
+            my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr);
+
+    CHECK_ENV_RC(Env, SQLAllocHandle(SQL_HANDLE_DBC, Env, &Connection1));
+    CHECK_DBC_RC(Connection1,
+                 SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
+                                  NULL, SQL_DRIVER_NOPROMPT));
+
+    CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
+
+    OK_SIMPLE_STMT(Stmt1, "DROP TABLE IF EXISTS test_rowcount_values");
+    OK_SIMPLE_STMT(Stmt1, "CREATE TABLE test_rowcount_values (id INT PRIMARY KEY, text VARCHAR(16))");
+    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (1, 'a'), (2, 'b')");
+
+    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (3, 'c'), (4, 'd')");
+    CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
+
+    FAIL_IF_NE_INT(rc, 2 * UPDATE_NEW_ROW_INSERTED, "SQLRowCount should return inserted rows count for insert query");
+
+    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (2, 'b'), (5, 'a') ON DUPLICATE KEY UPDATE text = VALUES(text)");
+    CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
+
+    // SingleStore return 0 if column value is not changed
+    FAIL_IF_NE_INT(rc, UPDATE_NO_EXISTING_ROW_CHANGED  + UPDATE_NEW_ROW_INSERTED,
+                   "SQLRowCount should return inserted rows count for insert query when column is not changed");
+
+    OK_SIMPLE_STMT(Stmt1, "INSERT INTO test_rowcount_values VALUES (2, 'c'), (6, 'a') ON DUPLICATE KEY UPDATE text = VALUES(text)");
+    CHECK_STMT_RC(Stmt1, SQLRowCount(Stmt1, &rc));
+
+    // SingleStore return 2 when row value is updated + 1 when new row is inserted
+    FAIL_IF_NE_INT(rc, UPDATE_EXISTING_ROW_UPDATED  + UPDATE_NEW_ROW_INSERTED,
+                   "SQLRowCount should return inserted rows count for insert query when column is updated");
+
+    CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
+    CHECK_DBC_RC(Connection1, SQLDisconnect(Connection1));
+    CHECK_DBC_RC(Connection1, SQLFreeHandle(SQL_HANDLE_DBC, Connection1));
 
     return OK;
 }
@@ -229,6 +279,7 @@ MA_ODBC_TESTS my_tests[] =
     {t_sqlrowcnt_select_nocache, "t_sqlrowcnt_select_nocache", NORMAL, ALL_DRIVERS},
     {t_sqlrowcnt_update, "t_sqlrowcnt_update", NORMAL, ALL_DRIVERS},
     {t_sqlrowcnt_insert, "t_sqlrowcnt_insert", NORMAL, ALL_DRIVERS},
+    {t_sqlrowcnt_insert_no_client_found_rows, "t_sqlrowcnt_insert_no_client_found_rows", NORMAL, ALL_DRIVERS},
     {t_sqlrowcnt_delete, "t_sqlrowcnt_delete", NORMAL, ALL_DRIVERS},
     {t_sqlrowcnt_bulk_operation, "t_sqlrowcnt_bulk_operation", NORMAL, ALL_DRIVERS},
     {t_sqlrowcnt_batch, "t_sqlrowcnt_batch", NORMAL, ALL_DRIVERS},
