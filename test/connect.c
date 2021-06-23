@@ -122,6 +122,14 @@ ODBC_TEST(driver_connect_simple) {
   IS_STR(conn, conn_out, conn_out_len);
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+  sprintf((char*)conn, "DSN=%s;DESCRIPTION=%s;UID=%s;PWD=%s", my_dsn, "some description", my_uid, my_pwd);
+  CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
+                                      conn_out, sizeof(conn_out), &conn_out_len,
+                                      SQL_DRIVER_NOPROMPT));
+  is_num(conn_out_len, strlen((char*)conn));
+  IS_STR(conn, conn_out, conn_out_len);
+
+  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;CHARSET=%s;",
           my_drivername, my_uid, my_pwd, my_servername, my_port, "utf8");
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
@@ -219,30 +227,34 @@ ODBC_TEST(driver_connect_savefile) {
   HSTMT hdbc;
   SQLCHAR conn[1024], conn_out[1024];
   SQLSMALLINT conn_out_len;
+  SQLRETURN rc;
 
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc));
   OK_SIMPLE_STMT(Stmt, "DROP USER IF EXISTS driver_connect_savefile");
   OK_SIMPLE_STMT(Stmt, "CREATE USER driver_connect_savefile@'%' IDENTIFIED BY 's3cureP@ss'")
   OK_SIMPLE_STMT(Stmt, "GRANT ALL ON odbc_test.* TO driver_connect_savefile@'%'");
 
-  sprintf((char*)conn, "SAVEFILE=driver_connect;DSN=%s;DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s",
+  sprintf((char*)conn, "SAVEFILE=./driver_connect.dsn;DSN=%s;DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s",
             my_dsn, my_drivername, "driver_connect_savefile", "s3cureP@ss", my_servername, my_port, my_schema);
 
-  CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
-                                      conn_out, sizeof(conn_out), &conn_out_len,
-                                      SQL_DRIVER_NOPROMPT));
+  rc = SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
+                            conn_out, sizeof(conn_out), &conn_out_len,
+                            SQL_DRIVER_NOPROMPT);
+  if (rc == SQL_SUCCESS) {
+    sprintf((char *) conn, "FILEDSN=./driver_connect.dsn;PWD=%s", my_pwd);
+    CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+    CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
+                                        conn_out, sizeof(conn_out), &conn_out_len,
+                                        SQL_DRIVER_NOPROMPT));
 
-  sprintf((char*)conn, "FILEDSN=driver_connect;PWD=%s", my_pwd);
-  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
-  CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
-                                      conn_out, sizeof(conn_out), &conn_out_len,
-                                      SQL_DRIVER_NOPROMPT));
-
-  sprintf((char*)conn, "FILEDSN=driver_connect");
-  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
-  FAIL_IF(SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
-                           conn_out, sizeof(conn_out), &conn_out_len,
-                           SQL_DRIVER_NOPROMPT) != SQL_ERROR, "saved dsn file should not include password");
+    sprintf((char *) conn, "FILEDSN=./driver_connect.dsn");
+    CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+    FAIL_IF(SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
+                             conn_out, sizeof(conn_out), &conn_out_len,
+                             SQL_DRIVER_NOPROMPT) != SQL_ERROR, "saved dsn file should not include password");
+  } else if (rc != SQL_SUCCESS_WITH_INFO) {
+    return FAIL;
+  }
   return OK;
 }
 
@@ -929,6 +941,51 @@ ODBC_TEST(driver_connect_forwardonly) {
     return OK;
 }
 
+
+ODBC_TEST(driver_connect_no_cache) {
+  HSTMT hdbc;
+  SQLCHAR conn[1024], conn_out[1024];
+
+  CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc));
+  SQLSMALLINT conn_out_len;
+  sprintf((char *) conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;NO_CACHE=1;",
+          my_drivername, my_uid, my_pwd, my_servername, my_port, my_schema);
+  CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
+                                      conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
+                                      SQL_DRIVER_NOPROMPT));
+  is_num(conn_out_len, strlen((char *) conn));
+  IS_STR(conn, conn_out, conn_out_len);
+
+  HSTMT hstmt;
+  CHECK_DBC_RC(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt));
+  OK_SIMPLE_STMT(hstmt, "DROP TABLE IF EXISTS driver_connect_no_cache");
+  OK_SIMPLE_STMT(hstmt, "CREATE TABLE driver_connect_no_cache (a INT)");
+  OK_SIMPLE_STMT(hstmt, "INSERT INTO driver_connect_no_cache VALUES (0), (1), (2), (3), (4)");
+
+  OK_SIMPLE_STMT(hstmt, "SELECT a FROM driver_connect_no_cache ORDER BY a");
+
+  SQLULEN cursor_type;
+
+  CHECK_STMT_RC(hstmt, SQLCloseCursor(hstmt));
+  CHECK_STMT_RC(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER)SQL_CURSOR_FORWARD_ONLY, 0));
+  CHECK_STMT_RC(hstmt, SQLGetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER)&cursor_type, 0, NULL));
+  is_num(cursor_type, SQL_CURSOR_FORWARD_ONLY);
+
+  OK_SIMPLE_STMT(hstmt, "SELECT a FROM driver_connect_no_cache ORDER BY a");
+  CHECK_STMT_RC(hstmt, SQLFetch(hstmt));
+
+  FAIL_IF(SQL_SUCCEEDED(SQLSetPos(hstmt, 3, SQL_POSITION, SQL_LOCK_NO_CHANGE)),
+          "Can't use SQLSetPos with FORWARD_ONLY cursor when NO_CACHE option is set");
+  CHECK_SQLSTATE_EX(hstmt, SQL_HANDLE_STMT, "HY109");
+  CHECK_STMT_RC(hstmt, SQLCloseCursor(hstmt));
+
+  OK_SIMPLE_STMT(hstmt, "DROP TABLE IF EXISTS driver_connect_no_cache");
+
+  CHECK_STMT_RC(hstmt, SQLFreeHandle(SQL_HANDLE_STMT, hstmt));
+  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+  return OK;
+}
+
 // TODO: test NamedPipe parameter and NamedPipe bit in options (has effect only on Windows)
 // TODO: test GUI prompts for Windows and Mac
 
@@ -944,6 +1001,7 @@ MA_ODBC_TESTS my_tests[]=
   {driver_connect_timeout, "driver_connect_timeout", NORMAL, ALL_DRIVERS},
   {driver_connect_options, "driver_connect_options", NORMAL, ALL_DRIVERS},
   {driver_connect_forwardonly, "driver_connect_forwardonly", NORMAL, ALL_DRIVERS},
+  {driver_connect_no_cache, "driver_connect_no_cache", NORMAL, ALL_DRIVERS},
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
