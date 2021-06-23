@@ -1636,6 +1636,15 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
       return MADB_ExecutePositionedUpdate(Stmt, ExecDirect);
   }
 
+  /* Stmt->params was allocated during prepare, but could be cleared
+     by SQLResetStmt. In latter case we need to allocate it again */
+  if (!Stmt->params &&
+    !(Stmt->params = (MYSQL_BIND *)MADB_CALLOC(sizeof(MYSQL_BIND) * MADB_STMT_PARAM_COUNT(Stmt))))
+  {
+    MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
+    return Stmt->Error.ReturnValue;
+  }
+
   if (MADB_SSPS_DISABLED(Stmt))
   {
       LOCK_MARIADB(Stmt->Connection);
@@ -1905,15 +1914,6 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
       Stmt->State = MADB_SS_EXECUTED;
 
       goto end;
-  }
-
-  /* Stmt->params was allocated during prepare, but could be cleared
-     by SQLResetStmt. In latter case we need to allocate it again */
-  if (!Stmt->params &&
-    !(Stmt->params = (MYSQL_BIND *)MADB_CALLOC(sizeof(MYSQL_BIND) * MADB_STMT_PARAM_COUNT(Stmt))))
-  {
-    MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
-    return Stmt->Error.ReturnValue;
   }
 
   /* Normally this check is done by a DM. We are doing that too, keeping in mind direct linking.

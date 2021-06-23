@@ -234,10 +234,10 @@ ODBC_TEST(sql_diag_record_fields)
                  "SQLGetDiagField should return correct native error code");
   CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, 1, SQL_DIAG_COLUMN_NUMBER, &diagColumnNumber, 0, NULL));
   FAIL_IF_NE_INT(diagColumnNumber, SQL_COLUMN_NUMBER_UNKNOWN,
-                 "SQLGetDiagField should return correct column number"); // TODO PLAT-5596
+                 "SQLGetDiagField should return correct column number");
   CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, 1, SQL_DIAG_ROW_NUMBER, &diagRowNumber, 0, NULL));
   FAIL_IF_NE_INT(diagRowNumber, SQL_ROW_NUMBER_UNKNOWN,
-                 "SQLGetDiagField should return correct row number"); // TODO PLAT-5596
+                 "SQLGetDiagField should return correct row number");
 
   // Connect using wrong DSN to get ODBC-specific SQLSTATE
   // Error code is IM002
