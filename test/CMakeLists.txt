@@ -18,13 +18,14 @@ INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR})
 ENABLE_TESTING()
 
 SET (ODBC_TESTS
-        "basic" "types" "blob" "desc" "info" "tran" "catalog1" "catalog2"
-        "use_result" "scroll" "bulk" "prepare" "datetime" "keys"
-        "curext" "relative" "unicode" "cursor" "dyn_cursor"
-        "error" "escape_sequences" "param" "result1" "result2" "multistatement"
-        "sqlcolumns" "sql_procedure_columns" "sql_get_type_info" "sql_special_columns"
-        "client_side" "sql_get_info" "sql_row_count" "sql_get_functions"
-        "sql_get_diag_field" "sql_get_diag_rec" "sql_execute" "connect")
+#        "basic" "types" "blob" "desc" "info" "tran" "catalog1" "catalog2"
+#        "use_result" "scroll" "bulk" "prepare" "datetime" "keys"
+#        "curext" "relative" "unicode" "cursor" "dyn_cursor"
+#        "error" "escape_sequences" "param" "result1" "result2" "multistatement"
+#        "sqlcolumns" "sql_procedure_columns" "sql_get_type_info" "sql_special_columns"
+#        "client_side" "sql_get_info" "sql_row_count" "sql_get_functions"
+#        "sql_get_diag_field" "sql_get_diag_rec" "sql_execute"
+        "connect")
 SET(COMMON_TEST_SOURCES tap.h)
 
 # Interactive makes sense on WIN32 only atm
