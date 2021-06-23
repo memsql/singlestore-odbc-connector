@@ -46,6 +46,9 @@ $env:TEST_PASSWORD=$ENV:MEMSQL_PASSWORD
 $env:TEST_SERVER=$ENV:MEMSQL_HOST
 $env:TEST_UID=$ENV:MEMSQL_USER
 
+Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n127.0.0.1`ttest-memsql-cluster" -Force
+Add-Content -Path $env:windir\my.ini -Value "`n[mysqld]`nplugin-load-add=authentication_pam.so`n[client]`nprotocol = TCP`n[odbc]`ndatabase = odbc_test_mycnf" -Force
+
 cd test
 ctest -V
 exit $LASTEXITCODE

@@ -26,6 +26,18 @@ cat ${ODBCINI}
 export ODBCINSTINI="$PWD/test/odbcinst.ini"
 cat ${ODBCINSTINI}
 
+echo "Modifying /etc/hosts and ~/my.cnf to enable connect tests"
+echo 127.0.0.1  test-memsql-cluster | sudo tee -a /etc/hosts
+echo "[mysqld]
+plugin-load-add=authentication_pam.so
+
+[client]
+protocol = TCP
+
+[odbc]
+database = odbc_test_mycnf
+" | sudo tee -a ~/my.cnf
+
 echo "Running tests"
 cd test
 ctest -V
