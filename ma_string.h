@@ -47,6 +47,8 @@ SQLLEN     SafeStrlen(SQLCHAR *str, SQLLEN buff_length);
   if((ptr) && ((len) == SQL_NTS))\
     len= sizeof(len) == 2 ? (SQLSMALLINT)strlen((ptr)) : (SQLINTEGER)strlen((ptr));\
   else if (!(ptr))\
-    len= 0
+    len= 0;\
+  else if (len && !((const char*)(ptr))[len - 1])\
+    --len
 
 #endif

@@ -754,6 +754,7 @@ do {\
 
 #define EXPAND(x) x
 #define CHECK_STMT_ERR(stmt, rc, ...) EXPAND(CHECK_HANDLE_ERR(SQL_HANDLE_STMT, stmt, rc, __VA_ARGS__))
+#define CHECK_DBC_ERR(stmt, rc, ...) EXPAND(CHECK_HANDLE_ERR(SQL_HANDLE_DBC, stmt, rc, __VA_ARGS__))
 
 #define FAIL_IF_NE_INT(got, exp, message) \
 do {\
@@ -1518,6 +1519,19 @@ int sqlwcharcmp(const SQLWCHAR *s1, const SQLWCHAR *s2, int n)
   }
 
   return n != 0 && *s1!=*s2;
+}
+
+int sqlwcharequal(const SQLWCHAR *s1, const SQLWCHAR *s2)
+{
+  while(*s1)
+  {
+    if(*s1++ != *s2++)
+    {
+      return 0;
+    }
+  }
+
+  return !*s2;
 }
 
 size_t sqlwcharlen(const SQLWCHAR *s)
