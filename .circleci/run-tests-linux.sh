@@ -36,7 +36,7 @@ protocol = TCP
 
 [odbc]
 database = odbc_test_mycnf
-" | sudo tee -a ~/my.cnf
+" | sudo tee ~/.my.cnf
 
 echo "Running tests"
 
