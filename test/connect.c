@@ -266,7 +266,7 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_ENV_RC(Env, SQLAllocHandle(SQL_HANDLE_DBC, Env, &hdbc));
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;SSLCERT=%s;SSLKEY=%s;",
       my_drivername, my_uid, my_pwd, my_servername, my_port, my_schema,
-      "test/ssl/test-memsql-cert.pem", "test/ssl/test-memsql-key.pem");
+      "ssl/test-memsql-cert.pem", "ssl/test-memsql-key.pem");
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
@@ -280,8 +280,8 @@ ODBC_TEST(driver_connect_ssl) {
 
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;SSLCERT=%s;SSLKEY=%s;",
           my_drivername, "driver_connect_ssl", "", my_servername, my_port, my_schema,
-          "test/ssl/test-memsql-cert.pem",
-          "test/ssl/test-memsql-key.pem");
+          "ssl/test-memsql-cert.pem",
+          "ssl/test-memsql-key.pem");
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
@@ -293,7 +293,7 @@ ODBC_TEST(driver_connect_ssl) {
 
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;SSLCA=%s;",
           my_drivername, "driver_connect_ssl", "", my_servername, my_port, my_schema,
-          "test/ssl/test-ca-cert.pem");
+          "ssl/test-ca-cert.pem");
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
@@ -304,9 +304,9 @@ ODBC_TEST(driver_connect_ssl) {
 
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;SSLCERT=%s;SSLKEY=%s;SSLCA=%s;",
           my_drivername, "driver_connect_ssl", "", my_servername, my_port, my_schema,
-          "test/ssl/test-memsql-cert.pem",
-          "test/ssl/test-memsql-key.pem",
-          "test/ssl/test-ca-cert.pem");
+          "ssl/test-memsql-cert.pem",
+          "ssl/test-memsql-key.pem",
+          "ssl/test-ca-cert.pem");
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
@@ -317,7 +317,7 @@ ODBC_TEST(driver_connect_ssl) {
 
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;SSLCAPATH=%s;",
           my_drivername, "driver_connect_ssl", "", my_servername, my_port, my_schema,
-          "test/ssl/capath");
+          "ssl/capath");
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
@@ -328,8 +328,8 @@ ODBC_TEST(driver_connect_ssl) {
 
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;SSLCERT=%s;SSLKEY=%s;SSLCIPHER=%s;NO_SSPS=1;",
           my_drivername, "driver_connect_ssl", "", my_servername, my_port, my_schema,
-          "test/ssl/test-memsql-cert.pem",
-          "test/ssl/test-memsql-key.pem",
+          "ssl/test-memsql-cert.pem",
+          "ssl/test-memsql-key.pem",
           "AES128-GCM-SHA256");
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                          conn_out, sizeof(conn_out), &conn_out_len,
@@ -351,8 +351,8 @@ ODBC_TEST(driver_connect_ssl) {
 
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;SSLCERT=%s;SSLKEY=%s;TLSVERSION=%s;NO_SSPS=1;",
           my_drivername, "driver_connect_ssl", "", my_servername, my_port, my_schema,
-          "test/ssl/test-memsql-cert.pem",
-          "test/ssl/test-memsql-key.pem",
+          "ssl/test-memsql-cert.pem",
+          "ssl/test-memsql-key.pem",
           "TLSv1.1");
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                          conn_out, sizeof(conn_out), &conn_out_len,
@@ -394,9 +394,9 @@ ODBC_TEST(driver_connect_ssl) {
 
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;SSLCERT=%s;SSLKEY=%s;SSLCA=%s;SSLVERIFY=1;",
           my_drivername, "driver_connect_ssl", "", "test-memsql-server", my_port, my_schema,
-          "test/ssl/test-memsql-cert.pem",
-          "test/ssl/test-memsql-key.pem",
-          "test/ssl/test-ca-cert.pem");
+          "ssl/test-memsql-cert.pem",
+          "ssl/test-memsql-key.pem",
+          "ssl/test-ca-cert.pem");
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                          conn_out, sizeof(conn_out), &conn_out_len,
                                          SQL_DRIVER_NOPROMPT));
@@ -407,8 +407,8 @@ ODBC_TEST(driver_connect_ssl) {
 
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;SSLCERT=%s;SSLKEY=%s;TLSKEYPWD=%s",
           my_drivername, "driver_connect_ssl", "", "test-memsql-server", my_port, my_schema,
-          "test/ssl/test-memsql-pass-cert.pem",
-          "test/ssl/test-memsql-pass-key.pem",
+          "ssl/test-memsql-pass-cert.pem",
+          "ssl/test-memsql-pass-key.pem",
           "secure_password");
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                          conn_out, sizeof(conn_out), &conn_out_len,
@@ -419,11 +419,11 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
 
   // In case of ever changing test certificates please generate new valid fingerprint using following command:
-  // openssl x509 -noout -fingerprint -sha1 -inform pem -in test/ssl/test-memsql-cert.pem
+  // openssl x509 -noout -fingerprint -sha1 -inform pem -in ssl/test-memsql-cert.pem
   //
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;SSLCA=%s;SSLVERIFY=1;TLSPEERFP=%s",
           my_drivername, "driver_connect_ssl", "", "test-memsql-server", my_port, my_schema,
-          "test/ssl/test-ca-cert.pem",
+          "ssl/test-ca-cert.pem",
           "7B:DD:F2:86:1B:7B:C5:71:66:2A:CD:A1:E9:9B:D4:6F:6B:F3:4D:A5");
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                          conn_out, sizeof(conn_out), &conn_out_len,
@@ -433,12 +433,12 @@ ODBC_TEST(driver_connect_ssl) {
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
 
-  // In case of ever changing test certificates please add generated fingerprint to test/ssl/fplist.txt
+  // In case of ever changing test certificates please add generated fingerprint to ssl/fplist.txt
   //
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;SSLCA=%s;SSLVERIFY=1;TLSPEERFPLIST=%s",
           my_drivername, "driver_connect_ssl", "", "test-memsql-server", my_port, my_schema,
-          "test/ssl/test-ca-cert.pem",
-          "test/ssl/fplist.txt");
+          "ssl/test-ca-cert.pem",
+          "ssl/fplist.txt");
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                          conn_out, sizeof(conn_out), &conn_out_len,
                                          SQL_DRIVER_NOPROMPT));
@@ -449,8 +449,8 @@ ODBC_TEST(driver_connect_ssl) {
 
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;SSLCERT=%s;SSLKEY=%s;TLSKEYPWD=%s",
           my_drivername, "driver_connect_ssl", "", "test-memsql-server", my_port, my_schema,
-          "test/ssl/test-memsql-pass-cert.pem",
-          "test/ssl/test-memsql-pass-key.pem",
+          "ssl/test-memsql-pass-cert.pem",
+          "ssl/test-memsql-pass-key.pem",
           "wrong_password");
   FAIL_IF(SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                            conn_out, sizeof(conn_out), &conn_out_len,
@@ -459,7 +459,7 @@ ODBC_TEST(driver_connect_ssl) {
 
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;SSLCA=%s;SSLVERIFY=1;TLSPEERFP=%s",
           my_drivername, "driver_connect_ssl", "", "test-memsql-server", my_port, my_schema,
-          "test/ssl/test-ca-cert.pem",
+          "ssl/test-ca-cert.pem",
           "7B:DD:F2:86:1B:7B:C5:71:66:2A:CD:A1:E9:9B:D4:6F:6B:F3:4D:A4");
   FAIL_IF(SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                            conn_out, sizeof(conn_out), &conn_out_len,
@@ -468,8 +468,8 @@ ODBC_TEST(driver_connect_ssl) {
 
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;SSLCA=%s;SSLVERIFY=1;TLSPEERFPLIST=%s",
           my_drivername, "driver_connect_ssl", "", "test-memsql-server", my_port, my_schema,
-          "test/ssl/test-ca-cert.pem",
-          "test/ssl/wrongfplist.txt");
+          "ssl/test-ca-cert.pem",
+          "ssl/wrongfplist.txt");
   FAIL_IF(SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                            conn_out, sizeof(conn_out), &conn_out_len,
                            SQL_DRIVER_NOPROMPT) != SQL_ERROR, "Should not be able to connect with wrong fingerprint");
