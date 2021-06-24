@@ -1609,6 +1609,31 @@ error:
 }
 /* }}} */
 
+/* PLAT-5607: the standard requires to return SQL_NO_DATA if no rows were affected */
+static int ProcessStmtReturnCode(const int rc, const MADB_Stmt* const Stmt)
+{
+  if (SQL_SUCCEEDED(rc) && !Stmt->MultiStmts && !Stmt->AffectedRows)
+  {
+    if(Stmt->Query.SubQuery.elements)
+    {
+      SINGLE_QUERY SubQuery;
+      MADB_GetDynamic((MADB_DynArray*)&Stmt->Query.SubQuery, &SubQuery, 0);
+
+      switch(SubQuery.QueryType)
+      { /* 0 if MADB_GetDynamic() fails */
+      case MADB_QUERY_INSERT:
+      case MADB_QUERY_UPDATE:
+      case MADB_QUERY_DELETE:
+        return SQL_NO_DATA;
+      default:
+        break;
+      }
+    }
+  }
+
+  return rc;
+}
+
 /* {{{ MADB_StmtExecute */
 SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
 {
@@ -1628,12 +1653,14 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
 
   if (Stmt->State == MADB_SS_EMULATED)
   {
-    return MADB_ExecuteQuery(Stmt, STMT_STRING(Stmt), (SQLINTEGER)strlen(STMT_STRING(Stmt)));
+    ret = MADB_ExecuteQuery(Stmt, STMT_STRING(Stmt), (SQLINTEGER)strlen(STMT_STRING(Stmt)));
+    return ProcessStmtReturnCode(ret, Stmt);
   }
 
   if (MADB_POSITIONED_COMMAND(Stmt))
   {
-      return MADB_ExecutePositionedUpdate(Stmt, ExecDirect);
+    ret = MADB_ExecutePositionedUpdate(Stmt, ExecDirect);
+    return ProcessStmtReturnCode(ret, Stmt);
   }
 
   if (MADB_SSPS_DISABLED(Stmt))
@@ -2096,7 +2123,8 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
         mysql_free_result(DefaultResult);
       }
 
-      return MADB_SetNativeError(&Stmt->Error, SQL_HANDLE_STMT, Stmt->stmt);
+      ret = MADB_SetNativeError(&Stmt->Error, SQL_HANDLE_STMT, Stmt->stmt);
+      return ProcessStmtReturnCode(ret, Stmt);
     }
     
     /* I don't think we can reliably establish the fact that we do not need to re-fetch the metadata, thus we are re-fetching always
@@ -2120,7 +2148,7 @@ end:
       ret= SQL_ERROR;
   }
 
-  return ret;
+  return ProcessStmtReturnCode(ret, Stmt);
 }
 /* }}} */
 

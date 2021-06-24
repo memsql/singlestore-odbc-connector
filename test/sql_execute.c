@@ -64,7 +64,7 @@ ODBC_TEST(execute_1_before_fetch_1) {
     PREPARE(Stmt, QUERY_SELECT_WITH_PARAMS_SINGLE_ROW);
     EXECUTE(Stmt);
     PREPARE(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
-    EXECUTE(Stmt);
+    EXECUTE_NO_DATA(Stmt);
     FETCH_CURSOR_ERR(Stmt);
     PREPARE(Stmt, QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW);
     EXECUTE(Stmt);
@@ -115,7 +115,7 @@ ODBC_TEST(execute_1_before_fetch_1) {
     IS(out_id == 3 && !strcmp("ca", out_text)); out_id = 0, *out_text = 0;
     CLOSE(Stmt);
     PREPARE(Stmt, QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW);
-    EXEC_DIRECT(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
+    EXEC_DIRECT_NO_DATA(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
     //EXECUTE(Stmt);   /* TODO: PLAT-5605, EXECUTE repeats the statement from EXEC_DIRECT */
     //FETCH_CURSOR_ERR(Stmt);
 
@@ -148,7 +148,7 @@ ODBC_TEST(execute_2_before_fetch_1) {
     PREPARE(Stmt, QUERY_SELECT_WITHOUT_PARAMS_MULTIPLE_ROWS);
     PREPARE(stmt2, QUERY_DELETE_WITHOUT_PARAMS);
     EXECUTE(Stmt);
-    EXECUTE(stmt2);
+    EXECUTE_NO_DATA(stmt2);
     FETCH(Stmt);
     IS(out_id == 1 && !strcmp("aa", out_text)); out_id = 0, *out_text = 0;
     EXEC_DIRECT(stmt2, QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW);
@@ -192,16 +192,16 @@ ODBC_TEST(execute_no_data) {
     OK_SIMPLE_STMT(Stmt, "INSERT INTO execute_3_to VALUES (1, 'aa'), (2, 'bc'), (3, 'ca')");
     OK_SIMPLE_STMT(Stmt, "INSERT INTO execute_3_from VALUES (11, 'xy'), (12, 'yz'), (13, 'zz')");
 
-    EXPECT_STMT(Stmt, SQLExecDirect(Stmt, "INSERT INTO execute_3_to SELECT * FROM execute_3_from WHERE id < 10", SQL_NTS), SQL_NO_DATA);
-    EXPECT_STMT(Stmt, SQLExecDirect(Stmt, "UPDATE execute_3_to SET id = 10 WHERE text = 'vvv'", SQL_NTS), SQL_NO_DATA);
-    EXPECT_STMT(Stmt, SQLExecDirect(Stmt, "DELETE FROM execute_3_to WHERE text LIKE '___'", SQL_NTS), SQL_NO_DATA);
+    EXEC_DIRECT_NO_DATA(Stmt, "INSERT INTO execute_3_to SELECT * FROM execute_3_from WHERE id < 10");
+    EXEC_DIRECT_NO_DATA(Stmt, "UPDATE execute_3_to SET id = 10 WHERE text = 'vvv'");
+    EXEC_DIRECT_NO_DATA(Stmt, "DELETE FROM execute_3_to WHERE text LIKE '___'");
 
     PREPARE(Stmt, "INSERT INTO execute_3_to SELECT * FROM execute_3_from WHERE id < 10");
-    EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_NO_DATA);
+    EXECUTE_NO_DATA(Stmt);
     PREPARE(Stmt, "UPDATE execute_3_to SET id = 10 WHERE text = 'vvv'");
-    EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_NO_DATA);
+    EXECUTE_NO_DATA(Stmt);
     PREPARE(Stmt, "DELETE FROM execute_3_to WHERE text LIKE '___'");
-    EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_NO_DATA);
+    EXECUTE_NO_DATA(Stmt);
 
     return OK;
 }
@@ -347,7 +347,7 @@ MA_ODBC_TESTS my_tests[] = {
    {execute_1_before_fetch_1, "execute_1_before_fetch_1", NORMAL, ALL_DRIVERS},
    {execute_2_before_fetch_1, "execute_2_before_fetch_1", NORMAL, ALL_DRIVERS},
    {execute_async, "execute_async", NORMAL, ALL_DRIVERS},
-   {execute_no_data, "execute_no_data", KNOWN_FAILURE, ALL_DRIVERS},    //TODO: bug PLAT-5607
+   {execute_no_data, "execute_no_data", NORMAL, ALL_DRIVERS},
    {execute_unbound, "execute_unbound", NORMAL, ALL_DRIVERS},
    {execute_transaction, "execute_transaction", NORMAL, ALL_DRIVERS},
    {NULL, NULL, NORMAL, ALL_DRIVERS}
