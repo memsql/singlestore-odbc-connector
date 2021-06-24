@@ -27,7 +27,7 @@ then
 fi
 
 echo "Modifying /etc/hosts and ~/my.cnf to enable connect tests"
-echo "127.0.0.1 test-memsql-cluster" | sudo tee -a /etc/hosts
+echo "127.0.0.1 test-memsql-server" | sudo tee -a /etc/hosts
 echo "singlestore.test.com test-memsql-cluster" | sudo tee -a /etc/hosts
 echo "[mysqld]
 plugin-load-add=authentication_pam.so
