@@ -353,7 +353,7 @@ ODBC_TEST(driver_connect_ssl) {
           my_drivername, "driver_connect_ssl", "", my_servername, my_port, my_schema,
           "ssl/test-memsql-cert.pem",
           "ssl/test-memsql-key.pem",
-          "TLSv1.1");
+          "TLSv1.2");
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                          conn_out, sizeof(conn_out), &conn_out_len,
                                          SQL_DRIVER_NOPROMPT));
@@ -366,7 +366,7 @@ ODBC_TEST(driver_connect_ssl) {
     CHECK_DBC_RC(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt));
     OK_SIMPLE_STMT(hstmt, "SHOW STATUS LIKE 'Ssl_version'");
     CHECK_STMT_RC(hstmt, SQLFetch(hstmt));
-    IS_STR(my_fetch_str(hstmt, buff, 2), "TLSv1.1", strlen("TLSv1.1"));
+    IS_STR(my_fetch_str(hstmt, buff, 2), "TLSv1.2", strlen("TLSv1.2"));
     CHECK_STMT_RC(hstmt, SQLFreeHandle(SQL_HANDLE_STMT, hstmt));
   }
 
@@ -499,7 +499,8 @@ ODBC_TEST(driver_connect_initstmt) {
 
   OK_SIMPLE_STMT(Stmt, "DROP DATABASE IF EXISTS driver_connect_initstmt")
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc));
-  sprintf((char *) conn, "DSN=%s;INITSTMT=CREATE DATABASE driver_connect_initstmt", my_dsn);
+  sprintf((char *) conn, "DSN=%s;UID=%s;PWD=%s;INITSTMT=CREATE DATABASE driver_connect_initstmt",
+      my_dsn, my_uid, my_pwd);
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
