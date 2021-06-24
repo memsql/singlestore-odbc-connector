@@ -78,7 +78,7 @@ ODBC_TEST(t_sqlrowcnt_update) {
 
     FAIL_IF_NE_INT(rc, 2, "SQLRowCount should return updated rows count for update query");
 
-    OK_SIMPLE_STMT(Stmt, "UPDATE test_rowcount_values SET id=5 WHERE text='c'");
+    EXEC_DIRECT_NO_DATA(Stmt, "UPDATE test_rowcount_values SET id=5 WHERE text='c'");
     CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
 
     FAIL_IF_NE_INT(rc, 0, "SQLRowCount should return updated rows count for update query");
@@ -134,7 +134,7 @@ ODBC_TEST(t_sqlrowcnt_delete) {
 
     FAIL_IF_NE_INT(rc, 1, "SQLRowCount should return deleted rows count for delete query");
 
-    OK_SIMPLE_STMT(Stmt, "DELETE FROM test_rowcount_values WHERE id=2;");
+    EXEC_DIRECT_NO_DATA(Stmt, "DELETE FROM test_rowcount_values WHERE id=2;");
     CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
 
     FAIL_IF_NE_INT(rc, 0, "SQLRowCount should return deleted rows count for delete query");

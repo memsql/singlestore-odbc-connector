@@ -1612,7 +1612,10 @@ error:
 /* PLAT-5607: the standard requires to return SQL_NO_DATA if no rows were affected */
 static int ProcessStmtReturnCode(const int rc, const MADB_Stmt* const Stmt)
 {
-  if (SQL_SUCCEEDED(rc) && !Stmt->MultiStmts && !Stmt->AffectedRows)
+  if (SQL_SUCCEEDED(rc)
+      && !Stmt->MultiStmts
+      && !Stmt->AffectedRows
+      && Stmt->Apd->Header.ArraySize == 1)
   {
     if(Stmt->Query.SubQuery.elements)
     {
