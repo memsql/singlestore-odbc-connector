@@ -25,7 +25,7 @@
 */
 
 #include "tap.h"
-#include <unistd.h>
+#include "stdio.h"
 
 ODBC_TEST(basic_connect) {
   HSTMT hdbc;
@@ -198,7 +198,9 @@ ODBC_TEST(driver_connect_trace) {
                                       SQL_DRIVER_NOPROMPT));
   is_num(conn_out_len, strlen((char *) conn));
   IS_STR(conn, conn_out, conn_out_len);
-  FAIL_IF( access( "test/test_trace.log", F_OK ) != 0, "Trace file should have been created");
+  FILE* file = fopen("test/test_trace.log", "r");
+  FAIL_IF(!file, "Trace file should have been created");
+  fclose(file);
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
   return OK;
@@ -698,7 +700,7 @@ int test_option_use_mycnf(SQLCHAR conn[1024], SQLCHAR conn_out[1024], HSTMT hdbc
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;OPTION=%d",
           my_drivername, my_uid, my_pwd, my_servername, my_port, options);
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
-                                      conn_out, sizeof(conn_out), &conn_out_len,
+                                      conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
   HSTMT hstmt;
   CHECK_DBC_RC(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt));
