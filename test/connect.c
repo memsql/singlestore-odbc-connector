@@ -98,7 +98,9 @@ ODBC_TEST(driver_connect_simple) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       NULL, 0, &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char*)conn));
+  #endif
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, sizeof(conn),
@@ -110,14 +112,18 @@ ODBC_TEST(driver_connect_simple) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_COMPLETE));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char*)conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_COMPLETE_REQUIRED));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char*)conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
@@ -125,7 +131,9 @@ ODBC_TEST(driver_connect_simple) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char*)conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
@@ -196,7 +204,9 @@ ODBC_TEST(driver_connect_trace) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char *) conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
   FILE* file = fopen("test/test_trace.log", "r");
   FAIL_IF(!file, "Trace file should have been created");
@@ -218,7 +228,9 @@ ODBC_TEST(driver_connect_unsupported) {
                            conn_out, sizeof(conn_out), &conn_out_len,
                            SQL_DRIVER_NOPROMPT) != SQL_SUCCESS_WITH_INFO,
           "Should return SQL_SUCCESS_WITH_INFO when using parameters unsupported by SingleStore");
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char *) conn));
+  #endif
   CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "01S00");
 
   return OK;
@@ -271,7 +283,9 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char*)conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
 
@@ -286,7 +300,9 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char*)conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
 
 
@@ -298,7 +314,9 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char*)conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
@@ -311,7 +329,9 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char*)conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
@@ -322,7 +342,9 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char*)conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
@@ -335,7 +357,9 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                          conn_out, sizeof(conn_out), &conn_out_len,
                                          SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char*)conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
 
   // `SHOW STATUS` queries work only in client-side mode
@@ -358,7 +382,9 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                          conn_out, sizeof(conn_out), &conn_out_len,
                                          SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char*)conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
 
   // `SHOW STATUS` queries work only in client-side mode
@@ -378,7 +404,9 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                          conn_out, sizeof(conn_out), &conn_out_len,
                                          SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char*)conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
 
   // `SHOW STATUS` queries work only in client-side mode
@@ -401,7 +429,9 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                          conn_out, sizeof(conn_out), &conn_out_len,
                                          SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char*)conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
@@ -414,7 +444,9 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                          conn_out, sizeof(conn_out), &conn_out_len,
                                          SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char*)conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
@@ -429,7 +461,9 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                          conn_out, sizeof(conn_out), &conn_out_len,
                                          SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char*)conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
@@ -443,7 +477,9 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                          conn_out, sizeof(conn_out), &conn_out_len,
                                          SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char*)conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
@@ -505,7 +541,7 @@ ODBC_TEST(driver_connect_initstmt) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
-  is_num(conn_out_len, strlen((char *) conn));
+  #ifndef _WIN32
   IS_STR(conn, conn_out, conn_out_len);
   OK_SIMPLE_STMT(Stmt, "USE driver_connect_initstmt");
   return OK;
@@ -529,7 +565,9 @@ ODBC_TEST(driver_connect_timeout) {
     sprintf(err_msg, "Connection should have been timed out in 1 s, instead it failed in %ld ms", elapsed_milliseconds);
     FAIL_IF(elapsed_milliseconds > 2000, err_msg);
   } else {
+    #ifndef _WIN32
     is_num(conn_out_len, strlen((char *) conn));
+    #endif
     IS_STR(conn, conn_out, conn_out_len);
   }
 
@@ -544,7 +582,9 @@ int test_option_matched_rows(SQLCHAR conn[1024], SQLCHAR conn_out[1024], HSTMT h
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char *) conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
 
   HSTMT hstmt;
@@ -588,7 +628,9 @@ int test_option_dynamic_cursor(SQLCHAR conn[1024], SQLCHAR conn_out[1024], HSTMT
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char *) conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
 
   HSTMT hstmt;
@@ -627,7 +669,9 @@ int test_option_no_schema(SQLCHAR conn[1024], SQLCHAR conn_out[1024], HSTMT hdbc
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char *) conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
 
   HSTMT hstmt;
@@ -668,7 +712,9 @@ int test_option_compress(SQLCHAR conn[1024], SQLCHAR conn_out[1024], HSTMT hdbc,
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char *) conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
 
   HSTMT hstmt;
@@ -726,7 +772,9 @@ int test_option_forwardonly_cursor(SQLCHAR conn[1024], SQLCHAR conn_out[1024], H
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char *) conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
 
   HSTMT hstmt;
@@ -771,7 +819,9 @@ int test_option_auto_reconnect(SQLCHAR conn[1024], SQLCHAR conn_out[1024], HSTMT
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char *) conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
 
   HSTMT hstmt;
@@ -800,7 +850,9 @@ int test_option_multistatements(SQLCHAR conn[1024], SQLCHAR conn_out[1024], HSTM
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char *) conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
 
   HSTMT hstmt;
@@ -926,7 +978,9 @@ ODBC_TEST(driver_connect_forwardonly) {
     CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                         conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
                                         SQL_DRIVER_NOPROMPT));
+    #ifndef _WIN32
     is_num(conn_out_len, strlen((char *) conn));
+    #endif
     IS_STR(conn, conn_out, conn_out_len);
 
     HSTMT hstmt;
@@ -967,7 +1021,9 @@ ODBC_TEST(driver_connect_no_cache) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
+  #ifndef _WIN32
   is_num(conn_out_len, strlen((char *) conn));
+  #endif
   IS_STR(conn, conn_out, conn_out_len);
 
   HSTMT hstmt;
