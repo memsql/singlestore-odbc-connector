@@ -851,6 +851,18 @@ int (*test_option_functions[]) (SQLCHAR[1024], SQLCHAR[1024], HSTMT, int, int) =
     test_option_multistatements
 };
 
+int count_bits(int mask) {
+#ifndef _WIN32
+  return __builtin_popcount(mask);
+#endif
+  int result = 0;
+  while (mask) {
+    result += (mask % 2);
+    mask /= 2;
+  }
+  return result;
+}
+
 int recurrently_check_options(
     SQLCHAR conn[1024], SQLCHAR conn_out[1024], HSTMT hdbc, int* option_bits, int option_count, int current_options_mask, int pos) {
   if (pos == option_count) {
@@ -858,9 +870,9 @@ int recurrently_check_options(
     // We have no reason to run tests on all options combinations at every run. Randomly run option combination
     // with 0.05 probability of run. Also always run combinations with only one option set and with all/no options set
     //
-    if (__builtin_popcount(current_options_mask) == 0 ||
-        __builtin_popcount(current_options_mask) == 1 ||
-        __builtin_popcount(current_options_mask) == option_count ||
+    if (count_bits(current_options_mask) == 0 ||
+        count_bits(current_options_mask) == 1 ||
+        count_bits(current_options_mask) == option_count ||
         rand() < RAND_MAX * 0.05) {
       for (i = 0; i < option_count; i++) {
         if ((*test_option_functions[i])(conn, conn_out, hdbc, current_options_mask, option_bits[i]) == FAIL) {
