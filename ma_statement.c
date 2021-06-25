@@ -4698,11 +4698,17 @@ SQLRETURN MADB_StmtProcedureColumns(MADB_Stmt *Stmt, char *CatalogName, SQLSMALL
                                 SQLSMALLINT NameLength3, char *ColumnName, SQLSMALLINT NameLength4)
 {
   char *StmtStr,
-       *p;
+       *p,
+       *StmtEnd;
   size_t Length= strlen(MADB_PROCEDURE_COLUMNS(Stmt)) + 1024;
   SQLRETURN ret;
 
   MADB_CLEAR_ERROR(&Stmt->Error);
+
+  ADJUST_LENGTH(CatalogName, NameLength1);
+  ADJUST_LENGTH(SchemaName, NameLength2);
+  ADJUST_LENGTH(ProcName, NameLength3);
+  ADJUST_LENGTH(ColumnName, NameLength4);
 
   if (!(StmtStr= MADB_CALLOC(Length)))
   {
@@ -4710,30 +4716,31 @@ SQLRETURN MADB_StmtProcedureColumns(MADB_Stmt *Stmt, char *CatalogName, SQLSMALL
   }
 
   p= StmtStr;
+  StmtEnd = StmtStr + Length;
 
   p+= _snprintf(p, Length, MADB_PROCEDURE_COLUMNS(Stmt));
   
   if (CatalogName)
-    p+= _snprintf(p, Length - strlen(StmtStr), "WHERE SPECIFIC_SCHEMA='%s' ", CatalogName);
+    p+= _snprintf(p, StmtEnd - p, "WHERE SPECIFIC_SCHEMA='%.*s' ", NameLength1, CatalogName);
   else
-    p+= _snprintf(p, Length - strlen(StmtStr), "WHERE SPECIFIC_SCHEMA LIKE DATABASE() ");
+    p+= _snprintf(p, StmtEnd - p, "WHERE SPECIFIC_SCHEMA LIKE DATABASE() ");
   if (ProcName && ProcName[0])
-    p+= _snprintf(p, Length - strlen(StmtStr), "AND SPECIFIC_NAME LIKE '%s' ", ProcName);
+    p+= _snprintf(p, StmtEnd - p, "AND SPECIFIC_NAME LIKE '%.*s' ", NameLength3, ProcName);
   if (ColumnName)
   {
     if (ColumnName[0])
     {
-      p+= _snprintf(p, Length- strlen(StmtStr), "AND PARAMETER_NAME LIKE '%s' ", ColumnName);
+      p+= _snprintf(p, StmtEnd - p, "AND PARAMETER_NAME LIKE '%.*s' ", NameLength4, ColumnName);
     }
     else
     {
-      p+= _snprintf(p, Length- strlen(StmtStr), "AND PARAMETER_NAME IS NULL ");
+      p+= _snprintf(p, StmtEnd - p, "AND PARAMETER_NAME IS NULL ");
     }
   }
     
-  p+= _snprintf(p, Length - strlen(StmtStr), " ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ORDINAL_POSITION");
+  p+= _snprintf(p, StmtEnd - p, " ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ORDINAL_POSITION");
 
-  ret= Stmt->Methods->ExecDirect(Stmt, StmtStr, SQL_NTS);
+  ret= Stmt->Methods->ExecDirect(Stmt, StmtStr, p - StmtStr);
 
   MADB_FREE(StmtStr);
 

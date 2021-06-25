@@ -853,6 +853,7 @@ do {                                                  \
 #define EXECUTE(stmt)                           CHECK_STMT_RC(stmt, SQLExecute(stmt))
 #define EXECUTE_CURSOR_ERR(stmt)                CHECK_STMT_ERR(stmt, SQLExecute(stmt), CURSOR_STATE_ERROR)
 #define FETCH(stmt)                             CHECK_STMT_RC(stmt, SQLFetch(stmt))
+#define FETCH_NO_DATA(stmt)                     EXPECT_STMT(stmt, SQLFetch(stmt), SQL_NO_DATA)
 #define FETCH_CURSOR_ERR(stmt)                  CHECK_STMT_ERR(stmt, SQLFetch(stmt), CURSOR_STATE_ERROR)
 #define CLOSE(stmt)                             CHECK_STMT_RC(stmt, SQLCloseCursor(stmt))
 #define UNBIND(stmt)                            CHECK_STMT_RC(Stmt, SQLFreeStmt(stmt, SQL_UNBIND)); \
