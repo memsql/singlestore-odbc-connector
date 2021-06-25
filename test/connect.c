@@ -991,17 +991,17 @@ ODBC_TEST(driver_connect_no_cache) {
 
 MA_ODBC_TESTS my_tests[]=
 {
-//  {basic_connect, "basic_connect",     NORMAL, ALL_DRIVERS},
-//  {driver_connect_simple, "driver_connect_simple",     NORMAL, ALL_DRIVERS},
-//  {driver_connect_trace, "driver_connect_trace", TO_FIX, ALL_DRIVERS},
-//  {driver_connect_unsupported, "driver_connect_unsupported",     TO_FIX, ALL_DRIVERS},
-//  {driver_connect_savefile, "driver_connect_savefile",     TO_FIX, ALL_DRIVERS},
+  {basic_connect, "basic_connect",     NORMAL, ALL_DRIVERS},
+  {driver_connect_simple, "driver_connect_simple",     NORMAL, ALL_DRIVERS},
+  {driver_connect_trace, "driver_connect_trace", TO_FIX, ALL_DRIVERS},
+  {driver_connect_unsupported, "driver_connect_unsupported",     TO_FIX, ALL_DRIVERS},
+  {driver_connect_savefile, "driver_connect_savefile",     TO_FIX, ALL_DRIVERS},
   {driver_connect_ssl, "driver_connect_ssl",     NORMAL, ALL_DRIVERS},
-//  {driver_connect_initstmt, "driver_connect_initstmt", NORMAL, ALL_DRIVERS},
-//  {driver_connect_timeout, "driver_connect_timeout", NORMAL, ALL_DRIVERS},
-//  {driver_connect_options, "driver_connect_options", NORMAL, ALL_DRIVERS},
-//  {driver_connect_forwardonly, "driver_connect_forwardonly", NORMAL, ALL_DRIVERS},
-//  {driver_connect_no_cache, "driver_connect_no_cache", NORMAL, ALL_DRIVERS},
+  {driver_connect_initstmt, "driver_connect_initstmt", NORMAL, ALL_DRIVERS},
+  {driver_connect_timeout, "driver_connect_timeout", NORMAL, ALL_DRIVERS},
+  {driver_connect_options, "driver_connect_options", NORMAL, ALL_DRIVERS},
+  {driver_connect_forwardonly, "driver_connect_forwardonly", NORMAL, ALL_DRIVERS},
+  {driver_connect_no_cache, "driver_connect_no_cache", NORMAL, ALL_DRIVERS},
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
