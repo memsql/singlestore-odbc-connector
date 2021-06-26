@@ -65,8 +65,8 @@ ODBC_TEST(basic_connect) {
                                 (SQLCHAR*)"basic_connect", SQL_NTS,
                                 (SQLCHAR*)"s3cureP@ss", SQL_NTS));
 
-  SQLCHAR* wrong_dsn[10];
-  memcpy((char*)wrong_dsn, "wrong_dsn", 9);
+  SQLCHAR wrong_dsn[10];
+  strcpy((char*)wrong_dsn, "wrong_dsn");
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
   FAIL_IF(SQLConnect(hdbc, wrong_dsn, SQL_NTS,
                      (SQLCHAR*)"basic_connect", SQL_NTS,
@@ -543,6 +543,7 @@ ODBC_TEST(driver_connect_initstmt) {
                                       SQL_DRIVER_NOPROMPT));
   #ifndef _WIN32
   IS_STR(conn, conn_out, conn_out_len);
+  #endif
   OK_SIMPLE_STMT(Stmt, "USE driver_connect_initstmt");
   return OK;
 }
