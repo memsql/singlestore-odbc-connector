@@ -50,7 +50,7 @@ SQLLEN     SafeStrlen(SQLCHAR *str, SQLLEN buff_length);
  * It also protects the parser from broken strings.
  */
 #define ADJUST_LENGTH(ptr, len)\
-  if((ptr) && ((len) == SQL_NTS))\
+  if((ptr) && ((len) == SQL_NTS || (len) == SQL_NTS + 1))\
     len= sizeof(len) == 2 ? (SQLSMALLINT)strlen((ptr)) : (SQLINTEGER)strlen((ptr));\
   else if (!(ptr) || (len < 0))\
     len= 0;\

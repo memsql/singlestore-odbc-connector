@@ -493,7 +493,7 @@ size_t ConnStringLength(const char * String, char Delimiter)
 }
 
 /* {{{ MADB_ParseConnString */
-my_bool MADB_ParseConnString(MADB_Dsn *Dsn, const char *String, size_t Length, char Delimiter)
+my_bool MADB_ParseConnString(MADB_Dsn *Dsn, const char *String, int Length, char Delimiter)
 {
   char    *Buffer, *Key, *Value, *ValueBuf;
   my_bool ret= TRUE;
@@ -622,7 +622,7 @@ end:
 /* {{{ MADB_ReadConnString */
 /* Like ParseConnString, but expands DSN if needed, preserving connection string values precedence.
    Or in other words - it is combination of ReadDsn and ParseConnString */
-BOOL MADB_ReadConnString(MADB_Dsn *Dsn, const char *String, size_t Length, char Delimiter)
+BOOL MADB_ReadConnString(MADB_Dsn *Dsn, const char *String, int Length, char Delimiter)
 {
   /* Basically at this point we need DSN name only */
   if (!MADB_ParseConnString(Dsn, String, Length, Delimiter))

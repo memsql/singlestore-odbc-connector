@@ -23,12 +23,19 @@
 /* {{{ MADB_StmtResetResultStructures */
 void MADB_StmtResetResultStructures(MADB_Stmt *Stmt)
 {
-  Stmt->CharOffset= (unsigned long *)MADB_REALLOC((char *)Stmt->CharOffset,
-    sizeof(long) * mysql_stmt_field_count(Stmt->stmt));
-  memset(Stmt->CharOffset, 0, sizeof(long) * mysql_stmt_field_count(Stmt->stmt));
-  Stmt->Lengths= (unsigned long *)MADB_REALLOC((char *)Stmt->Lengths,
-    sizeof(long) * mysql_stmt_field_count(Stmt->stmt));
-  memset(Stmt->Lengths, 0, sizeof(long) * mysql_stmt_field_count(Stmt->stmt));
+  const int size = sizeof(long) * mysql_stmt_field_count(Stmt->stmt);
+  if (size)
+  {
+    Stmt->CharOffset= (unsigned long *)MADB_REALLOC((char *)Stmt->CharOffset, size);
+    memset(Stmt->CharOffset, 0, sizeof(long) * mysql_stmt_field_count(Stmt->stmt));
+    Stmt->Lengths= (unsigned long *)MADB_REALLOC((char *)Stmt->Lengths, size);
+    memset(Stmt->Lengths, 0, sizeof(long) * mysql_stmt_field_count(Stmt->stmt));
+  }
+  else
+  {
+      MADB_FREE(Stmt->CharOffset);
+      MADB_FREE(Stmt->Lengths);
+  }
 
   Stmt->LastRowFetched= 0;
   MADB_STMT_RESET_CURSOR(Stmt);
