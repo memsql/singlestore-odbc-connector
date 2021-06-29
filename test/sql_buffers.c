@@ -692,21 +692,21 @@ static int test_proc_columns_w() {
                                             CW("odbc_test"), strlen("odbc_test"),
                                             NULL, 0,
                                             CW("aaa"), strlen("aaa"),
-                                            CW("a11"), strlen("a11")));
+                                            CW("a11"), strlen("a11")),
                     "HY009", 0, "Invalid use of null pointer");
     CHECK_STMT_ERR( Stmt,
                     SQLProcedureColumnsW(   Stmt,
                                             CW("odbc_test"), SQL_NTS,
                                             NULL, 0,
                                             CW("aaa"), SQL_NTS,
-                                            CW("a11"), SQL_NTS));
+                                            CW("a11"), SQL_NTS),
                     "HY009", 0, "Invalid use of null pointer");
     CHECK_STMT_ERR( Stmt,
                     SQLProcedureColumnsW(   Stmt,
                                             CW("odbc_testBLAH"), strlen("odbc_test"),
                                             NULL, 0,
                                             CW("aaaBLAH"), strlen("aaa"),
-                                            CW("a11BLAH"), strlen("a11")));
+                                            CW("a11BLAH"), strlen("a11")),
                     "HY009", 0, "Invalid use of null pointer");
 #else
     num_rows = 0;
