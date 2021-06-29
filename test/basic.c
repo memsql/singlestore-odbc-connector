@@ -734,7 +734,7 @@ ODBC_TEST(t_driverconnect_outstring)
   CHECK_DBC_RC(hdbc1, SQLDisconnect(hdbc1));
 
   CHECK_DBC_RC(hdbc1, SQLDriverConnectW(hdbc1, NULL, connw, SQL_NTS, connw_out,
-                                        sizeof(connw_out), &conn_out_len,
+                                        sizeof(connw_out)/sizeof(SQLWCHAR), &conn_out_len,
                                         SQL_DRIVER_COMPLETE));
   is_num(conn_out_len, strlen((const char*)conna));
   IS_WSTR(connw_out, connw, strlen((const char*)conna));
@@ -742,7 +742,7 @@ ODBC_TEST(t_driverconnect_outstring)
   CHECK_DBC_RC(hdbc1, SQLDisconnect(hdbc1));
 
   CHECK_DBC_RC(hdbc1, SQLDriverConnectW(hdbc1, NULL, connw, SQL_NTS, connw_out,
-                                        sizeof(connw_out), &conn_out_len,
+                                        sizeof(connw_out)/sizeof(SQLWCHAR), &conn_out_len,
                                         SQL_DRIVER_COMPLETE_REQUIRED));
   is_num(conn_out_len, strlen((const char*)conna));
   IS_WSTR(connw_out, connw, strlen((const char*)conna));

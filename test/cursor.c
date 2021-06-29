@@ -786,7 +786,7 @@ ODBC_TEST(t_default_cursor_unicode)
     SQLWCHAR curname[512];
     SQLSMALLINT nlen,index;
 
-    SQLINTEGER maxCursorNameLength;
+    SQLUSMALLINT maxCursorNameLength;
     SQLGetInfo(Connection, SQL_MAX_CURSOR_NAME_LEN, &maxCursorNameLength, 0, NULL);
 
     for(index=0; index < 100; index++)

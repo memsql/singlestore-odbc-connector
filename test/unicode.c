@@ -305,7 +305,7 @@ ODBC_TEST(sqldriverconnect)
   }
 
   CHECK_DBC_RC(hdbc1, SQLDriverConnectW(hdbc1, NULL, W(conn_in),
-                                  (SQLSMALLINT)wcslen(conn_in), conn_out, sizeof(conn_out),
+                                  (SQLSMALLINT)wcslen(conn_in), conn_out, sizeof(conn_out)/sizeof(SQLWCHAR),
                                   &conn_out_len, SQL_DRIVER_NOPROMPT));
 
   CHECK_DBC_RC(Connection, SQLAllocStmt(hdbc1, &hstmt1));
@@ -1226,7 +1226,7 @@ ODBC_TEST(t_bug14363601)
   SQLSMALLINT conn_out_len;
   SQLLEN strlen_or_ind= 10;
   SQLINTEGER col_id= 1234;
-  SQLWCHAR *col_vc= W(L"abcdefg\x30a1"), col_vc_res[30];
+  SQLWCHAR col_vc[20]= {'a', 'b', 'c', 'd', 'e', 'f', 'g', 0x30a1}, col_vc_res[30];
   double col_dc= 12345.678, col_dc_res= 0;
   unsigned char col_bc[10]= {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, col_bc_res[10];
 
@@ -1261,7 +1261,7 @@ ODBC_TEST(t_bug14363601)
   wcscat(conn_in, L";CHARSET=utf8");
 
   CHECK_DBC_RC(hdbc1, SQLDriverConnectW(hdbc1, NULL, WL(conn_in, wcslen(conn_in)),
-                                  (SQLSMALLINT)wcslen(conn_in), conn_out, sizeof(conn_out),
+                                  (SQLSMALLINT)wcslen(conn_in), conn_out, sizeof(conn_out)/sizeof(SQLWCHAR),
                                   &conn_out_len, SQL_DRIVER_NOPROMPT));
 
   CHECK_DBC_RC(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
@@ -1271,18 +1271,17 @@ ODBC_TEST(t_bug14363601)
                  "id INT, vc VARCHAR(32),"
                  "dc DOUBLE, bc BLOB)CHARSET=UTF8");
 
-  CHECK_STMT_RC(hstmt1, SQLPrepareW(hstmt1, 
+  CHECK_STMT_RC(hstmt1, SQLPrepareW(hstmt1,
 		    CW("INSERT INTO bug14363601 (id, vc, dc, bc) "
            "VALUES (?, ?, ?, ?)"), SQL_NTS));
 
   /* Bind 1st INT param */
   CHECK_STMT_RC(hstmt1, SQLBindParameter(hstmt1, 1, SQL_PARAM_INPUT, SQL_C_LONG,
                                   SQL_INTEGER, 0, 0, &col_id, 0, NULL));
-  
+
   /* Bind 2nd VARCHAR param */
   CHECK_STMT_RC(hstmt1, SQLBindParameter(hstmt1, 2, SQL_PARAM_INPUT, SQL_C_WCHAR,
-				   SQL_WCHAR, 10, 0, col_vc, 
-                                  10*sizeof(SQLWCHAR), NULL));
+				   SQL_WCHAR, 10, 0, col_vc, 10*sizeof(SQLWCHAR), NULL));
 
   /* Bind 3rd DECIMAL param */
   CHECK_STMT_RC(hstmt1, SQLBindParameter(hstmt1, 3, SQL_PARAM_INPUT, SQL_C_DOUBLE,
@@ -1291,7 +1290,7 @@ ODBC_TEST(t_bug14363601)
 
   /* Bind 4th BLOB param */
   CHECK_STMT_RC(hstmt1, SQLBindParameter(hstmt1, 4, SQL_PARAM_INPUT, SQL_C_BINARY,
-                                  SQL_BINARY, (SQLULEN)sizeof(col_bc), 0, &col_bc, 
+                                  SQL_BINARY, (SQLULEN)sizeof(col_bc), 0, &col_bc,
                                   sizeof(col_bc), &strlen_or_ind));
 
   CHECK_STMT_RC(hstmt1, SQLExecute(hstmt1));
@@ -1312,11 +1311,11 @@ ODBC_TEST(t_bug14363601)
     IS(col_vc[i] == col_vc_res[i]);
   }
 
-  CHECK_STMT_RC(hstmt1, SQLGetData(hstmt1, 3, SQL_C_DOUBLE, &col_dc_res, 
+  CHECK_STMT_RC(hstmt1, SQLGetData(hstmt1, 3, SQL_C_DOUBLE, &col_dc_res,
                              sizeof(col_dc_res), NULL));
   IS(col_dc == col_dc_res);
 
-  CHECK_STMT_RC(hstmt1, SQLGetData(hstmt1, 4, SQL_C_BINARY, &col_bc_res, 
+  CHECK_STMT_RC(hstmt1, SQLGetData(hstmt1, 4, SQL_C_BINARY, &col_bc_res,
                              sizeof(col_bc_res), NULL));
 
   /* check the binary buffer byte by byte */
@@ -1344,6 +1343,15 @@ ODBC_TEST(t_bug14363601)
 /* Issue ODBC-19 - if same ptr used for StrLen_IndPtr when binding columns, */
 ODBC_TEST(t_odbc19)
 {
+#ifdef WIN32
+  // Windows DM with ANSI driver truncates fetched columns to their returned length
+  // as a result, using the same ptr for StrLen_IndPtr causes
+  // all strings to be truncated to the length of the shortest one
+  if (is_ansi_driver())
+  {
+    return OK;
+  }
+#endif
   SQLLEN   lenPtr;
   SQLWCHAR a[10], b[10], c[10];
   SQLWCHAR a_ref[]= {'M', 'a', 'r', 'i', 'a', 'D', 'B', 0}, c_ref[]= {'S', 'k', 'y', 0};
