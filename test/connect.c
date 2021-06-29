@@ -111,11 +111,11 @@ int check_connection_string(size_t len, size_t expected_len, const SQLCHAR conn[
             break;
           }
         }
-        strncpy((char*)(sanitized_conn + sanitized_len), (char*)(conn + i + 7), (j - i - 6));
-        sanitized_len += j - i - 6;
+        strncpy((char*)(sanitized_conn + sanitized_len), (char*)(conn + i + 8), (j - i - 8));
+        sanitized_len += j - i - 8;
         if (j < len - 1) {
-          strncpy((char*)(sanitized_conn + sanitized_len), (char*)(conn + j + 1), (len - j));
-          sanitized_len += len - j;
+          strncpy((char*)(sanitized_conn + sanitized_len), (char*)(conn + j + 1), (len - j - 1));
+          sanitized_len += len - j - 1;
         }
       } else {
         strncpy((char*)sanitized_conn, (char*)conn, len);
@@ -135,11 +135,11 @@ ODBC_TEST(driver_connect_simple) {
   SQLSMALLINT conn_out_len;
 
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc));
-  sprintf((char*)conn, "DSN=%s;UID=%s;PWD=%s", my_dsn, my_uid, my_pwd);
+  sprintf((char*)conn, "DSN=%s;UID=%s;PWD=%s;", my_dsn, my_uid, my_pwd);
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       NULL, 0, &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, sizeof(conn),
@@ -151,20 +151,20 @@ ODBC_TEST(driver_connect_simple) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_COMPLETE));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_COMPLETE_REQUIRED));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
   sprintf((char*)conn, "DSN=%s;DESCRIPTION=%s;UID=%s;PWD=%s", my_dsn, "some description", my_uid, my_pwd);
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;CHARSET=%s;",
@@ -234,7 +234,7 @@ ODBC_TEST(driver_connect_trace) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
   FILE* file = fopen("test/test_trace.log", "r");
   FAIL_IF(!file, "Trace file should have been created");
   fclose(file);
@@ -255,7 +255,7 @@ ODBC_TEST(driver_connect_unsupported) {
                            conn_out, sizeof(conn_out), &conn_out_len,
                            SQL_DRIVER_NOPROMPT) != SQL_SUCCESS_WITH_INFO,
           "Should return SQL_SUCCESS_WITH_INFO when using parameters unsupported by SingleStore");
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
   CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "01S00");
 
   return OK;
@@ -308,7 +308,7 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
 
   OK_SIMPLE_STMT(Stmt, "DROP USER IF EXISTS driver_connect_ssl");
@@ -322,7 +322,7 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
 
@@ -332,7 +332,7 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
 
@@ -344,7 +344,7 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
 
@@ -354,7 +354,7 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
 
@@ -366,7 +366,7 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                          conn_out, sizeof(conn_out), &conn_out_len,
                                          SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   // `SHOW STATUS` queries work only in client-side mode
   //
@@ -388,7 +388,7 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                          conn_out, sizeof(conn_out), &conn_out_len,
                                          SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   // `SHOW STATUS` queries work only in client-side mode
   //
@@ -407,7 +407,7 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                          conn_out, sizeof(conn_out), &conn_out_len,
                                          SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   // `SHOW STATUS` queries work only in client-side mode
   //
@@ -429,7 +429,7 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                          conn_out, sizeof(conn_out), &conn_out_len,
                                          SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
 
@@ -441,7 +441,7 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                          conn_out, sizeof(conn_out), &conn_out_len,
                                          SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
 
@@ -455,7 +455,7 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                          conn_out, sizeof(conn_out), &conn_out_len,
                                          SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
 
@@ -468,7 +468,7 @@ ODBC_TEST(driver_connect_ssl) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                          conn_out, sizeof(conn_out), &conn_out_len,
                                          SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
 
@@ -554,7 +554,7 @@ ODBC_TEST(driver_connect_timeout) {
     sprintf(err_msg, "Connection should have been timed out in 1 s, instead it failed in %ld ms", elapsed_milliseconds);
     FAIL_IF(elapsed_milliseconds > 2000, err_msg);
   } else {
-    check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+    if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
   }
 
   return OK;
@@ -568,7 +568,7 @@ int test_option_matched_rows(SQLCHAR conn[1024], SQLCHAR conn_out[1024], HSTMT h
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   HSTMT hstmt;
   CHECK_DBC_RC(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt));
@@ -611,7 +611,7 @@ int test_option_dynamic_cursor(SQLCHAR conn[1024], SQLCHAR conn_out[1024], HSTMT
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   HSTMT hstmt;
   CHECK_DBC_RC(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt));
@@ -649,7 +649,7 @@ int test_option_no_schema(SQLCHAR conn[1024], SQLCHAR conn_out[1024], HSTMT hdbc
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   HSTMT hstmt;
   CHECK_DBC_RC(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt));
@@ -689,7 +689,7 @@ int test_option_compress(SQLCHAR conn[1024], SQLCHAR conn_out[1024], HSTMT hdbc,
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   HSTMT hstmt;
   CHECK_DBC_RC(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt));
@@ -746,7 +746,7 @@ int test_option_forwardonly_cursor(SQLCHAR conn[1024], SQLCHAR conn_out[1024], H
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   HSTMT hstmt;
   CHECK_DBC_RC(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt));
@@ -790,7 +790,7 @@ int test_option_auto_reconnect(SQLCHAR conn[1024], SQLCHAR conn_out[1024], HSTMT
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   HSTMT hstmt;
   CHECK_DBC_RC(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt));
@@ -818,7 +818,7 @@ int test_option_multistatements(SQLCHAR conn[1024], SQLCHAR conn_out[1024], HSTM
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   HSTMT hstmt;
   CHECK_DBC_RC(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt));
@@ -943,7 +943,7 @@ ODBC_TEST(driver_connect_forwardonly) {
     CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                         conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
                                         SQL_DRIVER_NOPROMPT));
-    check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+    if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
     HSTMT hstmt;
     CHECK_DBC_RC(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt));
@@ -983,7 +983,7 @@ ODBC_TEST(driver_connect_no_cache) {
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
-  check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn);
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   HSTMT hstmt;
   CHECK_DBC_RC(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt));
