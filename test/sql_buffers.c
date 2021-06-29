@@ -372,6 +372,7 @@ ODBC_TEST(buffers_exec_direct_w) {
 #define NUM_PROC_FIELDS 4
 
 static int test_proc_columns() {
+    SQLCHAR buf[BUF_SIZE];
     SQLULEN num_rows = 0;
 
     // We'll check only the dataset size
@@ -401,17 +402,21 @@ static int test_proc_columns() {
     IS(num_rows == 3);
 
     // Empty strings
-    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, (SQLCHAR*)"", 0, (SQLCHAR*)"", 0, (SQLCHAR*)"", 0, (SQLCHAR*)"", 0));
+    *buf = 0;
+
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, buf, 0, buf, 0, buf, 0, buf, 0));
     FETCH_NO_DATA(Stmt);
     CLOSE(Stmt);
 
-    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, (SQLCHAR*)"", SQL_NTS, (SQLCHAR*)"", SQL_NTS, (SQLCHAR*)"", SQL_NTS, (SQLCHAR*)"", SQL_NTS));
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, buf, SQL_NTS, buf, SQL_NTS, buf, SQL_NTS, buf, SQL_NTS));
     FETCH_NO_DATA(Stmt);
     CLOSE(Stmt);
 
-    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, (SQLCHAR*)"", 1000, (SQLCHAR*)"", 1000, (SQLCHAR*)"", 1000, (SQLCHAR*)"", 1000));
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, buf, BUF_SIZE, buf, BUF_SIZE, buf, BUF_SIZE, buf, BUF_SIZE));
     FETCH_NO_DATA(Stmt);
     CLOSE(Stmt);
+
+    IS(*buf == 0);
 
     // Normal runs
     num_rows = 0;
@@ -468,17 +473,21 @@ static int test_proc_columns() {
     IS(num_rows == 3);
 
     // Empty strings
-    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, (SQLCHAR*)"", 0, (SQLCHAR*)"", 0, (SQLCHAR*)"", 0, (SQLCHAR*)"", 0));
+    *buf = 0;
+
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, buf, 0, buf, 0, buf, 0, buf, 0));
     FETCH_NO_DATA(Stmt);
     CLOSE(Stmt);
 
-    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, (SQLCHAR*)"", SQL_NTS, (SQLCHAR*)"", SQL_NTS, (SQLCHAR*)"", SQL_NTS, (SQLCHAR*)"", SQL_NTS));
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, buf, SQL_NTS, buf, SQL_NTS, buf, SQL_NTS, buf, SQL_NTS));
     FETCH_NO_DATA(Stmt);
     CLOSE(Stmt);
 
-    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, (SQLCHAR*)"", 1000, (SQLCHAR*)"", 1000, (SQLCHAR*)"", 1000, (SQLCHAR*)"", 1000));
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, buf, BUF_SIZE, buf, BUF_SIZE, buf, BUF_SIZE, buf, BUF_SIZE));
     FETCH_NO_DATA(Stmt);
     CLOSE(Stmt);
+
+    IS(*buf == 0);
 
     // Normal runs
     num_rows = 0;
@@ -516,6 +525,7 @@ static int test_proc_columns() {
 }
 
 static int test_proc_columns_w() {
+    SQLWCHAR buf[BUF_SIZE];
     SQLULEN num_rows = 0;
 
     // We'll check only the dataset size
@@ -545,17 +555,21 @@ static int test_proc_columns_w() {
     IS(num_rows == 3);
 
     // Empty strings
-    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, CW(""), 0, CW(""), 0, CW(""), 0, CW(""), 0));
+    *buf = 0;
+
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, buf, 0, buf, 0, buf, 0, buf, 0));
     FETCH_NO_DATA(Stmt);
     CLOSE(Stmt);
 
-    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, CW(""), SQL_NTS, CW(""), SQL_NTS, CW(""), SQL_NTS, CW(""), SQL_NTS));
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, buf, SQL_NTS, buf, SQL_NTS, buf, SQL_NTS, buf, SQL_NTS));
     FETCH_NO_DATA(Stmt);
     CLOSE(Stmt);
 
-    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, CW(""), 1000, CW(""), 1000, CW(""), 1000, CW(""), 1000));
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, buf, BUF_SIZE, buf, BUF_SIZE, buf, BUF_SIZE, buf, BUF_SIZE));
     FETCH_NO_DATA(Stmt);
     CLOSE(Stmt);
+
+    IS(*buf == 0);
 
     // Normal runs
     num_rows = 0;
@@ -612,17 +626,21 @@ static int test_proc_columns_w() {
     IS(num_rows == 3);
 
     // Empty strings
-    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, CW(""), 0, CW(""), 0, CW(""), 0, CW(""), 0));
+    *buf = 0;
+
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, buf, 0, buf, 0, buf, 0, buf, 0));
     FETCH_NO_DATA(Stmt);
     CLOSE(Stmt);
 
-    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, CW(""), SQL_NTS, CW(""), SQL_NTS, CW(""), SQL_NTS, CW(""), SQL_NTS));
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, buf, SQL_NTS, buf, SQL_NTS, buf, SQL_NTS, buf, SQL_NTS));
     FETCH_NO_DATA(Stmt);
     CLOSE(Stmt);
 
-    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, CW(""), 1000, CW(""), 1000, CW(""), 1000, CW(""), 1000));
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, buf, BUF_SIZE, buf, BUF_SIZE, buf, BUF_SIZE, buf, BUF_SIZE));
     FETCH_NO_DATA(Stmt);
     CLOSE(Stmt);
+
+    IS(*buf == 0);
 
     // Normal runs
     num_rows = 0;
