@@ -150,6 +150,8 @@ char *MADB_ConvertFromWChar(const SQLWCHAR *Wstr, SQLINTEGER WstrCharLen, SQLULE
 
   if (WstrCharLen == SQL_NTS)
     WstrCharLen= -1;
+  else if(WstrCharLen > 0) /* normalize the input string */
+    WstrCharLen = SqlwcsLen(Wstr, WstrCharLen);
 
   AllocLen= AscLen= WideCharToMultiByte(cc->CodePage, 0, Wstr, WstrCharLen, NULL, 0, NULL, NULL);
   if (WstrCharLen != -1)
