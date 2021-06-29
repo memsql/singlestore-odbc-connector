@@ -21,6 +21,13 @@
 
 #define BUF_SIZE    1000
 
+#ifdef _WIN32
+#define NULL_ARG_ERROR  "Invalid argument value"
+#else
+#define NULL_ARG_ERROR  "Invalid use of null pointer"
+#endif
+
+
 ODBC_TEST(buffers_native_sql) {
     SQLCHAR in_buf[BUF_SIZE];
     SQLCHAR out_buf[BUF_SIZE];
@@ -121,10 +128,10 @@ ODBC_TEST(buffers_native_sql) {
     IS(!strncmp(in_buf, out_buf, 14));
 
     // Bad use
-    CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, NULL, 0, out_buf, 15, NULL), "HY009", 0, "Invalid use of null pointer");
+    CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, NULL, 0, out_buf, 15, NULL), "HY009", 0, NULL_ARG_ERROR);
     IS(strlen(out_buf) == 14);
 
-    CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, NULL, SQL_NTS, out_buf, 15, NULL), "HY009", 0, "Invalid use of null pointer");
+    CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, NULL, SQL_NTS, out_buf, 15, NULL), "HY009", 0, NULL_ARG_ERROR);
     IS(strlen(out_buf) == 14);
 
     out_len = 10;
@@ -242,10 +249,10 @@ ODBC_TEST(buffers_native_sql_w) {
     IS(!sqlwcharcmp(in_buf, out_buf, 14));
 
     // Bad use
-    CHECK_DBC_ERR(Connection, SQLNativeSqlW(Connection, NULL, 0, out_buf, 15, NULL), "HY009", 0, "Invalid use of null pointer");
+    CHECK_DBC_ERR(Connection, SQLNativeSqlW(Connection, NULL, 0, out_buf, 15, NULL), "HY009", 0, NULL_ARG_ERROR);
     IS(sqlwcharlen(out_buf) == 14);
 
-    CHECK_DBC_ERR(Connection, SQLNativeSqlW(Connection, NULL, SQL_NTS, out_buf, 15, NULL), "HY009", 0, "Invalid use of null pointer");
+    CHECK_DBC_ERR(Connection, SQLNativeSqlW(Connection, NULL, SQL_NTS, out_buf, 15, NULL), "HY009", 0, NULL_ARG_ERROR);
     IS(sqlwcharlen(out_buf) == 14);
 
     out_len = 10;
@@ -302,9 +309,9 @@ ODBC_TEST(buffers_exec_direct) {
     CLOSE(Stmt);
 
     // Bad use
-    CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, NULL, 0), "HY009", 0, "Invalid use of null pointer");
+    CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, NULL, 0), "HY009", 0, NULL_ARG_ERROR);
 
-    CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, NULL, SQL_NTS), "HY009", 0, "Invalid use of null pointer");
+    CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, NULL, SQL_NTS), "HY009", 0, NULL_ARG_ERROR);
 
     CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, in_buf, 0), "HY090", 0, "Invalid string or buffer length");
 
@@ -354,9 +361,9 @@ ODBC_TEST(buffers_exec_direct_w) {
     CLOSE(Stmt);
 
     // Bad use
-    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, NULL, 0), "HY009", 0, "Invalid use of null pointer");
+    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, NULL, 0), "HY009", 0, NULL_ARG_ERROR);
 
-    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, NULL, SQL_NTS), "HY009", 0, "Invalid use of null pointer");
+    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, NULL, SQL_NTS), "HY009", 0, NULL_ARG_ERROR);
 
     CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, in_buf, 0), "HY090", 0, "Invalid string or buffer length");
 
@@ -454,6 +461,11 @@ static int test_proc_columns() {
     CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_METADATA_ID, (SQLPOINTER) SQL_TRUE, SQL_IS_UINTEGER));
 
     // NULL buffers
+#ifdef WIN32_
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumns(Stmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0), "HY009", 0, "Invalid use of null pointer");
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumns(Stmt, NULL, SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS), "HY009", 0, "Invalid use of null pointer");
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumns(Stmt, NULL, 1000, NULL, 1000, NULL, 1000, NULL, 1000), "HY009", 0, "Invalid use of null pointer");
+#else
     num_rows = 0;
     CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0));
     FETCH(Stmt);
@@ -471,6 +483,7 @@ static int test_proc_columns() {
     FETCH(Stmt);
     CLOSE(Stmt);
     IS(num_rows == 3);
+#endif
 
     // Empty strings
     *buf = 0;
@@ -536,6 +549,11 @@ static int test_proc_columns_w() {
     CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_METADATA_ID, (SQLPOINTER)SQL_FALSE, SQL_IS_UINTEGER));
 
     // NULL buffers
+#ifdef WIN32_
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumnsW(Stmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0), "HY009", 0, "Invalid use of null pointer");
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumnsW(Stmt, NULL, SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS), "HY009", 0, "Invalid use of null pointer");
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumnsW(Stmt, NULL, 1000, NULL, 1000, NULL, 1000, NULL, 1000), "HY009", 0, "Invalid use of null pointer");
+#else
     num_rows = 0;
     CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0));
     FETCH(Stmt);
@@ -553,6 +571,7 @@ static int test_proc_columns_w() {
     FETCH(Stmt);
     CLOSE(Stmt);
     IS(num_rows == 3);
+#endif
 
     // Empty strings
     *buf = 0;
