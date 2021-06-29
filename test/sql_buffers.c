@@ -516,7 +516,7 @@ static int test_proc_columns() {
                                         (SQLCHAR*)"odbc_test", SQL_NTS,
                                         NULL, 0,
                                         (SQLCHAR*)"aaa", SQL_NTS,
-                                        (SQLCHAR*)"a11", SQL_NTS)),
+                                        (SQLCHAR*)"a11", SQL_NTS),
                     "HY009", 0, "Invalid use of null pointer");
     CHECK_STMT_ERR( Stmt,
                     SQLProcedureColumns(Stmt,
