@@ -1740,11 +1740,6 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
           // In APD, Header.ArraySize specifies the number of values in each parameter.
           // Obviously, it is expected to equal 1, but if not, bound params are expected to be the arrays of values.
           // Therefore, for each item in the array we construct a separate SQL query and send it to the engine.
-          // Unless it's a SELECT query in which case we construct the following:
-          // SELECT (params from bound item 1) ... UNION ALL SELECT (params from bound item 2 ...).
-          // These separate SELECTs will obviously return the same number of columns, so we are sure this query succeeds
-          // as long as each individual query succeeds.
-          SQLULEN IdxArrayStatusToUpd = Start;
           for (j = Start; j < Start + Stmt->Apd->Header.ArraySize; ++j)
           {
               // "... In an IPD, this SQLUINTEGER * header field points to a buffer containing the number
@@ -1773,18 +1768,7 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
                   Stmt->RebindParams = FALSE;
               }
 
-              // For select queries with a paramset size > 1 do a union of SELECT statements for each paramset.
-              if (Stmt->Query.ReturnsResult && j + 1 < Start + Stmt->Apd->Header.ArraySize) {
-                  // I believe we want to do "UNION ALL" rather than "UNION".
-                  if (MADB_DynstrAppend(&final_query, " UNION ALL ")) {
-                      ++ErrorCount;
-                      MADB_DynstrFree(&final_query);
-                      goto end;
-                  }
-                  continue;
-              }
-
-              if (mysql_real_query(Stmt->stmt->mysql, final_query.str, final_query.length)) {
+              if (mysql_reset_connection(Stmt->stmt->mysql) && mysql_real_query(Stmt->stmt->mysql, final_query.str, final_query.length)) {
                   ++ErrorCount;
                   ret = MADB_SetNativeError(&Stmt->Error, SQL_HANDLE_DBC, Stmt->stmt->mysql);
               } else
@@ -1808,23 +1792,8 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
 
               if (Stmt->Ipd->Header.ArrayStatusPtr)
               {
-                  // This could be the SELECT ... UNION ALL ... SELECT statement, in which case we should populate the
-                  // ArrayStatus for each participated row.
-                  // In case of SELECT ... UNION ALL ... SELECT this is expected to run only once for each row in the
-                  // paramset after all the rows are processed.
-                  // Otherwise, this will run on every iteration for every row in the paramset.
-                  while(IdxArrayStatusToUpd <= j)
-                  {
-                      // Update the Ipd status only if the corresponding Apd parameter shouldn't be ignored.
-                      // If it should be ignored, the Ipd status should be set by now.
-                      if (!Stmt->Apd->Header.ArrayStatusPtr || Stmt->Apd->Header.ArrayStatusPtr[IdxArrayStatusToUpd] != SQL_PARAM_IGNORE)
-                      {
-                          Stmt->Ipd->Header.ArrayStatusPtr[IdxArrayStatusToUpd] = SQL_SUCCEEDED(ret) ?
-                          SQL_PARAM_SUCCESS :
-                          (IdxArrayStatusToUpd == Stmt->Apd->Header.ArraySize - 1) ? SQL_PARAM_ERROR : SQL_PARAM_DIAG_UNAVAILABLE;
-                      }
-                      IdxArrayStatusToUpd++;
-                  }
+                  Stmt->Ipd->Header.ArrayStatusPtr[j-Start]= SQL_SUCCEEDED(ret) ? SQL_PARAM_SUCCESS :
+                                                             (j == Stmt->Apd->Header.ArraySize - 1) ? SQL_PARAM_ERROR : SQL_PARAM_DIAG_UNAVAILABLE;
               }
               ++Stmt->ArrayOffset;
               if (!SQL_SUCCEEDED(ret) && j == Start + Stmt->Apd->Header.ArraySize) {
