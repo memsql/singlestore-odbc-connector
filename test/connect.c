@@ -99,7 +99,7 @@ int check_connection_string(size_t len, size_t expected_len, const SQLCHAR conn[
   //
 
   SQLCHAR sanitized_conn[1024];
-  size_t i, sanitized_len;
+  size_t i, sanitized_len = 0;
   for (i = 0; i < len; i++) {
     if (strncmp((char*)(conn + i), "DRIVER=", 7) == 0) {
       if (conn[i + 7] == '{') {
@@ -123,6 +123,10 @@ int check_connection_string(size_t len, size_t expected_len, const SQLCHAR conn[
       }
       break;
     }
+  }
+  if (sanitized_len == 0) {
+    strncpy((char*)sanitized_conn, (char*)conn, len);
+    sanitized_len = len;
   }
   is_num(sanitized_len, expected_len);
   IS_STR(sanitized_conn, expected_conn, sanitized_len);
