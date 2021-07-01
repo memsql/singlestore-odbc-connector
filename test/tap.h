@@ -1263,11 +1263,14 @@ void cleanup()
     }
 
 end:
-    mysql_close(mysql);
-    if (errorMessage)
+    if (errorMessage)   // mysql_close(mysql) frees the memory pointed to by errorMessage
     {
         printf("Cleanup failed: %s\n\n", errorMessage);
-    } else
+    }
+
+    mysql_close(mysql);
+
+    if (!errorMessage)
     {
         printf("Cleanup finished successfully in %ld seconds\n\n", time(NULL) - start_time);
     }

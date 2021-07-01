@@ -43,6 +43,7 @@ SQLINTEGER SqlwcsCharLen(SQLWCHAR *str, SQLLEN octets);
 SQLLEN     SqlwcsLen(SQLWCHAR *str, SQLLEN buff_length);
 SQLLEN     SafeStrlen(SQLCHAR *str, SQLLEN buff_length);
 
+
 /* Calculate string length (if needed) and check for some input error
  *
  * ptr should be a string without zero chars inside
@@ -62,5 +63,8 @@ SQLLEN     SafeStrlen(SQLCHAR *str, SQLLEN buff_length);
     len= 0;\
   else if (len)\
     len= SafeStrlen(ptr, len)
+
+/* Fix SQLWCHAR buffer length to be multiple of sizeof(SQLWCHAR) */
+#define ALIGN_WCHAR_LENGTH(len) ((len) &= ~(sizeof(SQLWCHAR) == 2 ? 0x01ul : 0x03ul))
 
 #endif

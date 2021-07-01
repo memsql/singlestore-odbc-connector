@@ -507,7 +507,8 @@ my_bool MADB_ParseConnString(MADB_Dsn *Dsn, const char *String, int Length, char
   }
 
   Buffer= MADB_ALLOC(Length + 1);
-  Buffer= memcpy(Buffer, String, Length + 1);
+  Buffer= memcpy(Buffer, String, Length);
+  Buffer[Length]= 0;
   Key=    Buffer;
   ValueBuf= MADB_ALLOC(Length - 4); /*DSN=<value> - DSN or DRIVER must be in */
 

@@ -3749,6 +3749,8 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
       char  *ClientValue= NULL;
       size_t CharLength= 0;
 
+      ALIGN_WCHAR_LENGTH(BufferLength);
+
       /* Kinda this it not 1st call for this value, and we have it nice and recoded */
       if (IrdRec->InternalBuffer == NULL/* && Stmt->Lengths[Offset] == 0*/)
       {
