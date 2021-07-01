@@ -1329,8 +1329,21 @@ SQLRETURN MADB_InsertParam(MADB_Stmt* Stmt, MADB_DescRecord* ApdRecord, MADB_Des
             }
             break;
         }
-        case SQL_FLOAT:
         case SQL_C_FLOAT:
+        {
+          // Should we use a different number of decimal digits? It is enough for default values of float or double,
+          // but it may be inappropriate for the high precision fields.
+          char converted[50];
+          sprintf(converted, "%.17e", *(SQLREAL*)DataPtr);
+          if (MADB_DynstrAppend(&data, converted))
+          {
+            ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to append a float parameter", 0);
+            goto end;
+          }
+          EncloseInQuotes = FALSE;
+          break;
+        }
+        case SQL_FLOAT:
         case SQL_C_DOUBLE:
         {
             // Should we use a different number of decimal digits? It is enough for default values of float or double,
@@ -1339,7 +1352,7 @@ SQLRETURN MADB_InsertParam(MADB_Stmt* Stmt, MADB_DescRecord* ApdRecord, MADB_Des
             sprintf(converted, "%.17e", *(SQLDOUBLE*)DataPtr);
             if (MADB_DynstrAppend(&data, converted))
             {
-                ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to append a float parameter", 0);
+                ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to append a double parameter", 0);
                 goto end;
             }
             EncloseInQuotes = FALSE;

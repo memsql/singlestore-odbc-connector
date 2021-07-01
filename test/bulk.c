@@ -35,26 +35,26 @@ ODBC_TEST(t_bulk_insert_nts)
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_bulk_insert");
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_bulk_insert (a VARCHAR(20))");
-         
+
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
-                                (SQLPOINTER)SQL_CURSOR_FORWARD_ONLY, 0));
+                                     (SQLPOINTER)SQL_CURSOR_FORWARD_ONLY, 0));
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE,
-                                (SQLPOINTER)2, 0));
-  
+                                     (SQLPOINTER)2, 0));
+
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_CHAR, &a[0], 30, indicator));
 
   OK_SIMPLE_STMT(Stmt, "SELECT a FROM t_bulk_insert LIMIT 1");
- 
+
   CHECK_STMT_RC(Stmt, SQLBulkOperations(Stmt, SQL_ADD));
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE,
-                                (SQLPOINTER)1, 0));
- 
+                                     (SQLPOINTER)1, 0));
+
   OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_bulk_insert");
   is_num(myrowcount(Stmt), 2);
 
@@ -77,22 +77,22 @@ ODBC_TEST(t_bulk_insert_test)
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_bulk_insert");
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_bulk_insert (a VARCHAR(20), b bigint(20), c decimal(15,2))");
-         
+
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
-                                (SQLPOINTER)SQL_CURSOR_FORWARD_ONLY, 0));
+                                     (SQLPOINTER)SQL_CURSOR_FORWARD_ONLY, 0));
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE,
-                                (SQLPOINTER)2, 0));
+                                     (SQLPOINTER)2, 0));
 
   CHECK_STMT_RC(Stmt, SQLPrepare(Stmt, (SQLCHAR*)"INSERT INTO t_bulk_insert VALUES (?,?,?)", SQL_NTS));
-  
+
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_CHAR, &a[0], 30, indicator));
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_DOUBLE, &b[0], 8, b_indicator));
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_DOUBLE, &d[0], 8, d_indicator));
 
   OK_SIMPLE_STMT(Stmt, "SELECT a,b,c FROM t_bulk_insert LIMIT 1");
- 
+
 //  CHECK_STMT_RC(Stmt, SQLBulkOperations(Stmt, SQL_ADD));
 
   CHECK_DBC_RC(Connection, SQLEndTran(SQL_HANDLE_DBC, Connection, 0));
@@ -101,7 +101,7 @@ ODBC_TEST(t_bulk_insert_test)
 
   CHECK_DBC_RC(Connection, SQLAllocHandle(SQL_HANDLE_STMT, Connection, &Stmt));
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
-                                (SQLPOINTER)SQL_CURSOR_FORWARD_ONLY, 0));
+                                     (SQLPOINTER)SQL_CURSOR_FORWARD_ONLY, 0));
   //SQLFreeHandle(SQL_HANDLE_STMT, Stmt);
   CHECK_DBC_RC(Stmt, SQLEndTran(SQL_HANDLE_DBC, Connection, 0));
 
@@ -114,24 +114,24 @@ ODBC_TEST(t_bulk_insert)
 {
   SQLINTEGER i, id[MAX_INSERT_COUNT+1];
   SQLCHAR    name[MAX_INSERT_COUNT][40],
-             txt[MAX_INSERT_COUNT][60],
-             ltxt[MAX_INSERT_COUNT][70];
+    txt[MAX_INSERT_COUNT][60],
+    ltxt[MAX_INSERT_COUNT][70];
   SQLDOUBLE  dt, dbl[MAX_INSERT_COUNT];
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_bulk_insert");
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_bulk_insert (id INT, v VARCHAR(100),"
-         "txt TEXT, ft FLOAT(10), ltxt LONG VARCHAR)");
+                       "txt TEXT, ft FLOAT(10), ltxt LONG VARCHAR)");
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   dt= 0.23456;
 
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
-                                (SQLPOINTER)SQL_CURSOR_FORWARD_ONLY, 0));
+                                     (SQLPOINTER)SQL_CURSOR_FORWARD_ONLY, 0));
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE,
-                                (SQLPOINTER)MAX_INSERT_COUNT, 0));
+                                     (SQLPOINTER)MAX_INSERT_COUNT, 0));
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CONCURRENCY,
-                                (SQLPOINTER)SQL_CONCUR_ROWVER, 0));
+                                     (SQLPOINTER)SQL_CONCUR_ROWVER, 0));
 
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, id, 0, NULL));
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_CHAR, name, sizeof(name[0]), NULL));
@@ -159,7 +159,7 @@ ODBC_TEST(t_bulk_insert)
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE,
-                                (SQLPOINTER)1, 0));
+                                     (SQLPOINTER)1, 0));
 
   OK_SIMPLE_STMT(Stmt, "SELECT * FROM t_bulk_insert");
   is_num(myrowcount(Stmt), MAX_INSERT_COUNT * 2);
@@ -180,9 +180,9 @@ ODBC_TEST(t_mul_pkdel)
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_mul_pkdel");
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_mul_pkdel (a INT NOT NULL, b INT,"
-         "c VARCHAR(30) NOT NULL, PRIMARY KEY(a, c))");
+                       "c VARCHAR(30) NOT NULL, PRIMARY KEY(a, c))");
   OK_SIMPLE_STMT(Stmt, "INSERT INTO t_mul_pkdel VALUES (100,10,'MySQL1'),"
-         "(200,20,'MySQL2'),(300,20,'MySQL3'),(400,20,'MySQL4')");
+                       "(200,20,'MySQL2'),(300,20,'MySQL3'),(400,20,'MySQL4')");
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
@@ -229,10 +229,10 @@ ODBC_TEST(t_bulk_insert_indicator)
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
-                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+                                     (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
   CHECK_STMT_RC(Stmt,
-          SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)3, 0));
+                SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)3, 0));
 
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, id, 0, indicator));
 
@@ -250,7 +250,7 @@ ODBC_TEST(t_bulk_insert_indicator)
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE,
-                                (SQLPOINTER)1, 0));
+                                     (SQLPOINTER)1, 0));
 
   OK_SIMPLE_STMT(Stmt, "SELECT id FROM my_bulk ORDER BY IFNULL(id, 0)");
 
@@ -303,16 +303,16 @@ ODBC_TEST(t_bulk_insert_rows)
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
-                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+                                     (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE,
-                                (SQLPOINTER)3, 0));
+                                     (SQLPOINTER)3, 0));
 
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_BIND_TYPE,
-                                (SQLPOINTER)sizeof(row), 0));
+                                     (SQLPOINTER)sizeof(row), 0));
 
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, &rows[0].val, 0,
-                            &rows[0].ind));
+                                 &rows[0].ind));
 
   OK_SIMPLE_STMT(Stmt, "SELECT id FROM my_bulk");
 
@@ -326,10 +326,10 @@ ODBC_TEST(t_bulk_insert_rows)
 
   /* Now re-insert the last row using SQL_ATTR_ROW_BIND_OFFSET_PTR */
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE,
-                                (SQLPOINTER)1, 0));
+                                     (SQLPOINTER)1, 0));
 
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_BIND_OFFSET_PTR,
-                                (SQLPOINTER)&offset, 0));
+                                     (SQLPOINTER)&offset, 0));
 
   offset= 2 * sizeof(row);
 
@@ -337,7 +337,7 @@ ODBC_TEST(t_bulk_insert_rows)
 
   /* Remove SQL_ATTR_ROW_BIND_OFFSET_PTR */
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_BIND_OFFSET_PTR,
-                                NULL, 0));
+                                     NULL, 0));
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_UNBIND));
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
@@ -379,9 +379,9 @@ ODBC_TEST(t_odbc90)
   SQLHANDLE  Stmt1;
   SQLCHAR    conn[512], sval[MAODBC_ROWS][32]={"Record 1", "Record 21"};
   SQLLEN     ind1[MAODBC_ROWS]= {SQL_COLUMN_IGNORE, 0}, ind2[MAODBC_ROWS]= {sizeof(int), sizeof(int)},
-             ind3[MAODBC_ROWS]= {8, 9}, ind4[MAODBC_ROWS]={SQL_COLUMN_IGNORE, SQL_COLUMN_IGNORE};
+    ind3[MAODBC_ROWS]= {8, 9}, ind4[MAODBC_ROWS]={SQL_COLUMN_IGNORE, SQL_COLUMN_IGNORE};
   SQLINTEGER nval[MAODBC_ROWS]={100, 500}, id[MAODBC_ROWS]={2, 7};
- 
+
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS odbc90");
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE odbc90 (id int not null primary key auto_increment, \
                           nval int not null, sval varchar(32) not null, ts timestamp not null default now)");
@@ -390,10 +390,10 @@ ODBC_TEST(t_odbc90)
   /* This cursor closing is required, otherwise DM(on Windows) freaks out */
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
-    (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+                                     (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
   CHECK_STMT_RC(Stmt,
-    SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)MAODBC_ROWS, 0));
+                SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)MAODBC_ROWS, 0));
 
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, id, 0, ind1));
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_LONG, nval, 0, ind2));
@@ -410,7 +410,7 @@ ODBC_TEST(t_odbc90)
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE,
-    (SQLPOINTER)1, 0));
+                                     (SQLPOINTER)1, 0));
 
   OK_SIMPLE_STMT(Stmt, "SELECT id, nval, sval, ts FROM odbc90 ORDER BY id");
 
@@ -447,25 +447,25 @@ ODBC_TEST(t_odbc90)
   nval[0]= 100;
 
   sprintf((char *)conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s",
-    my_drivername, my_servername, my_uid, "XXXXXXXX", my_schema, ma_strport, add_connstr);
+          my_drivername, my_servername, my_uid, "XXXXXXXX", my_schema, ma_strport, add_connstr);
   diag("Starting new connection: %s", conn);
   sprintf((char*)conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s;",
-    my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr);
+          my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr);
   CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
   CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
-    (SQLPOINTER)SQL_OV_ODBC2, SQL_IS_INTEGER));
+                                    (SQLPOINTER)SQL_OV_ODBC2, SQL_IS_INTEGER));
   CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &Connection1));
   CHECK_DBC_RC(Connection1, SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT)strlen((const char*)conn), NULL, 0,
-    NULL, SQL_DRIVER_NOPROMPT));
+                                             NULL, SQL_DRIVER_NOPROMPT));
   CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
   /* This cursor closing is required, otherwise DM(on Windows) freaks out */
   CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
   CHECK_STMT_RC(Stmt1, SQLSetStmtAttr(Stmt1, SQL_ATTR_CURSOR_TYPE,
-    (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+                                      (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
   CHECK_STMT_RC(Stmt1,
-    SQLSetStmtAttr(Stmt1, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)MAODBC_ROWS, 0));
+                SQLSetStmtAttr(Stmt1, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)MAODBC_ROWS, 0));
 
   CHECK_STMT_RC(Stmt1, SQLBindCol(Stmt1, 1, SQL_C_LONG, id, 0, ind1));
   CHECK_STMT_RC(Stmt1, SQLBindCol(Stmt1, 2, SQL_C_LONG, nval, 0, ind2));
@@ -482,7 +482,7 @@ ODBC_TEST(t_odbc90)
   CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
 
   CHECK_STMT_RC(Stmt1, SQLSetStmtAttr(Stmt1, SQL_ATTR_ROW_ARRAY_SIZE,
-    (SQLPOINTER)1, 0));
+                                      (SQLPOINTER)1, 0));
 
   OK_SIMPLE_STMT(Stmt1, "SELECT id, nval, sval, ts FROM odbc90 ORDER BY id");
 
@@ -528,11 +528,11 @@ ODBC_TEST(t_bulk_delete)
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_bulk_delete");
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_bulk_delete (id INT unsigned not null primary key, val VARCHAR(20) not null)");
   /*OK_SIMPLE_STMT(Stmt, "INSERT INTO t_bulk_delete VALUES(1, 'first'), (2, 'second'), (3, 'third')");*/
-         
+
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_PARAMSET_SIZE,
-    (SQLPOINTER)3, 0));
+                                     (SQLPOINTER)3, 0));
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 0, 0, a, 0, id_ind));
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 2, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0, insert_val, sizeof(insert_val[0]), val_indicator));
 
@@ -542,7 +542,7 @@ ODBC_TEST(t_bulk_delete)
   OK_SIMPLE_STMT(Stmt, "INSERT INTO t_bulk_delete VALUES(?, ?)");
 
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_PARAMSET_SIZE,
-                                (SQLPOINTER)2, 0));
+                                     (SQLPOINTER)2, 0));
   OK_SIMPLE_STMT(Stmt, "DELETE FROM t_bulk_delete WHERE id=?");
 
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)1, 0));
@@ -570,12 +570,12 @@ ODBC_TEST(t_odbc149)
   SQLLEN tsLen[]= {0x01800000, SQL_NULL_DATA, 0x01800000}, bLen[]= {5, 3, 6}, bBufLen;
   SQLCHAR c[][8]= {"str1", "abcd", "xxxxxxy"}, cBuf[16];
   SQLCHAR b[][8]= {"\x1f\x1f\x1f\x00\x1f", "\x00\x44\x88", "\xcd\xcd\xcd\xcd\xcd\xcd"}, bBuf[256];
-  SQLLEN  cInd[]= {SQL_NTS, SQL_NTS, SQL_NTS}, wLen; 
+  SQLLEN  cInd[]= {SQL_NTS, SQL_NTS, SQL_NTS}, wLen;
   SQLWCHAR w[][8]= {{'x', 'x', 'x', 0}, {'y', 'y', 0}, {'z', 'z', 'z', 'a', 0}}, wBuf[16];
 
   //TODO https://memsql.atlassian.net/jira/software/c/projects/PLAT/issues/PLAT-5346
   if (iOdbc() && is_unicode_driver()) {
-      return OK;
+    return OK;
   }
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS odbc149");
@@ -614,7 +614,7 @@ ODBC_TEST(t_odbc149)
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_CHAR, cBuf, sizeof(cBuf), cInd));
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_C_BINARY, bBuf, sizeof(bBuf), &bBufLen));
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 5, SQL_C_WCHAR, wBuf, sizeof(wBuf), &wLen));
- 
+
   for (row= 0; row < MAODBC_ROWS; ++row)
   {
     memset(&Val[1], 0, sizeof(SQL_TIMESTAMP_STRUCT));
@@ -631,14 +631,14 @@ ODBC_TEST(t_odbc149)
     {
       IS(*tsLen == SQL_NULL_DATA);
     }
-    
+
     is_num(idBuf, id[row]);
     IS_STR(cBuf, c[row], strlen((const char*)(c[row])) + 1);
     is_num(bBufLen, bLen[row]);
     memcmp(bBuf, b[row], bBufLen);
     //TODO https://memsql.atlassian.net/jira/software/c/projects/PLAT/issues/PLAT-5346
     if (!iOdbc() && !is_ansi_driver()) {
-        IS_WSTR(wBuf, w[row], wLen/sizeof(SQLWCHAR));
+      IS_WSTR(wBuf, w[row], wLen/sizeof(SQLWCHAR));
     }
   }
 
@@ -699,8 +699,8 @@ ODBC_TEST(bulk_insert_all_datatypes)
     SQLUSMALLINT rowStatusArray[NUM_ROWS];
     Row rowsSelect[NUM_ROWS];
     Row rowsInsert[NUM_ROWS] = {
-      {0, "asd", 3, {1, 2, 3, 0}, 3, -1, 1, 100, 100, 0.3, 0.3333, 1, 10, 10, 100, 100, "abc", 3, {2001, 11, 1}, {5, 23, 59}, {2001, 11, 1, 5, 23, 59, 100001}},
-      {1, "bcd", 3, {2, 3, 4, 0}, 3, 2, 2, 10, 10, 0.5, 0.555, 1, 20, 20, 200, 200, "sdf", 3, {2005, 10, 6}, {7, 13, 29}, {2005, 10, 6, 7, 13, 29, 101}},
+      {0, "asd", 3, {1, 2, 3, 0}, 3, -1, 1, 100, 100, 0.3, 0.3333, 1, 10, 10, 100, 100, "abc", 3, {2001, 11, 1}, {5, 23, 59}, {2001, 11, 1, 5, 23, 59, 123456001}},
+      {1, "bcd", 3, {2, 3, 4, 0}, 3, 2, 2, 10, 10, 0.5, 0.555, 1, 20, 20, 200, 200, "sdf", 3, {2005, 10, 6}, {7, 13, 29}, {2005, 10, 6, 7, 13, 29, 2345001}},
       {2, "", 0, {0}, 0, 3, 3, -20, 20, -10.2, -100.222, 0, -30, 30, -300, 300, "", 0, {2002, 12, 1}, {0, 0, 0}, {2002, 12, 1, 0, 0, 0, 0}},
     };
 
@@ -826,10 +826,10 @@ ODBC_TEST(bulk_insert_all_datatypes)
       is_num(rowsSelect[i].c_ushort, rowsInsert[i].c_ushort);
       is_num(rowsSelect[i].c_slong, rowsInsert[i].c_slong);
       is_num(rowsSelect[i].c_ulong, rowsInsert[i].c_ulong);
-      // is_double(rowsSelect[i].c_float, rowsInsert[i].c_float); TODO PLAT-5554
+      is_double(rowsSelect[i].c_float, rowsInsert[i].c_float);
       is_num(rowsSelect[i].c_double, rowsInsert[i].c_double);
       is_num(rowsSelect[i].c_bit, rowsInsert[i].c_bit);
-      // is_num(rowsSelect[i].c_stinyint, rowsInsert[i].c_stinyint); TODO PLAT-5554
+      is_num(rowsSelect[i].c_stinyint, rowsInsert[i].c_stinyint);
       is_num(rowsSelect[i].c_utinyint, rowsInsert[i].c_utinyint);
       is_num(rowsSelect[i].c_sbigint, rowsInsert[i].c_sbigint);
       is_num(rowsSelect[i].c_ubigint, rowsInsert[i].c_ubigint);
@@ -853,7 +853,14 @@ ODBC_TEST(bulk_insert_all_datatypes)
       is_num(rowsSelect[i].c_type_timestamp.hour, rowsInsert[i].c_type_timestamp.hour);
       is_num(rowsSelect[i].c_type_timestamp.minute, rowsInsert[i].c_type_timestamp.minute);
       is_num(rowsSelect[i].c_type_timestamp.second, rowsInsert[i].c_type_timestamp.second);
-      // is_num(rowsSelect[i].c_type_timestamp.fraction, rowsInsert[i].c_type_timestamp.fraction); TODO PLAT-5554
+      // Precision is handled incorrectly for SSPS. It is caused by the engine bug DB-47380
+      // TODO enable this test for SSPS when 7.5 will be released and added for testing (it should contain fix)
+      if (NoSsps)
+      {
+        // S2 support saves only 6 numbers after comma, when ODBC structure allows to provide 9 numbers
+        // We lose last 3 numbers, so we are not comparing them here
+        is_num(rowsSelect[i].c_type_timestamp.fraction, rowsInsert[i].c_type_timestamp.fraction/1000*1000);
+      }
 
       is_num(rowsSelect[i].c_numeric.precision, rowsInsert[i].c_numeric.precision);
       is_num(rowsSelect[i].c_numeric.scale, rowsInsert[i].c_numeric.scale);
