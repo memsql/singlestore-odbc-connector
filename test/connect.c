@@ -1,28 +1,21 @@
-/*
-  Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
-                2016, 2019 MariaDB Corporation AB
-                2021 SingleStore, Inc.
+/*************************************************************************************
+  Copyright (c) 2021 SingleStore, Inc.
 
-  The MySQL Connector/ODBC is licensed under the terms of the GPLv2
-  <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
-  MySQL Connectors. There are special exceptions to the terms and
-  conditions of the GPLv2 as it is applied to this software, see the
-  FLOSS License Exception
-  <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+  This library is free software; you can redistribute it and/or
+  modify it under the terms of the GNU Library General Public
+  License as published by the Free Software Foundation; either
+  version 2.1 of the License, or (at your option) any later version.
 
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published
-  by the Free Software Foundation; version 2 of the License.
+  This library is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  Library General Public License for more details.
 
-  This program is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-  for more details.
-
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write to the Free Software Foundation, Inc.,
-  51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
-*/
+  You should have received a copy of the GNU Library General Public
+  License along with this library; if not see <http://www.gnu.org/licenses>
+  or write to the Free Software Foundation, Inc.,
+  51 Franklin St., Fifth Floor, Boston, MA 02110, USA
+*************************************************************************************/
 
 #include "tap.h"
 #include "stdio.h"
@@ -35,13 +28,8 @@ ODBC_TEST(basic_connect) {
   CHECK_DBC_RC(hdbc, SQLConnect(hdbc, my_dsn, SQL_NTS, my_uid, SQL_NTS, my_pwd, SQL_NTS));
 
   OK_SIMPLE_STMT(Stmt, "DROP USER IF EXISTS basic_connect");
-  OK_SIMPLE_STMT(Stmt, "CREATE USER basic_connect@'%' IDENTIFIED BY 's3cureP@ss'")
-  if (!SQL_SUCCEEDED(SQLExecDirect(Stmt, (SQLCHAR*)"GRANT ALL ON odbc_test.* TO basic_connect@'%'", SQL_NTS))) {
-    if (get_native_errcode(Stmt) == 1142) {
-      skip("test user does not have permissions to run this test (GRANT)");
-    }
-    return FAIL;
-  }
+  OK_SIMPLE_STMT(Stmt, "CREATE USER basic_connect@'%' IDENTIFIED BY 's3cureP@ss'");
+  OK_SIMPLE_STMT(Stmt, "GRANT ALL ON odbc_test.* TO basic_connect@'%'");
 
   FAIL_IF(SQLConnect(hdbc, my_dsn, SQL_NTS,
                      (SQLCHAR*)"basic_connect", SQL_NTS,
@@ -55,6 +43,7 @@ ODBC_TEST(basic_connect) {
                      (SQLCHAR*)"s3curePass", SQL_NTS) != SQL_ERROR,
           "Expected failure on attempt to establish connection with wrong password");
   CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "28000");
+
   FAIL_IF(SQLConnect(hdbc, my_dsn, SQL_NTS,
                      (SQLCHAR*)"basic_connect", SQL_NTS,
                      (SQLCHAR*)"", SQL_NTS) != SQL_ERROR,
@@ -65,10 +54,8 @@ ODBC_TEST(basic_connect) {
                                 (SQLCHAR*)"basic_connect", SQL_NTS,
                                 (SQLCHAR*)"s3cureP@ss", SQL_NTS));
 
-  SQLCHAR wrong_dsn[10];
-  strcpy((char*)wrong_dsn, "wrong_dsn");
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
-  FAIL_IF(SQLConnect(hdbc, wrong_dsn, SQL_NTS,
+  FAIL_IF(SQLConnect(hdbc, (SQLCHAR*)"wrong_dsn", SQL_NTS,
                      (SQLCHAR*)"basic_connect", SQL_NTS,
                      (SQLCHAR*)"s3cureP@ss", SQL_NTS) != SQL_ERROR,
           "Expected failure on connecting to non-existing data source");
@@ -139,7 +126,7 @@ ODBC_TEST(driver_connect_simple) {
   SQLSMALLINT conn_out_len;
 
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc));
-  sprintf((char*)conn, "DSN=%s;UID=%s;PWD=%s", my_dsn, my_uid, my_pwd);
+  sprintf((char*)conn, "DSN=%s;PWD=%s;UID=%s;", my_dsn, my_uid, my_pwd);
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       NULL, 0, &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
@@ -210,7 +197,7 @@ ODBC_TEST(driver_connect_simple) {
           "Should not be able to connect with incomplete parameters with NO_PROMPT");
   CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "HY000");
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__APPLE__)
   sprintf((char*)conn, "DSN=%s;", my_dsn);
   FAIL_IF(SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                        conn_out, sizeof(conn_out), &conn_out_len,
@@ -932,6 +919,8 @@ int recurrently_check_options(
 ODBC_TEST(driver_connect_options) {
   HSTMT hdbc;
   SQLCHAR conn[1024], conn_out[1024];
+
+  srand(time(NULL));
 
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc));
   int option_bits[] = {1 << 1,   // Tells connector to return the number of matched rows instead of number of changed rows

@@ -41,8 +41,6 @@ database = odbc_test_mycnf
 
 echo "Running tests"
 
-sudo cat /etc/hosts
-
 cd test
 export ODBCINI="$PWD/odbc.ini"
 export ODBCSYSINI=$PWD
