@@ -124,17 +124,19 @@ const char* GetDefaultLogDir()
 
 
 /* CharLen < 0 - treat as NTS */
-SQLINTEGER SqlwcsOctetLen(const SQLWCHAR *str, SQLINTEGER *CharLen)
+static SQLINTEGER SqlwcsOctetLen(const SQLWCHAR *str, SQLINTEGER* const CharLen)
 {
   SQLINTEGER result= 0, inChars= *CharLen;
+  unsigned int (*const charlenFn)(unsigned int c) = DmUnicodeCs->mb_charlen;
 
   if (str)
   {
-    while (inChars > 0 || (inChars < 0 && *str))
+    while (inChars && *str)
     {
-      result+= DmUnicodeCs->mb_charlen(*str);
+      const unsigned int charlen = charlenFn(*str);
+      result+= charlen;
       --inChars;
-      str+= DmUnicodeCs->mb_charlen(*str)/sizeof(SQLWCHAR);
+      str+= charlen/sizeof(SQLWCHAR);
     }
   }
 

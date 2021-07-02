@@ -43,17 +43,28 @@ SQLINTEGER SqlwcsCharLen(SQLWCHAR *str, SQLLEN octets);
 SQLLEN     SqlwcsLen(SQLWCHAR *str, SQLLEN buff_length);
 SQLLEN     SafeStrlen(SQLCHAR *str, SQLLEN buff_length);
 
-/* The last clause compensates for a Linux DM bug:
+
+/* Calculate string length (if needed) and check for some input error
+ *
+ * ptr should be a string without zero chars inside
+ * len is string length or SQL_NTS for 0-terminated strings
+ *
+ * The last clause compensates for a Linux DM bug:
  * it often includes the terminating 0 in string length
  * when converting SQLWCHAR strings to SQLCHAR strings
- * if a SQL*W() API method is called for ANSI driver (PLAT-5542)
+ * if a SQL*W() API method is called for ANSI driver (PLAT-5542).
+ * It also protects the parser from broken strings.
+ * SQL_NTS + 1 instead of SQL_NTS seems to be the same Linux DM bug
  */
 #define ADJUST_LENGTH(ptr, len)\
-  if((ptr) && ((len) == SQL_NTS))\
+  if((ptr) && ((len) == SQL_NTS || (len) == SQL_NTS + 1))\
     len= sizeof(len) == 2 ? (SQLSMALLINT)strlen((ptr)) : (SQLINTEGER)strlen((ptr));\
-  else if (!(ptr))\
+  else if (!(ptr) || (len < 0))\
     len= 0;\
-  else if (len && !((const char*)(ptr))[len - 1])\
-    --len
+  else if (len)\
+    len= SafeStrlen(ptr, len)
+
+/* Fix SQLWCHAR buffer length to be multiple of sizeof(SQLWCHAR) */
+#define ALIGN_WCHAR_LENGTH(len) ((len) &= ~(sizeof(SQLWCHAR) == 2 ? 0x01ul : 0x03ul))
 
 #endif
