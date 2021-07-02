@@ -1673,12 +1673,12 @@ int recurrently_check_options(
   if (pos == option_count) {
     int i;
     // We have no reason to run tests on all options combinations at every run. Randomly run option combination
-    // with 0.05 probability of run. Also always run combinations with only one option set and with all/no options set
+    // with 0.02 probability of run. Also always run combinations with only one option set and with all/no options set
     //
     if (count_bits(current_options_mask) == 0 ||
         count_bits(current_options_mask) == 1 ||
         count_bits(current_options_mask) == option_count ||
-        rand() < RAND_MAX * 0.05) {
+        rand() < RAND_MAX * 0.02) {
       for (i = 0; i < option_count; i++) {
         if ((*test_option_functions[i])(conn, conn_out, hdbc, current_options_mask, option_bits[i]) == FAIL) {
           printf("Failed test with option %d\n", current_options_mask);
