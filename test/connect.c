@@ -254,7 +254,7 @@ ODBC_TEST(driver_connect_simple) {
   if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
-  sprintf((char*)conn, "DSN=%s;UID=%s;PWD=%s;DESCRIPTION=%s;", my_dsn, my_pwd, my_uid, "some description");
+  sprintf((char*)conn, "DSN=%s;UID=%s;PWD=%s;DESCRIPTION=%s;", my_dsn, my_uid, my_pwd, "some description");
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
@@ -351,7 +351,7 @@ ODBC_TEST(driver_connect_simple_w) {
   if (check_connection_string_w(conn_out_len, strlen((char*)conn), conn_out, CW(conn)) == FAIL) { return FAIL; }
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
-  sprintf((char*)conn, "DSN=%s;PWD=%s;UID=%s;DESCRIPTION=%s;", my_dsn, my_pwd, my_uid, "some description");
+  sprintf((char*)conn, "DSN=%s;UID=%s;PWD=%s;DESCRIPTION=%s;", my_dsn, my_uid, my_pwd, "some description");
   CHECK_DBC_RC(hdbc, SQLDriverConnectW(hdbc, NULL, CW(conn), SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
