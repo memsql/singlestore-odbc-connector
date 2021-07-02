@@ -72,7 +72,11 @@ ODBC_TEST(basic_connect) {
                      (SQLCHAR*)"wrong_connect", -2,
                      (SQLCHAR*)"s3cureP@ss", -2) != SQL_ERROR,
           "Expected failure on passing negative number not equal to SQL_NTS as length");
-  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "HY090");
+
+  // S1090 is returned on MacOS instead of HY090, but error message is correct
+  //
+  FAIL_IF(check_sqlstate_ex(hdbc, SQL_HANDLE_DBC, "HY090") != OK && check_sqlstate_ex(hdbc, SQL_HANDLE_DBC, "S1090") != OK,
+      "Unexpected sqlstate!");
   return OK;
 }
 
