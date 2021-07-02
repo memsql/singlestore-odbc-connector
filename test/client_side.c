@@ -407,11 +407,11 @@ ODBC_TEST(client_side_multiparam)
     CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
 
     SQLLEN numOfRows;
-    // The following select will be transformed into a SELECT .. UNION ALL SELECT ... statement and is supposed to
-    // return a SQL_ATTR_PARAMSET_SIZE*(number of rows in each select) result set.
+    // The following select will be transformed into a SELECT .. UNION SELECT ... statement and is supposed to
+    // return a (number of rows in each select) result set.
     OK_SIMPLE_STMT(Stmt, "SELECT a, b FROM cs_cursor ORDER BY a");
     CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &numOfRows));
-    is_num(numOfRows, 5 * 5);
+    is_num(numOfRows, 5);
 
     SQLCHAR aCol[10];
     SQLLEN aColLen;
@@ -1372,7 +1372,7 @@ MA_ODBC_TESTS my_tests[] =
     {client_side_static_cursor,             "client_side_static_cursor", NORMAL, ALL_DRIVERS},
     {client_side_dynamic_cursor,            "client_side_dynamic_cursor", NORMAL, ALL_DRIVERS},
     {client_side_forward_only_cursor,       "client_side_forward_only_cursor", NORMAL, ALL_DRIVERS},
-    {client_side_multiparam,                "client_side_multiparam", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
+    {client_side_multiparam,                "client_side_multiparam", NORMAL, ALL_DRIVERS},
     {client_side_multirow,                  "client_side_multirow", NORMAL, ALL_DRIVERS},
     {client_side_multirow_columnwise,       "client_side_multirow_columnwise", NORMAL, ALL_DRIVERS},
     {client_side_get_data,                  "client_side_get_data", NORMAL, ALL_DRIVERS},

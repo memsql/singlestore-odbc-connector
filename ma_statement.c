@@ -1622,6 +1622,209 @@ error:
 }
 /* }}} */
 
+static int CspsInitStatementFromMultistatement( MADB_Stmt* const Stmt,
+                                                const unsigned StatementNr,
+                                                const char* const CurQuery,
+                                                const char* const QueriesEnd,
+                                                unsigned* const ParamPosId)
+{
+    unsigned ParamCount = 0;
+    unsigned long ParamIdx;
+
+    if (Stmt->MultiStmts && Stmt->MultiStmts[StatementNr] != NULL)
+    {
+        Stmt->stmt= Stmt->MultiStmts[StatementNr];
+    }
+    else
+    {
+        /* We have direct execution, since otherwise it'd already prepared, and thus Stmt->MultiStmts would be set */
+        if (CurQuery >= QueriesEnd)
+        {
+            /* Something went wrong(with parsing). But we've got here, and everything worked. Giving it chance to fail later.
+               This shouldn't really happen */
+            MDBUG_C_PRINT(Stmt->Connection, "Got past end of query direct-executing %s on stmt #%u", Stmt->Query.RefinedText, StatementNr);
+            return 1;
+        }
+        if (StatementNr > 0)
+        {
+            Stmt->stmt= MADB_NewStmtHandle(Stmt);
+        }
+        else
+        {
+            Stmt->MultiStmts= (MYSQL_STMT **)MADB_CALLOC(sizeof(MYSQL_STMT) * STMT_COUNT(Stmt->Query));
+            Stmt->CspsMultiStmtResult = (MYSQL_RES **) MADB_CALLOC(sizeof(MYSQL_RES) * STMT_COUNT(Stmt->Query));
+        }
+
+        Stmt->MultiStmts[StatementNr]= Stmt->stmt;
+    }
+    Stmt->CspsResult = Stmt->CspsMultiStmtResult[StatementNr];
+
+    Stmt->RebindParams= TRUE;
+
+    // In case of CSPS we trust our parsing to determine the number of parameters for each subquery.
+    // The loop below is O(ParamPositions) total, so it should be quite cheap.
+    while(*ParamPosId < Stmt->Query.ParamPositions.elements)
+    {
+        MADB_GetDynamic(&Stmt->Query.ParamPositions, &ParamIdx, *ParamPosId);
+        if (ParamIdx >= (CurQuery + strlen(CurQuery) - Stmt->Query.RefinedText))
+        {
+            break;
+        }
+        ParamCount++;
+        (*ParamPosId)++;
+    }
+
+    if (Stmt->ParamCount != ParamCount)
+    {
+        Stmt->ParamCount= (SQLSMALLINT)ParamCount;
+        Stmt->params= (MYSQL_BIND*)MADB_REALLOC(Stmt->params, sizeof(MYSQL_BIND) * MADB_STMT_PARAM_COUNT(Stmt));
+    }
+    memset(Stmt->params, 0, sizeof(MYSQL_BIND) * MADB_STMT_PARAM_COUNT(Stmt));
+
+    return 0;
+}
+
+typedef enum CspsControlFlowResult {
+    CCFR_OK,
+    CCFR_CONTINUE,
+    CCFR_ERROR,
+
+    CCFR_LAST
+} CspsControlFlowResult;
+
+static CspsControlFlowResult CspsInitStatementParams(   MADB_Stmt* const Stmt,
+                                                        MADB_DynString* const query,
+                                                        unsigned* const ErrorCount,
+                                                        SQLRETURN* const ret,
+                                                        const char* const CurQuery,
+                                                        const unsigned ParamOffset,
+                                                        const unsigned ParamSetIdx)
+{
+    // "... In an IPD, this SQLUINTEGER * header field points to a buffer containing the number
+    //  of sets of parameters that have been processed, including error sets. ..."
+    if (Stmt->Ipd->Header.RowsProcessedPtr) {
+        (*Stmt->Ipd->Header.RowsProcessedPtr)++;
+    }
+
+    // If param set should be ignored, don't construct and don't run the query.
+    if (Stmt->Apd->Header.ArrayStatusPtr &&
+        Stmt->Apd->Header.ArrayStatusPtr[ParamSetIdx] == SQL_PARAM_IGNORE) {
+        if (Stmt->Ipd->Header.ArrayStatusPtr) {
+            Stmt->Ipd->Header.ArrayStatusPtr[ParamSetIdx] = SQL_PARAM_UNUSED;
+        }
+        return CCFR_CONTINUE;
+    }
+
+    // For select queries with a paramset size > 1 do a union of SELECT statements for each paramset.
+    if (query->str && query->str[0]) {
+        // I believe we want to do "UNION ALL" rather than "UNION".
+        // "UNION ALL" fails for SELECTs without conditions
+        if (MADB_DynstrAppend(query, " UNION ")) {
+            ++*ErrorCount;
+            return CCFR_ERROR;
+        }
+    }
+
+    // Insert params for this paramset.
+    if (!SQL_SUCCEEDED(*ret = MADB_InsertParams(Stmt, CurQuery - Stmt->Query.RefinedText, ParamSetIdx, ParamOffset, query))) {
+        return CCFR_ERROR;
+    }
+
+    if (Stmt->RebindParams && MADB_STMT_PARAM_COUNT(Stmt)) {
+        Stmt->stmt->bind_param_done = 1;
+        Stmt->RebindParams = FALSE;
+    }
+
+    return CCFR_OK;
+}
+
+static int CspsRunStatementQuery(   MADB_Stmt* const Stmt,
+                                    const MADB_DynString* const query,
+                                    unsigned* const ErrorCount,
+                                    const unsigned ParamOffset)
+{
+    SQLRETURN ret= SQL_SUCCESS;
+
+    if (mysql_real_query(Stmt->stmt->mysql, query->str, query->length)) {
+        ++*ErrorCount;
+        ret = MADB_SetNativeError(&Stmt->Error, SQL_HANDLE_DBC, Stmt->stmt->mysql);
+    } else
+    {
+        // Update affected rows for queries which don't return results.
+        if (mysql_field_count(Stmt->stmt->mysql) == 0)
+        {
+            Stmt->stmt->upsert_status.affected_rows += mysql_affected_rows(Stmt->stmt->mysql);
+        }
+    }
+
+    // We need to unset InternalLength, i.e. reset dae length counters for next stmt.
+    // However that length is not used anywhere, and is not clear what is it needed for
+    ResetInternalLength(Stmt, ParamOffset);
+
+    return ret;
+}
+
+static void CspsReceiveStatementResults(MADB_Stmt* const Stmt, const SQLRETURN ret)
+{
+    // Free the previous result if there was any.
+    // In case of a multistatement it's correct to pass CspsResult and stmt because they are pointing to the proper
+    // multistatement result and multistatement, respectively.
+    MADB_CspsFreeResult(Stmt, &Stmt->CspsResult, Stmt->stmt);
+
+    // If a query returns result, fetch the full result set.
+    if (mysql_field_count(Stmt->stmt->mysql) > 0)
+    {
+        // The standard way to get the result after invoking mysql_real_query is to call either mysql_store_result
+        // or mysql_use_result. mysql_store_result fully reads the result set which allows us to scroll over the
+        // result set, get the number of affected rows, etc., but tracking updates is impossible unless the
+        // statement is re-executed.
+        // For the binary protocol the driver, regardless of the cursor type, invokes mysql_stmt_store_result
+        // which loads the result set entirely.
+        // However, according to the ODBC design, when the FORWARD-ONLY cursor is used, we should call
+        // mysql_use_result instead and fetch rows directly from the database.
+        // Supporting that would require some major changes to the driver. This is tracked in PLAT-5058.
+        // Therefore, for now we treat FORWARD-ONLY cursor as a STATIC cursor with restrictions (i.e. it
+        // fetches the full result set, iterates only in the forward direction, but does not track updates).
+        // When the DYNAMIC cursor is used we fetch the entire result set and re-execute the statement on each
+        // fetch to get updates.
+        //
+        // The client-side prepared statements will do the following:
+        // 1. For a STATIC cursor we use mysql_store_result, don't update the result set and don't re-execute
+        // the statement. Scrolling to any position is allowed.
+        // 2. For a DYNAMIC cursor we also use mysql_store_result, re-execute the statement on every fetch and
+        // allow scrolling to any position.
+        // 3. For a FORWARD-ONLY cursor we use mysql_use_result when NO_CACHE option is set and
+        // mysql_store_result when it is not, don't update the result set, and allow only
+        // SQL_FETCH_NEXT direction.
+        MYSQL_RES *cspsResult;
+        if (NO_CACHE(Stmt))
+        {
+          cspsResult = mysql_use_result(Stmt->stmt->mysql);
+        } else
+        {
+          cspsResult = mysql_store_result(Stmt->stmt->mysql);
+        }
+        if (cspsResult != NULL)
+        {
+            MADB_CspsCopyResult(Stmt, cspsResult, Stmt->stmt);
+
+            // VERY IMPORTANT to set this, otherwise binding fails and we cannot propagate the data to the client.
+            Stmt->stmt->state = MYSQL_STMT_USE_OR_STORE_CALLED;
+
+            // Save the result so it can be released later.
+            Stmt->CspsResult = cspsResult;
+        }
+    }
+    else // field_count is zero, so the query does not return a result.
+    {
+        // Update affected rows only if the statement does not return a result.
+        if (SQL_SUCCEEDED(ret) && !Stmt->MultiStmts)
+        {
+            Stmt->AffectedRows += mysql_stmt_affected_rows(Stmt->stmt);
+        }
+    }
+}
+
 /* {{{ MADB_StmtExecute */
 SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
 {
@@ -1631,7 +1834,7 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
   unsigned int ErrorCount=    0;
   unsigned int StatementNr;
   unsigned int ParamOffset=   0; /* for multi statements */
-  SQLULEN      j, Start=      0;
+  SQLULEN      j;
   /* For multistatement direct execution */
   char        *CurQuery= Stmt->Query.RefinedText, *QueriesEnd= Stmt->Query.RefinedText + Stmt->Query.RefinedLength;
 
@@ -1662,7 +1865,6 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
   {
       LOCK_MARIADB(Stmt->Connection);
       Stmt->AffectedRows = 0;
-      Start += Stmt->ArrayOffset;
 
       if (Stmt->Ipd->Header.RowsProcessedPtr)
       {
@@ -1670,226 +1872,123 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
       }
 
       unsigned int ParamPosId = 0;
-      unsigned int ParamCount = 0;
 
       for (StatementNr= 0; StatementNr < STMT_COUNT(Stmt->Query); ++StatementNr)
       {
-          if (QUERY_IS_MULTISTMT(Stmt->Query))
+          if (QUERY_IS_MULTISTMT(Stmt->Query)
+              && CspsInitStatementFromMultistatement(Stmt, StatementNr, CurQuery, QueriesEnd, &ParamPosId))
           {
-              if (Stmt->MultiStmts && Stmt->MultiStmts[StatementNr] != NULL)
-              {
-                  Stmt->stmt= Stmt->MultiStmts[StatementNr];
-              }
-              else
-              {
-                  /* We have direct execution, since otherwise it'd already prepared, and thus Stmt->MultiStmts would be set */
-                  if (CurQuery >= QueriesEnd)
-                  {
-                      /* Something went wrong(with parsing). But we've got here, and everything worked. Giving it chance to fail later.
-                         This shouldn't really happen */
-                      MDBUG_C_PRINT(Stmt->Connection, "Got past end of query direct-executing %s on stmt #%u", Stmt->Query.RefinedText, StatementNr);
-                      continue;
-                  }
-                  if (StatementNr > 0)
-                  {
-                      Stmt->stmt= MADB_NewStmtHandle(Stmt);
-                  }
-                  else
-                  {
-                      Stmt->MultiStmts= (MYSQL_STMT **)MADB_CALLOC(sizeof(MYSQL_STMT) * STMT_COUNT(Stmt->Query));
-                      Stmt->CspsMultiStmtResult = (MYSQL_RES **) MADB_CALLOC(sizeof(MYSQL_RES) * STMT_COUNT(Stmt->Query));
-                  }
-
-                  Stmt->MultiStmts[StatementNr]= Stmt->stmt;
-              }
-              Stmt->CspsResult = Stmt->CspsMultiStmtResult[StatementNr];
-
-              Stmt->RebindParams= TRUE;
-
-              // In case of CSPS we trust our parsing to determine the number of parameters for each subquery.
-              // The loop below is O(ParamPositions) total, so it should be quite cheap.
-              ParamCount = 0;
-              unsigned long ParamIdx;
-              while(ParamPosId < Stmt->Query.ParamPositions.elements)
-              {
-                  MADB_GetDynamic(&Stmt->Query.ParamPositions, &ParamIdx, ParamPosId);
-                  if (ParamIdx >= (CurQuery + strlen(CurQuery) - Stmt->Query.RefinedText))
-                  {
-                      break;
-                  }
-                  ParamCount++;
-                  ParamPosId++;
-              }
-
-              if (Stmt->ParamCount != ParamCount)
-              {
-                  Stmt->ParamCount= (SQLSMALLINT)ParamCount;
-                  Stmt->params= (MYSQL_BIND*)MADB_REALLOC(Stmt->params, sizeof(MYSQL_BIND) * MADB_STMT_PARAM_COUNT(Stmt));
-              }
-              memset(Stmt->params, 0, sizeof(MYSQL_BIND) * MADB_STMT_PARAM_COUNT(Stmt));
+              continue; /* bad statement - skip it */
           }
 
-          MADB_DynString final_query;
-          MADB_InitDynamicString(&final_query, "", 1024, 1024);
-
-          // In APD, Header.ArraySize specifies the number of values in each parameter.
-          // Obviously, it is expected to equal 1, but if not, bound params are expected to be the arrays of values.
-          // Therefore, for each item in the array we construct a separate SQL query and send it to the engine.
-          // Unless it's a SELECT query in which case we construct the following:
-          // SELECT (params from bound item 1) ... UNION ALL SELECT (params from bound item 2 ...).
-          // These separate SELECTs will obviously return the same number of columns, so we are sure this query succeeds
-          // as long as each individual query succeeds.
-          SQLULEN IdxArrayStatusToUpd = Start;
-          for (j = Start; j < Start + Stmt->Apd->Header.ArraySize; ++j)
+          // For select queries with a paramset size > 1 do a union of SELECT statements for each paramset.
+          if (Stmt->Query.ReturnsResult)
           {
-              // "... In an IPD, this SQLUINTEGER * header field points to a buffer containing the number
-              //  of sets of parameters that have been processed, including error sets. ..."
-              if (Stmt->Ipd->Header.RowsProcessedPtr) {
-                  (*Stmt->Ipd->Header.RowsProcessedPtr)++;
-              }
+              MADB_DynString final_query;
+              MADB_InitDynamicString(&final_query, "", 1024, 1024);
 
-              // If param set should be ignored, don't construct and don't run the query.
-              if (Stmt->Apd->Header.ArrayStatusPtr &&
-                  Stmt->Apd->Header.ArrayStatusPtr[j - Start] == SQL_PARAM_IGNORE) {
-                  if (Stmt->Ipd->Header.ArrayStatusPtr) {
-                      Stmt->Ipd->Header.ArrayStatusPtr[j - Start] = SQL_PARAM_UNUSED;
-                  }
-                  continue;
-              }
-
-              // Insert params for this paramset.
-              if (!SQL_SUCCEEDED(ret = MADB_InsertParams(Stmt, CurQuery - Stmt->Query.RefinedText, j - Start, ParamOffset, &final_query))) {
-                  MADB_DynstrFree(&final_query);
-                  goto end;
-              }
-
-              if (Stmt->RebindParams && MADB_STMT_PARAM_COUNT(Stmt)) {
-                  Stmt->stmt->bind_param_done = 1;
-                  Stmt->RebindParams = FALSE;
-              }
-
-              // For select queries with a paramset size > 1 do a union of SELECT statements for each paramset.
-              if (Stmt->Query.ReturnsResult && j + 1 < Start + Stmt->Apd->Header.ArraySize) {
-                  // I believe we want to do "UNION ALL" rather than "UNION".
-                  if (MADB_DynstrAppend(&final_query, " UNION ALL ")) {
-                      ++ErrorCount;
+              // In APD, Header.ArraySize specifies the number of values in each parameter.
+              // Obviously, it is expected to equal 1, but if not, bound params are expected to be the arrays of values.
+              // For a SELECT query we construct the following:
+              // SELECT (params from bound item 1) ... UNION ALL SELECT (params from bound item 2 ...).
+              // These separate SELECTs will obviously return the same number of columns, so we are sure this query succeeds
+              // as long as each individual query succeeds.
+              SQLULEN IdxArrayStatusToUpd = 0;
+              for (j = 0; j < Stmt->Apd->Header.ArraySize; ++j)
+              {
+                  const CspsControlFlowResult InitParamsRes
+                          = CspsInitStatementParams(Stmt, &final_query, &ErrorCount, &ret, CurQuery, ParamOffset, j);
+                  switch (InitParamsRes) {
+                  case CCFR_OK:
+                      break;
+                  case CCFR_CONTINUE:
+                      continue;
+                  case CCFR_ERROR:
                       MADB_DynstrFree(&final_query);
                       goto end;
-                  }
-                  continue;
-              }
-
-              if (mysql_real_query(Stmt->stmt->mysql, final_query.str, final_query.length)) {
-                  ++ErrorCount;
-                  ret = MADB_SetNativeError(&Stmt->Error, SQL_HANDLE_DBC, Stmt->stmt->mysql);
-              } else
-              {
-                  // Update affected rows for queries which don't return results.
-                  if (mysql_field_count(Stmt->stmt->mysql) == 0)
-                  {
-                      Stmt->stmt->upsert_status.affected_rows += mysql_affected_rows(Stmt->stmt->mysql);
+                  default:
+                      assert(0);
+                      break;
                   }
               }
 
-              // Now reset the final_query so it can be filled out again for the new paramset.
-              MADB_DynstrFree(&final_query);
-              if (j + 1 < Start + Stmt->Apd->Header.ArraySize) {
-                  MADB_InitDynamicString(&final_query, "", 1024, 1024);
-              }
-
-              // We need to unset InternalLength, i.e. reset dae length counters for next stmt.
-              // However that length is not used anywhere, and is not clear what is it needed for
-              ResetInternalLength(Stmt, ParamOffset);
+              ret = CspsRunStatementQuery(Stmt, &final_query, &ErrorCount, ParamOffset);
 
               if (Stmt->Ipd->Header.ArrayStatusPtr)
               {
-                  // This could be the SELECT ... UNION ALL ... SELECT statement, in which case we should populate the
-                  // ArrayStatus for each participated row.
                   // In case of SELECT ... UNION ALL ... SELECT this is expected to run only once for each row in the
                   // paramset after all the rows are processed.
-                  // Otherwise, this will run on every iteration for every row in the paramset.
-                  while(IdxArrayStatusToUpd <= j)
+                  while (IdxArrayStatusToUpd < Stmt->Apd->Header.ArraySize)
                   {
                       // Update the Ipd status only if the corresponding Apd parameter shouldn't be ignored.
                       // If it should be ignored, the Ipd status should be set by now.
-                      if (!Stmt->Apd->Header.ArrayStatusPtr || Stmt->Apd->Header.ArrayStatusPtr[IdxArrayStatusToUpd] != SQL_PARAM_IGNORE)
+                      if (!Stmt->Apd->Header.ArrayStatusPtr
+                              || Stmt->Apd->Header.ArrayStatusPtr[IdxArrayStatusToUpd] != SQL_PARAM_IGNORE)
                       {
-                          Stmt->Ipd->Header.ArrayStatusPtr[IdxArrayStatusToUpd] = SQL_SUCCEEDED(ret) ?
-                          SQL_PARAM_SUCCESS :
-                          (IdxArrayStatusToUpd == Stmt->Apd->Header.ArraySize - 1) ? SQL_PARAM_ERROR : SQL_PARAM_DIAG_UNAVAILABLE;
+                          Stmt->Ipd->Header.ArrayStatusPtr[IdxArrayStatusToUpd] =
+                                  SQL_SUCCEEDED(ret) ?
+                                          SQL_PARAM_SUCCESS :
+                                          (IdxArrayStatusToUpd == Stmt->Apd->Header.ArraySize - 1) ?
+                                                  SQL_PARAM_ERROR :
+                                                  SQL_PARAM_DIAG_UNAVAILABLE;
                       }
                       IdxArrayStatusToUpd++;
                   }
               }
-              ++Stmt->ArrayOffset;
-              if (!SQL_SUCCEEDED(ret) && j == Start + Stmt->Apd->Header.ArraySize) {
-                  goto end;
-              }
-          }
 
-          // If final_query underlying string is not null, we may have unreleased memory. That can happen if
-          // SQL_PARAM_IGNORE is provided for a parameter.
-          if (final_query.str)
-          {
               MADB_DynstrFree(&final_query);
           }
-
-          // Free the previous result if there was any.
-          // In case of a multistatement it's correct to pass CspsResult and stmt because they are pointing to the proper
-          // multistatement result and multistatement, respectively.
-          MADB_CspsFreeResult(Stmt, &Stmt->CspsResult, Stmt->stmt);
-
-          // If a query returns result, fetch the full result set.
-          if (mysql_field_count(Stmt->stmt->mysql) > 0)
+          else
           {
-              // The standard way to get the result after invoking mysql_real_query is to call either mysql_store_result
-              // or mysql_use_result. mysql_store_result fully reads the result set which allows us to scroll over the
-              // result set, get the number of affected rows, etc., but tracking updates is impossible unless the
-              // statement is re-executed.
-              // For the binary protocol the driver, regardless of the cursor type, invokes mysql_stmt_store_result
-              // which loads the result set entirely.
-              // However, according to the ODBC design, when the FORWARD-ONLY cursor is used, we should call
-              // mysql_use_result instead and fetch rows directly from the database.
-              // Supporting that would require some major changes to the driver. This is tracked in PLAT-5058.
-              // Therefore, for now we treat FORWARD-ONLY cursor as a STATIC cursor with restrictions (i.e. it
-              // fetches the full result set, iterates only in the forward direction, but does not track updates).
-              // When the DYNAMIC cursor is used we fetch the entire result set and re-execute the statement on each
-              // fetch to get updates.
-              //
-              // The client-side prepared statements will do the following:
-              // 1. For a STATIC cursor we use mysql_store_result, don't update the result set and don't re-execute
-              // the statement. Scrolling to any position is allowed.
-              // 2. For a DYNAMIC cursor we also use mysql_store_result, re-execute the statement on every fetch and
-              // allow scrolling to any position.
-              // 3. For a FORWARD-ONLY cursor we use mysql_use_result when NO_CACHE option is set and
-              // mysql_store_result when it is not, don't update the result set, and allow only
-              // SQL_FETCH_NEXT direction.
-              MYSQL_RES *cspsResult;
-              if (NO_CACHE(Stmt))
+              // In APD, Header.ArraySize specifies the number of values in each parameter.
+              // Obviously, it is expected to equal 1, but if not, bound params are expected to be the arrays of values.
+              // Therefore, for each item in the array we construct a separate SQL query and send it to the engine.
+              SQLULEN IdxArrayStatusToUpd = 0;
+              for (j = 0; j < Stmt->Apd->Header.ArraySize; ++j)
               {
-                cspsResult = mysql_use_result(Stmt->stmt->mysql);
-              } else
-              {
-                cspsResult = mysql_store_result(Stmt->stmt->mysql);
-              }
-              if (cspsResult != NULL)
-              {
-                  MADB_CspsCopyResult(Stmt, cspsResult, Stmt->stmt);
+                  MADB_DynString final_query;
+                  MADB_InitDynamicString(&final_query, "", 1024, 1024);
 
-                  // VERY IMPORTANT to set this, otherwise binding fails and we cannot propagate the data to the client.
-                  Stmt->stmt->state = MYSQL_STMT_USE_OR_STORE_CALLED;
+                  const CspsControlFlowResult InitParamsRes
+                          = CspsInitStatementParams(Stmt, &final_query, &ErrorCount, &ret, CurQuery, ParamOffset, j);
+                  switch(InitParamsRes) {
+                  case CCFR_OK:
+                      break;
+                  case CCFR_CONTINUE:
+                      MADB_DynstrFree(&final_query);
+                      continue;
+                  case CCFR_ERROR:
+                      MADB_DynstrFree(&final_query);
+                      goto end;
+                  default:
+                      assert(0);
+                      break;
+                  }
 
-                  // Save the result so it can be released later.
-                  Stmt->CspsResult = cspsResult;
-              }
-          } else // field_count is zero, so the query does not return a result.
-          {
-              // Update affected rows only if the statement does not return a result.
-              if (SQL_SUCCEEDED(ret) && !Stmt->MultiStmts)
-              {
-                  Stmt->AffectedRows += mysql_stmt_affected_rows(Stmt->stmt);
+                  ret = CspsRunStatementQuery(Stmt, &final_query, &ErrorCount, ParamOffset);
+
+                  if (Stmt->Ipd->Header.ArrayStatusPtr)
+                  {
+                      // Update the Ipd status only if the corresponding Apd parameter shouldn't be ignored.
+                      // If it should be ignored, the Ipd status should be set by now.
+                      if (!Stmt->Apd->Header.ArrayStatusPtr ||
+                              Stmt->Apd->Header.ArrayStatusPtr[IdxArrayStatusToUpd] != SQL_PARAM_IGNORE)
+                      {
+                          Stmt->Ipd->Header.ArrayStatusPtr[IdxArrayStatusToUpd] =
+                                  SQL_SUCCEEDED(ret) ?
+                                          SQL_PARAM_SUCCESS :
+                                          (IdxArrayStatusToUpd == Stmt->Apd->Header.ArraySize - 1) ?
+                                                  SQL_PARAM_ERROR :
+                                                  SQL_PARAM_DIAG_UNAVAILABLE;
+                      }
+                      ++IdxArrayStatusToUpd;
+                  }
+
+                  MADB_DynstrFree(&final_query);
               }
           }
+
+          CspsReceiveStatementResults(Stmt, ret);
 
           // Move forward to the next subquery in the multistatement.
           if (QUERY_IS_MULTISTMT(Stmt->Query))
@@ -1902,9 +2001,6 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
               Stmt->CspsResult = NULL;
           }
       }
-
-      // All rows processed, so we can unset ArrayOffset.
-      Stmt->ArrayOffset = 0;
 
       if (Stmt->MultiStmts)
       {
@@ -1938,7 +2034,6 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
 
   LOCK_MARIADB(Stmt->Connection);
   Stmt->AffectedRows= 0;
-  Start+= Stmt->ArrayOffset;
 
   if (Stmt->Ipd->Header.RowsProcessedPtr)
   {
@@ -1993,7 +2088,7 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
     }
 
     /* Convert and bind parameters */
-    for (j= Start; j < Start + Stmt->Apd->Header.ArraySize; ++j)
+    for (j= 0; j < Stmt->Apd->Header.ArraySize; ++j)
     {
       /* "... In an IPD, this SQLUINTEGER * header field points to a buffer containing the number
          of sets of parameters that have been processed, including error sets. ..." */
@@ -2003,11 +2098,11 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
       }
 
       if (Stmt->Apd->Header.ArrayStatusPtr &&
-        Stmt->Apd->Header.ArrayStatusPtr[j-Start] == SQL_PARAM_IGNORE)
+        Stmt->Apd->Header.ArrayStatusPtr[j] == SQL_PARAM_IGNORE)
       {
         if (Stmt->Ipd->Header.ArrayStatusPtr)
         {
-          Stmt->Ipd->Header.ArrayStatusPtr[j-Start]= SQL_PARAM_UNUSED;
+          Stmt->Ipd->Header.ArrayStatusPtr[j]= SQL_PARAM_UNUSED;
         }
         continue;
       }
@@ -2034,7 +2129,7 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
 
           Stmt->params[i-ParamOffset].length= NULL;
 
-          ret= MADB_C2SQL(Stmt, ApdRecord, IpdRecord, j - Start, &Stmt->params[i-ParamOffset]);
+          ret= MADB_C2SQL(Stmt, ApdRecord, IpdRecord, j, &Stmt->params[i-ParamOffset]);
           if (!SQL_SUCCEEDED(ret))
           {
             goto end;
@@ -2060,15 +2155,14 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
 
       if (Stmt->Ipd->Header.ArrayStatusPtr)
       {
-        Stmt->Ipd->Header.ArrayStatusPtr[j-Start]= SQL_SUCCEEDED(ret) ? SQL_PARAM_SUCCESS :
+        Stmt->Ipd->Header.ArrayStatusPtr[j]= SQL_SUCCEEDED(ret) ? SQL_PARAM_SUCCESS :
           (j == Stmt->Apd->Header.ArraySize - 1) ? SQL_PARAM_ERROR : SQL_PARAM_DIAG_UNAVAILABLE;
       }
       if (!mysql_stmt_field_count(Stmt->stmt) && SQL_SUCCEEDED(ret) && !Stmt->MultiStmts)
       {
         Stmt->AffectedRows+= mysql_stmt_affected_rows(Stmt->stmt);
       }
-      ++Stmt->ArrayOffset;
-      if (!SQL_SUCCEEDED(ret) && j == Start + Stmt->Apd->Header.ArraySize)
+      if (!SQL_SUCCEEDED(ret) && j == Stmt->Apd->Header.ArraySize)
       {
         goto end;
       }
@@ -2086,9 +2180,6 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
       }
     }
   }       /* End of for() on statements(Multistatmt) */
-  
-  /* All rows processed, so we can unset ArrayOffset */
-  Stmt->ArrayOffset= 0;
 
   if (Stmt->MultiStmts)
   {
