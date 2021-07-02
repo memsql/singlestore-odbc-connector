@@ -75,6 +75,61 @@ ODBC_TEST(basic_connect) {
   return OK;
 }
 
+ODBC_TEST(basic_connect_w) {
+  HSTMT hdbc;
+
+  CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc));
+
+  CHECK_DBC_RC(hdbc, SQLConnectW(hdbc, wdsn, SQL_NTS, wuid, SQL_NTS, wpwd, SQL_NTS));
+
+  OK_SIMPLE_STMT(Stmt, "DROP USER IF EXISTS basic_connect");
+  OK_SIMPLE_STMT(Stmt, "CREATE USER basic_connect@'%' IDENTIFIED BY 's3cureP@ss'");
+  OK_SIMPLE_STMT(Stmt, "GRANT ALL ON odbc_test.* TO basic_connect@'%'");
+
+  FAIL_IF(SQLConnectW(hdbc, wdsn, SQL_NTS,
+                     CW("basic_connect"), SQL_NTS,
+                     CW("s3cureP@ss"), SQL_NTS) != SQL_ERROR,
+          "Expected failure on attempt to establish connection for handle with established connection");
+  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "08002");
+
+  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+  FAIL_IF(SQLConnectW(hdbc, wdsn, SQL_NTS,
+                     CW("basic_connect"), SQL_NTS,
+                     CW("s3curePass"), SQL_NTS) != SQL_ERROR,
+          "Expected failure on attempt to establish connection with wrong password");
+  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "28000");
+
+  FAIL_IF(SQLConnectW(hdbc, wdsn, SQL_NTS,
+                     CW("basic_connect"), SQL_NTS,
+                     CW(""), SQL_NTS) != SQL_ERROR,
+          "Expected failure on attempt to establish connection without password for user with password");
+  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "28000");
+
+  CHECK_DBC_RC(hdbc, SQLConnectW(hdbc, wdsn, SQL_NTS,
+                                CW("basic_connect"), SQL_NTS,
+                                CW("s3cureP@ss"), SQL_NTS));
+
+  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+  FAIL_IF(SQLConnectW(hdbc, CW("wrong_dsn"), SQL_NTS,
+                     CW("basic_connect"), SQL_NTS,
+                     CW("s3cureP@ss"), SQL_NTS) != SQL_ERROR,
+          "Expected failure on connecting to non-existing data source");
+  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "IM002");
+
+  FAIL_IF(SQLConnectW(hdbc, wdsn, SQL_NTS,
+                     CW("wrong_connect"), SQL_NTS,
+                     CW("s3cureP@ss"), SQL_NTS) != SQL_ERROR,
+          "Expected failure on connecting with non-existing user");
+  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "28000");
+
+  FAIL_IF(SQLConnectW(hdbc, wdsn, -2,
+                     CW("wrong_connect"), -2,
+                     CW("s3cureP@ss"), -2) != SQL_ERROR,
+          "Expected failure on passing negative number not equal to SQL_NTS as length");
+  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "HY090");
+  return OK;
+}
+
 int check_connection_string(size_t len, size_t expected_len, const SQLCHAR conn[1024], const SQLCHAR expected_conn[1024]) {
 #ifndef _WIN32
   is_num(len, expected_len);
@@ -126,7 +181,7 @@ ODBC_TEST(driver_connect_simple) {
   SQLSMALLINT conn_out_len;
 
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc));
-  sprintf((char*)conn, "DSN=%s;PWD=%s;UID=%s;", my_dsn, my_pwd, my_uid);
+  sprintf((char*)conn, "DSN=%s;UID=%s;PWD=%s;", my_dsn, my_uid, my_pwd);
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       NULL, 0, &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
@@ -135,7 +190,7 @@ ODBC_TEST(driver_connect_simple) {
 #endif
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
-  CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, sizeof(conn),
+  CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, strlen((char*)conn),
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
   IS_STR(conn, conn_out, conn_out_len);
@@ -1030,6 +1085,7 @@ ODBC_TEST(driver_connect_no_cache) {
 MA_ODBC_TESTS my_tests[]=
 {
   {basic_connect, "basic_connect",     NORMAL, ALL_DRIVERS},
+  {basic_connect_w, "basic_connect_w",     NORMAL, UNICODE_DRIVER},
   {driver_connect_simple, "driver_connect_simple",     NORMAL, ALL_DRIVERS},
   {driver_connect_trace, "driver_connect_trace", TO_FIX, ALL_DRIVERS},
   {driver_connect_unsupported, "driver_connect_unsupported",     TO_FIX, ALL_DRIVERS},
