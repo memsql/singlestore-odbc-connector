@@ -1718,7 +1718,8 @@ static CspsControlFlowResult CspsInitStatementParams(   MADB_Stmt* const Stmt,
     // For select queries with a paramset size > 1 do a union of SELECT statements for each paramset.
     if (query->str && query->str[0]) {
         // I believe we want to do "UNION ALL" rather than "UNION".
-        // "UNION ALL" fails for SELECTs without conditions
+        // "UNION ALL" produces duplicate results for SELECTs without conditions
+        // that differs from SSPS behavior
         if (MADB_DynstrAppend(query, " UNION ")) {
             ++*ErrorCount;
             return CCFR_ERROR;
@@ -1890,7 +1891,7 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
               // In APD, Header.ArraySize specifies the number of values in each parameter.
               // Obviously, it is expected to equal 1, but if not, bound params are expected to be the arrays of values.
               // For a SELECT query we construct the following:
-              // SELECT (params from bound item 1) ... UNION ALL SELECT (params from bound item 2 ...).
+              // SELECT (params from bound item 1) ... UNION SELECT (params from bound item 2 ...).
               // These separate SELECTs will obviously return the same number of columns, so we are sure this query succeeds
               // as long as each individual query succeeds.
               SQLULEN IdxArrayStatusToUpd = 0;
@@ -1916,7 +1917,7 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
 
               if (Stmt->Ipd->Header.ArrayStatusPtr)
               {
-                  // In case of SELECT ... UNION ALL ... SELECT this is expected to run only once for each row in the
+                  // In case of SELECT ... UNION ... SELECT this is expected to run only once for each row in the
                   // paramset after all the rows are processed.
                   while (IdxArrayStatusToUpd < Stmt->Apd->Header.ArraySize)
                   {
