@@ -1894,7 +1894,6 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
               // SELECT (params from bound item 1) ... UNION SELECT (params from bound item 2 ...).
               // These separate SELECTs will obviously return the same number of columns, so we are sure this query succeeds
               // as long as each individual query succeeds.
-              SQLULEN IdxArrayStatusToUpd = 0;
               for (j = 0; j < Stmt->Apd->Header.ArraySize; ++j)
               {
                   const CspsControlFlowResult InitParamsRes
@@ -1919,21 +1918,20 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
               {
                   // In case of SELECT ... UNION ... SELECT this is expected to run only once for each row in the
                   // paramset after all the rows are processed.
-                  while (IdxArrayStatusToUpd < Stmt->Apd->Header.ArraySize)
+                  for (j = 0; j < Stmt->Apd->Header.ArraySize; ++j)
                   {
                       // Update the Ipd status only if the corresponding Apd parameter shouldn't be ignored.
                       // If it should be ignored, the Ipd status should be set by now.
                       if (!Stmt->Apd->Header.ArrayStatusPtr
-                              || Stmt->Apd->Header.ArrayStatusPtr[IdxArrayStatusToUpd] != SQL_PARAM_IGNORE)
+                              || Stmt->Apd->Header.ArrayStatusPtr[j] != SQL_PARAM_IGNORE)
                       {
-                          Stmt->Ipd->Header.ArrayStatusPtr[IdxArrayStatusToUpd] =
+                          Stmt->Ipd->Header.ArrayStatusPtr[j] =
                                   SQL_SUCCEEDED(ret) ?
                                           SQL_PARAM_SUCCESS :
-                                          (IdxArrayStatusToUpd == Stmt->Apd->Header.ArraySize - 1) ?
+                                          (j == Stmt->Apd->Header.ArraySize - 1) ?
                                                   SQL_PARAM_ERROR :
                                                   SQL_PARAM_DIAG_UNAVAILABLE;
                       }
-                      IdxArrayStatusToUpd++;
                   }
               }
 
@@ -1944,7 +1942,6 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
               // In APD, Header.ArraySize specifies the number of values in each parameter.
               // Obviously, it is expected to equal 1, but if not, bound params are expected to be the arrays of values.
               // Therefore, for each item in the array we construct a separate SQL query and send it to the engine.
-              SQLULEN IdxArrayStatusToUpd = 0;
               for (j = 0; j < Stmt->Apd->Header.ArraySize; ++j)
               {
                   MADB_DynString final_query;
@@ -1973,16 +1970,15 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
                       // Update the Ipd status only if the corresponding Apd parameter shouldn't be ignored.
                       // If it should be ignored, the Ipd status should be set by now.
                       if (!Stmt->Apd->Header.ArrayStatusPtr ||
-                              Stmt->Apd->Header.ArrayStatusPtr[IdxArrayStatusToUpd] != SQL_PARAM_IGNORE)
+                              Stmt->Apd->Header.ArrayStatusPtr[j] != SQL_PARAM_IGNORE)
                       {
-                          Stmt->Ipd->Header.ArrayStatusPtr[IdxArrayStatusToUpd] =
+                          Stmt->Ipd->Header.ArrayStatusPtr[j] =
                                   SQL_SUCCEEDED(ret) ?
                                           SQL_PARAM_SUCCESS :
-                                          (IdxArrayStatusToUpd == Stmt->Apd->Header.ArraySize - 1) ?
+                                          (j == Stmt->Apd->Header.ArraySize - 1) ?
                                                   SQL_PARAM_ERROR :
                                                   SQL_PARAM_DIAG_UNAVAILABLE;
                       }
-                      ++IdxArrayStatusToUpd;
                   }
 
                   MADB_DynstrFree(&final_query);
