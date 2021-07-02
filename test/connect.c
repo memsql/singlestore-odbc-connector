@@ -19,6 +19,7 @@
 
 #include "tap.h"
 #include "stdio.h"
+#include <wchar.h>
 
 ODBC_TEST(basic_connect) {
   HSTMT hdbc;
@@ -175,6 +176,51 @@ int check_connection_string(size_t len, size_t expected_len, const SQLCHAR conn[
   return OK;
 }
 
+int check_connection_string_w(size_t len, size_t expected_len, const SQLWCHAR conn[1024], const SQLWCHAR expected_conn[1024]) {
+#ifndef _WIN32
+  is_num(len, expected_len);
+  IS_WSTR(conn, expected_conn, expected_len);
+  return OK;
+#endif
+  // SQLDriverConnect function on Windows adds curly braces around driver name in connection string,
+  // we should ignore this in order to check conn and conn_out equality.
+  //
+
+  SQLWCHAR sanitized_conn[1024];
+  size_t i, sanitized_len = 0;
+  for (i = 0; i < len; i++) {
+    if (memcmp((conn + i), CW("DRIVER="), 7 * sizeof(SQLWCHAR)) == 0) {
+      if (conn[i + 7] == L'{') {
+        memcpy(sanitized_conn, conn, (i + 7) * sizeof(SQLWCHAR));
+        sanitized_len = i + 7;
+        size_t j;
+        for (j = i + 8; j < len; j++) {
+          if (conn[j] == L'}') {
+            break;
+          }
+        }
+        memcpy((sanitized_conn + sanitized_len), (conn + i + 8), (j - i - 8) * sizeof(SQLWCHAR));
+        sanitized_len += j - i - 8;
+        if (j < len - 1) {
+          memcpy((sanitized_conn + sanitized_len), (conn + j + 1), (len - j - 1) * sizeof(SQLWCHAR));
+          sanitized_len += len - j - 1;
+        }
+      } else {
+        memcpy(sanitized_conn, conn, len * sizeof(SQLWCHAR));
+        sanitized_len = len;
+      }
+      break;
+    }
+  }
+  if (sanitized_len == 0) {
+    memcpy(sanitized_conn, conn, len * sizeof(SQLWCHAR));
+    sanitized_len = len;
+  }
+  is_num(sanitized_len, expected_len);
+  IS_WSTR(sanitized_conn, expected_conn, sanitized_len);
+  return OK;
+}
+
 ODBC_TEST(driver_connect_simple) {
   HSTMT hdbc, hstmt;
   SQLCHAR conn[1024], conn_out[1024], buff[1024];
@@ -262,6 +308,103 @@ ODBC_TEST(driver_connect_simple) {
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PORT=%u;DB=%s;",
           my_drivername, my_uid, my_port, my_schema);
   FAIL_IF(SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
+                           conn_out, sizeof(conn_out), &conn_out_len,
+                           SQL_DRIVER_COMPLETE) != SQL_ERROR,
+          "Should not be able to connect with incomplete parameters on Unix");
+  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "IM008"); // dialog failed
+#endif
+
+  return OK;
+}
+
+ODBC_TEST(driver_connect_simple_w) {
+  HSTMT hdbc, hstmt;
+  SQLWCHAR conn[1024], conn_out[1024];
+  SQLCHAR buff[1024];
+  SQLSMALLINT conn_out_len;
+
+  CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc));
+  swprintf((wchar_t*)conn, 1024, L"DSN=%s;UID=%s;PWD=%s;", wdsn, wuid, wpwd);
+  CHECK_DBC_RC(hdbc, SQLDriverConnectW(hdbc, NULL, conn, SQL_NTS,
+                                      NULL, 0, &conn_out_len,
+                                      SQL_DRIVER_NOPROMPT));
+#ifndef _WIN32
+  is_num(conn_out_len, wcslen((wchar_t*)conn));
+#endif
+
+  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+  CHECK_DBC_RC(hdbc, SQLDriverConnectW(hdbc, NULL, conn, wcslen((wchar_t*)conn),
+                                      conn_out, sizeof(conn_out), &conn_out_len,
+                                      SQL_DRIVER_NOPROMPT));
+  IS_WSTR(conn, conn_out, conn_out_len);
+
+  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+  CHECK_DBC_RC(hdbc, SQLDriverConnectW(hdbc, NULL, conn, SQL_NTS,
+                                      conn_out, sizeof(conn_out), &conn_out_len,
+                                      SQL_DRIVER_COMPLETE));
+  if (check_connection_string_w(conn_out_len, wcslen((wchar_t*)conn), conn_out, conn) == FAIL) { return FAIL; }
+
+  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+  CHECK_DBC_RC(hdbc, SQLDriverConnectW(hdbc, NULL, conn, SQL_NTS,
+                                      conn_out, sizeof(conn_out), &conn_out_len,
+                                      SQL_DRIVER_COMPLETE_REQUIRED));
+  if (check_connection_string_w(conn_out_len, wcslen((wchar_t*)conn), conn_out, conn) == FAIL) { return FAIL; }
+
+  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+  swprintf((wchar_t*)conn, 1024, L"DSN=%s;PWD=%s;UID=%s;DESCRIPTION=%s;", wdsn, L"some description", wpwd, wuid);
+  CHECK_DBC_RC(hdbc, SQLDriverConnectW(hdbc, NULL, conn, SQL_NTS,
+                                      conn_out, sizeof(conn_out), &conn_out_len,
+                                      SQL_DRIVER_NOPROMPT));
+  if (check_connection_string_w(conn_out_len, wcslen((wchar_t*)conn), conn_out, conn) == FAIL) { return FAIL; }
+
+  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+  swprintf((wchar_t*)conn, L"DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;CHARSET=%s;",
+          wdrivername, wuid, wpwd, wservername, my_port, L"utf8");
+  CHECK_DBC_RC(hdbc, SQLDriverConnectW(hdbc, NULL, conn, SQL_NTS,
+                                      conn_out, sizeof(conn_out), &conn_out_len,
+                                      SQL_DRIVER_NOPROMPT));
+  CHECK_DBC_RC(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt));
+  OK_SIMPLE_STMT(hstmt, "SELECT * FROM INFORMATION_SCHEMA.GLOBAL_VARIABLES WHERE VARIABLE_NAME = 'CHARACTER_SET_CONNECTION'");
+  CHECK_STMT_RC(hstmt, SQLFetch(hstmt));
+  IS_STR(my_fetch_str(hstmt, buff, 2), "utf8", sizeof("utf8"));
+  CHECK_STMT_RC(hstmt, SQLFreeHandle(SQL_HANDLE_STMT, hstmt));
+
+  // For this test machine on which it is running has to have my.cnf file with section
+  // [odbc]
+  // database=odbc_test_mycnf
+  //
+  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+  OK_SIMPLE_STMT(Stmt, "CREATE DATABASE IF NOT EXISTS odbc_test_mycnf");
+  swprintf((wchar_t*)conn, 1024, L"DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;USE_MYCNF=1;",
+          wdrivername, wuid, wpwd, wservername, my_port);
+  CHECK_DBC_RC(hdbc, SQLDriverConnectW(hdbc, NULL, conn, SQL_NTS,
+                                      conn_out, sizeof(conn_out), &conn_out_len,
+                                      SQL_DRIVER_NOPROMPT));
+  CHECK_DBC_RC(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt));
+  OK_SIMPLE_STMT(hstmt, "SELECT DATABASE()");
+  CHECK_STMT_RC(hstmt, SQLFetch(hstmt));
+  IS_STR(my_fetch_str(hstmt, buff, 1), "odbc_test_mycnf", sizeof("odbc_test_mycnf"));
+  CHECK_STMT_RC(hstmt, SQLFreeHandle(SQL_HANDLE_STMT, hstmt));
+
+  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+  swprintf((wchar_t*)conn, 1024, L"DRIVER=%s;UID=%s;PORT=%u;DB=%s;NO_PROMPT=1;",
+          wdrivername, wuid, my_port, wschema);
+  FAIL_IF(SQLDriverConnectW(hdbc, NULL, conn, SQL_NTS,
+                           conn_out, sizeof(conn_out), &conn_out_len,
+                           SQL_DRIVER_COMPLETE) != SQL_ERROR,
+          "Should not be able to connect with incomplete parameters with NO_PROMPT");
+  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "HY000");
+
+#if !defined(_WIN32) && !defined(__APPLE__)
+  swprintf((wchar_t*)conn, 1024, L"DSN=%s;", wdsn);
+  FAIL_IF(SQLDriverConnectW(hdbc, NULL, conn, SQL_NTS,
+                                       conn_out, sizeof(conn_out), &conn_out_len,
+                                       SQL_DRIVER_PROMPT) != SQL_ERROR, "Can't use SQL_DRIVER_PROMPT on Unix");
+  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "HY092");
+
+  swprintf((wchar_t*)conn, 1024,L"DRIVER=%s;UID=%s;PORT=%u;DB=%s;",
+          wdrivername, wuid, my_port, wschema);
+  FAIL_IF(SQLDriverConnectW(hdbc, NULL, conn, SQL_NTS,
                            conn_out, sizeof(conn_out), &conn_out_len,
                            SQL_DRIVER_COMPLETE) != SQL_ERROR,
           "Should not be able to connect with incomplete parameters on Unix");
@@ -1087,6 +1230,7 @@ MA_ODBC_TESTS my_tests[]=
   {basic_connect, "basic_connect",     NORMAL, ALL_DRIVERS},
   {basic_connect_w, "basic_connect_w",     NORMAL, UNICODE_DRIVER},
   {driver_connect_simple, "driver_connect_simple",     NORMAL, ALL_DRIVERS},
+  {driver_connect_simple_w, "driver_connect_simple_w",     NORMAL, UNICODE_DRIVER},
   {driver_connect_trace, "driver_connect_trace", TO_FIX, ALL_DRIVERS},
   {driver_connect_unsupported, "driver_connect_unsupported",     TO_FIX, ALL_DRIVERS},
   {driver_connect_savefile, "driver_connect_savefile",     TO_FIX, ALL_DRIVERS},
