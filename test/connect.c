@@ -732,20 +732,9 @@ ODBC_TEST(driver_connect_ssl_w) {
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;SSLCERT=%s;SSLKEY=%s;",
           my_drivername, my_uid, my_pwd, my_servername, my_port, my_schema,
           "ssl/test-memsql-cert.pem", "ssl/test-memsql-key.pem");
-  rc = SQLDriverConnectW(hdbc, NULL, CW(conn), SQL_NTS,
+  CHECK_DBC_RC(hdbc, SQLDriverConnectW(hdbc, NULL, CW(conn), SQL_NTS,
                         conn_out, sizeof(conn_out), &conn_out_len,
-                        SQL_DRIVER_NOPROMPT);
-  if (rc == SQL_ERROR) {
-    // TODO: configure s2 servers for non-ubuntu test to have SSL enable.
-    //
-    SQLINTEGER err_code;
-    SQLGetDiagRec(SQL_HANDLE_DBC, hdbc, 1, NULL, &err_code, NULL, 0, NULL);
-    if (err_code == 2454) {
-      diag("Server is not configured for SSL.");
-      return OK;
-    }
-    CHECK_DBC_RC(hdbc, rc);
-  }
+                        SQL_DRIVER_NOPROMPT));
   if (check_connection_string_w(conn_out_len, strlen((char*)conn), conn_out, CW(conn)) == FAIL) { return FAIL; }
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
 
@@ -757,9 +746,20 @@ ODBC_TEST(driver_connect_ssl_w) {
           my_drivername, "driver_connect_ssl", "", my_servername, my_port, my_schema,
           "ssl/test-memsql-cert.pem",
           "ssl/test-memsql-key.pem");
-  CHECK_DBC_RC(hdbc, SQLDriverConnectW(hdbc, NULL, CW(conn), SQL_NTS,
+  rc =SQLDriverConnectW(hdbc, NULL, CW(conn), SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
-                                      SQL_DRIVER_NOPROMPT));
+                                      SQL_DRIVER_NOPROMPT);
+  if (rc == SQL_ERROR) {
+    // TODO: configure s2 servers for non-ubuntu test to have SSL enable.
+    //
+    SQLINTEGER err_code;
+    SQLGetDiagRec(SQL_HANDLE_DBC, hdbc, 1, NULL, &err_code, NULL, 0, NULL);
+    if (err_code == 2454) {
+      diag("Server is not configured for SSL.");
+      return OK;
+    }
+    CHECK_DBC_RC(hdbc, rc);
+  }
   if (check_connection_string_w(conn_out_len, strlen((char*)conn), conn_out, CW(conn)) == FAIL) { return FAIL; }
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
