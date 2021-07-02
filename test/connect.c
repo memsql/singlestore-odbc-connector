@@ -254,7 +254,7 @@ ODBC_TEST(driver_connect_simple) {
   if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
-  sprintf((char*)conn, "DSN=%s;PWD=%s;UID=%s;DESCRIPTION=%s;", my_dsn, my_pwd, my_uid, "some description");
+  sprintf((char*)conn, "DSN=%s;UID=%s;PWD=%s;DESCRIPTION=%s;", my_dsn, my_pwd, my_uid, "some description");
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
@@ -503,11 +503,11 @@ ODBC_TEST(driver_connect_ssl) {
   if (rc == SQL_ERROR) {
     // TODO: configure s2 servers for non-ubuntu test to have SSL enable.
     //
-    if (get_native_errcode(Stmt) == 2454) {
+    if (get_native_errcode(hdbc) == 2454) {
       diag("Server is not configured for SSL.");
       return OK;
     }
-    return FAIL;
+    CHECK_DBC_RC(hdbc, rc);
   }
   if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
@@ -735,7 +735,7 @@ ODBC_TEST(driver_connect_ssl_w) {
   if (rc == SQL_ERROR) {
     // TODO: configure s2 servers for non-ubuntu test to have SSL enable.
     //
-    if (get_native_errcode(Stmt) == 2454) {
+    if (get_native_errcode(hdbc) == 2454) {
       diag("Server is not configured for SSL.");
       return OK;
     }
@@ -957,7 +957,7 @@ ODBC_TEST(driver_connect_initstmt) {
 
   OK_SIMPLE_STMT(Stmt, "DROP DATABASE IF EXISTS driver_connect_initstmt")
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc));
-  sprintf((char *) conn, "DSN=%s;UID=%s;PWD=%s;INITSTMT=CREATE DATABASE driver_connect_initstmt",
+  sprintf((char *) conn, "DSN=%s;UID=%s;PWD=%s;INITSTMT=CREATE DATABASE driver_connect_initstmt;",
       my_dsn, my_uid, my_pwd);
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
@@ -975,7 +975,7 @@ ODBC_TEST(driver_connect_initstmt_w) {
 
   OK_SIMPLE_STMT(Stmt, "DROP DATABASE IF EXISTS driver_connect_initstmt")
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc));
-  sprintf((char *) conn, "DSN=%s;UID=%s;PWD=%s;INITSTMT=CREATE DATABASE driver_connect_initstmt",
+  sprintf((char *) conn, "DSN=%s;UID=%s;PWD=%s;INITSTMT=CREATE DATABASE driver_connect_initstmt;",
       my_dsn, my_uid, my_pwd);
   CHECK_DBC_RC(hdbc, SQLDriverConnectW(hdbc, NULL, CW(conn), SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
