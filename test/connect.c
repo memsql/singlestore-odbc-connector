@@ -126,7 +126,7 @@ ODBC_TEST(driver_connect_simple) {
   SQLSMALLINT conn_out_len;
 
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc));
-  sprintf((char*)conn, "DSN=%s;PWD=%s;UID=%s;", my_dsn, my_uid, my_pwd);
+  sprintf((char*)conn, "DSN=%s;PWD=%s;UID=%s;", my_dsn, my_pwd, my_uid);
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       NULL, 0, &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
@@ -153,7 +153,7 @@ ODBC_TEST(driver_connect_simple) {
   if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
-  sprintf((char*)conn, "DSN=%s;DESCRIPTION=%s;UID=%s;PWD=%s", my_dsn, "some description", my_uid, my_pwd);
+  sprintf((char*)conn, "DSN=%s;DESCRIPTION=%s;PWD=%s;UID=%s;", my_dsn, "some description", my_pwd, my_uid);
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
