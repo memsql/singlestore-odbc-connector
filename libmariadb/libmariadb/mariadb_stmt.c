@@ -68,6 +68,8 @@ SET_CLIENT_STMT_ERROR((stmt), (stmt)->mysql->net.last_errno, (stmt)->mysql->net.
 #define MAX_DATE_STR_LEN 5
 #define MAX_DATETIME_STR_LEN 12
 
+#define INVALID_STMT_ID ((unsigned long) -1)
+
 static my_bool net_stmt_close(MYSQL_STMT *stmt, my_bool remove);
 
 static my_bool is_not_null= 0;
@@ -432,8 +434,6 @@ int mthd_stmt_fetch_to_bind_fake(MYSQL_STMT *stmt, unsigned char **row)
         if (!stmt->bind_result_done ||
             stmt->bind[i].flags & MADB_BIND_DUMMY)
         {
-            unsigned long length;
-
             if (!stmt->bind[i].length)
                 stmt->bind[i].length= &stmt->bind[i].length_value;
             if (row[i] != NULL) {
@@ -1595,7 +1595,7 @@ MYSQL_STMT * STDCALL mysql_stmt_init(MYSQL *mysql)
   /* fill mysql's stmt list */
   stmt->list.data= stmt;
   stmt->mysql= mysql;
-  stmt->stmt_id= 0;
+  stmt->stmt_id= INVALID_STMT_ID;
   mysql->stmts= list_add(mysql->stmts, &stmt->list);
 
 
@@ -2157,7 +2157,7 @@ static my_bool madb_reset_stmt(MYSQL_STMT *stmt, unsigned int flags)
     CLEAR_CLIENT_STMT_ERROR(stmt);
   }
 
-  if (stmt->stmt_id)
+  if (stmt->stmt_id != INVALID_STMT_ID)
   {
     /* free buffered resultset, previously allocated
      * by mysql_stmt_store_result
@@ -2242,7 +2242,7 @@ static my_bool mysql_stmt_internal_reset(MYSQL_STMT *stmt, my_bool is_close)
 
   ret= madb_reset_stmt(stmt, flags);
 
-  if (stmt->stmt_id)
+  if (stmt->stmt_id != INVALID_STMT_ID)
   {
     if ((stmt->state > MYSQL_STMT_EXECUTED &&
         stmt->mysql->status != MYSQL_STATUS_READY) ||
@@ -2299,8 +2299,7 @@ MYSQL_RES * STDCALL mysql_stmt_result_metadata(MYSQL_STMT *stmt)
 
 my_bool STDCALL mysql_stmt_reset(MYSQL_STMT *stmt)
 {
-  if (stmt->stmt_id > 0 &&
-      stmt->stmt_id != (unsigned long) -1)
+  if (stmt->stmt_id != INVALID_STMT_ID)
     return mysql_stmt_internal_reset(stmt, 0);
   return 0;
 }
@@ -2520,7 +2519,7 @@ int STDCALL mariadb_stmt_execute_direct(MYSQL_STMT *stmt,
                                          sizeof(stmt_id), 1, stmt))
       goto fail;
   }
-  stmt->stmt_id= -1;
+  stmt->stmt_id= INVALID_STMT_ID;
   if (mysql->methods->db_command(mysql, COM_STMT_PREPARE, stmt_str, length, 1, stmt))
     goto fail;
 
@@ -2531,7 +2530,7 @@ int STDCALL mariadb_stmt_execute_direct(MYSQL_STMT *stmt,
   stmt->state= MYSQL_STMT_PREPARED;
   /* Since we can't determine stmt_id here, we need to set it to -1, so server will know that the
    * execute command belongs to previous prepare */
-  stmt->stmt_id= -1;
+  stmt->stmt_id= INVALID_STMT_ID;
   if (mysql_stmt_execute(stmt))
     goto fail;
 
