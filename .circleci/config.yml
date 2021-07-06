@@ -48,6 +48,7 @@ commands:
             brew install mysql-client
             brew install cmake
             brew cleanup
+            brew install bind
 
 orbs:
   win: circleci/windows@2.4.0

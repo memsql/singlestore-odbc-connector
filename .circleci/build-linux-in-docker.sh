@@ -20,6 +20,20 @@
 
 set -eo pipefail
 
+echo "Modifying /etc/hosts and ~/my.cnf to enable connect tests"
+echo "$(dig ${MEMSQL_HOST} +short) singlestore.test.com" | tee -a /etc/hosts
+echo "$(dig ${MEMSQL_HOST} +short) test-memsql-server" | tee -a /etc/hosts
+echo "$(dig ${MEMSQL_HOST} +short) test-memsql-cluster" | tee -a /etc/hosts
+echo "[mysqld]
+plugin-load-add=authentication_pam.so
+
+[client]
+protocol = TCP
+
+[odbc]
+database = odbc_test_mycnf
+" | tee ~/.my.cnf
+
 export PROJ_PATH=`pwd`
 
 ## build odbc connector

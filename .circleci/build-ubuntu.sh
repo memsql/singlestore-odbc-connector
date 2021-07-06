@@ -20,7 +20,20 @@
 
 set -eo pipefail
 
+echo "Modifying /etc/hosts and ~/my.cnf to enable connect tests"
 echo 127.0.0.1 singlestore.test.com | sudo tee -a /etc/hosts
+echo 127.0.0.1 test-memsql-server | sudo tee -a /etc/hosts
+echo 127.0.0.1 test-memsql-cluster | sudo tee -a /etc/hosts
+echo "[mysqld]
+plugin-load-add=authentication_pam.so
+
+[client]
+protocol = TCP
+
+[odbc]
+database = odbc_test_mycnf
+" | sudo tee ~/.my.cnf
+
 export PROJ_PATH=`pwd`
 mkdir tmp
 .circleci/gen-ssl.sh singlestore.test.com tmp
