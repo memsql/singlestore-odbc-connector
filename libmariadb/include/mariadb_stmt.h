@@ -223,6 +223,7 @@ struct st_mysql_stmt
   MYSQL_ROWS               *result_cursor;
   my_bool                  bind_result_done;
   my_bool                  bind_param_done;
+  my_bool                  prepared_on_server;
 
   mysql_upsert_status      upsert_status;
 
