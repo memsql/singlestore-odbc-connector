@@ -604,6 +604,11 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
     Stmt->Query.ReturnsResult= '\1';
   }
 
+  if (QUERY_IS_MULTISTMT(Stmt->Query) && NO_CACHE(Stmt))
+  {
+    return MADB_SetError(&Stmt->Error, MADB_ERR_HY000, "Execution of the multi-statement is not supported with Forward-Only cursor and NO_CACHE option enabled", 0);
+  }
+
   /* if we have multiple statements we save single statements in Stmt->StrMultiStmt
      and store the number in Stmt->MultiStmts */
   /* If client-side prepared statements are enabled or neither of statements
