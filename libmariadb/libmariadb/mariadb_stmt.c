@@ -2537,7 +2537,7 @@ int STDCALL mariadb_stmt_execute_direct(MYSQL_STMT *stmt,
                                          sizeof(stmt_id), 1, stmt))
       goto fail;
   }
-  stmt->prepared_on_server = TRUE;
+  stmt->prepared_on_server= TRUE;
   stmt->stmt_id= LAST_USED_STMT_ID;
   if (mysql->methods->db_command(mysql, COM_STMT_PREPARE, stmt_str, length, 1, stmt))
     goto fail;
