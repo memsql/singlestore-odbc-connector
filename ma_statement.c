@@ -1720,17 +1720,6 @@ static CspsControlFlowResult CspsInitStatementParams(   MADB_Stmt* const Stmt,
         return CCFR_CONTINUE;
     }
 
-    // For select queries with a paramset size > 1 do a union of SELECT statements for each paramset.
-    if (query->str && query->str[0]) {
-        // I believe we want to do "UNION ALL" rather than "UNION".
-        // "UNION ALL" produces duplicate results for SELECTs without conditions
-        // that differs from SSPS behavior
-        if (MADB_DynstrAppend(query, " UNION ")) {
-            ++*ErrorCount;
-            return CCFR_ERROR;
-        }
-    }
-
     // Insert params for this paramset.
     if (!SQL_SUCCEEDED(*ret = MADB_InsertParams(Stmt, CurQuery - Stmt->Query.RefinedText, ParamSetIdx, ParamOffset, query))) {
         return CCFR_ERROR;
