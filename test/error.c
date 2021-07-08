@@ -773,6 +773,30 @@ ODBC_TEST(t_odbc226)
   return OK;
 }
 
+ODBC_TEST(t_no_cache_multistatement)
+{
+  SQLHANDLE Connection1, Stmt1;
+  SQLCHAR conn[512];
+
+  sprintf((char *) conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s;NO_CACHE=1;OPTIONS=%lu",
+          my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr, my_options);
+
+  CHECK_ENV_RC(Env, SQLAllocHandle(SQL_HANDLE_DBC, Env, &Connection1));
+  CHECK_DBC_RC(Connection1,
+               SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
+                                NULL, SQL_DRIVER_NOPROMPT));
+
+  CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
+
+  CHECK_STMT_ERR(Stmt1, SQLPrepare(Stmt1, (SQLCHAR *)"SELECT 1, 2; SELECT 1", SQL_NTS),
+                 (SQLCHAR *)"HY000", 0, (SQLCHAR *)"Execution of the multi-statement is not supported with Forward-Only cursor and NO_CACHE option enabled");
+
+  CHECK_STMT_ERR(Stmt1, SQLExecDirect(Stmt1, (SQLCHAR *)"SELECT 1, 2; SELECT 1", SQL_NTS),
+                 (SQLCHAR *)"HY000", 0, (SQLCHAR *)"Execution of the multi-statement is not supported with Forward-Only cursor and NO_CACHE option enabled");
+
+  return OK;
+}
+
 
 MA_ODBC_TESTS my_tests[]=
 {
@@ -797,6 +821,7 @@ MA_ODBC_TESTS my_tests[]=
   {t_odbc123, "t_odbc123", ALL_DRIVERS},
   {t_odbc43, "t_odbc43_datetime_overflow", ALL_DRIVERS},
   {t_odbc226, "t_odbc226", ALL_DRIVERS},
+  {t_no_cache_multistatement, "t_no_cache_multistatement", NORMAL, ALL_DRIVERS}, // PLAT-5666
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 

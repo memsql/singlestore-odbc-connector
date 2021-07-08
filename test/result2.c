@@ -544,9 +544,6 @@ ODBC_TEST(t_desccol_before_exec)
   SQLULEN     collen;
   SQLLEN      coltype;
 
-  diag("desccol before exec not supported");
-  return SKIP;
-
   OK_SIMPLE_STMT(Stmt, "drop table if exists desccol_before_exec");
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE desccol_before_exec ("\
     "tt_int INT PRIMARY KEY auto_increment,"\
@@ -611,6 +608,15 @@ ODBC_TEST(t_desccol_before_exec)
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
 
   IS_STR(szData, "string 2", 8);
+
+  /* Check SQLNumResultCols in the case of multistatement */
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+  CHECK_STMT_RC(Stmt, SQLPrepare(Stmt, (SQLCHAR*)"select tt_int, tt_varchar "
+                                                 "from desccol_before_exec "
+                                                 "where tt_int <= ?; "
+                                                 "select 1", SQL_NTS));
+  CHECK_STMT_RC(Stmt, SQLNumResultCols(Stmt, &colCount));
+  is_num(colCount, 2);
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
   OK_SIMPLE_STMT(Stmt, "drop table if exists desccol_before_exec");
@@ -1479,6 +1485,7 @@ MA_ODBC_TESTS my_tests[]=
   {t_odbc232, "t_odbc232", NORMAL, ALL_DRIVERS},
   {t_odbc274, "t_odbc274_InsDelReplace_returning", NORMAL, ALL_DRIVERS},
   {t_odbc214, "t_odbc214_medium", NORMAL, ALL_DRIVERS},
+  {t_desccol_before_exec, "t_desccol_before_exec", CSPS_FAIL | SSPS_OK, ALL_DRIVERS}, // TODO PLAT-5665
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 

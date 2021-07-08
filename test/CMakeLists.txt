@@ -24,7 +24,7 @@ SET (ODBC_TESTS
         "error" "escape_sequences" "param" "result1" "result2" "multistatement"
         "sqlcolumns" "sql_procedure_columns" "sql_get_type_info" "sql_special_columns"
         "client_side" "sql_get_info" "sql_row_count" "sql_get_functions"
-        "sql_get_diag_field" "sql_get_diag_rec" "sql_execute" "sql_buffers")
+        "sql_get_diag_field" "sql_get_diag_rec" "sql_execute" "sql_buffers" "connect")
 SET(COMMON_TEST_SOURCES tap.h)
 
 # Interactive makes sense on WIN32 only atm
@@ -56,6 +56,9 @@ FOREACH (ODBC_TEST ${ODBC_TESTS})
   IF (NOT ${ODBC_TEST} STREQUAL "interactive" OR USE_INTERACTIVE_TESTS)
     ADD_TEST(odbc_${ODBC_TEST} ${EXECUTABLE_OUTPUT_PATH}/odbc_${ODBC_TEST})
     SET_TESTS_PROPERTIES(odbc_${ODBC_TEST} PROPERTIES TIMEOUT 240)
+    IF (${ODBC_TEST} STREQUAL "connect")
+      SET_TESTS_PROPERTIES(odbc_${ODBC_TEST} PROPERTIES TIMEOUT 480)
+    ENDIF()
     IF(NOT WIN32)
       SET_PROPERTY(TEST odbc_${ODBC_TEST} APPEND PROPERTY
               ENVIRONMENT ODBCINI=${CMAKE_BINARY_DIR}/test/odbc.ini)
