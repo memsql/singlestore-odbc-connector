@@ -782,11 +782,12 @@ ODBC_TEST(paramarray_select)
       diag("Parameter #%u status isn't successful(0x%X)", i+1, paramStatusArray[i]);
       return FAIL;
     }
-
-    CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-
-    is_num(my_fetch_int(Stmt, 1), intField[i]);
   }
+
+  // SELECT statement with several sets of parameters returns result only for the last set
+  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+  is_num(my_fetch_int(Stmt, 1), intField[STMTS_TO_EXEC-1]);
+  EXPECT_STMT(Stmt, SQLFetch(Stmt), SQL_NO_DATA);
 
   /* Clean-up */
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
@@ -1324,7 +1325,7 @@ MA_ODBC_TESTS my_tests[]=
   {paramarray_by_row, "paramarray_by_row", NORMAL, ALL_DRIVERS},
   {paramarray_by_column, "paramarray_by_column", NORMAL, ALL_DRIVERS},
   {paramarray_ignore_paramset, "paramarray_ignore_paramset", NORMAL, ALL_DRIVERS},
-  {paramarray_select, "paramarray_select", CSPS_OK | SSPS_TO_FIX, ALL_DRIVERS},
+  {paramarray_select, "paramarray_select", NORMAL, ALL_DRIVERS},
   {t_bug49029, "t_bug49029", NORMAL, ALL_DRIVERS},
   {t_bug56804, "t_bug56804", NORMAL, ALL_DRIVERS},
   {t_bug59772, "t_bug59772", NORMAL, ALL_DRIVERS},

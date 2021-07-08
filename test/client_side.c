@@ -407,8 +407,7 @@ ODBC_TEST(client_side_multiparam)
     CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
 
     SQLLEN numOfRows;
-    // The following select will be transformed into a SELECT .. UNION SELECT ... statement and is supposed to
-    // return a (number of rows in each select) result set.
+    // The following select will return result only for the last set of parameters
     OK_SIMPLE_STMT(Stmt, "SELECT a, b FROM cs_cursor ORDER BY a");
     CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &numOfRows));
     is_num(numOfRows, 5);
