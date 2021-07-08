@@ -223,7 +223,7 @@ ODBC_TEST(test_semicolon)
    Also tests ODBC-97*/
 ODBC_TEST(t_odbc74)
 {
-  SQLCHAR ref[][4]= {"\"", "'", "*/", "/*", "end", "one\\", "two\\"}, val[8];
+  SQLCHAR ref[][5]= {"\"", "'", "*/", "/*", "end", "one\\", "two\\"}, val[8];
   unsigned int i;
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS odbc74; CREATE TABLE odbc74(id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,\
