@@ -588,3 +588,100 @@ SQLLEN SafeStrlen(SQLCHAR *str, SQLLEN buff_length)
   }
   return result;
 }
+
+/* Parse and quote Identifier Arguments -- used when SQL_ATTR_METADATA_ID is TRUE
+ * https://docs.microsoft.com/en-us/sql/odbc/reference/develop-app/identifier-arguments?view=sql-server-ver15
+ *
+ * out is output string buffer, at least (*len) + IDENTIFIER_BUFFER_OVERHEAD chars. Will be quoted and 0-terminated.
+ * in is the input non-0-terminated string.
+ * len is the length of the in string.
+ *
+ * returns TRUE on failure, 0 on success
+ */
+#define QUOTE_IN '`'
+#define QUOTE_OUT '\''
+#define ESCAPE '\\'
+my_bool ProcessIdentifierString(OUT char* out, const char* in, const size_t len)
+{
+    const char* const buf_end = out + len + IDENTIFIER_BUFFER_OVERHEAD;
+    const char* last;
+
+    /* remove trailing blanks */
+    for (last= in + len - 1; last >= in; --last)
+    {
+        const char cur= *last;
+        if (!cur)
+            return TRUE; /* 0 inside string */
+        if (!isspace(cur))
+            break;
+    }
+
+    /* Check for empty string or whitespace */
+    if (last < in)
+    {
+        *out++= QUOTE_OUT;
+        *out++= QUOTE_OUT;
+        *out= 0;
+
+        return FALSE;
+    }
+
+    /* Check for quoted identifier - if the last char is quote */
+    if (*last == QUOTE_IN && (last == in || *(last - 1) != ESCAPE))
+    {
+        /* Find the leading quote */
+        const char* first;
+        for (first= in; first < last; ++first)
+        {
+            const char cur= *first;
+            if (!cur)
+                return TRUE; /* 0 inside string */
+            if (!isspace(cur))
+            {
+                if (cur == QUOTE_IN)
+                    break;
+                else
+                    return TRUE; /* first char is not quote while the last char is quote */
+            }
+        }
+        if (first == last)
+            return TRUE; /* The string consists of a single quote char when blanks are removed */
+
+        /* MSDN: the driver removes leading and trailing blanks and treats literally the string within the quotation marks */
+        *out++= QUOTE_OUT;
+        ++first;
+        for (; first < last; ++first)
+        {
+            const char cur= *first;
+            if (!cur || (cur == QUOTE_IN && *(first - 1) != ESCAPE))
+                return TRUE; /* 0 or unescaped quote inside the quoted string */
+
+            *out++= cur;
+        }
+        *out++= QUOTE_OUT;
+        *out= 0;
+
+        assert(out < buf_end);
+        return FALSE;
+    }
+
+    if (*in == QUOTE_IN)
+        return TRUE; /* Leading char is quote but the trailing char is not */
+
+    /* Else the string is unquoted */
+    /* MSDN: the driver removes trailing blanks and folds the string to uppercase */
+    *out++= QUOTE_OUT;
+    for(; in <= last; ++in)
+    {
+        const char cur= *in;
+        if (!cur || (cur == QUOTE_IN && *(in - 1) != ESCAPE))
+            return TRUE; /* 0 or unescaped quote inside the unquoted string */
+
+        *out++= toupper(cur);
+    }
+    *out++= QUOTE_OUT;
+    *out= 0;
+
+    assert(out < buf_end);
+    return FALSE;
+}

@@ -22,7 +22,7 @@
 
 extern MADB_ERROR MADB_ErrorList[];
 
-enum enum_madb_error {
+typedef enum enum_madb_error {
   MADB_ERR_00000=0,
   MADB_ERR_01000,
   MADB_ERR_01001,
@@ -145,7 +145,7 @@ enum enum_madb_error {
   MADB_ERR_S1000,
   MADB_ERR_S1107,
   MADB_ERR_S1C00,
-};
+} MadbErrNo;
 char* MADB_PutErrorPrefix(MADB_Dbc *dbc, MADB_Error *error);
 
 SQLRETURN MADB_SetError(MADB_Error *Error, unsigned int SqlErrorCode, const char *SqlErrorMsg, unsigned int NativeError);
