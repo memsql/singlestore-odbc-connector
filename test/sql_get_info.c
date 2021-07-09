@@ -111,14 +111,34 @@ int CheckUInteger(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, SQLUINTEGER CorrectValu
 #define BUF_LEN 16382
 int CheckChar(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, char *CorrectValue) {
   SQLCHAR string_value[BUF_LEN];
-  SQLWCHAR stringw_value[BUF_LEN];
+  SQLWCHAR stringw_value[BUF_LEN / sizeof(SQLWCHAR)];
   SQLSMALLINT length = 0;
   SQLSMALLINT cmpLength;
 
+  // ANSI tests
+  CHECK_DBC_ERR(Hdbc, SQLGetInfo(Hdbc, InfoType, string_value, -1, &length), "HY090", 0, "Invalid string or buffer length");
+  /* This causes size == -1 sanitizer error with Linux DM
+  CHECK_DBC_ERR(Hdbc, SQLGetInfo(Hdbc, InfoType, string_value, 0, &length), "HY090", 0, "Invalid string or buffer length");
+  */
+  CHECK_DBC_ERR(Hdbc, SQLGetInfo(Hdbc, InfoType, string_value, SQL_NTS, &length), "HY090", 0, "Invalid string or buffer length");
+
+  memset(string_value, 0xFF, sizeof(string_value));
   CHECK_DBC_RC(Hdbc, SQLGetInfo(Hdbc, InfoType, string_value, BUF_LEN, &length));
   is_num(length, strlen(CorrectValue));
-  IS_STR(string_value, CorrectValue, length + 1);
+  IS_STR(string_value, CorrectValue, MIN(length + 1, BUF_LEN / sizeof(SQLWCHAR) - 1));
 
+  memset(string_value, 0xFF, sizeof(string_value));
+  CHECK_DBC_RC(Hdbc, SQLGetInfo(Hdbc, InfoType, string_value, BUF_LEN, NULL));
+  IS_STR(string_value, CorrectValue, MIN(length + 1, BUF_LEN / sizeof(SQLWCHAR) - 1));
+
+  // UNICODE tests
+  CHECK_DBC_ERR(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, -1, &length), "HY090", 0, "Invalid string or buffer length");
+  /* This causes size == -2 sanitizer error with Linux DM
+  CHECK_DBC_ERR(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, 0, &length), "HY090", 0, "Invalid string or buffer length");
+  */
+  CHECK_DBC_ERR(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, SQL_NTS, &length), "HY090", 0, "Invalid string or buffer length");
+
+  memset(stringw_value, 0xFF, sizeof(stringw_value));
   CHECK_DBC_RC(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, BUF_LEN, &length));
   is_num(length, strlen(CorrectValue)*sizeof(SQLWCHAR));
   cmpLength = strlen(CorrectValue);
@@ -130,6 +150,35 @@ int CheckChar(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, char *CorrectValue) {
   if (BUF_LEN/sizeof(SQLWCHAR)-1 < cmpLength)
   {
     cmpLength = BUF_LEN/sizeof(SQLWCHAR)-1;
+  }
+  IS_WSTR(stringw_value, CW(CorrectValue), cmpLength);
+
+  memset(stringw_value, 0xFF, sizeof(stringw_value));
+  CHECK_DBC_RC(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, BUF_LEN, NULL));
+  cmpLength = strlen(CorrectValue);
+  // SQL_KEYWORDS length is bigger then 17k
+  // We can't bigger BUF_LEN, because when Unicode driver is used,
+  // Driver Manager limits BufferLength to 16382
+  // If we pass bigger value, it overflows and becomes negative
+  // So we will check only prefix if the buffer is too small
+  if (BUF_LEN/sizeof(SQLWCHAR)-1 < cmpLength)
+  {
+    cmpLength = BUF_LEN/sizeof(SQLWCHAR)-1;
+  }
+  IS_WSTR(stringw_value, CW(CorrectValue), cmpLength);
+
+  memset(stringw_value, 0xFF, sizeof(stringw_value));
+  CHECK_DBC_RC(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, BUF_LEN - 1, &length)); /* odd length */
+  is_num(length, strlen(CorrectValue)*sizeof(SQLWCHAR));
+  cmpLength = strlen(CorrectValue);
+  // SQL_KEYWORDS length is bigger then 17k
+  // We can't bigger BUF_LEN, because when Unicode driver is used,
+  // Driver Manager limits BufferLength to 16382
+  // If we pass bigger value, it overflows and becomes negative
+  // So we will check only prefix if the buffer is too small
+  if (BUF_LEN/sizeof(SQLWCHAR)-1 < cmpLength)
+  {
+    cmpLength = BUF_LEN/sizeof(SQLWCHAR)-2;
   }
   IS_WSTR(stringw_value, CW(CorrectValue), cmpLength);
 

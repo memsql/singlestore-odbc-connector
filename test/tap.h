@@ -114,6 +114,8 @@ int strcpy_s(char *dest, size_t buffer_size, const char *src)
 #endif
 
 #define LENGTHOF(arr) (sizeof(arr) / sizeof(arr[0]))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 #include <sql.h>
 #include <sqlext.h>

@@ -395,6 +395,14 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC ConnectionHandle,
 
     MDBUG_C_ENTER(Dbc, "SQLGetInfo");
     MDBUG_C_DUMP(Dbc, InfoType, d);
+    /* Linux DM overflows output buffer when SQLGetInfoW() is called with ANSI driver.
+     * The DM thinks that BufferLength is in SQLWCHARs, not in bytes.
+     * As we don't know if we've been called by SQLGetInfoW or by SQLGetInfoA,
+     * cut the buffer length in half to protect the end user from Linux DM.
+     */
+#ifndef _WIN32
+    BufferLength >>= 1;
+#endif //_WIN32
     ret= Dbc->Methods->GetInfo(Dbc, InfoType, InfoValuePtr, BufferLength, StringLengthPtr, FALSE);
 
     MDBUG_C_RETURN(Dbc, ret, &Dbc->Error);
