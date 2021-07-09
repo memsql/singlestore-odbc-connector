@@ -183,7 +183,15 @@ int CheckChar(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMALLINT RecNumber, S
     SQLSMALLINT length = 0;
 
     CHECK_STMT_RC(Stmt, SQLGetDiagFieldW(HandleType, Handle, RecNumber, DiagIdentifier, stringw_value, BUFF_SIZE*sizeof(SQLWCHAR), &length));
-    is_num(length, strlen(CorrectValue)*sizeof(SQLWCHAR));
+    if (UnixOdbc())
+    {
+      // in Unix ODBC 2.3.1 SQLGetDiagFieldW returned length in characters
+      // this bug was fixed in 2.3.2 version
+      IS(length == strlen(CorrectValue)*sizeof(SQLWCHAR) || length == strlen(CorrectValue));
+    } else
+    {
+      IS(length == strlen(CorrectValue)*sizeof(SQLWCHAR));
+    }
     IS_WSTR(stringw_value, CW(CorrectValue), strlen(CorrectValue)+1);
   }
 
@@ -252,14 +260,25 @@ ODBC_TEST(sql_diag_record_fields)
   FAIL_IF_NE_INT(nativeErrorCode, 0,
                  "SQLGetDiagField should return 0 if no native error code presented");
 
-  // Execute SQLGetFunctions with wrong FunctionId
-  // Error code is HY095
+  // Set connection attribute that can't be changed
+  // Error code is 01S02
   // for SQL_DIAG_CLASS_ORIGIN it should return "ISO 9075" but for SQL_DIAG_SUBCLASS_ORIGIN it should return "ODBC 3.0"
-  FAIL_IF(SQLGetFunctions(Connection, -100, &fExists) != SQL_ERROR, "Failure expected");
-  IS_OK(CheckChar(SQL_HANDLE_DBC, Connection, 1, SQL_DIAG_SQLSTATE, "HY095"));
+  FAIL_IF(SQLSetConnectAttr(Connection, SQL_ATTR_ACCESS_MODE, (SQLPOINTER)SQL_MODE_READ_ONLY, 0) != SQL_SUCCESS_WITH_INFO, "Success with info expected");
+  IS_OK(CheckChar(SQL_HANDLE_DBC, Connection, 1, SQL_DIAG_SQLSTATE, "01S02"));
   IS_OK(CheckChar(SQL_HANDLE_DBC, Connection, 1, SQL_DIAG_CLASS_ORIGIN, "ISO 9075"));
   // IS_OK(CheckChar(SQL_HANDLE_DBC, Connection, 1, SQL_DIAG_SUBCLASS_ORIGIN, "ODBC 3.0")); TODO PLAT-5595
 
+  // Old version of unixODBC DM doesn't check that FunctionId is valid
+  if (!UnixOdbc())
+  {
+    // Execute SQLGetFunctions with wrong FunctionId
+    // Error code is HY095
+    // for SQL_DIAG_CLASS_ORIGIN it should return "ISO 9075" but for SQL_DIAG_SUBCLASS_ORIGIN it should return "ODBC 3.0"
+    FAIL_IF(SQLGetFunctions(Connection, -100, &fExists) != SQL_ERROR, "Failure expected");
+    IS_OK(CheckChar(SQL_HANDLE_DBC, Connection, 1, SQL_DIAG_SQLSTATE, "HY095"));
+    IS_OK(CheckChar(SQL_HANDLE_DBC, Connection, 1, SQL_DIAG_CLASS_ORIGIN, "ISO 9075"));
+    // IS_OK(CheckChar(SQL_HANDLE_DBC, Connection, 1, SQL_DIAG_SUBCLASS_ORIGIN, "ODBC 3.0")); TODO PLAT-5595
+  }
   return OK;
 }
 

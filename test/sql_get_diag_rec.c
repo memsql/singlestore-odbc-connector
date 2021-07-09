@@ -80,6 +80,7 @@ ODBC_TEST(sql_get_diag_rec)
   SQLINTEGER catalogLength;
   char version[10];
   char errMsg[512];
+  char errMsg2[512];
 
   // get S2 version
   OK_SIMPLE_STMT(Stmt, "SELECT @@memsql_version");
@@ -105,10 +106,19 @@ ODBC_TEST(sql_get_diag_rec)
   // wrong DSN
   SQLAllocHandle(SQL_HANDLE_DBC, Env, &Hdbc);
   FAIL_IF(SQLConnect(Hdbc, (SQLCHAR *)"Wrong DSN", SQL_NTS, my_uid, SQL_NTS, my_pwd, SQL_NTS) != SQL_ERROR, "Failure expected");
-  sprintf(errMsg, iOdbc() ? "[iODBC][Driver Manager]Data source name not found and no default driver specified. Driver could not be loaded" :
-                  UnixOdbc() ? "[unixODBC][Driver Manager]Data source name not found, and no default driver specified" :
-                  "[Microsoft][ODBC Driver Manager] Data source name not found and no default driver specified");
-  IS_OK(CheckRec(SQL_HANDLE_DBC, Hdbc, 1, "IM002", 0, errMsg));
+  if (UnixOdbc())
+  {
+    sprintf(errMsg, "[unixODBC][Driver Manager]Data source name not found, and no default driver specified");
+    sprintf(errMsg2, "[unixODBC][Driver Manager]Data source name not found and no default driver specified");
+
+    // For Centos:8 and Debian:9-10 we are using the same version of UnixODBC but we are getting different error messages
+    IS_OK(CheckRec(SQL_HANDLE_DBC, Hdbc, 1, "IM002", 0, errMsg) || CheckRec(SQL_HANDLE_DBC, Hdbc, 1, "IM002", 0, errMsg2));
+  } else
+  {
+    sprintf(errMsg, iOdbc() ? "[iODBC][Driver Manager]Data source name not found and no default driver specified. Driver could not be loaded" :
+                    "[Microsoft][ODBC Driver Manager] Data source name not found and no default driver specified");
+    IS_OK(CheckRec(SQL_HANDLE_DBC, Hdbc, 1, "IM002", 0, errMsg));
+  }
 
   return OK;
 }

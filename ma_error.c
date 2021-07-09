@@ -267,7 +267,7 @@ SQLRETURN MADB_GetDiagRec(MADB_Error *Err, SQLSMALLINT RecNumber,
 
   InternalError.PrefixLen= 0;
   MADB_CLEAR_ERROR(&InternalError);
-  if (RecNumber > 1)
+  if (RecNumber > 1 || Err->ReturnValue == SQL_SUCCESS)
     return SQL_NO_DATA;
   if (BufferLength < 0)
     return SQL_ERROR;
@@ -367,7 +367,7 @@ SQLRETURN MADB_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
     // TODO PLAT-5589
     break;
   case SQL_DIAG_NUMBER:
-    *(SQLINTEGER *)DiagInfoPtr= 1;
+    *(SQLINTEGER *)DiagInfoPtr= (Err->ReturnValue == SQL_SUCCESS) ? 0:1;
     break;
   case SQL_DIAG_RETURNCODE:
     *(SQLRETURN *)DiagInfoPtr= Err->ReturnValue;
@@ -379,6 +379,8 @@ SQLRETURN MADB_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
     *(SQLLEN *)DiagInfoPtr= (Stmt->stmt) ? (SQLLEN)mysql_stmt_affected_rows(Stmt->stmt) : 0;
     break;
   case SQL_DIAG_CLASS_ORIGIN:
+    if (BufferLength < 0)
+      return SQL_ERROR;
     Length= MADB_SetString(isWChar ?  &utf8 : 0, DiagInfoPtr,  isWChar ? BufferLength / sizeof(SQLWCHAR) : BufferLength,
                                      strncmp(Err->SqlState, "IM", 2)== 0 ? "ODBC 3.0" : "ISO 9075", SQL_NTS, &Error);
     if (StringLengthPtr)
@@ -388,12 +390,16 @@ SQLRETURN MADB_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
     *(SQLINTEGER *)DiagInfoPtr= SQL_COLUMN_NUMBER_UNKNOWN;
     break;
   case SQL_DIAG_CONNECTION_NAME:
+    if (BufferLength < 0)
+      return SQL_ERROR;
     /* MariaDB ODBC Driver always returns an empty string */
     if (StringLengthPtr)
       *StringLengthPtr= 0;
     DiagInfoPtr= (isWChar) ? (SQLPOINTER)L"" : (SQLPOINTER)"";
     break;
   case SQL_DIAG_MESSAGE_TEXT:
+    if (BufferLength < 0)
+      return SQL_ERROR;
     Length= MADB_SetString(isWChar ?  &utf8 : 0, DiagInfoPtr,  isWChar ? BufferLength / sizeof(SQLWCHAR) : BufferLength,
                                      Err->SqlErrorMsg, strlen(Err->SqlErrorMsg), &Error);
     if (StringLengthPtr)
@@ -410,6 +416,8 @@ SQLRETURN MADB_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
     break;
   case SQL_DIAG_SERVER_NAME:
     {
+      if (BufferLength < 0)
+        return SQL_ERROR;
       char *ServerName= "";
       if (Stmt && Stmt->stmt)
       {
@@ -427,14 +435,18 @@ SQLRETURN MADB_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
     }
     break;
   case SQL_DIAG_SQLSTATE:
-    Length= MADB_SetString(isWChar ?  &utf8 : 0, DiagInfoPtr, 
+    if (BufferLength < 0)
+      return SQL_ERROR;
+    Length= MADB_SetString(isWChar ?  &utf8 : 0, DiagInfoPtr,
                            isWChar ? BufferLength / sizeof(SQLWCHAR) : BufferLength, Err->SqlState, strlen(Err->SqlState), &Error);
     if (StringLengthPtr)
       *StringLengthPtr= (SQLSMALLINT)Length;
    
     break;
   case SQL_DIAG_SUBCLASS_ORIGIN:
-    Length= MADB_SetString(isWChar ?  &utf8 : 0, DiagInfoPtr, 
+    if (BufferLength < 0)
+      return SQL_ERROR;
+    Length= MADB_SetString(isWChar ?  &utf8 : 0, DiagInfoPtr,
                            isWChar ? BufferLength / sizeof(SQLWCHAR) : BufferLength, "ODBC 3.0", 8, &Error);
     if (StringLengthPtr)
       *StringLengthPtr= (SQLSMALLINT)Length;
