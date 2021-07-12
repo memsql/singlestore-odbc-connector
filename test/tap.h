@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef _WIN32
 # define _WINSOCKAPI_
@@ -202,6 +203,18 @@ char *test_status[]= {"not ok", "ok", "skip"};
 #define IS_ODBC3() (OdbcVer == SQL_OV_ODBC3)
 /* Atm iODBC is the only DM using SQLWCHAR of 4 bytes size */
 #define iOdbc() (sizeof(SQLWCHAR)==4)
+
+enum Platform {
+    LINUX,
+    WINDOWS,
+    MAC
+};
+
+#ifdef _WIN32
+const enum Platform cPlatform= WINDOWS;
+#else
+const enum Platform cPlatform= (iOdbc() ? MAC : LINUX);
+#endif
 
 #define skip(A) diag((A)); return SKIP;
 
