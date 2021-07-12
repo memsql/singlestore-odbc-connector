@@ -120,7 +120,6 @@ void MADB_DSN_SetDefaults(MADB_Dsn *Dsn)
   Dsn->IsTcpIp= 1;
   Dsn->Options = MADB_OPT_FLAG_NO_CACHE;
   Dsn->NoSsps = 1;
-  Dsn->NoCache = 1;
 }
 /* }}} */
 

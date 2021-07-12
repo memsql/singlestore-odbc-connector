@@ -48,7 +48,7 @@ ODBC_TEST(my_ts)
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt,SQL_CLOSE));
 
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
-                                (SQLPOINTER)SQL_CURSOR_KEYSET_DRIVEN, 0));
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
   /* insert using SQL_C_TIMESTAMP to SQL_TIMESTAMP */
   ts.year= 2002;

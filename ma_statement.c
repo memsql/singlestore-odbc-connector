@@ -3469,8 +3469,8 @@ SQLRETURN MADB_StmtSetAttr(MADB_Stmt *Stmt, SQLINTEGER Attribute, SQLPOINTER Val
     {
       if ((SQLULEN)ValuePtr == SQL_CURSOR_KEYSET_DRIVEN)
       {
-        Stmt->Options.CursorType= SQL_CURSOR_STATIC;
-        MADB_SetError(&Stmt->Error, MADB_ERR_01S02, "Option value changed to default (SQL_CURSOR_STATIC)", 0);
+        Stmt->Options.CursorType= SQL_CURSOR_FORWARD_ONLY;
+        MADB_SetError(&Stmt->Error, MADB_ERR_01S02, "Option value changed to default (SQL_CURSOR_FORWARD_ONLY)", 0);
         return Stmt->Error.ReturnValue;
       }
       Stmt->Options.CursorType= (SQLUINTEGER)(SQLULEN)ValuePtr;
@@ -3481,8 +3481,8 @@ SQLRETURN MADB_StmtSetAttr(MADB_Stmt *Stmt, SQLINTEGER Attribute, SQLPOINTER Val
       if ((SQLULEN)ValuePtr != SQL_CURSOR_FORWARD_ONLY &&
           (SQLULEN)ValuePtr != SQL_CURSOR_STATIC)
       {
-        Stmt->Options.CursorType= SQL_CURSOR_STATIC;
-        MADB_SetError(&Stmt->Error, MADB_ERR_01S02, "Option value changed to default (SQL_CURSOR_STATIC)", 0);
+        Stmt->Options.CursorType= SQL_CURSOR_FORWARD_ONLY;
+        MADB_SetError(&Stmt->Error, MADB_ERR_01S02, "Option value changed to default (SQL_CURSOR_FORWARD_ONLY)", 0);
         return Stmt->Error.ReturnValue;
       }
       Stmt->Options.CursorType= (SQLUINTEGER)(SQLULEN)ValuePtr;
