@@ -111,10 +111,9 @@ ODBC_TEST(sql_diag_cursor_row_count)
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 0, 0, ids, 0, NULL));
   CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt)); // TODO PLAT-5583
-//  CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, recordNumber, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
+  CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, recordNumber, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
   //FAIL_IF_NE_INT(rowCount, 2,
   //               "SQLGetDiagField with SQL_DIAG_CURSOR_ROW_COUNT should return correct values when SQL_ATTR_PARAMSET_SIZE is not 1"); TODO PLAT-5598
-  CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, 0, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
   // SELECT statement with several sets of parameters returns result only for the last set
   FAIL_IF_NE_INT(rowCount, 1,
                  "SQLGetDiagField with SQL_DIAG_CURSOR_ROW_COUNT should return correct values when SQL_ATTR_PARAMSET_SIZE is not 1");
