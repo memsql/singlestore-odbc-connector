@@ -970,6 +970,9 @@ ODBC_TEST(sql_native_sql_buffers) {
   int len;
   SQLCHAR buffer[BUFFER_SIZE];
 
+  //This test doesn't work with Unicode type of iODBC driver
+  if (iOdbc() && is_unicode_driver()) return OK;
+
   // Terminate the input statement by the number of bytes
   //
   CHECK_STMT_RC(Stmt, SQLNativeSql(Connection, (SQLCHAR*)"SELECT 1 some incorrect query suffix", 8, buffer, BUFFER_SIZE, &len));
@@ -1003,6 +1006,9 @@ ODBC_TEST(sql_native_sql_buffers) {
 ODBC_TEST(sql_native_sql_buffers_unicode) {
     int len;
     SQLWCHAR buffer[BUFFER_SIZE];
+
+    //This test doesn't work with ANSI type of iODBC driver
+    if (iOdbc() && is_ansi_driver()) return OK;
 
     // Terminate the input statement by the number of bytes
     //

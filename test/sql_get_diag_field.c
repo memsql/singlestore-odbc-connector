@@ -26,6 +26,7 @@ ODBC_TEST(sql_diag_cursor_row_count)
   SQLHANDLE Hdbc;
   SQLCHAR conn[512];
   SQLHANDLE StmtNoCache;
+  SQLSMALLINT recordNumber = iOdbc() ? 1 : 0;
   int i;
 
   sprintf((char *)conn, "DSN=%s;DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;NO_CACHE=1;%s;%s",
@@ -57,7 +58,7 @@ ODBC_TEST(sql_diag_cursor_row_count)
     CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE, cursors[i], 0));
     OK_SIMPLE_STMT(Stmt, "SELECT * FROM sql_diag_cursor_row_count");
     CHECK_STMT_RC(Stmt, SQLFetch(Stmt)); // TODO PLAT-5583
-    CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, 0, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, recordNumber, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
     FAIL_IF_NE_INT(rowCount, 2,
                    "SQLGetDiagField with SQL_DIAG_CURSOR_ROW_COUNT should return row count for select statement");
     CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
@@ -65,7 +66,7 @@ ODBC_TEST(sql_diag_cursor_row_count)
     CHECK_STMT_RC(StmtNoCache, SQLSetStmtAttr(StmtNoCache, SQL_ATTR_CURSOR_TYPE, cursors[i], 0));
     OK_SIMPLE_STMT(StmtNoCache, "SELECT * FROM sql_diag_cursor_row_count");
     CHECK_STMT_RC(StmtNoCache, SQLFetch(StmtNoCache)); // TODO PLAT-5583
-    CHECK_STMT_RC(StmtNoCache, SQLGetDiagField(SQL_HANDLE_STMT, StmtNoCache, 0, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
+    CHECK_STMT_RC(StmtNoCache, SQLGetDiagField(SQL_HANDLE_STMT, StmtNoCache, recordNumber, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
     CHECK_STMT_RC(StmtNoCache, SQLFreeStmt(StmtNoCache, SQL_CLOSE));
     if (cursors[i] == SQL_CURSOR_FORWARD_ONLY)
     {
@@ -81,22 +82,25 @@ ODBC_TEST(sql_diag_cursor_row_count)
   // Test SQL_DIAG_CURSOR_ROW_COUNT with multistatement
   OK_SIMPLE_STMT(Stmt, "SELECT * FROM sql_diag_cursor_row_count; SELECT 1");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt)); // TODO PLAT-5583
-  CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, 0, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
+  CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, recordNumber, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
   FAIL_IF_NE_INT(rowCount, 2,
                  "SQLGetDiagField with SQL_DIAG_CURSOR_ROW_COUNT should return correct values for multistatement");
 
   CHECK_STMT_RC(Stmt, SQLMoreResults(Stmt));
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt)); // TODO PLAT-5583
-  CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, 0, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
+  CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, recordNumber, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
   FAIL_IF_NE_INT(rowCount, 1,
                  "SQLGetDiagField with SQL_DIAG_CURSOR_ROW_COUNT should return correct values for multistatement");
 
   EXPECT_STMT(Stmt, SQLMoreResults(Stmt), SQL_NO_DATA);
   EXPECT_STMT(Stmt, SQLFetch(Stmt), SQL_ERROR);
-  CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, 0, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
-  FAIL_IF_NE_INT(rowCount, 0,
+  if (iOdbc()) {
+    EXPECT_STMT(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, recordNumber, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL), SQL_ERROR);
+  } else {
+    CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, recordNumber, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
+    FAIL_IF_NE_INT(rowCount, 0,
                  "SQLGetDiagField with SQL_DIAG_CURSOR_ROW_COUNT should return 0 when no data left");
-
+  }
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
@@ -107,7 +111,7 @@ ODBC_TEST(sql_diag_cursor_row_count)
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 0, 0, ids, 0, NULL));
   CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt)); // TODO PLAT-5583
-  CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, 0, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
+  CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, recordNumber, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
   //FAIL_IF_NE_INT(rowCount, 2,
   //               "SQLGetDiagField with SQL_DIAG_CURSOR_ROW_COUNT should return correct values when SQL_ATTR_PARAMSET_SIZE is not 1"); TODO PLAT-5598
 
@@ -246,7 +250,9 @@ ODBC_TEST(sql_diag_record_fields)
   IS_OK(CheckChar(SQL_HANDLE_DBC, Hdbc, 1, SQL_DIAG_SQLSTATE, "IM002"));
   IS_OK(CheckChar(SQL_HANDLE_DBC, Hdbc, 1, SQL_DIAG_CLASS_ORIGIN, "ODBC 3.0"));
   IS_OK(CheckChar(SQL_HANDLE_DBC, Hdbc, 1, SQL_DIAG_SUBCLASS_ORIGIN, "ODBC 3.0"));
-  IS_OK(CheckChar(SQL_HANDLE_DBC, Hdbc, 1, SQL_DIAG_SERVER_NAME, ""));
+  if (!iOdbc()) {
+    IS_OK(CheckChar(SQL_HANDLE_DBC, Hdbc, 1, SQL_DIAG_SERVER_NAME, ""));
+  }
   CHECK_DBC_RC(Hdbc, SQLGetDiagField(SQL_HANDLE_DBC, Hdbc, 1, SQL_DIAG_NATIVE, &nativeErrorCode, 0, NULL));
   FAIL_IF_NE_INT(nativeErrorCode, 0,
                  "SQLGetDiagField should return 0 if no native error code presented");

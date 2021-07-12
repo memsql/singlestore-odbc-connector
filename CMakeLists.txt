@@ -328,6 +328,7 @@ IF (WITH_SANITIZER)
   SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined -fsanitize=leak -fsanitize=address")
 ENDIF(WITH_SANITIZER)
 
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-implicit-function-declaration")
 
 # We need to determine the last parameter for SQLColAttribute:
 # Older UnixODBC version expect SQLPOINTER while Windows expects SQLLEN *
@@ -552,7 +553,7 @@ IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
       SET_VALUE(TEST_DRIVER "SingleStore ODBC 0.8.2-beta Driver")
       SET_VALUE(TEST_DSN "ssodbc_test")
       SET_VALUE(TEST_PORT "5506")
-      SET_VALUE(TEST_SERVER "127.0.0.1")
+      SET_VALUE(TEST_SERVER "88.198.107.146")
       SET_VALUE(TEST_SOCKET "")
       SET_VALUE(TEST_SCHEMA "odbc_test")
       SET_VALUE(TEST_UID "root")

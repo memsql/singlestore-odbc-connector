@@ -325,6 +325,9 @@ SQLRETURN MADB_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
   Error.PrefixLen= 0;
   MADB_CLEAR_ERROR(&Error);
 
+  if (BufferLength < 0)
+    return SQL_ERROR;
+
   if (RecNumber > 1)
     return SQL_NO_DATA;
 
@@ -367,7 +370,7 @@ SQLRETURN MADB_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
     // TODO PLAT-5589
     break;
   case SQL_DIAG_NUMBER:
-    *(SQLINTEGER *)DiagInfoPtr= 1;
+    *(SQLINTEGER *)DiagInfoPtr= (Err->ReturnValue == SQL_SUCCESS) ? 0 : 1;
     break;
   case SQL_DIAG_RETURNCODE:
     *(SQLRETURN *)DiagInfoPtr= Err->ReturnValue;
@@ -427,11 +430,10 @@ SQLRETURN MADB_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
     }
     break;
   case SQL_DIAG_SQLSTATE:
-    Length= MADB_SetString(isWChar ?  &utf8 : 0, DiagInfoPtr, 
-                           isWChar ? BufferLength / sizeof(SQLWCHAR) : BufferLength, Err->SqlState, strlen(Err->SqlState), &Error);
+    Length= MADB_SetString(isWChar ?  &utf8 : 0, DiagInfoPtr,
+                         BufferLength == -1 ? 0 : isWChar ? BufferLength / sizeof(SQLWCHAR) : BufferLength, Err->SqlState, strlen(Err->SqlState), &Error);
     if (StringLengthPtr)
       *StringLengthPtr= (SQLSMALLINT)Length;
-   
     break;
   case SQL_DIAG_SUBCLASS_ORIGIN:
     Length= MADB_SetString(isWChar ?  &utf8 : 0, DiagInfoPtr, 

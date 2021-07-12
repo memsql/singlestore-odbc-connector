@@ -19,6 +19,7 @@ IF(APPLE)
   find_library(ICONV_LIBRARIES NAMES iconv libiconv c PATHS
                /opt/local/lib/
                /usr/lib/
+               /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/
                NO_CMAKE_SYSTEM_PATH)
     SET(ICONV_EXTERNAL TRUE)
 ELSE()

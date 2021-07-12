@@ -3,6 +3,10 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
+#define _LARGEFILE64_SOURCE     /* See feature_test_macros(7) */
+#include <sys/types.h>
+#include <unistd.h>
+
 #ifdef _LARGEFILE64_SOURCE
 #  ifndef _LARGEFILE_SOURCE
 #    define _LARGEFILE_SOURCE 1
