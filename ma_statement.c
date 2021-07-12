@@ -19,12 +19,6 @@
 *************************************************************************************/
 #include <ma_odbc.h>
 
-#ifdef WIN32
-#define ma_alloca(SZ) _alloca((size_t) (SZ))
-#else
-#define ma_alloca(SZ) alloca((size_t) (SZ))
-#endif
-
 #define MADB_MIN_QUERY_LEN 5
 
 struct st_ma_stmt_methods MADB_StmtMethods; /* declared at the end of file */
@@ -4803,9 +4797,9 @@ static MadbErrNo ProcedureColumnsIdentifier(INOUT char* const StmtStr, const cha
     }
 
     /* Reallocate and process the argument strings */
-    CatalogNameFinal= ma_alloca(CatalogNameLength + IDENTIFIER_BUFFER_OVERHEAD);
-    ProcNameFinal= ma_alloca(ProcNameLength + IDENTIFIER_BUFFER_OVERHEAD);
-    ColumnNameFinal= ma_alloca(ColumnNameLength + IDENTIFIER_BUFFER_OVERHEAD);
+    CatalogNameFinal= MADB_ALLOCA(CatalogNameLength + IDENTIFIER_BUFFER_OVERHEAD);
+    ProcNameFinal= MADB_ALLOCA(ProcNameLength + IDENTIFIER_BUFFER_OVERHEAD);
+    ColumnNameFinal= MADB_ALLOCA(ColumnNameLength + IDENTIFIER_BUFFER_OVERHEAD);
     if (!CatalogNameFinal || !ProcNameFinal || !ColumnNameFinal)
     {
         return MADB_ERR_HY001;

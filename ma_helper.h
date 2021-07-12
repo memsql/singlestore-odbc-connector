@@ -102,6 +102,12 @@ extern my_bool DummyError;
 #define MADB_CALLOC(a) calloc((a) > 0 ? (a) : 1, sizeof(char))
 #define MADB_REALLOC(a,b) realloc((a),(b))
 
+#ifdef WIN32
+#define MADB_ALLOCA(sz) _alloca((size_t) (sz))
+#else
+#define MADB_ALLOCA(sz) alloca((size_t) (sz))
+#endif
+
 /* If required to free old memory pointed by current ptr, and set new value */
 #define MADB_RESET(ptr, newptr) do {\
   char *local_new_ptr= (newptr);\
