@@ -129,7 +129,7 @@ int run_sql_procedurecolumns_routine_type(SQLHANDLE Stmt, const SQLSMALLINT *Exp
     IS_OK(run_cleanup());
     OK_SIMPLE_STMT(Stmt, createStmtStr);
 
-    CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLProcedureColumns(Stmt, ExpTableCat, SQL_NTS, NULL, 0,
+    CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLProcedureColumns(Stmt, ExpTableCat, SQL_NTS, (SQLCHAR *)"", 0,
                                                                (SQLCHAR *) ExpRoutineName, SQL_NTS, NULL, 0));
 
     SQLCHAR procedureCat[SQL_COLUMNS_BUFFER_LEN], procedureSchema[SQL_COLUMNS_BUFFER_LEN], procedureName[SQL_COLUMNS_BUFFER_LEN], colName[SQL_COLUMNS_BUFFER_LEN];
@@ -495,6 +495,7 @@ static const QueryDesc c_queries_with_id_off[] = {
 
 static const QueryDesc c_queries_with_id_on[] = {
     // Get all fields
+#ifndef WIN32
     {NULL, NULL, NULL, FULL_MASK},
     // Basic use
     {"odbc_test", NULL, NULL, FULL_MASK},
@@ -502,9 +503,11 @@ static const QueryDesc c_queries_with_id_on[] = {
     {"test_get_name", "test_get_name", NULL, 0},
     {NULL, "test_get_name", NULL, ONE_MASK},
     {NULL, NULL, "test_input_number", 0x01},
+#endif
     {"odbc_test", "test_get_name", "test_input_number", 0x01},
     {NULL, "test set and get precision", "test precision", 0x20},
     // Remove trailing blanks in unquoted: bugs PLAT-5550, PLAT-5553
+#ifndef WIN32
     {"odbc_test ", NULL, NULL, FULL_MASK},
     //{"odbc_test \t", NULL, NULL, FULL_MASK},													TODO: PLAT-5550
     //{"odbc_test \r", NULL, NULL, FULL_MASK},													TODO: PLAT-5550
@@ -517,21 +520,28 @@ static const QueryDesc c_queries_with_id_on[] = {
     {NULL, " test_get_name", NULL, 0},
     //{NULL, NULL, "test_input_number  " , 0x01},												TODO: PLAT-5550, PLAT-5553
     {NULL, NULL, " test_input_number", 0},
+#endif
     //{"odbc_test \t\r\n\t ", "test_get_name \t\r\n\t ", "test_input_number \t\r\n\t ", 0x01},	TODO: PLAT-5550, PLAT-5553
     // Remove leading and trailing blanks in quoted - not tested because ` is not escapable
     {NULL, "`test set and get precision`", "`test precision`", 0},
+#ifndef WIN32
     {" `odbc_test` ", NULL, NULL, 0},
     {"` odbc_test `", NULL, NULL, 0},
     // Escape sequences: bugs PLAT-5551, PLAT-5553
     {"", NULL, NULL, 0},
+#endif
     //{"odbc_test", "", NULL, 0},																TODO: PLAT-5551
     //{NULL, "", NULL, 0},																		TODO: PLAT-5551
+#ifndef WIN32
     {NULL, NULL, "", 0},
     {"%_%", NULL, NULL, 0},
+#endif
     //{NULL, "%_%", "TEST_IN", 0},																TODO: PLAT-5553
     //{NULL, NULL, "%_%", 0},																	TODO: PLAT-5553
     {"odbc_test", "test_get_name", "", 0},
+#ifndef WIN32
     {"%e%", NULL, NULL, 0},
+#endif
     //{NULL, "%e%", NULL, 0},																	TODO: PLAT-5553
     //{NULL, NULL, "%e%", 0},																	TODO: PLAT-5553
 };
@@ -614,7 +624,7 @@ static int query_and_check_N(const char* const catalog, const char* const proced
 
     memset(result, 0, sizeof(result));
 
-    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, (SQLCHAR*)catalog, SQL_NTS, NULL, 0, (SQLCHAR*)procedure, SQL_NTS, (SQLCHAR*)column, SQL_NTS));
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, (SQLCHAR*)catalog, SQL_NTS, (SQLCHAR *)"", 0, (SQLCHAR*)procedure, SQL_NTS, (SQLCHAR*)column, SQL_NTS));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_CHAR, result[0].catalog, sizeof(result[0].catalog), &result[0].catLen));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_CHAR, result[0].procedure, sizeof(result[0].procedure), &result[0].procLen));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_C_CHAR, result[0].column_name, sizeof(result[0].column_name), &result[0].colLen));
@@ -701,7 +711,7 @@ static int query_and_check_W(const char* const catalog, const char* const proced
         pCol = col;
     }
 
-    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, pCat, SQL_NTS, NULL, 0, pProc, SQL_NTS, pCol, SQL_NTS));
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, pCat, SQL_NTS, CW(""), 0, pProc, SQL_NTS, pCol, SQL_NTS));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_WCHAR, result[0].catalog, sizeof(result[0].catalog), &result[0].catLen));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_WCHAR, result[0].procedure, sizeof(result[0].procedure), &result[0].procLen));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_C_WCHAR, result[0].column_name, sizeof(result[0].column_name), &result[0].colLen));
@@ -792,7 +802,7 @@ static int query_and_check_WN(const char* const catalog, const char* const proce
         pCol = col;
     }
 
-    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, pCat, SQL_NTS, NULL, 0, pProc, SQL_NTS, pCol, SQL_NTS));
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, pCat, SQL_NTS, CW(""), 0, pProc, SQL_NTS, pCol, SQL_NTS));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_CHAR, result[0].catalog, sizeof(result[0].catalog), &result[0].catLen));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_WCHAR, result[0].procedure, sizeof(result[0].procedure), NULL));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_C_CHAR, result[0].column_name, sizeof(result[0].column_name), NULL));
@@ -862,7 +872,7 @@ static int query_and_check_NW(const char* const catalog, const char* const proce
 
     memset(result, 0, sizeof(result));
 
-    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, (SQLCHAR*)catalog, SQL_NTS, NULL, 0, (SQLCHAR*)procedure, SQL_NTS, (SQLCHAR*)column, SQL_NTS));
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, (SQLCHAR*)catalog, SQL_NTS, (SQLCHAR *)"", 0, (SQLCHAR*)procedure, SQL_NTS, (SQLCHAR*)column, SQL_NTS));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_WCHAR, result[0].catalog, sizeof(result[0].catalog),NULL));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_CHAR, result[0].procedure, sizeof(result[0].procedure), &result[0].procLen));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_C_WCHAR, result[0].column_name, sizeof(result[0].column_name), &result[0].colLen));
@@ -936,7 +946,7 @@ static int query_and_check_non_ascii_N(const char* const catalog, const char* co
 
     memset(result, 0, sizeof(result));
 
-    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, (SQLCHAR*)catalog, SQL_NTS, NULL, 0, (SQLCHAR*)procedure, SQL_NTS, (SQLCHAR*)column, SQL_NTS));
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, (SQLCHAR*)catalog, SQL_NTS, (SQLCHAR *)"", 0, (SQLCHAR*)procedure, SQL_NTS, (SQLCHAR*)column, SQL_NTS));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_CHAR, result[0].catalog, sizeof(result[0].catalog), &result[0].catLen));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_CHAR, result[0].procedure, sizeof(result[0].procedure), &result[0].procLen));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_C_CHAR, result[0].column_name, sizeof(result[0].column_name), &result[0].colLen));
@@ -1020,7 +1030,7 @@ static int query_and_check_non_ascii_W(const char* const catalog, const char* co
         pCol = CW(column);
     }
 
-    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, pCat, SQL_NTS, NULL, 0, pProc, SQL_NTS, pCol, SQL_NTS));
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, pCat, SQL_NTS, CW(""), 0, pProc, SQL_NTS, pCol, SQL_NTS));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_WCHAR, result[0].catalog, sizeof(result[0].catalog), &result[0].catLen));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_WCHAR, result[0].procedure, sizeof(result[0].procedure), &result[0].procLen));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_C_WCHAR, result[0].column_name, sizeof(result[0].column_name), &result[0].colLen));

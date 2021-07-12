@@ -36,10 +36,9 @@ typedef struct
   char *LocalTypeName;
   SQLSMALLINT MinimumScale;
   SQLSMALLINT MaximumScale;
-  SQLSMALLINT SqlDataType1;
   SQLSMALLINT SqlDateTimeSub;
-  SQLINTEGER NumPrecRadix;
   SQLSMALLINT IntervalPrecision;
+  SQLINTEGER NumPrecRadix;
   SQLSMALLINT SqlDataType;
 } MADB_TypeInfo;
 

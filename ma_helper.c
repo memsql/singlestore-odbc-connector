@@ -139,6 +139,15 @@ unsigned int GetMultiStatements(MADB_Stmt *Stmt, BOOL ExecDirect)
     ++i;
   }
 
+  if(MADB_SSPS_ENABLED(Stmt))
+  {
+    /* If we have result returning query - fill descriptor records with metadata */
+    if (mysql_stmt_field_count(Stmt->stmt) > 0)
+    {
+      MADB_DescSetIrdMetadata(Stmt, mysql_fetch_fields(FetchMetadata(Stmt)), mysql_stmt_field_count(Stmt->stmt));
+    }
+  }
+
   if (MaxParams)
   {
     if (Stmt->params)

@@ -25,11 +25,14 @@ int CheckUSmallInt(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, SQLUSMALLINT CorrectVa
   SQLSMALLINT length = 0;
 
   // ANSI functions
+#ifndef WIN32
+  // Windows DM crashes when InfoValuePtr is NULL
   CHECK_DBC_RC(Connection,SQLGetInfo(Hdbc, InfoType, NULL, 0, NULL));
 
   CHECK_DBC_RC(Connection,SQLGetInfo(Hdbc, InfoType, NULL, 0, &length));
   is_num(length, sizeof(SQLUSMALLINT));
   length = 0;
+#endif
 
   CHECK_DBC_RC(Connection,SQLGetInfo(Hdbc, InfoType, &small_int_value, 0, NULL));
   is_num(small_int_value, CorrectValue);
@@ -42,11 +45,14 @@ int CheckUSmallInt(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, SQLUSMALLINT CorrectVa
   length = 0;
 
   // UNICODE functions
+#ifndef WIN32
+  // Windows DM crashes when InfoValuePtr is NULL
   CHECK_DBC_RC(Connection,SQLGetInfoW(Hdbc, InfoType, NULL, 0, NULL));
 
   CHECK_DBC_RC(Connection,SQLGetInfoW(Hdbc, InfoType, NULL, 0, &length));
   is_num(length, sizeof(SQLUSMALLINT));
   length = 0;
+#endif
 
   CHECK_DBC_RC(Connection,SQLGetInfoW(Hdbc, InfoType, &small_int_value, 0, NULL));
   is_num(small_int_value, CorrectValue);
@@ -64,12 +70,14 @@ int CheckUInteger(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, SQLUINTEGER CorrectValu
   SQLSMALLINT length = 0;
 
   // ANSI functions
+#ifndef WIN32
+  // Windows DM crashes when InfoValuePtr is NULL
   CHECK_DBC_RC(Connection,SQLGetInfo(Hdbc, InfoType, NULL, 0, NULL));
 
   CHECK_DBC_RC(Connection,SQLGetInfo(Hdbc, InfoType, NULL, 0, &length));
   is_num(length, sizeof(SQLUINTEGER));
   length = 0;
-
+#endif
   CHECK_DBC_RC(Connection,SQLGetInfo(Hdbc, InfoType, &int_value, 0, NULL));
   is_num(int_value, CorrectValue);
   int_value = 0;
@@ -81,12 +89,14 @@ int CheckUInteger(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, SQLUINTEGER CorrectValu
   length = 0;
 
   // UNICODE functions
+#ifndef WIN32
+  // Windows DM crashes when InfoValuePtr is NULL
   CHECK_DBC_RC(Connection,SQLGetInfoW(Hdbc, InfoType, NULL, 0, NULL));
 
   CHECK_DBC_RC(Connection,SQLGetInfoW(Hdbc, InfoType, NULL, 0, &length));
   is_num(length, sizeof(SQLUINTEGER));
   length = 0;
-
+#endif
   CHECK_DBC_RC(Connection,SQLGetInfoW(Hdbc, InfoType, &int_value, 0, NULL));
   is_num(int_value, CorrectValue);
   int_value = 0;

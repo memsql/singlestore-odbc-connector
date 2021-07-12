@@ -295,7 +295,6 @@ struct st_ma_odbc_stmt
   SQLSMALLINT               ParamCount;
   enum MADB_DaeType         DataExecutionType;
   MYSQL_RES                 *DefaultsResult;
-  int                       ArrayOffset;
   SQLSETPOSIROW             DaeRowNumber;
   int                       Status;
   MADB_DescRecord           *PutDataRec;

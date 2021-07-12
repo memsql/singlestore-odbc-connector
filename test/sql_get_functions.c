@@ -117,6 +117,15 @@ ODBC_TEST(sql_api_all_functions)
   {
     if (function_supports[i].function < SQL_API_ALL_FUNCTIONS_SIZE)
     {
+#ifdef WIN32
+      // Windows DM calls SQLGetFunctions with SQL_API_ODBC3_ALL_FUNCTIONS at the beginning of the execution
+      // Then it handles all cals to SQLGetFunctions by its own
+      // For some reason, it treats SQL_API_SQLBULKOPERATIONS as unsupported
+      if (function_supports[i].function == SQL_API_SQLBULKOPERATIONS)
+      {
+        continue;
+      }
+#endif
       IS(fExists[function_supports[i].function] == function_supports[i].is_supported);
     }
   }

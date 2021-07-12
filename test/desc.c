@@ -114,13 +114,25 @@ ODBC_TEST(t_desc_paramset)
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_INTEGER, &val1, sizeof(SQLINTEGER), NULL));
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_INTEGER, &val2, sizeof(SQLINTEGER), NULL));
 
-  int rc;
-  int cnt = 0;
-  while ((rc = SQLFetch(Stmt)) == SQL_SUCCESS) {
-      FAIL_IF(val1 != params1[cnt ? 2 : 0], "Expected a different value!");
-      FAIL_IF(val2 != params2[cnt ? 2 : 0], "Expected a different value!");
-      cnt++;
-  }
+  FETCH(Stmt);
+  IS(val1 == params1[0]);
+  IS(val2 == params2[0]);
+  FETCH(Stmt);
+  IS(val1 == params1[2]);
+  IS(val2 == params2[2]);
+  FETCH_NO_DATA(Stmt);
+  CLOSE(Stmt);
+
+  PREPARE(Stmt, "select x, y from t_paramset order by x");
+  EXECUTE(Stmt);
+  FETCH(Stmt);
+  IS(val1 == params1[0]);
+  IS(val2 == params2[0]);
+  FETCH(Stmt);
+  IS(val1 == params1[2]);
+  IS(val2 == params2[2]);
+  FETCH_NO_DATA(Stmt);
+  CLOSE(Stmt);
 
   return OK;
 }

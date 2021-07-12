@@ -48,10 +48,9 @@ typedef struct
     char *LocalTypeName;
     SQLSMALLINT MinimumScale;
     SQLSMALLINT MaximumScale;
-    SQLSMALLINT SqlDataType1;
     SQLSMALLINT SqlDateTimeSub;
-    SQLINTEGER NumPrecRadix;
     SQLSMALLINT IntervalPrecision;
+    SQLINTEGER NumPrecRadix;
     SQLSMALLINT SqlDataType;
     SQLSMALLINT DataTypeAlias;
 } MADB_TypeInfo;
@@ -87,7 +86,7 @@ MADB_TypeInfo TypeInfoV3[TYPES_COUNT]=
     {"tinyint unsigned",SQL_TINYINT,3,"","","NULL",1,0,3,SQL_TRUE,0,1,"tinyint unsigned",0,0,0,0,10, SQL_TINYINT},
     {"smallint",SQL_SMALLINT,5,"","","NULL",1,0,3,SQL_FALSE,0,1,"smallint",0,0,0,0,10, SQL_SMALLINT},
     {"smallint unsigned",SQL_SMALLINT,5,"","","NULL",1,0,3,1,0,1,"smallint unsigned",0,0,0,0,10, SQL_SMALLINT},
-    {"mediumint",SQL_INTEGER,7,"","","NULL",1,0,3,SQL_FALSE,0,1,"mediumint",0,0,0,0,10},
+    {"mediumint",SQL_INTEGER,7,"","","NULL",1,0,3,SQL_FALSE,0,1,"mediumint",0,0,0,0,10, SQL_INTEGER},
     {"mediumint unsigned",SQL_INTEGER,8,"","","NULL",1,0,3,1,0,1,"mediumint unsigned",0,0,0,0,10, SQL_INTEGER},
     {"integer",SQL_INTEGER,10,"","","NULL",1,0,3,SQL_FALSE,0,1,"integer",0,0,0,0,10,SQL_INTEGER},
     {"integer unsigned",SQL_INTEGER,10,"","","NULL",1,0,3,1,0,1,"integer unsigned",0,0,0,0,10, SQL_INTEGER},
@@ -152,7 +151,7 @@ MADB_TypeInfo TypeInfoV2[TYPES_COUNT]=
     {"tinyint unsigned",SQL_TINYINT,3,"","","NULL",1,0,3,1,0,1,"tinyint unsigned",0,0,0,0,10, SQL_TINYINT},
     {"smallint",SQL_SMALLINT,5,"","","NULL",1,0,3,SQL_FALSE,0,1,"smallint",0,0,0,0,10, SQL_SMALLINT},
     {"smallint unsigned",SQL_SMALLINT,5,"","","NULL",1,0,3,SQL_TRUE,0,1,"smallint unsigned",0,0,0,0,10, SQL_SMALLINT},
-    {"mediumint",SQL_INTEGER,7,"","","NULL",1,0,3,SQL_FALSE,0,1,"mediumint",0,0,0,0,10},
+    {"mediumint",SQL_INTEGER,7,"","","NULL",1,0,3,SQL_FALSE,0,1,"mediumint",0,0,0,0,10, SQL_INTEGER},
     {"mediumint unsigned",SQL_INTEGER,8,"","","NULL",1,0,3,1,0,1,"mediumint unsigned",0,0,0,0,10, SQL_INTEGER},
     {"integer",SQL_INTEGER,10,"","","NULL",1,0,3,SQL_FALSE,0,1,"integer",0,0,0,0,10,SQL_INTEGER},
     {"integer unsigned",SQL_INTEGER,10,"","","NULL",1,0,3,1,0,1,"integer unsigned",0,0,0,0,10, SQL_INTEGER},
@@ -169,11 +168,11 @@ MADB_TypeInfo TypeInfoV2[TYPES_COUNT]=
     {"dec",SQL_DECIMAL,65,"","","precision,scale",1,0,3,0,0,1,"dec",-308,308,0,0,10, SQL_DECIMAL},
     {"fixed",SQL_DECIMAL,65,"","","precision,scale",1,0,3,0,0,1,"fixed",-308,308,0,0,10, SQL_DECIMAL},
     {"numeric",SQL_NUMERIC,65,"","","precision,scale",1,0,3,0,0,1,"numeric", -308,308,0,0,10, SQL_NUMERIC}, /* Todo: ?? */
-    // Time and Date TODO: PLAT-5619
-    {"date",SQL_DATE,10,"\'","\'","NULL",1,0,3,0,0,0,"date",0,0,0,0,10, SQL_DATETIME, 0, SQL_TYPE_DATE},
-    {"time",SQL_TIME,18,"\'","\'","NULL",1,0,3,0,0,0,"time",0,0,0,0,10, SQL_DATETIME, 0, SQL_TYPE_TIME},
-    {"datetime",SQL_TIMESTAMP,27,"\'","\'","NULL",1,0,3,0,0,0,"datetime",0,0,0,0,10, SQL_DATETIME, 0, SQL_TYPE_TIMESTAMP},
-    {"timestamp",SQL_TIMESTAMP,27,"\'","\'","scale",1,0,3,0,0,0,"timestamp",0,0,0,0,10, SQL_DATETIME, 0, SQL_TYPE_TIMESTAMP},
+    // Time and Date
+    {"date",SQL_DATE,10,"\'","\'","NULL",1,0,3,0,0,0,"date",0,0,0,0,10, SQL_DATETIME, SQL_TYPE_DATE},
+    {"time",SQL_TIME,18,"\'","\'","NULL",1,0,3,0,0,0,"time",0,0,0,0,10, SQL_DATETIME, SQL_TYPE_TIME},
+    {"datetime",SQL_TIMESTAMP,27,"\'","\'","NULL",1,0,3,0,0,0,"datetime",0,0,0,0,10, SQL_DATETIME, SQL_TYPE_TIMESTAMP},
+    {"timestamp",SQL_TIMESTAMP,27,"\'","\'","scale",1,0,3,0,0,0,"timestamp",0,0,0,0,10, SQL_DATETIME, SQL_TYPE_TIMESTAMP},
     {"year",SQL_SMALLINT,4,"","","NULL",1,0,3,SQL_FALSE,0,1,"year",0,0,0,0,10, SQL_SMALLINT},
     // String Types
     {"binary",SQL_BINARY,255,"\'","\'","length",1,1,3,0,0,0,"binary",0,0,0,0,10, SQL_BINARY},
