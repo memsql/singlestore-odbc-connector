@@ -404,8 +404,7 @@ ODBC_TEST(t_sqlgettypeinfo_fetchscroll) {
     qsort(expTypeInfo, TYPES_COUNT, sizeof(MADB_TypeInfo), compare);
 
     get_conn_string((char *) conn);
-    sprintf((char *) dynCursorConn, "%s;OPTION=67108898", conn);
-
+    sprintf((char *) dynCursorConn, "%sOPTION=67108898", conn);
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
     CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
                                       (SQLPOINTER) SQL_OV_ODBC3, SQL_IS_INTEGER));
@@ -415,7 +414,7 @@ ODBC_TEST(t_sqlgettypeinfo_fetchscroll) {
                  SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
                                   NULL, SQL_DRIVER_NOPROMPT));
     CHECK_DBC_RC(DynCursorConnection,
-                 SQLDriverConnect(DynCursorConnection, NULL, dynCursorConn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
+                 SQLDriverConnect(DynCursorConnection, NULL, dynCursorConn, (SQLSMALLINT) strlen((const char *) dynCursorConn), NULL, 0,
                                   NULL, SQL_DRIVER_NOPROMPT));
 
     for(i = 0; i < cursorsCnt; i++) {
@@ -424,7 +423,6 @@ ODBC_TEST(t_sqlgettypeinfo_fetchscroll) {
         } else {
             CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
         }
-        CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
         CHECK_STMT_RC(Stmt1, SQLSetStmtAttr(Stmt1, SQL_ATTR_CURSOR_TYPE, cursors[i], 0));
 
         CHECK_STMT_RC(Stmt1, SQLGetTypeInfo(Stmt1, SQL_ALL_TYPES));

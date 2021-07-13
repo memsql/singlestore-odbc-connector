@@ -1642,6 +1642,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
   case SQL_IDENTIFIER_QUOTE_CHAR:
     // SQL_IDENTIFIER_QUOTE_CHAR is the character string that is used as the starting and ending delimiter of a quoted (delimited) identifier in SQL statements.
     // TODO DB-46842
+    // If this is ever changed please update MADB_DynStrAppendQuoted() and ProcessIdentifierString()
     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),"`", SQL_NTS, &Dbc->Error);
     break;
   case SQL_INDEX_KEYWORDS:

@@ -98,7 +98,7 @@ MADB_DsnMap DsnMap[] = {
   {&DsnKeys[32], 4, cbTls13,              4, 0},
   {&DsnKeys[33], 4, cbForceTls,           0, 0},
   {&DsnKeys[27], 4, txtCrl,               0, 0},
-  {&DsnKeys[25], 4, txtTlsPeerFp,        41, 0},
+  {&DsnKeys[25], 4, txtTlsPeerFp,        260, 0},
   {&DsnKeys[26], 4, txtTlsPeerFpList,   260, 0},
   {NULL, 0, 0, 0, 0}
 };

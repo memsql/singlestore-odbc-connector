@@ -262,8 +262,8 @@ ODBC_TEST(client_side_dynamic_cursor)
     SQLHANDLE henv, hdbc, hstmt;
     SQLCHAR DSNString[256];
 
-    sprintf((char *)DSNString, "DRIVER=%s;SERVER=%s;DATABASE=%s;UID=%s;PASSWORD=%s;PORT=%d;NO_SSPS=%d;%s",
-            my_drivername, my_servername, my_schema, my_uid, my_pwd, my_port, NoSsps, add_connstr);
+    sprintf((char *)DSNString, "DRIVER=%s;SERVER=%s;DATABASE=%s;UID=%s;PASSWORD=%s;PORT=%d;NO_SSPS=%d;OPTIONS=%lu;%s",
+            my_drivername, my_servername, my_schema, my_uid, my_pwd, my_port, NoSsps, my_options|32, add_connstr);
 
     mydrvconnect(&henv, &hdbc, &hstmt, DSNString);
 

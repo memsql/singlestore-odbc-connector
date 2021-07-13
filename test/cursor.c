@@ -45,7 +45,7 @@ ODBC_TEST(my_positioned_cursor)
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
-                                (SQLPOINTER)SQL_CURSOR_DYNAMIC,0));
+                                (SQLPOINTER)SQL_CURSOR_STATIC,0));
 
   /* set the cursor name as 'mysqlcur' on Stmt */
   CHECK_STMT_RC(Stmt, SQLSetCursorName(Stmt, (SQLCHAR*)"mysqlcur", SQL_NTS));
@@ -576,7 +576,7 @@ ODBC_TEST(t_pos_datetime_delete)
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CONCURRENCY,
                                 (SQLPOINTER)SQL_CONCUR_ROWVER, 0));
   CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
-                                (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0));
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
   CHECK_STMT_RC(Stmt, SQLSetCursorName(Stmt, (SQLCHAR *)"venu_cur", 8));
 
@@ -594,7 +594,7 @@ ODBC_TEST(t_pos_datetime_delete)
   CHECK_STMT_RC(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CONCURRENCY,
                                  (SQLPOINTER)SQL_CONCUR_ROWVER, 0));
   CHECK_STMT_RC(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,
-                                 (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0));
+                                 (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
   OK_SIMPLE_STMT(hstmt1, "DELETE FROM t_pos_datetime_delete WHERE CURRENT OF venu_cur");
 
@@ -673,11 +673,11 @@ ODBC_TEST(t_pos_datetime_delete1)
   CHECK_STMT_RC(Stmt,rc);
 
   SQLSetStmtAttr(Stmt, SQL_ATTR_CONCURRENCY, (SQLPOINTER) SQL_CONCUR_ROWVER, 0);
-  SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER) SQL_CURSOR_DYNAMIC, 0);
+  SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER) SQL_CURSOR_STATIC, 0);
   SQLSetStmtOption(Stmt,SQL_SIMULATE_CURSOR,SQL_SC_NON_UNIQUE);
 
   SQLSetStmtAttr(hstmt1, SQL_ATTR_CONCURRENCY, (SQLPOINTER) SQL_CONCUR_ROWVER, 0);
-  SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER) SQL_CURSOR_DYNAMIC, 0);
+  SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER) SQL_CURSOR_STATIC, 0);
   SQLSetStmtOption(hstmt1,SQL_SIMULATE_CURSOR,SQL_SC_NON_UNIQUE);
 
   rc = SQLSetCursorName(Stmt, (SQLCHAR *)"venu_cur",8);
@@ -3032,7 +3032,7 @@ ODBC_TEST(t_bug32420)
                                  SQL_DRIVER_NOPROMPT));
   CHECK_DBC_RC(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
   CHECK_STMT_RC(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,
-                                 (SQLPOINTER) SQL_CURSOR_DYNAMIC, 0));
+                                 (SQLPOINTER) SQL_CURSOR_STATIC, 0));
   OK_SIMPLE_STMT(hstmt1, "drop table if exists bug32420");
   OK_SIMPLE_STMT(hstmt1, "CREATE TABLE bug32420 ("\
                 "tt_int INT PRIMARY KEY auto_increment,"\
@@ -3258,13 +3258,14 @@ ODBC_TEST(t_cursor_pos_static)
 ODBC_TEST(t_cursor_pos_dynamic)
 {
   SQLHANDLE henv1, hdbc1, hstmt1;
- // SET_DSN_OPTION(32);
+  unsigned long my_options_old = my_options;
+  my_options |= 32;
   ODBC_Connect(&henv1, &hdbc1, &hstmt1);
   CHECK_STMT_RC(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,
                                  (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0));
   is_num(t_cursor_pos(hstmt1), OK);
   (void) ODBC_Disconnect(henv1, hdbc1, hstmt1);
-//  SET_DSN_OPTION(0);
+  my_options_old = my_options;
   return OK;
 }
 

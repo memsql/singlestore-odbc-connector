@@ -19,6 +19,10 @@
 #ifndef _ma_string_h_
 #define _ma_string_h_
 
+#define IN
+#define OUT
+#define INOUT
+
 char *MADB_ConvertFromWChar(const SQLWCHAR *Ptr, SQLINTEGER PtrLength, SQLULEN *Length, Client_Charset* cc, BOOL *DefaultCharUsed);
 int MADB_ConvertAnsi2Unicode(Client_Charset* cc, const char *AnsiString, SQLLEN AnsiLength, 
                              SQLWCHAR *UnicodeString, SQLLEN UnicodeLength, 
@@ -43,6 +47,8 @@ SQLINTEGER SqlwcsCharLen(SQLWCHAR *str, SQLLEN octets);
 SQLLEN     SqlwcsLen(SQLWCHAR *str, SQLLEN buff_length);
 SQLLEN     SafeStrlen(SQLCHAR *str, SQLLEN buff_length);
 
+#define IDENTIFIER_BUFFER_OVERHEAD  3
+my_bool ProcessIdentifierString(INOUT char* out, const char* in, const size_t len);
 
 /* Calculate string length (if needed) and check for some input error
  *

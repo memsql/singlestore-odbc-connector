@@ -371,6 +371,7 @@ SQLRETURN MADB_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
     break;
   case SQL_DIAG_NUMBER:
     *(SQLINTEGER *)DiagInfoPtr= (Err->ReturnValue == SQL_SUCCESS) ? 0 : 1;
+    *(SQLINTEGER *)DiagInfoPtr= (Err->ReturnValue == SQL_SUCCESS) ? 0:1;
     break;
   case SQL_DIAG_RETURNCODE:
     *(SQLRETURN *)DiagInfoPtr= Err->ReturnValue;

@@ -3469,8 +3469,8 @@ SQLRETURN MADB_StmtSetAttr(MADB_Stmt *Stmt, SQLINTEGER Attribute, SQLPOINTER Val
     {
       if ((SQLULEN)ValuePtr == SQL_CURSOR_KEYSET_DRIVEN)
       {
-        Stmt->Options.CursorType= SQL_CURSOR_STATIC;
-        MADB_SetError(&Stmt->Error, MADB_ERR_01S02, "Option value changed to default (SQL_CURSOR_STATIC)", 0);
+        Stmt->Options.CursorType= SQL_CURSOR_FORWARD_ONLY;
+        MADB_SetError(&Stmt->Error, MADB_ERR_01S02, "Option value changed to default (SQL_CURSOR_FORWARD_ONLY)", 0);
         return Stmt->Error.ReturnValue;
       }
       Stmt->Options.CursorType= (SQLUINTEGER)(SQLULEN)ValuePtr;
@@ -3481,8 +3481,8 @@ SQLRETURN MADB_StmtSetAttr(MADB_Stmt *Stmt, SQLINTEGER Attribute, SQLPOINTER Val
       if ((SQLULEN)ValuePtr != SQL_CURSOR_FORWARD_ONLY &&
           (SQLULEN)ValuePtr != SQL_CURSOR_STATIC)
       {
-        Stmt->Options.CursorType= SQL_CURSOR_STATIC;
-        MADB_SetError(&Stmt->Error, MADB_ERR_01S02, "Option value changed to default (SQL_CURSOR_STATIC)", 0);
+        Stmt->Options.CursorType= SQL_CURSOR_FORWARD_ONLY;
+        MADB_SetError(&Stmt->Error, MADB_ERR_01S02, "Option value changed to default (SQL_CURSOR_FORWARD_ONLY)", 0);
         return Stmt->Error.ReturnValue;
       }
       Stmt->Options.CursorType= (SQLUINTEGER)(SQLULEN)ValuePtr;
@@ -4494,7 +4494,7 @@ SQLRETURN MADB_StmtTables(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLINT Catalo
                                   "if(TABLE_TYPE='BASE TABLE','TABLE',TABLE_TYPE) AS TABLE_TYPE ,"
                                   "TABLE_COMMENT AS REMARKS FROM INFORMATION_SCHEMA.TABLES WHERE 1=1 ",
                                   8192, 512);
-    if (Stmt->Options.MetadataId== SQL_TRUE)
+    if (Stmt->Options.MetadataId)
     {
       strcpy(Quote, "`");
     }
@@ -4729,6 +4729,107 @@ end:
 }
 /* }}} */
 
+static MadbErrNo ProcedureColumnsNormal(INOUT char* const StmtStr, const char* const StmtEnd, INOUT size_t* const Offset,
+                                        const char* const CatalogName, const SQLSMALLINT CatalogNameLength,
+                                        const char* const SchemaName, const SQLSMALLINT  SchemaNameLength,
+                                        const char* const ProcName, const SQLSMALLINT ProcNameLength,
+                                        const char* const ColumnName, const SQLSMALLINT ColumnNameLength)
+{
+    char* p= StmtStr + *Offset;
+
+    assert(StmtStr && StmtEnd);
+    assert(p < StmtEnd);
+
+    /* Print the search parameters */
+    if (CatalogName)
+        p+= snprintf(p, StmtEnd - p, "WHERE SPECIFIC_SCHEMA='%.*s' ", CatalogNameLength, CatalogName);
+    else
+        p+= snprintf(p, StmtEnd - p, "WHERE SPECIFIC_SCHEMA LIKE DATABASE() ");
+
+    if (p >= StmtEnd)
+        return MADB_ERR_HY001;
+
+    if (ProcName) {
+        p+= snprintf(p, StmtEnd - p, "AND SPECIFIC_NAME LIKE '%.*s' ", ProcNameLength, ProcName);
+
+        if (p >= StmtEnd)
+            return MADB_ERR_HY001;
+    }
+
+    if (ColumnName)
+    {
+        if (ColumnName[0])
+        {
+            p+= snprintf(p, StmtEnd - p, "AND PARAMETER_NAME LIKE '%.*s' ", ColumnNameLength, ColumnName);
+        }
+        else
+        {
+            p+= snprintf(p, StmtEnd - p, "AND PARAMETER_NAME IS NULL ");
+        }
+
+        if (p >= StmtEnd)
+            return MADB_ERR_HY001;
+    }
+
+    /* Update filled buffer length */
+    *Offset = p - StmtStr;
+    return 0;
+}
+
+static MadbErrNo ProcedureColumnsIdentifier(INOUT char* const StmtStr, const char* const StmtEnd, INOUT size_t* const Offset,
+                                            const char* const CatalogName, SQLSMALLINT CatalogNameLength,
+                                            const char* const SchemaName, SQLSMALLINT  SchemaNameLength,
+                                            const char* const ProcName, SQLSMALLINT ProcNameLength,
+                                            const char* const ColumnName, SQLSMALLINT ColumnNameLength)
+{
+    char* CatalogNameFinal;
+    char* ProcNameFinal;
+    char* ColumnNameFinal;
+
+    char* p= StmtStr + *Offset;
+
+    assert(StmtStr && StmtEnd);
+    assert(p < StmtEnd);
+
+    /* https://docs.microsoft.com/en-us/sql/odbc/reference/develop-app/identifier-arguments?view=sql-server-ver15 */
+    if (!CatalogName || !SchemaName || !ProcName || !ColumnName) {
+        return MADB_ERR_HY009;
+    }
+
+    /* Reallocate and process the argument strings */
+    CatalogNameFinal= MADB_ALLOCA(CatalogNameLength + IDENTIFIER_BUFFER_OVERHEAD);
+    ProcNameFinal= MADB_ALLOCA(ProcNameLength + IDENTIFIER_BUFFER_OVERHEAD);
+    ColumnNameFinal= MADB_ALLOCA(ColumnNameLength + IDENTIFIER_BUFFER_OVERHEAD);
+    if (!CatalogNameFinal || !ProcNameFinal || !ColumnNameFinal)
+    {
+        return MADB_ERR_HY001;
+    }
+
+    if (ProcessIdentifierString(CatalogNameFinal, CatalogName, CatalogNameLength)
+        || ProcessIdentifierString(ProcNameFinal, ProcName, ProcNameLength)
+        || ProcessIdentifierString(ColumnNameFinal, ColumnName, ColumnNameLength))
+    {
+        return MADB_ERR_42000;
+    }
+
+    /* Print the processed identifiers */
+    p+= snprintf(p, StmtEnd - p, "WHERE SPECIFIC_SCHEMA=%s ", CatalogNameFinal);
+    if (p >= StmtEnd)
+        return MADB_ERR_HY001;
+
+    p+= snprintf(p, StmtEnd - p, "AND SPECIFIC_NAME=%s ", ProcNameFinal);
+    if (p >= StmtEnd)
+        return MADB_ERR_HY001;
+
+    p+= snprintf(p, StmtEnd - p, "AND PARAMETER_NAME=%s ", ColumnNameFinal);
+    if (p >= StmtEnd)
+        return MADB_ERR_HY001;
+
+    /* Update filled buffer length */
+    *Offset = p - StmtStr;
+    return 0;
+}
+
 /* {{{ MADB_StmtProcedureColumns
  * Despite the name, this function works both for procedures and functions in SingleStore
  * It returns an empty set for functions and procedures without parameters */
@@ -4736,54 +4837,76 @@ SQLRETURN MADB_StmtProcedureColumns(MADB_Stmt *Stmt, char *CatalogName, SQLSMALL
                                 char *SchemaName, SQLSMALLINT NameLength2, char *ProcName,
                                 SQLSMALLINT NameLength3, char *ColumnName, SQLSMALLINT NameLength4)
 {
-  char *StmtStr,
-       *p,
-       *StmtEnd;
-  size_t Length= strlen(MADB_PROCEDURE_COLUMNS(Stmt)) + 1024;
-  SQLRETURN ret;
+    const char* const QueryPrefix= MADB_PROCEDURE_COLUMNS(Stmt);
+    char* StmtStr;
+    const char* StmtEnd;
+    size_t Length;
+    size_t Offset;
+    SQLRETURN ret;
+    MadbErrNo err;
 
-  MADB_CLEAR_ERROR(&Stmt->Error);
+    MADB_CLEAR_ERROR(&Stmt->Error);
 
-  ADJUST_LENGTH(CatalogName, NameLength1);
-  ADJUST_LENGTH(SchemaName, NameLength2);
-  ADJUST_LENGTH(ProcName, NameLength3);
-  ADJUST_LENGTH(ColumnName, NameLength4);
+    /* Preprocess the input strings */
+    ADJUST_LENGTH(CatalogName, NameLength1);
+    ADJUST_LENGTH(SchemaName, NameLength2);
+    ADJUST_LENGTH(ProcName, NameLength3);
+    ADJUST_LENGTH(ColumnName, NameLength4);
 
-  if (!(StmtStr= MADB_CALLOC(Length)))
-  {
-    return MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
-  }
-
-  p= StmtStr;
-  StmtEnd = StmtStr + Length;
-
-  p+= _snprintf(p, Length, MADB_PROCEDURE_COLUMNS(Stmt));
-  
-  if (CatalogName)
-    p+= _snprintf(p, StmtEnd - p, "WHERE SPECIFIC_SCHEMA='%.*s' ", NameLength1, CatalogName);
-  else
-    p+= _snprintf(p, StmtEnd - p, "WHERE SPECIFIC_SCHEMA LIKE DATABASE() ");
-  if (ProcName && ProcName[0])
-    p+= _snprintf(p, StmtEnd - p, "AND SPECIFIC_NAME LIKE '%.*s' ", NameLength3, ProcName);
-  if (ColumnName)
-  {
-    if (ColumnName[0])
+    /* Prepare the common query part without the parameters */
+    Offset = strlen(QueryPrefix);
+    Length= Offset + 1024;
+    StmtStr= MADB_CALLOC(Length);
+    StmtEnd = StmtStr + Length;
+    if (!StmtStr)
     {
-      p+= _snprintf(p, StmtEnd - p, "AND PARAMETER_NAME LIKE '%.*s' ", NameLength4, ColumnName);
+        return MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
+    }
+
+    memcpy(StmtStr, QueryPrefix, Offset);
+
+    /* Fill in the query parameters, considering SQL_ATTR_METADATA_ID setting */
+    err= Stmt->Options.MetadataId
+            ? ProcedureColumnsIdentifier(   StmtStr, StmtEnd, &Offset,
+                                            CatalogName, NameLength1,
+                                            SchemaName, NameLength2,
+                                            ProcName, NameLength3,
+                                            ColumnName, NameLength4)
+            : ProcedureColumnsNormal(   StmtStr, StmtEnd, &Offset,
+                                        CatalogName, NameLength1,
+                                        SchemaName, NameLength2,
+                                        ProcName, NameLength3,
+                                        ColumnName, NameLength4);
+
+    /* Add the tail of the query */
+    if (!err)
+    {
+        assert(Offset < Length - 1);
+
+        Offset+= snprintf(StmtStr + Offset, Length - Offset, " ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ORDINAL_POSITION");
+        if (Offset >= Length - 1)
+        {
+            err= MADB_ERR_HY001;
+        }
+    }
+
+    /* Execute the DB query */
+    if (!err)
+    {
+        ret= Stmt->Methods->ExecDirect(Stmt, StmtStr, Offset);
+    }
+
+    /* Clean up */
+    MADB_FREE(StmtStr);
+    
+    if (err)
+    {
+        return MADB_SetError(&Stmt->Error, err, NULL, 0);
     }
     else
     {
-      p+= _snprintf(p, StmtEnd - p, "AND PARAMETER_NAME IS NULL ");
+        return ret;
     }
-  }
-    
-  p+= _snprintf(p, StmtEnd - p, " ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ORDINAL_POSITION");
-
-  ret= Stmt->Methods->ExecDirect(Stmt, StmtStr, p - StmtStr);
-
-  MADB_FREE(StmtStr);
-
-  return ret;
 }
 /* }}} */
 

@@ -374,7 +374,7 @@ ODBC_TEST(sqlsetcursorname)
   CHECK_DBC_RC(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
   CHECK_STMT_RC(hstmt1, SQLSetStmtAttrW(hstmt1, SQL_ATTR_CURSOR_TYPE,
-                                  (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0));
+                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
   CHECK_STMT_RC(hstmt1, SQLSetCursorNameW(hstmt1, WW("a\x00e3b"), SQL_NTS));
 

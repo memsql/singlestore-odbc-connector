@@ -177,7 +177,7 @@ ODBC_TEST(my_pcbvalue_add)
     rc = SQLBindCol(Stmt,4,SQL_C_CHAR,szData,2,&pcbValue2);
     CHECK_STMT_RC(Stmt,rc);
 
-    rc = SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0);
+    rc = SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER)SQL_CURSOR_STATIC, 0);
     CHECK_STMT_RC(Stmt, rc);
 
     rc = SQLSetStmtAttr(Stmt, SQL_ATTR_CONCURRENCY ,(SQLPOINTER)SQL_CONCUR_ROWVER , 0);
