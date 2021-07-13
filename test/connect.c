@@ -714,7 +714,7 @@ ODBC_TEST(driver_connect_ssl) {
                            conn_out, sizeof(conn_out), &conn_out_len,
                            SQL_DRIVER_NOPROMPT) != SQL_ERROR, "Should not be able to connect without SSL for "
                                                               "SSL required user");
-  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, strcmp(version, "7.1.12") ? "HY000" : "28000");
+  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, strcmp(version, "7.0.15") ? "HY000" : "28000");
 
 
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;FORCE_TLS=1;",
@@ -944,7 +944,7 @@ ODBC_TEST(driver_connect_ssl_w) {
                            conn_out, sizeof(conn_out), &conn_out_len,
                            SQL_DRIVER_NOPROMPT) != SQL_ERROR, "Should not be able to connect without SSL for "
                                                               "SSL required user");
-  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, strcmp(version, "7.1.12") ? "HY000" : "28000");
+  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, strcmp(version, "7.0.15") ? "HY000" : "28000");
 
 
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;FORCE_TLS=1;",
