@@ -1082,6 +1082,37 @@ ODBC_TEST(sql_native_sql_errors) {
   return OK;
 }
 
+#define BUFF_SIZE 512
+ODBC_TEST(decimal_conversion)
+{
+  SQLHANDLE Hdbc, Hstmt;
+  SQLCHAR   conn[BUFF_SIZE];
+  SQLCHAR res[BUFF_SIZE];
+  char query[BUFF_SIZE];
+  char *value = "123451234512.1234";
+  sprintf(query, "SELECT {fn ConVErT(%s, SQL_decIMAL )   }", value);
+  OK_SIMPLE_STMT(Stmt, query);
+  CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_CHAR, &res, BUFF_SIZE, NULL));
+  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+
+  // by default the precision is 10 and scale is 0
+  IS_STR(res, "9999999999", strlen("9999999999") + 1);
+
+  sprintf((char *)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;APP={SingleStore Power BI Direct Query Connector}",
+          my_drivername, my_uid, my_pwd, my_servername, my_port, my_schema);
+  CHECK_ENV_RC(Env, SQLAllocHandle(SQL_HANDLE_DBC, Env, &Hdbc));
+  CHECK_DBC_RC(Hdbc, SQLDriverConnect(Hdbc, NULL, conn, SQL_NTS, NULL, 0, NULL, SQL_DRIVER_NOPROMPT));
+  CHECK_DBC_RC(Hdbc, SQLAllocHandle(SQL_HANDLE_STMT, Hdbc, &Hstmt));
+  OK_SIMPLE_STMT(Hstmt, query);
+  CHECK_STMT_RC(Hstmt, SQLBindCol(Hstmt, 1, SQL_C_CHAR, &res, BUFF_SIZE, NULL));
+  CHECK_STMT_RC(Hstmt, SQLFetch(Hstmt));
+
+  // when APP is "SingleStore Power BI Direct Query Connector" SQL_DECIMAL is converted to DOUBLE
+  IS_STR(res, value, strlen(value) + 1);
+
+  return OK;
+}
+#undef BUFF_SIZE
 
 MA_ODBC_TESTS my_tests[]=
 {
@@ -1110,6 +1141,7 @@ MA_ODBC_TESTS my_tests[]=
   {sql_native_sql_buffers, "sql_native_sql_buffers_ansi", NORMAL, ALL_DRIVERS},
   {sql_native_sql_buffers_unicode, "sql_native_sql_buffers_unicode", NORMAL, ALL_DRIVERS},
   {sql_native_sql_errors, "sql_native_sql_errors", NORMAL, ALL_DRIVERS},
+  {decimal_conversion, "decimal_conversion", NORMAL, ALL_DRIVERS},
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
