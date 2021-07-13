@@ -122,7 +122,8 @@ int CheckChar(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, char *CorrectValue) {
   CHECK_DBC_ERR(Hdbc, SQLGetInfo(Hdbc, InfoType, string_value, -1, &length), "HY090", 0, "Invalid string or buffer length");
   if(cPlatform != LINUX) {
       /* This causes size == -1 sanitizer error with Linux DM */
-      CHECK_DBC_ERR(Hdbc, SQLGetInfo(Hdbc, InfoType, string_value, 0, &length), "HY090", 0, "Invalid string or buffer length");
+      CHECK_DBC_RC(Hdbc, SQLGetInfo(Hdbc, InfoType, string_value, 0, &length));
+      is_num(length, strlen(CorrectValue));
   }
   CHECK_DBC_ERR(Hdbc, SQLGetInfo(Hdbc, InfoType, string_value, SQL_NTS, &length), "HY090", 0, "Invalid string or buffer length");
 
@@ -152,7 +153,8 @@ int CheckChar(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, char *CorrectValue) {
   CHECK_DBC_ERR(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, -1, &length), "HY090", 0, "Invalid string or buffer length");
   if (cPlatform != LINUX) {
       /* This causes size == -2 sanitizer error with Linux DM */
-      CHECK_DBC_ERR(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, 0, &length), "HY090", 0, "Invalid string or buffer length");
+      CHECK_DBC_RC(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, 0, &length));
+      is_num(length, strlen(CorrectValue)*sizeof(SQLWCHAR));
   }
   CHECK_DBC_ERR(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, SQL_NTS, &length), "HY090", 0, "Invalid string or buffer length");
 
