@@ -190,7 +190,8 @@ int CheckChar(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, char *CorrectValue) {
   memset(stringw_value, 0xFF, sizeof(stringw_value));
   CHECK_DBC_RC(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value,  sizeof(stringw_value) - 1, &length)); /* odd length */
   is_num(length, strlen(CorrectValue)*sizeof(SQLWCHAR));
-  IS_WSTR(stringw_value, CW(CorrectValue), cmpLength);
+  IS_WSTR(stringw_value, CW(CorrectValue), cmpLength - 1);
+  IS(!stringw_value[cmpLength - 1]);
   IS(paddingw == DEADBEEF);
 
   // Too short buffer
