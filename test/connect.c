@@ -498,8 +498,13 @@ ODBC_TEST(driver_connect_savefile) {
 ODBC_TEST(driver_connect_ssl) {
   HSTMT hdbc, hstmt;
   SQLCHAR conn[1024], conn_out[1024], buff[1024];
+  char *version[128];
   SQLSMALLINT conn_out_len;
   SQLRETURN rc;
+
+  OK_SIMPLE_STMT(Stmt, "SELECT @@memsql_version");
+  CHECK_STMT_RC(hstmt, SQLFetch(Stmt));
+  my_fetch_str(Stmt, (SQLCHAR *) version, 1);
 
   CHECK_ENV_RC(Env, SQLAllocHandle(SQL_HANDLE_DBC, Env, &hdbc));
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;SSLCERT=%s;SSLKEY=%s;",
@@ -708,7 +713,7 @@ ODBC_TEST(driver_connect_ssl) {
                            conn_out, sizeof(conn_out), &conn_out_len,
                            SQL_DRIVER_NOPROMPT) != SQL_ERROR, "Should not be able to connect without SSL for "
                                                               "SSL required user");
-  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "HY000");
+  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, strcmp(version, "7.1.12") ? "HY000" : "28000");
 
 
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;FORCE_TLS=1;",
