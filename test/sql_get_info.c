@@ -138,12 +138,15 @@ int CheckChar(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, char *CorrectValue) {
   IS(padding == DEADBEEF);
 
   // Too short buffer
-  memset(string_value, 0xFF, sizeof(string_value));
-  CHECK_DBC_RC(Hdbc, SQLGetInfo(Hdbc, InfoType, string_value, strlen(CorrectValue) / 2 + 1, &length));
-  is_num(length, strlen(CorrectValue));
-  IS_STR(string_value, CorrectValue, strlen(CorrectValue) / 2);
-  IS(!string_value[strlen(CorrectValue) / 2]);
-  IS(padding == DEADBEEF);
+  if (cPlatform != LINUX || is_ansi_driver()) {
+    /* Linux DM messes up output length and trailing 0 if the buffer is too short. */
+    memset(string_value, 0xFF, sizeof(string_value));
+    CHECK_DBC_RC(Hdbc, SQLGetInfo(Hdbc, InfoType, string_value, strlen(CorrectValue) / 2 + 1, &length));
+    is_num(length, strlen(CorrectValue));
+    IS_STR(string_value, CorrectValue, strlen(CorrectValue) / 2);
+    IS(!string_value[strlen(CorrectValue) / 2]);
+    IS(padding == DEADBEEF);
+  }
 
   // UNICODE tests
   CHECK_DBC_ERR(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, -1, &length), "HY090", 0, "Invalid string or buffer length");
@@ -188,16 +191,15 @@ int CheckChar(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, char *CorrectValue) {
   IS(paddingw == DEADBEEF);
 
   // Too short buffer
-  if (cPlatform == LINUX) {
-    /* Linux DM does not add the trailing 0 if the buffer is too short. */
-    return OK;
+  /* Linux DM does not add the trailing 0 if the buffer is too short. */
+  if (cPlatform != LINUX) {
+    memset(stringw_value, 0xFF, sizeof(stringw_value));
+    CHECK_DBC_RC(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, (strlen(CorrectValue) / 2 + 1) * sizeof(SQLWCHAR), &length));
+    is_num(length, strlen(CorrectValue)*sizeof(SQLWCHAR));
+    IS_WSTR(stringw_value, CW(CorrectValue), strlen(CorrectValue) / 2);
+    IS(!stringw_value[strlen(CorrectValue) / 2]);
+    IS(paddingw == DEADBEEF);
   }
-  memset(stringw_value, 0xFF, sizeof(stringw_value));
-  CHECK_DBC_RC(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, (strlen(CorrectValue) / 2 + 1) * sizeof(SQLWCHAR), &length));
-  is_num(length, strlen(CorrectValue)*sizeof(SQLWCHAR));
-  IS_WSTR(stringw_value, CW(CorrectValue), strlen(CorrectValue) / 2);
-  IS(!stringw_value[strlen(CorrectValue) / 2]);
-  IS(paddingw == DEADBEEF);
 
   return OK;
 }
