@@ -2305,17 +2305,7 @@ MYSQL_RES * STDCALL mysql_stmt_result_metadata(MYSQL_STMT *stmt)
 
 my_bool STDCALL mysql_stmt_reset(MYSQL_STMT *stmt)
 {
-  /* The original MariaDB code has
-   * if (stmt->prepared_on_server && stmt->stmt_id != LAST_USED_STMT_ID)
-   * I don't know if our DB engine can send 0xFFFFFFFF (LAST_USED_STMT_ID)
-   * as a valid stmt_id (after days of work), and the mariadb_stmt_execute_direct()
-   * that makes use of the LAST_USED_STMT_ID MariaDB protocol extension
-   * seems not to be ever called.
-   * So I omit the stmt->stmt_id != LAST_USED_STMT_ID case to make sure
-   * that we don't have a hard to reproduce cleanup issue
-   * if 0xFFFFFFFF stmt_id is received from the server.
-   */
-  if (stmt->prepared_on_server)
+  if (stmt->prepared_on_server && stmt->stmt_id != LAST_USED_STMT_ID)
     return mysql_stmt_internal_reset(stmt, 0);
   return 0;
 }
