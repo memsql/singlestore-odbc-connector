@@ -453,6 +453,10 @@ SQLRETURN SQL_API SQLNativeSql(SQLHDBC ConnectionHandle,
         MADB_SetError(&Dbc->Error, MADB_ERR_01004, NULL, 0);
         return Dbc->Error.ReturnValue;
     }
+    if ((TextLength1 < 0 && TextLength1 != SQL_NTS) || (BufferLength < 0 && OutStatementText != NULL)) {
+        MADB_SetError(&Dbc->Error, MADB_ERR_HY090, NULL, 0);
+        return Dbc->Error.ReturnValue;
+    }
 
     InStatementStart = (char *)InStatementText;
     ADJUST_LENGTH(InStatementStart, TextLength1);
