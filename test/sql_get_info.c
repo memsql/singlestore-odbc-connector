@@ -140,7 +140,7 @@ int CheckChar(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, char *CorrectValue) {
   IS(padding == DEADBEEF);
 
   // Too short buffer
-  if (cPlatform != LINUX || is_ansi_driver()) {
+  if (cPlatform != LINUX && is_ansi_driver()) {
     /* Linux DM messes up output length and trailing 0 if the buffer is too short. */
     memset(string_value, 0xFF, sizeof(string_value));
     CHECK_DBC_RC(Hdbc, SQLGetInfo(Hdbc, InfoType, string_value, strlen(CorrectValue) / 2 + 1, &length));
