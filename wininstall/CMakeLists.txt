@@ -62,9 +62,9 @@ ENDIF()
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/wininstall/mariadb_odbc.xml.in
                ${CMAKE_BINARY_DIR}/wininstall/mariadb_odbc.xml)
 IF(${revno})
-  SET(MSI_PACKAGE "singlestore-connector-odbc-${PRODUCT_VERSION}-beta-r${revno}-${PLATFORM}.msi")
+  SET(MSI_PACKAGE "singlestore-connector-odbc-${PRODUCT_VERSION}-r${revno}-${PLATFORM}.msi")
 ELSE()
-  SET(MSI_PACKAGE "singlestore-connector-odbc-${PRODUCT_VERSION}-beta-${PLATFORM}.msi")
+  SET(MSI_PACKAGE "singlestore-connector-odbc-${PRODUCT_VERSION}-${PLATFORM}.msi")
 ENDIF()
 
 SET(ENV{MARIADB_ODBC_MSI_PACKAGE} "${MSI_PACKAGE}")
