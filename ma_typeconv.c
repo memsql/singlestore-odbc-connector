@@ -951,23 +951,24 @@ SQLRETURN MADB_CspsConvertSql2C(MADB_Stmt *Stmt, MYSQL_FIELD *field, MYSQL_BIND 
 SQLLEN MADB_ConvertIntegerToChar(MADB_Stmt *Stmt, int SourceType, void* Src, char* Dest)
 {
     SQLBIGINT num;
+    SQLUBIGINT numUnsigned;
     my_bool isUnsigned = FALSE;
     switch (SourceType)
     {
         case SQL_C_UBIGINT:
-            num = *(SQLUBIGINT*)Src;
+            numUnsigned = *(SQLUBIGINT*)Src;
             isUnsigned = TRUE;
             break;
         case SQL_C_ULONG:
-            num = *(SQLUINTEGER*)Src;
+            numUnsigned = *(SQLUINTEGER*)Src;
             isUnsigned = TRUE;
             break;
         case SQL_C_USHORT:
-            num = *(SQLUSMALLINT*)Src;
+            numUnsigned = *(SQLUSMALLINT*)Src;
             isUnsigned = TRUE;
             break;
         case SQL_C_UTINYINT:
-            num = *(SQLCHAR*)Src;
+            numUnsigned = *(SQLCHAR*)Src;
             isUnsigned = TRUE;
             break;
         case SQL_BIGINT:
@@ -978,8 +979,10 @@ SQLLEN MADB_ConvertIntegerToChar(MADB_Stmt *Stmt, int SourceType, void* Src, cha
         case SQL_C_SSHORT:
             num = *(SQLSMALLINT*)Src;
             break;
-        case SQL_C_TINYINT:
         case SQL_C_STINYINT:
+            num = *(SQLSCHAR*)Src;
+            break;
+        case SQL_C_TINYINT:
             num = *(SQLCHAR*)Src;
             break;
         default:
@@ -993,7 +996,7 @@ SQLLEN MADB_ConvertIntegerToChar(MADB_Stmt *Stmt, int SourceType, void* Src, cha
     formatting = isUnsigned ? "%I64u" : "%I64d";
 #endif
 
-    sprintf(Dest, formatting, num);
+    sprintf(Dest, formatting, isUnsigned ? numUnsigned : num);
     return strlen(Dest);
 }
 /* }}} */

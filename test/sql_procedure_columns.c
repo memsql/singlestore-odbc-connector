@@ -129,7 +129,7 @@ int run_sql_procedurecolumns_routine_type(SQLHANDLE Stmt, const SQLSMALLINT *Exp
     IS_OK(run_cleanup());
     OK_SIMPLE_STMT(Stmt, createStmtStr);
 
-    CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLProcedureColumns(Stmt, ExpTableCat, SQL_NTS, NULL, 0,
+    CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLProcedureColumns(Stmt, ExpTableCat, SQL_NTS, (SQLCHAR *)"", 0,
                                                                (SQLCHAR *) ExpRoutineName, SQL_NTS, NULL, 0));
 
     SQLCHAR procedureCat[SQL_COLUMNS_BUFFER_LEN], procedureSchema[SQL_COLUMNS_BUFFER_LEN], procedureName[SQL_COLUMNS_BUFFER_LEN], colName[SQL_COLUMNS_BUFFER_LEN];
@@ -449,15 +449,15 @@ static const Mask c_implemented_mask = 0x3B;
 static const QueryDesc c_queries_with_id_off[] = {
     // Get all fields
     {NULL, NULL, NULL, FULL_MASK},
-    // Ordinary argument: bug PLAT-5553
+    // Ordinary argument
     {"odbc_test", NULL, NULL, FULL_MASK},
     {"ODBC_TEST", NULL, NULL, FULL_MASK},
-    //{"odbc_test ", NULL, NULL, 0},				TODO: PLAT-5553
+    {"odbc_test ", NULL, NULL, FULL_MASK},
     {"`odbc_test`", NULL, NULL, 0},
-    // Pattern value arguments - full search: bug PLAT-5551
+    // Pattern value arguments - full search
     {"", NULL, NULL, 0},
-    //{"odbc_test", "", NULL, 0},					TODO: PLAT-5551
-    //{NULL, "", NULL, 0},							TODO: PLAT-5551
+    {"odbc_test", "", NULL, 0},
+    {NULL, "", NULL, 0},
     {NULL, NULL, "", 0},
     {"%_%", NULL, NULL, 0},
     {NULL, "%_%", "TEST_IN", 0x08},
@@ -495,45 +495,44 @@ static const QueryDesc c_queries_with_id_off[] = {
 
 static const QueryDesc c_queries_with_id_on[] = {
     // Get all fields
-    {NULL, NULL, NULL, FULL_MASK},
+    {"", "", "", 0},
     // Basic use
-    {"odbc_test", NULL, NULL, FULL_MASK},
-    {"test_get_name", NULL, NULL, 0},
-    {"test_get_name", "test_get_name", NULL, 0},
-    {NULL, "test_get_name", NULL, ONE_MASK},
-    {NULL, NULL, "test_input_number", 0x01},
+    {"odbc_test", "", "", 0},
+    {"test_get_name", "", "", 0},
+    {"test_get_name", "test_get_name", "", 0},
+    {"", "test_get_name", "", 0},
+    {"", "", "test_input_number", 0},
     {"odbc_test", "test_get_name", "test_input_number", 0x01},
-    {NULL, "test set and get precision", "test precision", 0x20},
-    // Remove trailing blanks in unquoted: bugs PLAT-5550, PLAT-5553
-    {"odbc_test ", NULL, NULL, FULL_MASK},
-    //{"odbc_test \t", NULL, NULL, FULL_MASK},													TODO: PLAT-5550
-    //{"odbc_test \r", NULL, NULL, FULL_MASK},													TODO: PLAT-5550
-    //{"odbc_test \n", NULL, NULL, FULL_MASK},													TODO: PLAT-5550
-    //{"odbc_test \t\r\n\t ", NULL, NULL, FULL_MASK},											TODO: PLAT-5550
-    {" odbc_test \t", NULL, NULL, 0},
-    {" odbc_test", NULL, NULL, 0},
-    {" odbc_test ", NULL, NULL, 0},
-    //{NULL, "test_get_name ", NULL, ONE_MASK},													TODO: PLAT-5550, PLAT-5553
-    {NULL, " test_get_name", NULL, 0},
-    //{NULL, NULL, "test_input_number  " , 0x01},												TODO: PLAT-5550, PLAT-5553
-    {NULL, NULL, " test_input_number", 0},
-    //{"odbc_test \t\r\n\t ", "test_get_name \t\r\n\t ", "test_input_number \t\r\n\t ", 0x01},	TODO: PLAT-5550, PLAT-5553
-    // Remove leading and trailing blanks in quoted - not tested because ` is not escapable
-    {NULL, "`test set and get precision`", "`test precision`", 0},
-    {" `odbc_test` ", NULL, NULL, 0},
-    {"` odbc_test `", NULL, NULL, 0},
-    // Escape sequences: bugs PLAT-5551, PLAT-5553
-    {"", NULL, NULL, 0},
-    //{"odbc_test", "", NULL, 0},																TODO: PLAT-5551
-    //{NULL, "", NULL, 0},																		TODO: PLAT-5551
-    {NULL, NULL, "", 0},
-    {"%_%", NULL, NULL, 0},
-    //{NULL, "%_%", "TEST_IN", 0},																TODO: PLAT-5553
-    //{NULL, NULL, "%_%", 0},																	TODO: PLAT-5553
+    {"odbc_test", "test set and get precision", "test precision", 0x20},
+    // Remove trailing blanks in unquoted
+    {"odbc_test ", "test_get_name ", "test_input_number ", 0x01},
+    {"odbc_test \t", "test_get_name \t", "test_input_number \t", 0x01},
+    {"odbc_test \r", "test_get_name \r", "test_input_number \r", 0x01},
+    {"odbc_test \n", "test_get_name \n", "test_input_number \n", 0x01},
+    {"odbc_test \t\r\n\t ", "test_get_name \t\r\n\t", "test_input_number \t\r\n\t", 0x01},
+    {" odbc_test \t", "test_get_name", "test_input_number", 0},
+    {" odbc_test", "test_get_name", "test_input_number", 0},
+    {" odbc_test ", "test_get_name", "test_input_number", 0},
+    {"odbc_test", "test_get_name ", "test_input_number", 0x01},
+    {"odbc_test", " test_get_name", "test_input_number", 0},
+    {"odbc_test", "test_get_name", "test_input_number  " , 0x01},
+    {"odbc_test", "test_get_name", " test_input_number", 0},
+     // Remove leading and trailing blanks in quoted - not tested because ` is not escapable
+    {"odbc_test", "`test set and get precision`", "`test precision`", 0x20},
+    {" `odbc_test` ", " `test set and get precision` ", " `test precision` ", 0x20},
+    {"` odbc_test `", "` test set and get precision `", "` test precision `", 0},
+    // Escape sequences
+    {"", "", "", 0},
+    {"odbc_test", "", "", 0},
+    {"", "", "", 0},
+    {"", "", "", 0},
+    {"%_%", "", "", 0},
+    {"", "%_%", "TEST_IN", 0},
+    {"", "", "%_%", 0},
     {"odbc_test", "test_get_name", "", 0},
-    {"%e%", NULL, NULL, 0},
-    //{NULL, "%e%", NULL, 0},																	TODO: PLAT-5553
-    //{NULL, NULL, "%e%", 0},																	TODO: PLAT-5553
+    {"%e%", "", "", 0},
+    {"", "%e%", "", 0},
+    {"", "", "%e%", 0},
 };
 
 static const ProcData c_proc_expected_non_ascii[NUM_PROC_FIELDS] = {
@@ -567,12 +566,12 @@ static const QueryDesc c_queries_non_ascii_with_id_off[] = {
 
 static const QueryDesc c_queries_non_ascii_with_id_on[] = {
     // Get all fields
-    {NULL, NULL, NULL, FULL_MASK},
+    {"", "", "", FULL_MASK},
     // Case insensitive
-    {NULL, "найти_петю_и_округлить", NULL, TWO_MASK},
-    {NULL, NULL, "ВАСЯ_ПУПКИН", 0x01},
+    {"", "найти_петю_и_округлить", "", TWO_MASK},
+    {"", "", "ВАСЯ_ПУПКИН", 0x01},
     // Remove trailing blanks
-    //{"odbc_test  ", "узнать_имя_васи  ", "петя_васин  ", 0x02},		TODO: PLAT-5550, PLAT-5553
+    {"odbc_test  ", "узнать_имя_васи  ", "петя_васин  ", 0x02},
 };
 
 
@@ -614,7 +613,7 @@ static int query_and_check_N(const char* const catalog, const char* const proced
 
     memset(result, 0, sizeof(result));
 
-    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, (SQLCHAR*)catalog, SQL_NTS, NULL, 0, (SQLCHAR*)procedure, SQL_NTS, (SQLCHAR*)column, SQL_NTS));
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, (SQLCHAR*)catalog, SQL_NTS, (SQLCHAR *)"", 0, (SQLCHAR*)procedure, SQL_NTS, (SQLCHAR*)column, SQL_NTS));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_CHAR, result[0].catalog, sizeof(result[0].catalog), &result[0].catLen));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_CHAR, result[0].procedure, sizeof(result[0].procedure), &result[0].procLen));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_C_CHAR, result[0].column_name, sizeof(result[0].column_name), &result[0].colLen));
@@ -701,7 +700,7 @@ static int query_and_check_W(const char* const catalog, const char* const proced
         pCol = col;
     }
 
-    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, pCat, SQL_NTS, NULL, 0, pProc, SQL_NTS, pCol, SQL_NTS));
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, pCat, SQL_NTS, CW(""), 0, pProc, SQL_NTS, pCol, SQL_NTS));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_WCHAR, result[0].catalog, sizeof(result[0].catalog), &result[0].catLen));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_WCHAR, result[0].procedure, sizeof(result[0].procedure), &result[0].procLen));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_C_WCHAR, result[0].column_name, sizeof(result[0].column_name), &result[0].colLen));
@@ -792,7 +791,7 @@ static int query_and_check_WN(const char* const catalog, const char* const proce
         pCol = col;
     }
 
-    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, pCat, SQL_NTS, NULL, 0, pProc, SQL_NTS, pCol, SQL_NTS));
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, pCat, SQL_NTS, CW(""), 0, pProc, SQL_NTS, pCol, SQL_NTS));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_CHAR, result[0].catalog, sizeof(result[0].catalog), &result[0].catLen));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_WCHAR, result[0].procedure, sizeof(result[0].procedure), NULL));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_C_CHAR, result[0].column_name, sizeof(result[0].column_name), NULL));
@@ -862,7 +861,7 @@ static int query_and_check_NW(const char* const catalog, const char* const proce
 
     memset(result, 0, sizeof(result));
 
-    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, (SQLCHAR*)catalog, SQL_NTS, NULL, 0, (SQLCHAR*)procedure, SQL_NTS, (SQLCHAR*)column, SQL_NTS));
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, (SQLCHAR*)catalog, SQL_NTS, (SQLCHAR *)"", 0, (SQLCHAR*)procedure, SQL_NTS, (SQLCHAR*)column, SQL_NTS));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_WCHAR, result[0].catalog, sizeof(result[0].catalog),NULL));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_CHAR, result[0].procedure, sizeof(result[0].procedure), &result[0].procLen));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_C_WCHAR, result[0].column_name, sizeof(result[0].column_name), &result[0].colLen));
@@ -936,7 +935,7 @@ static int query_and_check_non_ascii_N(const char* const catalog, const char* co
 
     memset(result, 0, sizeof(result));
 
-    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, (SQLCHAR*)catalog, SQL_NTS, NULL, 0, (SQLCHAR*)procedure, SQL_NTS, (SQLCHAR*)column, SQL_NTS));
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, (SQLCHAR*)catalog, SQL_NTS, (SQLCHAR *)"", 0, (SQLCHAR*)procedure, SQL_NTS, (SQLCHAR*)column, SQL_NTS));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_CHAR, result[0].catalog, sizeof(result[0].catalog), &result[0].catLen));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_CHAR, result[0].procedure, sizeof(result[0].procedure), &result[0].procLen));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_C_CHAR, result[0].column_name, sizeof(result[0].column_name), &result[0].colLen));
@@ -1020,7 +1019,7 @@ static int query_and_check_non_ascii_W(const char* const catalog, const char* co
         pCol = CW(column);
     }
 
-    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, pCat, SQL_NTS, NULL, 0, pProc, SQL_NTS, pCol, SQL_NTS));
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, pCat, SQL_NTS, CW(""), 0, pProc, SQL_NTS, pCol, SQL_NTS));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_WCHAR, result[0].catalog, sizeof(result[0].catalog), &result[0].catLen));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_WCHAR, result[0].procedure, sizeof(result[0].procedure), &result[0].procLen));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_C_WCHAR, result[0].column_name, sizeof(result[0].column_name), &result[0].colLen));
@@ -1128,6 +1127,69 @@ ODBC_TEST(metadata_id_for_procedurecolumns) {
             }
         }
     }
+
+    // With SQL_ATTR_METADATA_ID = TRUE NULL arguments are not acceptable
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_METADATA_ID, (SQLPOINTER) SQL_TRUE, SQL_IS_UINTEGER));
+
+    // Narrow string iface
+    CHECK_STMT_ERR( Stmt,
+                    SQLProcedureColumns(Stmt,
+                                        NULL, SQL_NTS,
+                                        (SQLCHAR *)"", SQL_NTS,
+                                        (SQLCHAR*)"test_get_name", SQL_NTS,
+                                        (SQLCHAR*)"test_input_number", SQL_NTS),
+                    NULL_PTR_ERROR);
+    CHECK_STMT_ERR( Stmt,
+                    SQLProcedureColumns(Stmt,
+                                        (SQLCHAR*)"odbc_test", SQL_NTS,
+                                        NULL, SQL_NTS,
+                                        (SQLCHAR*)"test_get_name", SQL_NTS,
+                                        (SQLCHAR*)"test_input_number", SQL_NTS),
+                    NULL_PTR_ERROR);
+    CHECK_STMT_ERR( Stmt,
+                    SQLProcedureColumns(Stmt,
+                                        (SQLCHAR*)"odbc_test", SQL_NTS,
+                                        (SQLCHAR *)"", SQL_NTS,
+                                        NULL, SQL_NTS,
+                                        (SQLCHAR*)"test_input_number", SQL_NTS),
+                    NULL_PTR_ERROR);
+    CHECK_STMT_ERR( Stmt,
+                    SQLProcedureColumns(Stmt,
+                                        (SQLCHAR*)"odbc_test", SQL_NTS,
+                                        (SQLCHAR *)"", SQL_NTS,
+                                        (SQLCHAR*)"test_get_name", SQL_NTS,
+                                        NULL, SQL_NTS),
+                    NULL_PTR_ERROR);
+
+    // Wide string iface
+    CHECK_STMT_ERR( Stmt,
+                    SQLProcedureColumnsW(Stmt,
+                                        NULL, SQL_NTS,
+                                        CW(""), SQL_NTS,
+                                        CW("test_get_name"), SQL_NTS,
+                                        CW("test_input_number"), SQL_NTS),
+                    NULL_PTR_ERROR);
+    CHECK_STMT_ERR( Stmt,
+                    SQLProcedureColumnsW(Stmt,
+                                        CW("odbc_test"), SQL_NTS,
+                                        NULL, SQL_NTS,
+                                        CW("test_get_name"), SQL_NTS,
+                                        CW("test_input_number"), SQL_NTS),
+                    NULL_PTR_ERROR);
+    CHECK_STMT_ERR( Stmt,
+                    SQLProcedureColumnsW(Stmt,
+                                        CW("odbc_test"), SQL_NTS,
+                                        CW(""), SQL_NTS,
+                                        NULL, SQL_NTS,
+                                        CW("test_input_number"), SQL_NTS),
+                    NULL_PTR_ERROR);
+    CHECK_STMT_ERR( Stmt,
+                    SQLProcedureColumnsW(Stmt,
+                                        CW("odbc_test"), SQL_NTS,
+                                        CW(""), SQL_NTS,
+                                        CW("test_get_name"), SQL_NTS,
+                                        NULL, SQL_NTS),
+                    NULL_PTR_ERROR);
 
     return OK;
 }

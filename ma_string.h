@@ -19,6 +19,10 @@
 #ifndef _ma_string_h_
 #define _ma_string_h_
 
+#define IN
+#define OUT
+#define INOUT
+
 char *MADB_ConvertFromWChar(const SQLWCHAR *Ptr, SQLINTEGER PtrLength, SQLULEN *Length, Client_Charset* cc, BOOL *DefaultCharUsed);
 int MADB_ConvertAnsi2Unicode(Client_Charset* cc, const char *AnsiString, SQLLEN AnsiLength, 
                              SQLWCHAR *UnicodeString, SQLLEN UnicodeLength, 
@@ -43,17 +47,19 @@ SQLINTEGER SqlwcsCharLen(SQLWCHAR *str, SQLLEN octets);
 SQLLEN     SqlwcsLen(SQLWCHAR *str, SQLLEN buff_length);
 SQLLEN     SafeStrlen(SQLCHAR *str, SQLLEN buff_length);
 
-/* The last clause compensates for a Linux DM bug:
- * it often includes the terminating 0 in string length
- * when converting SQLWCHAR strings to SQLCHAR strings
- * if a SQL*W() API method is called for ANSI driver (PLAT-5542)
+#define IDENTIFIER_BUFFER_OVERHEAD  3
+my_bool ProcessIdentifierString(INOUT char* out, const char* in, const size_t len);
+
+
+/* Calculate string length (if needed) and check for some input error
+ *
+ * ptr should be a string without zero chars inside
+ * len is string length or SQL_NTS for 0-terminated strings
+ *
  */
-#define ADJUST_LENGTH(ptr, len)\
-  if((ptr) && ((len) == SQL_NTS))\
-    len= sizeof(len) == 2 ? (SQLSMALLINT)strlen((ptr)) : (SQLINTEGER)strlen((ptr));\
-  else if (!(ptr))\
-    len= 0;\
-  else if (len && !((const char*)(ptr))[len - 1])\
-    --len
+#define ADJUST_LENGTH(ptr, len) ((len) = (ptr) ? SafeStrlen((ptr), (len)) : 0)
+
+/* Fix SQLWCHAR buffer length to be multiple of sizeof(SQLWCHAR) */
+#define ALIGN_WCHAR_LENGTH(len) ((len) &= ~(sizeof(SQLWCHAR) == 2 ? 0x01ul : 0x03ul))
 
 #endif

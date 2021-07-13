@@ -26,38 +26,89 @@ void get_conn_string(char* c) {
             my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, NoSsps, add_connstr);
 }
 
-int check_stmt_correct_type_info(const MADB_TypeInfo ExpTypeInfo, const MADB_TypeInfo RecTypeInfo, SQLLEN cpSize) {
-    FAIL_IF_NE_STR(ExpTypeInfo.TypeName, RecTypeInfo.TypeName, "Wrong TYPE_INFO returned");
-    FAIL_IF_NE_INT(ExpTypeInfo.DataType, RecTypeInfo.DataType, "Wrong DATA_TYPE returned");
-    FAIL_IF_NE_INT(ExpTypeInfo.ColumnSize, RecTypeInfo.ColumnSize, "Wrong COLUMN_SIZE returned");
-    FAIL_IF_NE_STR(ExpTypeInfo.LiteralPrefix, RecTypeInfo.LiteralPrefix, "Wrong LITERAL_PREFIX returned");
-    FAIL_IF_NE_STR(ExpTypeInfo.LiteralSuffix, RecTypeInfo.LiteralSuffix, "Wrong LITERAL_SUFFIX returned");
+int check_stmt_correct_type_info(const MADB_TypeInfo* const ExpTypeInfo, MADB_TypeInfo* const RecTypeInfo, SQLLEN cpSize) {
+    FAIL_IF_NE_STR(ExpTypeInfo->TypeName, RecTypeInfo->TypeName, "Wrong TYPE_INFO returned");
+    IS(strlen(RecTypeInfo->TypeName));
+
+    FAIL_IF_NE_INT(ExpTypeInfo->DataType, RecTypeInfo->DataType, "Wrong DATA_TYPE returned");
+    IS(RecTypeInfo->DataType);
+
+    FAIL_IF_NE_INT(ExpTypeInfo->ColumnSize, RecTypeInfo->ColumnSize, "Wrong COLUMN_SIZE returned");
+    IS(RecTypeInfo->ColumnSize);
+
+    FAIL_IF_NE_STR(ExpTypeInfo->LiteralPrefix, RecTypeInfo->LiteralPrefix, "Wrong LITERAL_PREFIX returned");
+    FAIL_IF_NE_STR(ExpTypeInfo->LiteralSuffix, RecTypeInfo->LiteralSuffix, "Wrong LITERAL_SUFFIX returned");
+    IS((!strlen(RecTypeInfo->LiteralPrefix) && !strlen(RecTypeInfo->LiteralSuffix))
+        || !strcmp(RecTypeInfo->LiteralPrefix, RecTypeInfo->LiteralSuffix));
+
     if (cpSize > 0) {
-        FAIL_IF_NE_STR(ExpTypeInfo.CreateParams, RecTypeInfo.CreateParams, "Wrong CREATE_PARAMS returned");
+        FAIL_IF_NE_STR(ExpTypeInfo->CreateParams, RecTypeInfo->CreateParams, "Wrong CREATE_PARAMS returned");
+        IS(strlen(RecTypeInfo->CreateParams));
+    } else {
+        IS(!strlen(RecTypeInfo->CreateParams));
     }
-    FAIL_IF_NE_INT(ExpTypeInfo.Nullable, RecTypeInfo.Nullable, "Wrong NULLABLE returned");
-    FAIL_IF_NE_INT(ExpTypeInfo.CaseSensitive, RecTypeInfo.CaseSensitive, "Wrong CASE_SENSITIVE returned");
-    FAIL_IF_NE_INT(ExpTypeInfo.Searchable, RecTypeInfo.Searchable, "Wrong SEARCHABLE returned");
-    FAIL_IF_NE_INT(ExpTypeInfo.Unsigned, RecTypeInfo.Unsigned, "Wrong UNSIGNED_ATTRIBUTE returned");
-    FAIL_IF_NE_INT(ExpTypeInfo.FixedPrecScale, RecTypeInfo.FixedPrecScale, "Wrong FIXED_PREC_SCALE returned");
-    FAIL_IF_NE_INT(ExpTypeInfo.AutoUniqueValue, RecTypeInfo.AutoUniqueValue, "Wrong AUTO_UNIQUE_VALUE returned");
-    FAIL_IF_NE_STR(ExpTypeInfo.LocalTypeName, RecTypeInfo.LocalTypeName, "Wrong LOCAL_TYPE_NAME returned");
-    FAIL_IF_NE_INT(ExpTypeInfo.MinimumScale, RecTypeInfo.MinimumScale, "Wrong MINIMUM_SCALE returned");
-    FAIL_IF_NE_INT(ExpTypeInfo.MaximumScale, RecTypeInfo.MaximumScale, "Wrong MAXIMUM_SCALE returned");
-    FAIL_IF_NE_INT(ExpTypeInfo.SqlDataType, RecTypeInfo.SqlDataType, "Wrong SQL_DATA_TYPE returned");
-    FAIL_IF_NE_INT(ExpTypeInfo.SqlDateTimeSub, RecTypeInfo.SqlDateTimeSub, "Wrong SQL_DATETIME_SUB returned");
-    FAIL_IF_NE_INT(ExpTypeInfo.NumPrecRadix, RecTypeInfo.NumPrecRadix, "Wrong NUM_PREC_RADIX returned");
-    FAIL_IF_NE_INT(ExpTypeInfo.IntervalPrecision, RecTypeInfo.IntervalPrecision, "Wrong INTERVAL_PRECISION returned");
+
+    FAIL_IF_NE_INT(ExpTypeInfo->Nullable, RecTypeInfo->Nullable, "Wrong NULLABLE returned");
+    IS(RecTypeInfo->Nullable == SQL_NO_NULLS || RecTypeInfo->Nullable == SQL_NULLABLE);
+
+    FAIL_IF_NE_INT(ExpTypeInfo->CaseSensitive, RecTypeInfo->CaseSensitive, "Wrong CASE_SENSITIVE returned");
+    IS(RecTypeInfo->CaseSensitive == SQL_FALSE || RecTypeInfo->CaseSensitive == SQL_TRUE);
+
+    FAIL_IF_NE_INT(ExpTypeInfo->Searchable, RecTypeInfo->Searchable, "Wrong SEARCHABLE returned");
+    IS(RecTypeInfo->Searchable == SQL_PRED_NONE
+        || RecTypeInfo->Searchable == SQL_PRED_CHAR
+        || RecTypeInfo->Searchable == SQL_PRED_BASIC
+        || RecTypeInfo->Searchable == SQL_SEARCHABLE);
+
+    FAIL_IF_NE_INT(ExpTypeInfo->Unsigned, RecTypeInfo->Unsigned, "Wrong UNSIGNED_ATTRIBUTE returned");
+    IS(RecTypeInfo->Unsigned == SQL_FALSE || RecTypeInfo->Unsigned == SQL_TRUE);
+
+    FAIL_IF_NE_INT(ExpTypeInfo->FixedPrecScale, RecTypeInfo->FixedPrecScale, "Wrong FIXED_PREC_SCALE returned");
+    IS(RecTypeInfo->FixedPrecScale == SQL_FALSE || RecTypeInfo->FixedPrecScale == SQL_TRUE);
+
+    FAIL_IF_NE_INT(ExpTypeInfo->AutoUniqueValue, RecTypeInfo->AutoUniqueValue, "Wrong AUTO_UNIQUE_VALUE returned");
+    IS(RecTypeInfo->AutoUniqueValue == SQL_FALSE || RecTypeInfo->AutoUniqueValue == SQL_TRUE);
+
+    FAIL_IF_NE_STR(ExpTypeInfo->LocalTypeName, RecTypeInfo->LocalTypeName, "Wrong LOCAL_TYPE_NAME returned");
+    IS(!strcmp(RecTypeInfo->LocalTypeName, RecTypeInfo->TypeName));
+
+    FAIL_IF_NE_INT(ExpTypeInfo->MinimumScale, RecTypeInfo->MinimumScale, "Wrong MINIMUM_SCALE returned");
+    FAIL_IF_NE_INT(ExpTypeInfo->MaximumScale, RecTypeInfo->MaximumScale, "Wrong MAXIMUM_SCALE returned");
+    IS(RecTypeInfo->MinimumScale == -RecTypeInfo->MaximumScale);
+    IS(!RecTypeInfo->MinimumScale || strstr(ExpTypeInfo->CreateParams, "scale"));
+
+    FAIL_IF_NE_INT(ExpTypeInfo->SqlDataType, RecTypeInfo->SqlDataType, "Wrong SQL_DATA_TYPE returned");
+    IS(RecTypeInfo->SqlDataType == RecTypeInfo->DataType
+        || RecTypeInfo->SqlDataType == SQL_DATETIME
+        || RecTypeInfo->SqlDataType == SQL_BIT);
+
+    FAIL_IF_NE_INT(ExpTypeInfo->SqlDateTimeSub, RecTypeInfo->SqlDateTimeSub, "Wrong SQL_DATETIME_SUB returned");
+    IS(!RecTypeInfo->SqlDateTimeSub);
+
+    FAIL_IF_NE_INT(ExpTypeInfo->NumPrecRadix, RecTypeInfo->NumPrecRadix, "Wrong NUM_PREC_RADIX returned");
+    IS(RecTypeInfo->NumPrecRadix == 10);
+
+    FAIL_IF_NE_INT(ExpTypeInfo->IntervalPrecision, RecTypeInfo->IntervalPrecision, "Wrong INTERVAL_PRECISION returned");
+    IS(!RecTypeInfo->IntervalPrecision);
+
+    // Reset the CreateParams string
+    RecTypeInfo->CreateParams[0] = 0;
+
     return OK;
 }
 
 #define INIT_TYPE_INFO(ti) \
 do {                             \
     (ti)->TypeName = my_alloca(sizeof(SQLCHAR) * BUFFER_LEN);\
+    *(ti)->TypeName = 0;\
     (ti)->LiteralPrefix = my_alloca(sizeof(SQLCHAR) * BUFFER_LEN);\
+    *(ti)->LiteralPrefix = 0;\
     (ti)->LiteralSuffix = my_alloca(sizeof(SQLCHAR) * BUFFER_LEN);\
+    *(ti)->LiteralSuffix = 0;\
     (ti)->CreateParams = my_alloca(sizeof(SQLCHAR) * BUFFER_LEN);\
+    *(ti)->CreateParams = 0;\
     (ti)->LocalTypeName = my_alloca(sizeof(SQLCHAR) * BUFFER_LEN);\
+    *(ti)->LocalTypeName = 0;\
 } while(0)
 
 SQLRETURN BindColumnWithDescriptor(SQLHANDLE Stmt1, SQLUSMALLINT colNumber, SQLSMALLINT targetType, SQLPOINTER *targetValue, SQLLEN *cpSize) {
@@ -156,7 +207,7 @@ int run_sql_get_type_info(SQLHANDLE Stmt1, SQLSMALLINT DataType, MADB_TypeInfo *
     while (SQL_SUCCEEDED(SQLFetch(Stmt1))) {
         if(numOfRowsFetched >= expTypeInfoCount) {
             fprintf(stdout, "Unexpected row %s (File: %s Line: %d)\n", recTypeInfo.TypeName, __FILE__, __LINE__);
-        } else if ((rc = check_stmt_correct_type_info(ExpTypeInfo[numOfRowsFetched], recTypeInfo, cpSize)) != OK) {
+        } else if ((rc = check_stmt_correct_type_info(&ExpTypeInfo[numOfRowsFetched], &recTypeInfo, cpSize)) != OK) {
             return rc;
         }
         numOfRowsFetched++;
@@ -287,8 +338,8 @@ ODBC_TEST(t_sqlgettypeinfo_sequential) {
 
     CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
 
-    CHECK_STMT_RC(Stmt1, run_sql_get_type_info(Stmt1, SQL_ALL_TYPES, TypeInfoV3));
-    CHECK_STMT_RC(Stmt1, run_sql_get_type_info(Stmt1, SQL_ALL_TYPES, TypeInfoV3));
+    IS_OK(run_sql_get_type_info(Stmt1, SQL_ALL_TYPES, TypeInfoV3));
+    IS_OK(run_sql_get_type_info(Stmt1, SQL_ALL_TYPES, TypeInfoV3));
 
     SQLCHAR *sql = "SELECT 1";
     CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
@@ -297,7 +348,7 @@ ODBC_TEST(t_sqlgettypeinfo_sequential) {
     CHECK_STMT_RC(Stmt1, SQLFetch(Stmt1));
 
     CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
-    CHECK_STMT_RC(Stmt1, run_sql_get_type_info(Stmt1, SQL_ALL_TYPES, TypeInfoV3));
+    IS_OK(run_sql_get_type_info(Stmt1, SQL_ALL_TYPES, TypeInfoV3));
 
 
     CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
@@ -353,8 +404,7 @@ ODBC_TEST(t_sqlgettypeinfo_fetchscroll) {
     qsort(expTypeInfo, TYPES_COUNT, sizeof(MADB_TypeInfo), compare);
 
     get_conn_string((char *) conn);
-    sprintf((char *) dynCursorConn, "%s;OPTION=67108898", conn);
-
+    sprintf((char *) dynCursorConn, "%sOPTION=67108898", conn);
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
     CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
                                       (SQLPOINTER) SQL_OV_ODBC3, SQL_IS_INTEGER));
@@ -364,7 +414,7 @@ ODBC_TEST(t_sqlgettypeinfo_fetchscroll) {
                  SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
                                   NULL, SQL_DRIVER_NOPROMPT));
     CHECK_DBC_RC(DynCursorConnection,
-                 SQLDriverConnect(DynCursorConnection, NULL, dynCursorConn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
+                 SQLDriverConnect(DynCursorConnection, NULL, dynCursorConn, (SQLSMALLINT) strlen((const char *) dynCursorConn), NULL, 0,
                                   NULL, SQL_DRIVER_NOPROMPT));
 
     for(i = 0; i < cursorsCnt; i++) {
@@ -373,7 +423,6 @@ ODBC_TEST(t_sqlgettypeinfo_fetchscroll) {
         } else {
             CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
         }
-        CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
         CHECK_STMT_RC(Stmt1, SQLSetStmtAttr(Stmt1, SQL_ATTR_CURSOR_TYPE, cursors[i], 0));
 
         CHECK_STMT_RC(Stmt1, SQLGetTypeInfo(Stmt1, SQL_ALL_TYPES));
@@ -382,42 +431,42 @@ ODBC_TEST(t_sqlgettypeinfo_fetchscroll) {
         }
 
         CHECK_STMT_RC(Stmt1, SQLFetch(Stmt1));
-        if ((rc = check_stmt_correct_type_info(expTypeInfo[0], recTypeInfo, cpSize)) != OK) {
+        if ((rc = check_stmt_correct_type_info(&expTypeInfo[0], &recTypeInfo, cpSize)) != OK) {
             return rc;
         }
 
         CHECK_STMT_RC(Stmt1, SQLFetchScroll(Stmt1, SQL_FETCH_LAST, 0));
-        if ((rc = check_stmt_correct_type_info(expTypeInfo[TYPES_COUNT - 1], recTypeInfo, cpSize)) != OK) {
+        if ((rc = check_stmt_correct_type_info(&expTypeInfo[TYPES_COUNT - 1], &recTypeInfo, cpSize)) != OK) {
             return rc;
         }
 
         CHECK_STMT_RC(Stmt1, SQLFetchScroll(Stmt1, SQL_FETCH_PRIOR, -1));
-        if ((rc = check_stmt_correct_type_info(expTypeInfo[TYPES_COUNT - 2], recTypeInfo, cpSize)) != OK) {
+        if ((rc = check_stmt_correct_type_info(&expTypeInfo[TYPES_COUNT - 2], &recTypeInfo, cpSize)) != OK) {
             return rc;
         }
 
         CHECK_STMT_RC(Stmt1, SQLFetchScroll(Stmt1, SQL_FETCH_FIRST, 0));
-        if ((rc = check_stmt_correct_type_info(expTypeInfo[0], recTypeInfo, cpSize)) != OK) {
+        if ((rc = check_stmt_correct_type_info(&expTypeInfo[0], &recTypeInfo, cpSize)) != OK) {
             return rc;
         }
 
         CHECK_STMT_RC(Stmt1, SQLFetchScroll(Stmt1, SQL_FETCH_NEXT, -1));
-        if ((rc = check_stmt_correct_type_info(expTypeInfo[1], recTypeInfo, cpSize)) != OK) {
+        if ((rc = check_stmt_correct_type_info(&expTypeInfo[1], &recTypeInfo, cpSize)) != OK) {
             return rc;
         }
 
         CHECK_STMT_RC(Stmt1, SQLFetchScroll(Stmt1, SQL_FETCH_RELATIVE, 3));
-        if ((rc = check_stmt_correct_type_info(expTypeInfo[4], recTypeInfo, cpSize)) != OK) {
+        if ((rc = check_stmt_correct_type_info(&expTypeInfo[4], &recTypeInfo, cpSize)) != OK) {
             return rc;
         }
 
         CHECK_STMT_RC(Stmt1, SQLFetchScroll(Stmt1, SQL_FETCH_ABSOLUTE, -5));
-        if ((rc = check_stmt_correct_type_info(expTypeInfo[TYPES_COUNT - 5], recTypeInfo, cpSize)) != OK) {
+        if ((rc = check_stmt_correct_type_info(&expTypeInfo[TYPES_COUNT - 5], &recTypeInfo, cpSize)) != OK) {
             return rc;
         }
 
         CHECK_STMT_RC(Stmt1, SQLFetch(Stmt1));
-        if ((rc = check_stmt_correct_type_info(expTypeInfo[TYPES_COUNT - 4], recTypeInfo, cpSize)) != OK) {
+        if ((rc = check_stmt_correct_type_info(&expTypeInfo[TYPES_COUNT - 4], &recTypeInfo, cpSize)) != OK) {
             return rc;
         }
 
@@ -624,7 +673,7 @@ ODBC_TEST(t_sqlgettypeinfo_stmtattributes) {
     }
     numOfRowsFetched = 0;
     while (SQL_SUCCEEDED(SQLFetch(Stmt1))) {
-        if ((rc = check_stmt_correct_type_info(expTypeInfo[numOfRowsFetched], recTypeInfo, cpSize)) != OK) {
+        if ((rc = check_stmt_correct_type_info(&expTypeInfo[numOfRowsFetched], &recTypeInfo, cpSize)) != OK) {
             return rc;
         }
         numOfRowsFetched++;

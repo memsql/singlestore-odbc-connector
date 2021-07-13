@@ -21,6 +21,15 @@
 
 #define BUF_SIZE    1000
 
+#ifdef _WIN32
+#define NULL_ARG_ERROR  "Invalid argument value"
+#define INVALID_BUF_SIZE_ERROR  "Invalid string or buffer length"
+#else
+#define NULL_ARG_ERROR  "Invalid use of null pointer"
+#define INVALID_BUF_SIZE_ERROR  "Invalid string or buffer length"
+#endif
+
+
 ODBC_TEST(buffers_native_sql) {
     SQLCHAR in_buf[BUF_SIZE];
     SQLCHAR out_buf[BUF_SIZE];
@@ -119,6 +128,33 @@ ODBC_TEST(buffers_native_sql) {
     IS(!strcmp(in_buf, query));
     IS(strlen(out_buf) == 14)
     IS(!strncmp(in_buf, out_buf, 14));
+
+    // Bad use
+    CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, NULL, 0, out_buf, 15, NULL), "HY009", 0, NULL_ARG_ERROR);
+    IS(strlen(out_buf) == 14);
+
+    CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, NULL, SQL_NTS, out_buf, 15, NULL), "HY009", 0, NULL_ARG_ERROR);
+    IS(strlen(out_buf) == 14);
+
+    out_len = 10;
+    CHECK_DBC_RC(Connection, SQLNativeSql(Connection, in_buf, 0, out_buf, 15, &out_len));
+    IS(strlen(out_buf) == 0);
+    IS(out_len == 0);
+
+    *in_buf = 0;
+    out_len = 10;
+    out_buf[0] = 'b';
+    CHECK_DBC_RC(Connection, SQLNativeSql(Connection, in_buf, BUF_SIZE, out_buf, 15, &out_len));
+    IS(strlen(out_buf) == 0);
+    IS(out_len == 0);
+
+    query = "DELETE FROM thetable WHERE id = 1";
+    strcpy(in_buf, query);
+    CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, in_buf, -1, out_buf, BUF_SIZE, &out_len), "HY090", 0, INVALID_BUF_SIZE_ERROR);
+
+    query = "SELECT (1, 2, 3)";
+    strcpy(in_buf, query);
+    CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, in_buf, SQL_NTS, out_buf, -1, &out_len), "HY090", 0, INVALID_BUF_SIZE_ERROR);
 
     return OK;
 }
@@ -222,12 +258,539 @@ ODBC_TEST(buffers_native_sql_w) {
     IS(sqlwcharlen(out_buf) == 14)
     IS(!sqlwcharcmp(in_buf, out_buf, 14));
 
+    // Bad use
+    CHECK_DBC_ERR(Connection, SQLNativeSqlW(Connection, NULL, 0, out_buf, 15, NULL), "HY009", 0, NULL_ARG_ERROR);
+    IS(sqlwcharlen(out_buf) == 14);
+
+    CHECK_DBC_ERR(Connection, SQLNativeSqlW(Connection, NULL, SQL_NTS, out_buf, 15, NULL), "HY009", 0, NULL_ARG_ERROR);
+    IS(sqlwcharlen(out_buf) == 14);
+
+    out_len = 10;
+    CHECK_DBC_RC(Connection, SQLNativeSqlW(Connection, in_buf, 0, out_buf, 15, &out_len));
+    IS(sqlwcharlen(out_buf) == 0);
+    IS(out_len == 0);
+
+    *in_buf = 0;
+    out_len = 10;
+    out_buf[0] = 'b';
+    CHECK_DBC_RC(Connection, SQLNativeSqlW(Connection, in_buf, BUF_SIZE, out_buf, 15, &out_len));
+    IS(sqlwcharlen(out_buf) == 0);
+    IS(out_len == 0);
+
+    query = "DELETE FROM thetable WHERE id = 1";
+    in_buf = CW(query);
+    CHECK_DBC_ERR(Connection, SQLNativeSqlW(Connection, in_buf, -1, out_buf, BUF_SIZE, &out_len), "HY090", 0, INVALID_BUF_SIZE_ERROR);
+
+    query = "SELECT (1, 2, 3)";
+    in_buf = CW(query);
+    CHECK_DBC_ERR(Connection, SQLNativeSqlW(Connection, in_buf, SQL_NTS, out_buf, -1, &out_len), "HY090", 0, INVALID_BUF_SIZE_ERROR);
+
     return OK;
 }
+
+
+ODBC_TEST(buffers_exec_direct) {
+#define TABLE "buffers_exec_direct"
+    SQLCHAR in_buf[BUF_SIZE];
+    const char* query;
+    const char* long_query;
+    SQLINTEGER in_id = 3;
+    SQLINTEGER out_id;
+    SQLCHAR out_text[10];
+
+    // Simple use
+    query = "CREATE TABLE " TABLE "(id INT, text VARCHAR(16))";
+    strcpy(in_buf, query);
+    CHECK_STMT_RC(Stmt, SQLExecDirect(Stmt, in_buf, strlen(in_buf)));
+    IS(!strcmp(in_buf, query));
+
+    query = "INSERT INTO " TABLE " VALUES (1, 'aa'), (2, 'bc'), (3, 'ca')";
+    strcpy(in_buf, query);
+    CHECK_STMT_RC(Stmt, SQLExecDirect(Stmt, in_buf, SQL_NTS));
+    IS(!strcmp(in_buf, query));
+
+    // Shortcut in buff
+    CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_SLONG, SQL_INTEGER, 0, 0, &in_id, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_SLONG, &out_id, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_CHAR, &out_text, sizeof(out_text), NULL));
+
+    query = "SELECT * FROM " TABLE " WHERE id = ?";
+    long_query = "SELECT * FROM " TABLE " WHERE id = ?BLAH";
+    strcpy(in_buf, long_query);
+    CHECK_STMT_RC(Stmt, SQLExecDirect(Stmt, in_buf, strlen(query)));
+    IS(!strcmp(in_buf, long_query));
+
+    FETCH(Stmt);
+    IS(in_id == 3);
+    IS(out_id == 3);
+    IS(!strcmp(out_text, "ca"));
+    CLOSE(Stmt);
+
+    // Bad use
+    CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, NULL, 0), "HY009", 0, NULL_ARG_ERROR);
+
+    CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, NULL, SQL_NTS), "HY009", 0, NULL_ARG_ERROR);
+
+    CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, in_buf, 0), "HY090", 0, "Invalid string or buffer length");
+
+    CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, in_buf, -1), "HY090", 0, "Invalid string or buffer length");
+
+    *in_buf = 0;
+    CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, in_buf, BUF_SIZE), "42000", 0, "Syntax error or access violation");
+
+    UNBIND(Stmt);
+    return OK;
+#undef TABLE
+}
+
+ODBC_TEST(buffers_exec_direct_w) {
+#define TABLE "buffers_exec_direct_w"
+    SQLWCHAR* in_buf;
+    const char* query;
+    const char* long_query;
+    SQLINTEGER in_id = 3;
+    SQLINTEGER out_id;
+    SQLWCHAR out_text[10];
+
+    // Simple use
+    query = "CREATE TABLE " TABLE "(id INT, text VARCHAR(16))";
+    in_buf = CW(query);
+    CHECK_STMT_RC(Stmt, SQLExecDirectW(Stmt, in_buf, sqlwcharlen(in_buf)));
+    IS(sqlwcharequal(in_buf, CW(query)));
+
+    query = "INSERT INTO " TABLE " VALUES (1, 'aa'), (2, 'bc'), (3, 'ca')";
+    in_buf = CW(query);
+    CHECK_STMT_RC(Stmt, SQLExecDirectW(Stmt, in_buf, SQL_NTS));
+    IS(sqlwcharequal(in_buf, CW(query)));
+
+    // Shortcut in buff
+    CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_SLONG, SQL_INTEGER, 0, 0, &in_id, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_SLONG, &out_id, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_WCHAR, &out_text, sizeof(out_text), NULL));
+
+    query = "SELECT * FROM " TABLE " WHERE id = ?";
+    long_query = "SELECT * FROM " TABLE " WHERE id = ?BLAH";
+    in_buf = CW(long_query);
+    CHECK_STMT_RC(Stmt, SQLExecDirectW(Stmt, in_buf, strlen(query)));
+    IS(sqlwcharequal(in_buf, CW(long_query)));
+
+    FETCH(Stmt);
+    IS(in_id == 3);
+    IS(out_id == 3);
+    IS(sqlwcharequal(out_text, CW("ca")));
+    CLOSE(Stmt);
+
+    // Bad use
+    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, NULL, 0), "HY009", 0, NULL_ARG_ERROR);
+
+    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, NULL, SQL_NTS), "HY009", 0, NULL_ARG_ERROR);
+
+    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, in_buf, 0), "HY090", 0, "Invalid string or buffer length");
+
+    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, in_buf, -1), "HY090", 0, "Invalid string or buffer length");
+
+    *in_buf = 0;
+    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, in_buf, BUF_SIZE), "42000", 0, "Syntax error or access violation");
+
+    UNBIND(Stmt);
+    return OK;
+#undef TABLE
+}
+
+
+#define NUM_PROC_FIELDS 4
+
+static int test_proc_columns() {
+    SQLCHAR buf[BUF_SIZE];
+    SQLULEN num_rows = 0;
+
+    // We'll check only the dataset size
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)(NUM_PROC_FIELDS + 1), 0));
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROWS_FETCHED_PTR, &num_rows, 0));
+
+    // With id mode OFF query strings are treated as patterns
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_METADATA_ID, (SQLPOINTER)SQL_FALSE, SQL_IS_UINTEGER));
+
+    // NULL buffers
+    num_rows = 0;
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0));
+    FETCH(Stmt);
+    CLOSE(Stmt);
+    IS(num_rows == 3);
+
+    num_rows = 0;
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, NULL, SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS));
+    FETCH(Stmt);
+    CLOSE(Stmt);
+    IS(num_rows == 3);
+
+    num_rows = 0;
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, NULL, 1000, NULL, 1000, NULL, 1000, NULL, 1000));
+    FETCH(Stmt);
+    CLOSE(Stmt);
+    IS(num_rows == 3);
+
+    // Empty strings
+    *buf = 0;
+
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, buf, 0, buf, 0, buf, 0, buf, 0));
+    FETCH_NO_DATA(Stmt);
+    CLOSE(Stmt);
+
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, buf, SQL_NTS, buf, SQL_NTS, buf, SQL_NTS, buf, SQL_NTS));
+    FETCH_NO_DATA(Stmt);
+    CLOSE(Stmt);
+
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, buf, BUF_SIZE, buf, BUF_SIZE, buf, BUF_SIZE, buf, BUF_SIZE));
+    FETCH_NO_DATA(Stmt);
+    CLOSE(Stmt);
+
+    IS(*buf == 0);
+
+    // Invalid use
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumns(Stmt,
+                                            (SQLCHAR*)"odbc_test", -1000,
+                                            NULL, 0,
+                                            (SQLCHAR*)"aaa", strlen("aaa"),
+                                            (SQLCHAR*)"a11", strlen("a11")),
+                   "HY090", 0, "Invalid string or buffer length");
+
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumns(Stmt,
+                                             (SQLCHAR*)"odbc_test", strlen("odbc_test"),
+                                             NULL, 0,
+                                             (SQLCHAR*)"aaa", -1000,
+                                             (SQLCHAR*)"a11", strlen("a11")),
+                   "HY090", 0, "Invalid string or buffer length");
+
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumns(Stmt,
+                                             (SQLCHAR*)"odbc_test", strlen("odbc_test"),
+                                             NULL, 0,
+                                             (SQLCHAR*)"aaa", strlen("aaa"),
+                                             (SQLCHAR*)"a11", -1000),
+                   "HY090", 0, "Invalid string or buffer length");
+
+    // Normal runs
+    num_rows = 0;
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt,
+                                            (SQLCHAR*)"odbc_test", strlen("odbc_test"),
+                                            NULL, 0,
+                                            (SQLCHAR*)"aaa", strlen("aaa"),
+                                            (SQLCHAR*)"a11", strlen("a11")));
+    FETCH(Stmt);
+    CLOSE(Stmt);
+    IS(num_rows == 1);
+
+    num_rows = 0;
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt,
+                                            (SQLCHAR*)"odbc_test", SQL_NTS,
+                                            NULL, 0,
+                                            (SQLCHAR*)"aaa", SQL_NTS,
+                                            (SQLCHAR*)"a11", SQL_NTS));
+    FETCH(Stmt);
+    CLOSE(Stmt);
+    IS(num_rows == 1);
+
+    // Shortcut buffers
+    num_rows = 0;
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt,
+                                            (SQLCHAR*)"odbc_testBLAH", strlen("odbc_test"),
+                                            NULL, 0,
+                                            (SQLCHAR*)"aaaBLAH", strlen("aaa"),
+                                            (SQLCHAR*)"a11BLAH", strlen("a11")));
+    FETCH(Stmt);
+    CLOSE(Stmt);
+    IS(num_rows == 1);
+
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_METADATA_ID, (SQLPOINTER) SQL_TRUE, SQL_IS_UINTEGER));
+
+    // NULL buffers
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumns(Stmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0), NULL_PTR_ERROR);
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumns(Stmt, NULL, SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS), NULL_PTR_ERROR);
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumns(Stmt, NULL, 1000, NULL, 1000, NULL, 1000, NULL, 1000), NULL_PTR_ERROR);
+
+    // Empty strings
+    *buf = 0;
+
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, buf, 0, buf, 0, buf, 0, buf, 0));
+    FETCH_NO_DATA(Stmt);
+    CLOSE(Stmt);
+
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, buf, SQL_NTS, buf, SQL_NTS, buf, SQL_NTS, buf, SQL_NTS));
+    FETCH_NO_DATA(Stmt);
+    CLOSE(Stmt);
+
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, buf, BUF_SIZE, buf, BUF_SIZE, buf, BUF_SIZE, buf, BUF_SIZE));
+    FETCH_NO_DATA(Stmt);
+    CLOSE(Stmt);
+
+    IS(*buf == 0);
+
+    // Invalid use
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumns(Stmt,
+                                             (SQLCHAR*)"odbc_test", -1000,
+                                             NULL, 0,
+                                             (SQLCHAR*)"aaa", strlen("aaa"),
+                                             (SQLCHAR*)"a11", strlen("a11")),
+                   "HY090", 0, "Invalid string or buffer length");
+
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumns(Stmt,
+                                             (SQLCHAR*)"odbc_test", strlen("odbc_test"),
+                                             NULL, 0,
+                                             (SQLCHAR*)"aaa", -1000,
+                                             (SQLCHAR*)"a11", strlen("a11")),
+                   "HY090", 0, "Invalid string or buffer length");
+
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumns(Stmt,
+                                             (SQLCHAR*)"odbc_test", strlen("odbc_test"),
+                                             NULL, 0,
+                                             (SQLCHAR*)"aaa", strlen("aaa"),
+                                             (SQLCHAR*)"a11", -1000),
+                   "HY090", 0, "Invalid string or buffer length");
+
+    // Normal runs
+    num_rows = 0;
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt,
+                                            (SQLCHAR*)"odbc_test", strlen("odbc_test"),
+                                            "", 0,
+                                            (SQLCHAR*)"aaa", strlen("aaa"),
+                                            (SQLCHAR*)"a11", strlen("a11")));
+    FETCH(Stmt);
+    CLOSE(Stmt);
+    IS(num_rows == 1);
+
+    num_rows = 0;
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt,
+                                            (SQLCHAR*)"odbc_test", SQL_NTS,
+                                            "", 0,
+                                            (SQLCHAR*)"aaa", SQL_NTS,
+                                            (SQLCHAR*)"a11", SQL_NTS));
+    FETCH(Stmt);
+    CLOSE(Stmt);
+    IS(num_rows == 1);
+
+    // Shortcut buffers
+    num_rows = 0;
+    CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt,
+                                            (SQLCHAR*)"odbc_testBLAH", strlen("odbc_test"),
+                                            "", 0,
+                                            (SQLCHAR*)"aaaBLAH", strlen("aaa"),
+                                            (SQLCHAR*)"a11BLAH", strlen("a11")));
+    FETCH(Stmt);
+    CLOSE(Stmt);
+    IS(num_rows == 1);
+
+    return OK;
+}
+
+static int test_proc_columns_w() {
+    SQLWCHAR buf[BUF_SIZE];
+    SQLULEN num_rows = 0;
+
+    // We'll check only the dataset size
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)(NUM_PROC_FIELDS + 1), 0));
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_ROWS_FETCHED_PTR, &num_rows, 0));
+
+    // With id mode OFF query strings are treated as patterns
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_METADATA_ID, (SQLPOINTER)SQL_FALSE, SQL_IS_UINTEGER));
+
+    // NULL buffers
+    num_rows = 0;
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0));
+    FETCH(Stmt);
+    CLOSE(Stmt);
+    IS(num_rows == 3);
+
+    num_rows = 0;
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, NULL, SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS));
+    FETCH(Stmt);
+    CLOSE(Stmt);
+    IS(num_rows == 3);
+
+    num_rows = 0;
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, NULL, 1000, NULL, 1000, NULL, 1000, NULL, 1000));
+    FETCH(Stmt);
+    CLOSE(Stmt);
+    IS(num_rows == 3);
+
+    // Empty strings
+    *buf = 0;
+
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, buf, 0, buf, 0, buf, 0, buf, 0));
+    FETCH_NO_DATA(Stmt);
+    CLOSE(Stmt);
+
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, buf, SQL_NTS, buf, SQL_NTS, buf, SQL_NTS, buf, SQL_NTS));
+    FETCH_NO_DATA(Stmt);
+    CLOSE(Stmt);
+
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, buf, BUF_SIZE, buf, BUF_SIZE, buf, BUF_SIZE, buf, BUF_SIZE));
+    FETCH_NO_DATA(Stmt);
+    CLOSE(Stmt);
+
+    IS(*buf == 0);
+
+    // Invalid use
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumnsW(  Stmt,
+                                                CW("odbc_test"), -1000,
+                                                NULL, 0,
+                                                CW("aaa"), strlen("aaa"),
+                                                CW("a11"), strlen("a11")),
+                   "HY090", 0, "Invalid string or buffer length");
+
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumnsW(  Stmt,
+                                                CW("odbc_test"), strlen("odbc_test"),
+                                                NULL, 0,
+                                                CW("aaa"), -1000,
+                                                CW("a11"), strlen("a11")),
+                   "HY090", 0, "Invalid string or buffer length");
+
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumnsW(  Stmt,
+                                                CW("odbc_test"), strlen("odbc_test"),
+                                                NULL, 0,
+                                                CW("aaa"), strlen("aaa"),
+                                                CW("a11"), -1000),
+                   "HY090", 0, "Invalid string or buffer length");
+
+    // Normal runs
+    num_rows = 0;
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(   Stmt,
+                                                CW("odbc_test"), strlen("odbc_test"),
+                                                NULL, 0,
+                                                CW("aaa"), strlen("aaa"),
+                                                CW("a11"), strlen("a11")));
+    FETCH(Stmt);
+    CLOSE(Stmt);
+    IS(num_rows == 1);
+
+    num_rows = 0;
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(   Stmt,
+                                                CW("odbc_test"), SQL_NTS,
+                                                NULL, 0,
+                                                CW("aaa"), SQL_NTS,
+                                                CW("a11"), SQL_NTS));
+    FETCH(Stmt);
+    CLOSE(Stmt);
+    IS(num_rows == 1);
+
+    // Shortcut buffers
+    num_rows = 0;
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(   Stmt,
+                                                CW("odbc_testBLAH"), strlen("odbc_test"),
+                                                NULL, 0,
+                                                CW("aaaBLAH"), strlen("aaa"),
+                                                CW("a11BLAH"), strlen("a11")));
+    FETCH(Stmt);
+    CLOSE(Stmt);
+    IS(num_rows == 1);
+
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_METADATA_ID, (SQLPOINTER) SQL_TRUE, SQL_IS_UINTEGER));
+
+    // NULL buffers
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumnsW(Stmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0), NULL_PTR_ERROR);
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumnsW(Stmt, NULL, SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS), NULL_PTR_ERROR);
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumnsW(Stmt, NULL, 1000, NULL, 1000, NULL, 1000, NULL, 1000), NULL_PTR_ERROR);
+
+    // Empty strings
+    *buf = 0;
+
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, buf, 0, buf, 0, buf, 0, buf, 0));
+    FETCH_NO_DATA(Stmt);
+    CLOSE(Stmt);
+
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, buf, SQL_NTS, buf, SQL_NTS, buf, SQL_NTS, buf, SQL_NTS));
+    FETCH_NO_DATA(Stmt);
+    CLOSE(Stmt);
+
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, buf, BUF_SIZE, buf, BUF_SIZE, buf, BUF_SIZE, buf, BUF_SIZE));
+    FETCH_NO_DATA(Stmt);
+    CLOSE(Stmt);
+
+    IS(*buf == 0);
+
+    // Invalid use
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumnsW(  Stmt,
+                                                CW("odbc_test"), -1000,
+                                                NULL, 0,
+                                                CW("aaa"), strlen("aaa"),
+                                                CW("a11"), strlen("a11")),
+                   "HY090", 0, "Invalid string or buffer length");
+
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumnsW(  Stmt,
+                                                CW("odbc_test"), strlen("odbc_test"),
+                                                NULL, 0,
+                                                CW("aaa"), -1000,
+                                                CW("a11"), strlen("a11")),
+                   "HY090", 0, "Invalid string or buffer length");
+
+    CHECK_STMT_ERR(Stmt, SQLProcedureColumnsW(  Stmt,
+                                                CW("odbc_test"), strlen("odbc_test"),
+                                                NULL, 0,
+                                                CW("aaa"), strlen("aaa"),
+                                                CW("a11"), -1000),
+                   "HY090", 0, "Invalid string or buffer length");
+
+    // Normal runs
+    num_rows = 0;
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(   Stmt,
+                                                CW("odbc_test"), strlen("odbc_test"),
+                                                CW(""), 0,
+                                                CW("aaa"), strlen("aaa"),
+                                                CW("a11"), strlen("a11")));
+    FETCH(Stmt);
+    CLOSE(Stmt);
+    IS(num_rows == 1);
+
+    num_rows = 0;
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(   Stmt,
+                                                CW("odbc_test"), SQL_NTS,
+                                                CW(""), 0,
+                                                CW("aaa"), SQL_NTS,
+                                                CW("a11"), SQL_NTS));
+    FETCH(Stmt);
+    CLOSE(Stmt);
+    IS(num_rows == 1);
+
+    // Shortcut buffers
+    num_rows = 0;
+    CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(   Stmt,
+                                                CW("odbc_testBLAH"), strlen("odbc_test"),
+                                                CW(""), 0,
+                                                CW("aaaBLAH"), strlen("aaa"),
+                                                CW("a11BLAH"), strlen("a11")));
+    FETCH(Stmt);
+    CLOSE(Stmt);
+    IS(num_rows == 1);
+
+    return OK;
+}
+
+ODBC_TEST(buffers_proc_columns) {
+    int res;
+
+    OK_SIMPLE_STMT(Stmt, "CREATE FUNCTION aaa (a11 INT, aa1 INT) RETURNS INT AS BEGIN RETURN 0; END");
+    OK_SIMPLE_STMT(Stmt, "CREATE PROCEDURE bbb (b22 INT) AS BEGIN SET b22 = 0; END");
+
+    res = test_proc_columns();
+    CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+    UNBIND(Stmt);
+
+    res &= test_proc_columns_w();
+    CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+    UNBIND(Stmt);
+
+    OK_SIMPLE_STMT(Stmt, "DROP FUNCTION aaa");
+    OK_SIMPLE_STMT(Stmt, "DROP PROCEDURE bbb");
+
+    return res;
+}
+
 
 MA_ODBC_TESTS my_tests[] = {
    {buffers_native_sql, "buffers_native_sql", NORMAL, ALL_DRIVERS},
    {buffers_native_sql_w, "buffers_native_sql_w", NORMAL, ALL_DRIVERS},
+   {buffers_exec_direct, "buffers_exec_direct", NORMAL, ALL_DRIVERS},
+   {buffers_exec_direct_w, "buffers_exec_direct_w", NORMAL, ALL_DRIVERS},
+   {buffers_proc_columns, "buffers_proc_columns", NORMAL, ALL_DRIVERS},
    {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
