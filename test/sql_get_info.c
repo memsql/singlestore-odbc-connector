@@ -201,8 +201,9 @@ int CheckChar(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, char *CorrectValue) {
   IS(paddingw == DEADBEEF);
 
   // Too short buffer
-  /* Linux DM does not add the trailing 0 if the buffer is too short. */
-  if (cPlatform != LINUX) {
+  if (cPlatform == WINDOWS) {
+    /* Linux DM does not add the trailing 0 if the buffer is too short. */
+    /* MacOS DM returns wrong length */
     memset(stringw_value, 0xFF, sizeof(stringw_value));
     CHECK_DBC_RC(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, (strlen(CorrectValue) / 2 + 1) * sizeof(SQLWCHAR), &length));
     is_num(length, strlen(CorrectValue)*sizeof(SQLWCHAR));
