@@ -103,7 +103,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_SYSMENU
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     LTEXT           "Please specify a server name and port",IDC_STATIC,9,7,130,10,0,WS_EX_TRANSPARENT
-    LTEXT           "Server Name:",lblServerName,17,21,49,11,0,WS_EX_TRANSPARENT | WS_EX_RIGHT
+    LTEXT           "Server Name:",lblServerName,15,21,49,11,0,WS_EX_TRANSPARENT | WS_EX_RIGHT
     LTEXT           "Please specify a user name and password to connect to SingleStore",IDC_STATIC,9,54,207,8,0,WS_EX_TRANSPARENT
     LTEXT           "Please specify a database to use",IDC_STATIC,9,105,207,8,0,WS_EX_TRANSPARENT
     LTEXT           "User name:",IDC_STATIC,26,70,38,8,0,WS_EX_TRANSPARENT | WS_EX_RIGHT
@@ -111,7 +111,7 @@ BEGIN
     LTEXT           "Database:",IDC_STATIC,20,121,34,8,0,WS_EX_TRANSPARENT | WS_EX_RIGHT
     EDITTEXT        txtServerName,71,18,141,14,ES_AUTOHSCROLL
     EDITTEXT        txtPort,71,34,40,14,ES_AUTOHSCROLL
-    LTEXT           "Port:",lblPort,28,35,49,11,0,WS_EX_TRANSPARENT | WS_EX_RIGHT
+    LTEXT           "Port:",lblPort,23,35,49,11,0,WS_EX_TRANSPARENT | WS_EX_RIGHT
     EDITTEXT        txtUserName,71,68,141,14,ES_AUTOHSCROLL
     EDITTEXT        txtPassword,71,86,142,14,ES_PASSWORD | ES_AUTOHSCROLL
     PUSHBUTTON      "&Test DSN",pbTestDSN,223,86,50,14
