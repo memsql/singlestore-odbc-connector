@@ -11,8 +11,15 @@ otherwise use the libssodbca.so.
 
 The following command would install the UnixODBC package.
 
+(Centos)
 ```
+sudo yum update
 sudo yum install unixODBC
+```
+(Debian)
+```
+sudo apt-get update
+sudo apt-get install unixodbc
 ```
 
 If you plan to compile an application from source against SingleStore ODBC Connector and UnixODBC,
@@ -20,11 +27,32 @@ then you also need the development header files that define the ODBC API functio
 ODBC data types, etc.
 To install UnixODBC development files you can use the following command.
 
+(Centos)
 ```
 sudo yum install unixODBC-devel
 ```
+(Debian)
+```
+sudo apt-get install unixodbc-dev
+```
 
-2. Configuring SingleStore ODBC Connector as a UnixODBC Driver on Linux
+2. Installing ODBC connector and plugins
+
+After extracting tarball package, run the following commands to install connector and required plugins
+(Centos)
+```
+sudo install libssodbca.so /usr/lib64/
+sudo install libssodbcw.so /usr/lib64/
+sudo install -D plugins/* -t /usr/lib64
+```
+(Debian)
+```
+sudo install libssodbca.so /usr/lib/
+sudo install libssodbcw.so /usr/lib/
+sudo install -D plugins/* -t /usr/lib
+```
+
+3. Configuring SingleStore ODBC Connector as a UnixODBC Driver on Linux
 
 Create a template file similar to the following,
 with a name like SingleStore_odbc_driver_template.ini.
@@ -41,7 +69,7 @@ Install it to the system's global /etc/odbcinst.ini file with the following comm
 sudo odbcinst -i -d -f SingleStore_odbc_driver_template.ini
 ```
 
-3. Configuring a DSN with UnixODBC on Linux
+4. Configuring a DSN with UnixODBC on Linux
 
 Create a template file similar to the following,
 with a name like SingleStore_odbc_data_source_template.ini.
@@ -63,7 +91,7 @@ Install it to the system's global /etc/odbc.ini file with the following command.
 sudo odbcinst -i -s -l -f SingleStore_odbc_data_source_template.ini
 ```
 
-4. Verifying a DSN Configuration with UnixODBC on Linux
+5. Verifying a DSN Configuration with UnixODBC on Linux
 
 Verify that a DSN is properly configured with UnixODBC on Linux by using the isql utility.
 
