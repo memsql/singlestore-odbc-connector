@@ -134,6 +134,8 @@ MADB_Dsn *MADB_DSN_Init()
     Dsn->FreeMe= TRUE;
     Dsn->Keys= (MADB_DsnKey *)&DsnKeys;
   }
+  MADB_DSN_SetDefaults(Dsn);
+
   return Dsn;
 }
 /* }}} */
