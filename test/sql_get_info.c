@@ -119,14 +119,14 @@ int CheckChar(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, char *CorrectValue) {
   SQLSMALLINT cmpLength;
 
   // ANSI tests
-  CHECK_DBC_ERR(Hdbc, SQLGetInfo(Hdbc, InfoType, string_value, -1, &length), "HY090", 0, "Invalid string or buffer length");
+  CHECK_DBC_ERR(Hdbc, SQLGetInfo(Hdbc, InfoType, string_value, -1, &length), cPlatform == MAC ? "S1090" : "HY090", 0, "Invalid string or buffer length");
   if(cPlatform == MAC) {
       /* This causes size == -1 sanitizer error with Linux DM */
       /* Windows DM returns incorrect length */
       CHECK_DBC_RC(Hdbc, SQLGetInfo(Hdbc, InfoType, string_value, 0, &length));
       is_num(length, strlen(CorrectValue));
   }
-  CHECK_DBC_ERR(Hdbc, SQLGetInfo(Hdbc, InfoType, string_value, SQL_NTS, &length), "HY090", 0, "Invalid string or buffer length");
+  CHECK_DBC_ERR(Hdbc, SQLGetInfo(Hdbc, InfoType, string_value, SQL_NTS, &length), cPlatform == MAC ? "S1090" : "HY090", 0, "Invalid string or buffer length");
 
   memset(string_value, 0xFF, sizeof(string_value));
   CHECK_DBC_RC(Hdbc, SQLGetInfo(Hdbc, InfoType, string_value, BUF_LEN, &length));
@@ -152,13 +152,13 @@ int CheckChar(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, char *CorrectValue) {
   }
 
   // UNICODE tests
-  CHECK_DBC_ERR(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, -1, &length), "HY090", 0, "Invalid string or buffer length");
+  CHECK_DBC_ERR(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, -1, &length), cPlatform == MAC ? "S1090" : "HY090", 0, "Invalid string or buffer length");
   if (cPlatform != LINUX) {
       /* This causes size == -2 sanitizer error with Linux DM */
       CHECK_DBC_RC(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, 0, &length));
       is_num(length, strlen(CorrectValue)*sizeof(SQLWCHAR));
   }
-  CHECK_DBC_ERR(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, SQL_NTS, &length), "HY090", 0, "Invalid string or buffer length");
+  CHECK_DBC_ERR(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, SQL_NTS, &length), cPlatform == MAC ? "S1090" : "HY090", 0, "Invalid string or buffer length");
 
   cmpLength = strlen(CorrectValue) + 1;
   if (BUF_LEN/sizeof(SQLWCHAR) < cmpLength) {
