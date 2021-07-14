@@ -1346,7 +1346,7 @@ int test_option_use_mycnf(SQLCHAR conn[1024], SQLCHAR conn_out[1024], HSTMT hdbc
   //
   SQLSMALLINT conn_out_len;
   OK_SIMPLE_STMT(Stmt, "CREATE DATABASE IF NOT EXISTS odbc_test_mycnf");
-  sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;OPTION=%d",
+  sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;OPTION=%d;NO_SSPS=0",
           my_drivername, my_uid, my_pwd, my_servername, my_port, options);
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
