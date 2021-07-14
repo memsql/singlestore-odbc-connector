@@ -158,28 +158,27 @@ int CheckChar(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, char *CorrectValue) {
   // UNICODE tests
   CHECK_DBC_ERR(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, -1, &length), NULL, -1, "Invalid string or buffer length");
   if (cPlatform == WINDOWS) {
-      /* This causes size == -2 sanitizer error with Linux DM */
-      /* A negative length is returned on MacOS */
-      CHECK_DBC_RC(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, 0, &length));
-      is_num(length, strlen(CorrectValue)*sizeof(SQLWCHAR));
+    /* This causes size == -2 sanitizer error with Linux DM */
+    /* A negative length is returned on MacOS */
+    CHECK_DBC_RC(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, 0, &length));
+    is_num(length, strlen(CorrectValue)*sizeof(SQLWCHAR));
   }
   CHECK_DBC_ERR(Hdbc, SQLGetInfoW(Hdbc, InfoType, stringw_value, SQL_NTS, &length), NULL, -1, "Invalid string or buffer length");
 
   cmpLength = strlen(CorrectValue) + 1;
   if (BUF_LEN/sizeof(SQLWCHAR) < cmpLength) {
-      if (cPlatform == LINUX) {
-          /* Linux DM corrupts memory as it thinks OUT buffer length is in WCARS, not in bytes. */
-          return OK;
-      }
-      else
-      {
-          // SQL_KEYWORDS length is bigger then 17k
-          // We can't bigger BUF_LEN, because when Unicode driver is used,
-          // Driver Manager limits BufferLength to 16382
-          // If we pass bigger value, it overflows and becomes negative
-          // So we will check only prefix if the buffer is too small
-          cmpLength = BUF_LEN/sizeof(SQLWCHAR)-1;
-      }
+    if (cPlatform != WINDOWS) {
+      /* Linux DM corrupts memory as it thinks OUT buffer length is in WCARS, not in bytes. */
+      /* MacOS DM returns incorrect length */
+      return OK;
+    }
+
+    // SQL_KEYWORDS length is bigger then 17k
+    // We can't bigger BUF_LEN, because when Unicode driver is used,
+    // Driver Manager limits BufferLength to 16382
+    // If we pass bigger value, it overflows and becomes negative
+    // So we will check only prefix if the buffer is too small
+    cmpLength = BUF_LEN/sizeof(SQLWCHAR)-1;
   }
 
   memset(stringw_value, 0xFF, sizeof(stringw_value));
