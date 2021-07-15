@@ -7,7 +7,7 @@ Both kinds of drivers are provided in the same download package.
 To install Unicode driver, use libssodbcw.so in the father steps,
 otherwise use the libssodbca.so.
 
-1. Install UnixODBC and OpenSSL
+1. Install UnixODBC
 
 The following command would install the UnixODBC package.
 
@@ -15,13 +15,11 @@ The following command would install the UnixODBC package.
 ```
 sudo yum update
 sudo yum install unixODBC
-sudo yum install openssl-devel
 ```
 (Debian)
 ```
 sudo apt-get update
 sudo apt-get install unixodbc
-sudo apt-get install libssl-dev
 ```
 
 If you plan to compile an application from source against SingleStore ODBC Driver and UnixODBC,

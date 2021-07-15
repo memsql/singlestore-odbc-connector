@@ -20,10 +20,26 @@
 if [[ $IMAGE_NAME == centos* ]]
 then
   yum update
-  yum -y install gcc-c++ make gcc openssl-devel unixODBC unixODBC-devel wget bind-utils
+  yum -y install gcc-c++ make gcc openssl openssl-devel unixODBC unixODBC-devel wget bind-utils
+  # install cmake
   wget https://github.com/Kitware/CMake/releases/download/v3.20.3/cmake-3.20.3-linux-x86_64.tar.gz
   cd /usr || exit
   tar --strip-components=1 -xzf /root/project/cmake-3.20.3-linux-x86_64.tar.gz
+  # install static version of openssl
+  yum group install 'Development Tools'
+  yum install perl-core zlib-devel -y
+  export OPENSSL_VER=$(expr substr "$(openssl version|  awk '{print $2}')" 1 6)
+  wget https://www.openssl.org/source/openssl-${OPENSSL_VER}.tar.gz
+  tar -xf openssl-${OPENSSL_VER}.tar.gz
+  cd openssl-${OPENSSL_VER} || exit
+  ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl shared zlib
+  make
+  make install
+  cd /etc/ld.so.conf.d/ || exit
+  echo "/usr/local/ssl/lib" >> openssl-${OPENSSL_VER}
+  ldconfig -v
+  install /usr/local/ssl/lib/libssl.a /usr/lib64
+  install /usr/local/ssl/lib/libcrypto.a /usr/lib64
 else
   apt-get update
   apt-get install -y cmake make gcc libssl-dev dnsutils
