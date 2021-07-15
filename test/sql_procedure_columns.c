@@ -57,9 +57,12 @@ static int try_drop_check_error(const char* const command) {
     {
         IS_OK(process_drop_error(command));
     }
-    if(!SQL_SUCCEEDED(SQLExecDirectW(Stmt, CW(command), SQL_NTS)))
+    if(cPlatform != MAC) /* The non-ASCII query gets corrupted for ANSI driver */
     {
-        IS_OK(process_drop_error(command));
+        if(!SQL_SUCCEEDED(SQLExecDirectW(Stmt, CW(command), SQL_NTS)))
+        {
+            IS_OK(process_drop_error(command));
+        }
     }
 
     return OK;
@@ -932,6 +935,10 @@ static int query_and_check_non_ascii_N(const char* const catalog, const char* co
     size_t i, j;
     size_t prev = NUM_PROC_FIELDS;
 
+    // TODO: PLAT-5560
+    if (cPlatform == LINUX && is_unicode_driver())
+        return OK;
+
     memset(result, 0, sizeof(result));
 
     CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, (SQLCHAR*)catalog, SQL_NTS, (SQLCHAR *)"", 0, (SQLCHAR*)procedure, SQL_NTS, (SQLCHAR*)column, SQL_NTS));
@@ -1006,6 +1013,10 @@ static int query_and_check_non_ascii_W(const char* const catalog, const char* co
     Mask remaining = (mask & c_implemented_mask);
     size_t i, j;
     size_t prev = NUM_PROC_FIELDS;
+
+    // TODO: PLAT-5560
+    if (cPlatform == LINUX && is_unicode_driver())
+        return OK;
 
     memset(result, 0, sizeof(result));
     if(catalog) {
