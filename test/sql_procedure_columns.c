@@ -57,12 +57,11 @@ static int try_drop_check_error(const char* const command) {
     {
         IS_OK(process_drop_error(command));
     }
-    /*	TODO: PLAT-5561
     if(!SQL_SUCCEEDED(SQLExecDirectW(Stmt, CW(command), SQL_NTS)))
     {
         IS_OK(process_drop_error(command));
     }
-    */
+
     return OK;
 }
 
@@ -566,10 +565,10 @@ static const QueryDesc c_queries_non_ascii_with_id_off[] = {
 
 static const QueryDesc c_queries_non_ascii_with_id_on[] = {
     // Get all fields
-    {"", "", "", FULL_MASK},
+    {"", "", "", 0},
     // Case insensitive
-    {"", "найти_петю_и_округлить", "", TWO_MASK},
-    {"", "", "ВАСЯ_ПУПКИН", 0x01},
+    {"odbc_test", "найти_петю_и_округлить", "ПЕТЯ", 0x08},
+    {"odbc_test", "узнать_имя_васи", "ВАСЯ_ПУПКИН", 0x01},
     // Remove trailing blanks
     {"odbc_test  ", "узнать_имя_васи  ", "петя_васин  ", 0x02},
 };
@@ -1260,7 +1259,7 @@ ODBC_TEST(procedurecolumns_non_ascii_W) {
         ProcColWorkerFn fn;
         const char* mode;
     } functions[] = {
-        //{query_and_check_non_ascii_N, "N"},
+        {query_and_check_non_ascii_N, "N"},
         {query_and_check_non_ascii_W, "W"},
     };
 
@@ -1306,8 +1305,8 @@ MA_ODBC_TESTS my_tests[] =
                 {t_procedurecolumns2U, "t_procedurecolumns2U", NORMAL, UNICODE_DRIVER},
                 {t_procedurecolumns2A, "t_procedurecolumns2A", NORMAL, ANSI_DRIVER},
                 {metadata_id_for_procedurecolumns, "metadata_id_for_procedurecolumns", NORMAL, ALL_DRIVERS},
-                {procedurecolumns_non_ascii_N, "procedurecolumns_non_ascii_N", KNOWN_FAILURE, ALL_DRIVERS},	// TODO: PLAT-5560, PLAT-5561, PLAT-5562
-                {procedurecolumns_non_ascii_W, "procedurecolumns_non_ascii_W", KNOWN_FAILURE, ALL_DRIVERS},	// TODO: PLAT-5560, PLAT-5561, PLAT-5562
+                {procedurecolumns_non_ascii_N, "procedurecolumns_non_ascii_N", NORMAL, ALL_DRIVERS},
+                {procedurecolumns_non_ascii_W, "procedurecolumns_non_ascii_W", NORMAL, ALL_DRIVERS},
                 {NULL, NULL, NORMAL, ALL_DRIVERS}
         };
 
