@@ -387,7 +387,7 @@ WHILE(${DRIVER_INDEX} LESS ${DRIVERS_COUNT})
     ENDIF()
   ELSE()
     MESSAGE(STATUS "Version script: ${CMAKE_SOURCE_DIR}/maodbc.def")
-    ADD_LIBRARY(${LIBRARY_NAME} STATIC ${MARIADB_ODBC_SOURCES_TYPE} maodbc${CONNECTOR_DRIVER_TYPE_SHORT}.rc ${SSL_LIBRARIES})
+    ADD_LIBRARY(${LIBRARY_NAME} SHARED ${MARIADB_ODBC_SOURCES_TYPE} maodbc${CONNECTOR_DRIVER_TYPE_SHORT}.rc ${SSL_LIBRARIES})
 
     IF(APPLE)
       SET(MAODBC_INSTALL_RPATH "${ODBC_LIB_DIR}" "@loader_path" "/usr/local/opt/libiodbc" "/usr/local/iODBC/lib" "/usr/local/opt/openssl@1.1/lib" "/usr/local/opt/libressl/lib")
