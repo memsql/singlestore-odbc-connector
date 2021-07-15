@@ -301,21 +301,11 @@ workflows:
             parameters:
               build_type:
                 - RelWithDebInfo
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
       - publish-macos:
           matrix:
             parameters:
               build_type:
                 - RelWithDebInfo
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
       - publish-linux:
           matrix:
             parameters:
@@ -325,11 +315,6 @@ workflows:
                 - centos7
               build_type:
                 - RelWithDebInfo
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
       - publish-linux:
           matrix:
             parameters:
@@ -339,11 +324,6 @@ workflows:
                 - centos8
               build_type:
                 - RelWithDebInfo
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
       - publish-linux:
           matrix:
             parameters:
@@ -353,11 +333,6 @@ workflows:
                 - debian9
               build_type:
                 - RelWithDebInfo
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
       - publish-linux:
           matrix:
             parameters:
@@ -367,11 +342,6 @@ workflows:
                 - debian10
               build_type:
                 - RelWithDebInfo
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
   daily:
     triggers:
       - schedule:
