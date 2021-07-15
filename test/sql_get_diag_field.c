@@ -63,7 +63,7 @@ ODBC_TEST(sql_diag_cursor_row_count)
     CHECK_STMT_RC(Hstmt, SQLSetStmtAttr(Hstmt, SQL_ATTR_CURSOR_TYPE, cursors[i], 0));
     OK_SIMPLE_STMT(Hstmt, "SELECT * FROM sql_diag_cursor_row_count");
     CHECK_STMT_RC(Hstmt, SQLFetch(Hstmt)); // TODO PLAT-5583
-    CHECK_STMT_RC(Hstmt, SQLGetDiagField(SQL_HANDLE_STMT, Hstmt, 0, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
+    CHECK_STMT_RC(Hstmt, SQLGetDiagField(SQL_HANDLE_STMT, Hstmt, recordNumber, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
     FAIL_IF_NE_INT(rowCount, 2,
                    "SQLGetDiagField with SQL_DIAG_CURSOR_ROW_COUNT should return row count for select statement");
     CHECK_STMT_RC(Hstmt, SQLFreeStmt(Hstmt, SQL_CLOSE));
@@ -71,7 +71,7 @@ ODBC_TEST(sql_diag_cursor_row_count)
     CHECK_STMT_RC(HstmtNoCache, SQLSetStmtAttr(HstmtNoCache, SQL_ATTR_CURSOR_TYPE, cursors[i], 0));
     OK_SIMPLE_STMT(HstmtNoCache, "SELECT * FROM sql_diag_cursor_row_count");
     CHECK_STMT_RC(HstmtNoCache, SQLFetch(HstmtNoCache)); // TODO PLAT-5583
-    CHECK_STMT_RC(HstmtNoCache, SQLGetDiagField(SQL_HANDLE_STMT, HstmtNoCache, 0, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
+    CHECK_STMT_RC(HstmtNoCache, SQLGetDiagField(SQL_HANDLE_STMT, HstmtNoCache, recordNumber, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
     CHECK_STMT_RC(HstmtNoCache, SQLFreeStmt(HstmtNoCache, SQL_CLOSE));
     if (cursors[i] == SQL_CURSOR_FORWARD_ONLY)
     {

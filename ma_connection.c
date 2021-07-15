@@ -917,7 +917,7 @@ SQLRETURN MADB_DbcGetFunctions(MADB_Dbc *Dbc, SQLUSMALLINT FunctionId, SQLUSMALL
       }
     break;
   }
-  return MADB_SetError(&Dbc->Error, MADB_ERR_HY095, mysql_error(Dbc->mariadb),
+  return MADB_SetError(&Dbc->Error, MADB_ERR_HY095, "Function type out of range",
                   mysql_errno(Dbc->mariadb));
 }
 /* }}} */
