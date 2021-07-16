@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef _WIN32
 # define _WINSOCKAPI_
@@ -114,6 +115,8 @@ int strcpy_s(char *dest, size_t buffer_size, const char *src)
 #endif
 
 #define LENGTHOF(arr) (sizeof(arr) / sizeof(arr[0]))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 #include <sql.h>
 #include <sqlext.h>
@@ -128,7 +131,7 @@ static SQLCHAR *my_dsn=             (SQLCHAR *)"ssodbc_test_a";
 static SQLCHAR *my_uid=             (SQLCHAR *)"root";
 static SQLCHAR *my_pwd=             (SQLCHAR *)"";
 static SQLCHAR *my_schema=          (SQLCHAR *)"odbc_test";
-static SQLCHAR *my_drivername=      (SQLCHAR *)"SingleStore ODBC 0.8.2-beta ANSI Driver";
+static SQLCHAR *my_drivername=      (SQLCHAR *)"SingleStore ODBC 1.0.0 ANSI Driver";
 static SQLCHAR *my_servername=      (SQLCHAR *)"127.0.0.1";
 static SQLCHAR *add_connstr=        (SQLCHAR*)"";
 
@@ -200,6 +203,18 @@ char *test_status[]= {"not ok", "ok", "skip"};
 #define IS_ODBC3() (OdbcVer == SQL_OV_ODBC3)
 /* Atm iODBC is the only DM using SQLWCHAR of 4 bytes size */
 #define iOdbc() (sizeof(SQLWCHAR)==4)
+
+enum Platform {
+    LINUX,
+    WINDOWS,
+    MAC
+};
+
+#ifdef _WIN32
+const enum Platform cPlatform= WINDOWS;
+#else
+const enum Platform cPlatform= (iOdbc() ? MAC : LINUX);
+#endif
 
 #define skip(A) diag((A)); return SKIP;
 
@@ -1003,11 +1018,11 @@ SQLHANDLE DoConnect(SQLHANDLE Connection, BOOL DoWConnect,
   }
   else
   {
-    _snprintf(DSNString, 1024, "DSN=%s;UID=%s;PWD={%s};PORT=%u;DATABASE=%s;OPTION=%lu;SERVER=%s;NO_SSPS=%d;%s", dsn ? dsn : (const char*)my_dsn,
+    _snprintf(DSNString, 1024, "DSN=%s;UID=%s;PWD={%s};PORT=%u;DATABASE=%s;OPTION=%lu;SERVER=%s;NO_SSPS=%d;%s;NO_CACHE=0", dsn ? dsn : (const char*)my_dsn,
       uid ? uid : (const char*)my_uid, pwd ? pwd : (const char*)my_pwd, port ? port : my_port,
       schema ? schema : (const char*)my_schema, options ? *options : my_options, server ? server : (const char*)my_servername,
       NoSsps, add_parameters ? add_parameters : "");
-    diag("DSN=%s;UID=%s;PWD={%s};PORT=%u;DATABASE=%s;OPTION=%lu;SERVER=%s;NO_SSPS=%d;%s", dsn ? dsn : (const char*)my_dsn,
+    diag("DSN=%s;UID=%s;PWD={%s};PORT=%u;DATABASE=%s;OPTION=%lu;SERVER=%s;NO_SSPS=%d;%s;NO_CACHE=0", dsn ? dsn : (const char*)my_dsn,
            uid ? uid : (const char*)my_uid, "********", port ? port : my_port,
            schema ? schema : (const char*)my_schema, options ? *options : my_options, server ? server : (const char*)my_servername,
            NoSsps, add_parameters ? add_parameters : "");

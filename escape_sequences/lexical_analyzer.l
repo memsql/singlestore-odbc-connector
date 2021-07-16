@@ -18,7 +18,7 @@
 *************************************************************************************/
 %{
 #include "escape_sequences/parser.h"
-#define YY_DECL int yylex(YYSTYPE * yylval_param, yyscan_t yyscanner, MADB_Error *error)
+#define YY_DECL int yylex(YYSTYPE * yylval_param, yyscan_t yyscanner, MADB_Error *error, MADB_Dbc *Dbc)
 int yylex();
 %}
 

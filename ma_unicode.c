@@ -687,7 +687,7 @@ SQLRETURN SQL_API SQLNativeSqlW(SQLHDBC ConnectionHandle,
     InStatementStart = (char *)InStmtStr;
     InStatementEnd = InStmtStr + InLength;
     InStatementIterator = &InStatementStart;
-    if (MADB_UnescapeQuery(&Dbc->Error, &res, InStatementIterator, &InStatementEnd, 0)) {
+    if (MADB_UnescapeQuery(Dbc, &Dbc->Error, &res, InStatementIterator, &InStatementEnd, 0)) {
         MADB_FREE(InStmtStr);
         return Dbc->Error.ReturnValue;
     }

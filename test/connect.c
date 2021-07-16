@@ -498,8 +498,14 @@ ODBC_TEST(driver_connect_savefile) {
 ODBC_TEST(driver_connect_ssl) {
   HSTMT hdbc, hstmt;
   SQLCHAR conn[1024], conn_out[1024], buff[1024];
+  char version[128];
   SQLSMALLINT conn_out_len;
   SQLRETURN rc;
+
+  OK_SIMPLE_STMT(Stmt, "SELECT @@memsql_version");
+  CHECK_STMT_RC(hstmt, SQLFetch(Stmt));
+  my_fetch_str(Stmt, (SQLCHAR *) version, 1);
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   CHECK_ENV_RC(Env, SQLAllocHandle(SQL_HANDLE_DBC, Env, &hdbc));
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;SSLCERT=%s;SSLKEY=%s;",
@@ -708,7 +714,7 @@ ODBC_TEST(driver_connect_ssl) {
                            conn_out, sizeof(conn_out), &conn_out_len,
                            SQL_DRIVER_NOPROMPT) != SQL_ERROR, "Should not be able to connect without SSL for "
                                                               "SSL required user");
-  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "HY000");
+  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, strcmp(version, "7.0.15") ? "HY000" : "28000");
 
 
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;FORCE_TLS=1;",
@@ -722,9 +728,15 @@ ODBC_TEST(driver_connect_ssl) {
 ODBC_TEST(driver_connect_ssl_w) {
   HSTMT hdbc, hstmt;
   SQLCHAR conn[1024], buff[1024];
+  char version[128];
   SQLWCHAR conn_out[1024];
   SQLSMALLINT conn_out_len;
   SQLRETURN rc;
+
+  OK_SIMPLE_STMT(Stmt, "SELECT @@memsql_version");
+  CHECK_STMT_RC(hstmt, SQLFetch(Stmt));
+  my_fetch_str(Stmt, (SQLCHAR *) version, 1);
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   CHECK_ENV_RC(Env, SQLAllocHandle(SQL_HANDLE_DBC, Env, &hdbc));
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;SSLCERT=%s;SSLKEY=%s;",
@@ -932,7 +944,7 @@ ODBC_TEST(driver_connect_ssl_w) {
                            conn_out, sizeof(conn_out), &conn_out_len,
                            SQL_DRIVER_NOPROMPT) != SQL_ERROR, "Should not be able to connect without SSL for "
                                                               "SSL required user");
-  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "HY000");
+  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, strcmp(version, "7.0.15") ? "HY000" : "28000");
 
 
   sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;FORCE_TLS=1;",
@@ -1334,7 +1346,7 @@ int test_option_use_mycnf(SQLCHAR conn[1024], SQLCHAR conn_out[1024], HSTMT hdbc
   //
   SQLSMALLINT conn_out_len;
   OK_SIMPLE_STMT(Stmt, "CREATE DATABASE IF NOT EXISTS odbc_test_mycnf");
-  sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;OPTION=%d",
+  sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;OPTION=%d;NO_SSPS=0",
           my_drivername, my_uid, my_pwd, my_servername, my_port, options);
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,
@@ -1364,7 +1376,7 @@ int test_option_use_mycnf_w(SQLCHAR conn[1024], SQLWCHAR conn_out[1024], HSTMT h
   //
   SQLSMALLINT conn_out_len;
   OK_SIMPLE_STMT(Stmt, "CREATE DATABASE IF NOT EXISTS odbc_test_mycnf");
-  sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;OPTION=%d",
+  sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;OPTION=%d;NO_SSPS=0",
           my_drivername, my_uid, my_pwd, my_servername, my_port, options);
   CHECK_DBC_RC(hdbc, SQLDriverConnectW(hdbc, NULL, CW(conn), SQL_NTS,
                                       conn_out, 1024 * sizeof(SQLCHAR), &conn_out_len,

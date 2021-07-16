@@ -81,6 +81,7 @@ MADB_DsnKey DsnKeys[]=
   {"COMPAT_MODE",    offsetof(MADB_Dsn, CompatMode),        DSN_TYPE_BOOL,   0, 0}, /* MYSQL_COMPATIBILITY_MODE */
   {"NO_SSPS",        offsetof(MADB_Dsn, NoSsps),            DSN_TYPE_BOOL,   0, 0},
   {"NO_CACHE",       offsetof(MADB_Dsn, NoCache),           DSN_TYPE_BOOL,   MADB_OPT_FLAG_NO_CACHE, 0},
+  {"APP",       offsetof(MADB_Dsn, App),           DSN_TYPE_STRING, 0, 0},
   /* Aliases. Here offset is index of aliased key */
   {"SERVERNAME",     DSNKEY_SERVER_INDEX,                   DSN_TYPE_STRING, 0, 1},
   {"USER",           DSNKEY_UID_INDEX,                      DSN_TYPE_STRING, 0, 1},
@@ -133,6 +134,8 @@ MADB_Dsn *MADB_DSN_Init()
     Dsn->FreeMe= TRUE;
     Dsn->Keys= (MADB_DsnKey *)&DsnKeys;
   }
+  MADB_DSN_SetDefaults(Dsn);
+
   return Dsn;
 }
 /* }}} */

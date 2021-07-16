@@ -84,7 +84,7 @@ char* SkipQuotedString_Noescapes(char **CurPtr, const char *End, char Quote)
 // srcEnd is a pointer to the end of the source string.
 // openCurlyBrackets is a number of currently opened curly brackets from the start of the source string to the src.
 //
-SQLRETURN MADB_UnescapeQuery(MADB_Error *error, MADB_DynString *res, char **src, char **srcEnd, int openCurlyBrackets)
+SQLRETURN MADB_UnescapeQuery(MADB_Dbc *Dbc, MADB_Error *error, MADB_DynString *res, char **src, char **srcEnd, int openCurlyBrackets)
 {
   if (MADB_InitDynamicString(res, "", *srcEnd - *src, 256))
   {
@@ -102,7 +102,7 @@ SQLRETURN MADB_UnescapeQuery(MADB_Error *error, MADB_DynString *res, char **src,
     {
       case '{':
         (*src)++;
-        if (MADB_UnescapeQuery(error, &subquery, src, srcEnd, openCurlyBrackets + 1))
+        if (MADB_UnescapeQuery(Dbc, error, &subquery, src, srcEnd, openCurlyBrackets + 1))
         {
           MADB_DynstrFree(res);
           return error->ReturnValue;
@@ -136,7 +136,7 @@ SQLRETURN MADB_UnescapeQuery(MADB_Error *error, MADB_DynString *res, char **src,
           return MADB_SetError(error,  MADB_ERR_HY001, "Failed to allocate memory for the query string", 0);
         }
 
-        if (yyparse(scanner, error, res) != 0)
+        if (yyparse(scanner, error, Dbc, res) != 0)
         {
           MADB_DynstrFree(res);
           yy_delete_buffer(buf, scanner);
@@ -208,7 +208,7 @@ int MADB_ResetParser(MADB_Stmt *Stmt, char *OriginalQuery, SQLINTEGER OriginalLe
     char **OriginalQueryIterator = &OriginalQuery;
     char *OriginalQueryEnd = OriginalQuery + OriginalLength;
     MADB_DynString res;
-    if (MADB_UnescapeQuery(&Stmt->Error, &res, OriginalQueryIterator, &OriginalQueryEnd, 0)) {
+    if (MADB_UnescapeQuery(Stmt->Connection, &Stmt->Error, &res, OriginalQueryIterator, &OriginalQueryEnd, 0)) {
       return Stmt->Error.ReturnValue;
     }
 
