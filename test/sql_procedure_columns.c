@@ -936,7 +936,7 @@ static int query_and_check_non_ascii_N(const char* const catalog, const char* co
     size_t prev = NUM_PROC_FIELDS;
 
     // TODO: PLAT-5560
-    if (cPlatform == LINUX && is_unicode_driver())
+    if (is_unicode_driver())
         return OK;
 
     memset(result, 0, sizeof(result));
@@ -1015,7 +1015,7 @@ static int query_and_check_non_ascii_W(const char* const catalog, const char* co
     size_t prev = NUM_PROC_FIELDS;
 
     // TODO: PLAT-5560
-    if (cPlatform == LINUX && is_unicode_driver())
+    if (is_unicode_driver())
         return OK;
 
     memset(result, 0, sizeof(result));
