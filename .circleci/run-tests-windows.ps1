@@ -43,7 +43,12 @@ New-ItemProperty -Path "HKCU:\Software\ODBC\ODBC.INI\ODBC Data Sources" -Name $E
 $env:TEST_SCHEMA="odbc_test"
 $env:TEST_PORT=$ENV:MEMSQL_PORT
 $env:TEST_PASSWORD=$ENV:MEMSQL_PASSWORD
-$env:TEST_SERVER=$ENV:MEMSQL_HOST
+if ($env:DRIVER_TYPE -imatch "unicode")
+{
+    $env:TEST_SERVER=$ENV:HOST_WINDOWS_UNICODE
+} else {
+    $env:TEST_SERVER=$ENV:HOST_WINDOWS_ANSI
+}
 $env:TEST_UID=$ENV:MEMSQL_USER
 
 Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$((Resolve-DnsName $ENV:MEMSQL_HOST).IPAddress)`ttest-memsql-server" -Force
