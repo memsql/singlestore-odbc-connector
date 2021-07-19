@@ -194,6 +194,7 @@ jobs:
 
   build-linux-in-docker:
     #    We need docker based jobs because CircleCI has only ubuntu Linux executor and we need to test our connector on Debian and CentOS too
+    #    This job use a `$MEMSQL_HOST` variable which point to `mac-ansi` host. Because of that we can't run this job and `macos-ansi` job simultaneously
     parameters:
       os_version:
         type: string
