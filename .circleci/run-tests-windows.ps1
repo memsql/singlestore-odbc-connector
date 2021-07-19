@@ -44,10 +44,20 @@ $env:TEST_SCHEMA="odbc_test"
 $env:TEST_PORT=$ENV:MEMSQL_PORT
 $env:TEST_PASSWORD=$ENV:MEMSQL_PASSWORD
 $env:TEST_UID=$ENV:MEMSQL_USER
+if ($env:DRIVER_TYPE -imatch "unicode")
+{
+    $env:TEST_SERVER=$ENV:HOST_WINDOWS_UNICODE
+    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$((Resolve-DnsName $ENV:HOST_WINDOWS_UNICODE).IPAddress)`ttest-memsql-server" -Force
+    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$((Resolve-DnsName $ENV:HOST_WINDOWS_UNICODE).IPAddress)`ttest-memsql-cluster" -Force
+    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$((Resolve-DnsName $ENV:HOST_WINDOWS_UNICODE).IPAddress)`tsinglestore.test.com" -Force
 
-Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$((Resolve-DnsName $ENV:TEST_SERVER).IPAddress)`ttest-memsql-server" -Force
-Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$((Resolve-DnsName $ENV:TEST_SERVER).IPAddress)`ttest-memsql-cluster" -Force
-Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$((Resolve-DnsName $ENV:TEST_SERVER).IPAddress)`tsinglestore.test.com" -Force
+} else {
+    $env:TEST_SERVER=$ENV:HOST_WINDOWS_ANSI
+    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$((Resolve-DnsName $ENV:HOST_WINDOWS_ANSI).IPAddress)`ttest-memsql-server" -Force
+    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$((Resolve-DnsName $ENV:HOST_WINDOWS_ANSI).IPAddress)`ttest-memsql-cluster" -Force
+    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$((Resolve-DnsName $ENV:HOST_WINDOWS_ANSI).IPAddress)`tsinglestore.test.com" -Force
+
+}
 Add-Content -Path $env:windir\my.ini -Value "`n[mysqld]`nplugin-load-add=authentication_pam.so`n[client]`nprotocol = TCP`n[odbc]`ndatabase = odbc_test_mycnf" -Force
 
 cd test

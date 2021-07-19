@@ -85,10 +85,6 @@ jobs:
           command: |
             .circleci\build-windows.ps1
       - run:
-          name: Setup host
-          command: |
-            .circleci\setup-windows-host.ps1
-      - run:
           name: Run tests
           command: |
             .circleci\run-tests-windows.ps1
