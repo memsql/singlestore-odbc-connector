@@ -22,13 +22,6 @@ if (-not (Get-Command ctest -ErrorAction SilentlyContinue)) {
     New-Alias -Name ctest -Value "$Env:ProgramFiles\CMake\bin\ctest.exe"
 }
 
-if ($env:DRIVER_TYPE -imatch "unicode")
-{
-    $env:TEST_SERVER=$ENV:HOST_WINDOWS_UNICODE
-} else {
-    $env:TEST_SERVER=$ENV:HOST_WINDOWS_ANSI
-}
-
 New-Item -Path "HKCU:\Software\ODBC"
 New-Item -Path "HKCU:\Software\ODBC\ODBC.INI"
 $regPath = "HKCU:\Software\ODBC\ODBC.INI\$ENV:TEST_DSN"
