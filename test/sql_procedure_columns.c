@@ -57,7 +57,7 @@ static int try_drop_check_error(const char* const command) {
     {
         IS_OK(process_drop_error(command));
     }
-    if(cPlatform != MAC) /* The non-ASCII query gets corrupted for ANSI driver */
+    if(cPlatform == LINUX) /* The non-ASCII query gets corrupted for ANSI driver on Windows and MAC */
     {
         if(!SQL_SUCCEEDED(SQLExecDirectW(Stmt, CW(command), SQL_NTS)))
         {
