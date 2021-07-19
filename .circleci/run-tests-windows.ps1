@@ -33,7 +33,6 @@ New-ItemProperty -Path $regPath -Name "DRIVER" -Value $ENV:TEST_DRIVER
 New-ItemProperty -Path $regPath -Name "OPTIONS" -Value "0"
 New-ItemProperty -Path $regPath -Name "PORT" -Value $ENV:MEMSQL_PORT
 New-ItemProperty -Path $regPath -Name "PWD" -Value $ENV:MEMSQL_PASSWORD
-New-ItemProperty -Path $regPath -Name "SERVER" -Value $ENV:TEST_SERVER
 New-ItemProperty -Path $regPath -Name "SSLVERIFY" -Value "0"
 New-ItemProperty -Path $regPath -Name "TCPIP" -Value "1"
 New-ItemProperty -Path $regPath -Name "UID" -Value $ENV:MEMSQL_USER
@@ -47,12 +46,14 @@ $env:TEST_UID=$ENV:MEMSQL_USER
 if ($env:DRIVER_TYPE -imatch "unicode")
 {
     $env:TEST_SERVER=$ENV:HOST_WINDOWS_UNICODE
+    New-ItemProperty -Path $regPath -Name "SERVER" -Value $ENV:HOST_WINDOWS_UNICODE
     Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$((Resolve-DnsName $ENV:HOST_WINDOWS_UNICODE).IPAddress)`ttest-memsql-server" -Force
     Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$((Resolve-DnsName $ENV:HOST_WINDOWS_UNICODE).IPAddress)`ttest-memsql-cluster" -Force
     Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$((Resolve-DnsName $ENV:HOST_WINDOWS_UNICODE).IPAddress)`tsinglestore.test.com" -Force
 
 } else {
     $env:TEST_SERVER=$ENV:HOST_WINDOWS_ANSI
+    New-ItemProperty -Path $regPath -Name "SERVER" -Value $ENV:HOST_WINDOWS_ANSI
     Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$((Resolve-DnsName $ENV:HOST_WINDOWS_ANSI).IPAddress)`ttest-memsql-server" -Force
     Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$((Resolve-DnsName $ENV:HOST_WINDOWS_ANSI).IPAddress)`ttest-memsql-cluster" -Force
     Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$((Resolve-DnsName $ENV:HOST_WINDOWS_ANSI).IPAddress)`tsinglestore.test.com" -Force
