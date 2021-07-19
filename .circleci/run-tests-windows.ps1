@@ -47,16 +47,16 @@ if ($env:DRIVER_TYPE -imatch "unicode")
 {
     $env:TEST_SERVER=$ENV:HOST_WINDOWS_UNICODE
     New-ItemProperty -Path $regPath -Name "SERVER" -Value $ENV:HOST_WINDOWS_UNICODE
-    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$((Resolve-DnsName $ENV:HOST_WINDOWS_UNICODE).IPAddress)`ttest-memsql-server" -Force
-    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$((Resolve-DnsName $ENV:HOST_WINDOWS_UNICODE).IPAddress)`ttest-memsql-cluster" -Force
-    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$((Resolve-DnsName $ENV:HOST_WINDOWS_UNICODE).IPAddress)`tsinglestore.test.com" -Force
+    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$ENV:HOST_WINDOWS_UNICODE`ttest-memsql-server" -Force
+    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$ENV:HOST_WINDOWS_UNICODE`ttest-memsql-cluster" -Force
+    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$ENV:HOST_WINDOWS_UNICODE`tsinglestore.test.com" -Force
 
 } else {
     $env:TEST_SERVER=$ENV:HOST_WINDOWS_ANSI
     New-ItemProperty -Path $regPath -Name "SERVER" -Value $ENV:HOST_WINDOWS_ANSI
-    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$((Resolve-DnsName $ENV:HOST_WINDOWS_ANSI).IPAddress)`ttest-memsql-server" -Force
-    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$((Resolve-DnsName $ENV:HOST_WINDOWS_ANSI).IPAddress)`ttest-memsql-cluster" -Force
-    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$((Resolve-DnsName $ENV:HOST_WINDOWS_ANSI).IPAddress)`tsinglestore.test.com" -Force
+    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$ENV:HOST_WINDOWS_ANSI`ttest-memsql-server" -Force
+    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$ENV:HOST_WINDOWS_ANSI`ttest-memsql-cluster" -Force
+    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$ENV:HOST_WINDOWS_ANSI`tsinglestore.test.com" -Force
 
 }
 Add-Content -Path $env:windir\my.ini -Value "`n[mysqld]`nplugin-load-add=authentication_pam.so`n[client]`nprotocol = TCP`n[odbc]`ndatabase = odbc_test_mycnf" -Force
