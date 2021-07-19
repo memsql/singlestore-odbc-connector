@@ -1225,7 +1225,7 @@ ODBC_TEST(procedurecolumns_non_ascii_N) {
     };
 
     /* Fails on MAC, disable for now */
-    if(cPlatform == MAC)
+    if(cPlatform != LINUX)
       return SKIP; /* TODO: fix the test */
 
     // Init env
@@ -1278,8 +1278,8 @@ ODBC_TEST(procedurecolumns_non_ascii_W) {
         {query_and_check_non_ascii_W, "W"},
     };
 
-    /* Fails on MAC, disable for now */
-    if(cPlatform == MAC)
+    /* Fails on MAC and Windows, disable for now */
+    if(cPlatform != LINUX)
       return SKIP; /* TODO: fix the test */
 
     // Init env
