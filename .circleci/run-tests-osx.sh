@@ -27,9 +27,9 @@ export ODBCINSTINI="$PWD/test/odbcinst.ini"
 cat ${ODBCINSTINI}
 
 echo "Modifying /etc/hosts and ~/my.cnf to enable connect tests"
-echo "$(dig ${TEST_SERVER} +short) test-memsql-server" | sudo tee -a /etc/hosts
-echo "$(dig ${TEST_SERVER} +short) test-memsql-cluster" | sudo tee -a /etc/hosts
-echo "$(dig ${TEST_SERVER} +short) singlestore.test.com" | sudo tee -a /etc/hosts
+echo "${TEST_SERVER} test-memsql-server" | sudo tee -a /etc/hosts
+echo "${TEST_SERVER} test-memsql-cluster" | sudo tee -a /etc/hosts
+echo "${TEST_SERVER} singlestore.test.com" | sudo tee -a /etc/hosts
 echo "[mysqld]
 plugin-load-add=authentication_pam.so
 
