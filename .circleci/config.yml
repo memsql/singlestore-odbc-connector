@@ -62,11 +62,14 @@ jobs:
         type: string
       test_driver:
         type: string
+      driver_type:
+        type: string
     executor: win/default
     environment:
       BUILD_TYPE: << parameters.build_type >>
       TEST_DRIVER: << parameters.test_driver >>
       TEST_DSN: << parameters.test_dsn >>
+      DRIVER_TYPE: << parameters.driver_type >>
     steps:
       - checkout
       - run:
@@ -94,12 +97,15 @@ jobs:
         type: string
       driver_name:
         type: string
+      driver_type:
+        type: string
     macos:
       xcode: 11.0.0
     environment:
       BUILD_TYPE: << parameters.build_type >>
       TEST_DSN: << parameters.test_dsn >>
       DRIVER_NAME: << parameters.driver_name >>
+      DRIVER_TYPE: << parameters.driver_type >>
       TEST_SCHEMA: odbc_test
       CONTINUOUS_INTEGRATION: true
     steps:
@@ -107,10 +113,19 @@ jobs:
           name: Define Environment Variables
           command: |
             echo 'export TEST_DRIVER=$DRIVER_NAME' >> $BASH_ENV
-            echo 'export TEST_SERVER=$MEMSQL_HOST' >> $BASH_ENV
             echo 'export TEST_UID=$MEMSQL_USER' >> $BASH_ENV
             echo 'export TEST_PORT=$MEMSQL_PORT' >> $BASH_ENV
             echo 'export TEST_PASSWORD=$MEMSQL_PASSWORD' >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: Define Host Variable
+          command: |
+            if [ "$DRIVER_TYPE" = "unicode" ]
+            then
+              echo 'export TEST_SERVER=$HOST_MAC_UNICODE' >> $BASH_ENV
+            else
+              echo 'export TEST_SERVER=$HOST_MAC_ANSI' >> $BASH_ENV
+            fi
             source $BASH_ENV
       - setup-environment-macos
       - checkout
@@ -179,6 +194,7 @@ jobs:
 
   build-linux-in-docker:
     #    We need docker based jobs because CircleCI has only ubuntu Linux executor and we need to test our connector on Debian and CentOS too
+    #    This job use a `$MEMSQL_HOST` variable which point to `mac-ansi` host. Because of that we can't run this job and `macos-ansi` job simultaneously
     parameters:
       os_version:
         type: string
@@ -361,9 +377,9 @@ workflows:
                 - ssodbc_test_a
               driver_name:
                 - SingleStore ODBC 1.0.0 ANSI Driver
+              driver_type:
+                - ansi
       - build-windows:
-          requires:
-            - build-macos-ansi-RelWithDebInfo
           name: build-windows-unicode-<< matrix.build_type >>
           matrix:
             parameters:
@@ -373,9 +389,9 @@ workflows:
                 - ssodbc_test_w
               test_driver:
                 - SingleStore ODBC 1.0.0 Unicode Driver
+              driver_type:
+                - unicode
       - build-macos:
-          requires:
-            - build-windows-unicode-RelWithDebInfo
           name: build-macos-unicode-<< matrix.build_type >>
           matrix:
             parameters:
@@ -385,9 +401,9 @@ workflows:
                 - ssodbc_test_w
               driver_name:
                 - SingleStore ODBC 1.0.0 Unicode Driver
+              driver_type:
+                - unicode
       - build-windows:
-          requires:
-            - build-macos-unicode-RelWithDebInfo
           name: build-windows-ansi-<< matrix.build_type >>
           matrix:
             parameters:
@@ -397,6 +413,8 @@ workflows:
                 - ssodbc_test_a
               test_driver:
                 - SingleStore ODBC 1.0.0 ANSI Driver
+              driver_type:
+                - ansi
   daily:
     triggers:
       - schedule:
@@ -670,6 +688,8 @@ workflows:
                 - ssodbc_test_w
               driver_name:
                 - SingleStore ODBC 1.0.0 Unicode Driver
+              driver_type:
+                - unicode
       - build-macos:
           requires:
             - build-macos-unicode-RelWithDebInfo
@@ -682,6 +702,8 @@ workflows:
                 - ssodbc_test_a
               driver_name:
                 - SingleStore ODBC 1.0.0 ANSI Driver
+              driver_type:
+                - ansi
       - build-windows:
           requires:
             - build-macos-ansi-RelWithDebInfo
@@ -694,6 +716,8 @@ workflows:
                 - ssodbc_test_w
               test_driver:
                 - SingleStore ODBC 1.0.0 Unicode Driver
+              driver_type:
+                - unicode
       - build-windows:
           requires:
             - build-windows-unicode-RelWithDebInfo
@@ -706,7 +730,8 @@ workflows:
                 - ssodbc_test_a
               test_driver:
                 - SingleStore ODBC 1.0.0 ANSI Driver
-
+              driver_type:
+                - ansi
   publish:
     jobs:
       - publish-windows:
