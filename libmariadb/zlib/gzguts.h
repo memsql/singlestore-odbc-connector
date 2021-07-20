@@ -5,7 +5,9 @@
 
 #define _LARGEFILE64_SOURCE     /* See feature_test_macros(7) */
 #include <sys/types.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 #ifdef _LARGEFILE64_SOURCE
 #  ifndef _LARGEFILE_SOURCE
