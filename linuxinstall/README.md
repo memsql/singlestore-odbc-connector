@@ -1,6 +1,6 @@
-Creating a Data Source with SingleStore ODBC Connector
+Creating a Data Source with SingleStore ODBC Driver
 
-Connector/ODBC offers the flexibility to handle data using any character set through
+ODBC driver offers the flexibility to handle data using any character set through
 its Unicode-enabled driver, or the maximum raw speed for a more limited range of character
 sets through its ANSI driver.
 Both kinds of drivers are provided in the same download package.
@@ -24,7 +24,7 @@ sudo apt-get install unixodbc
 sudo apt-get install libssl-dev
 ```
 
-If you plan to compile an application from source against SingleStore ODBC Connector and UnixODBC,
+If you plan to compile an application from source against SingleStore ODBC Driver and UnixODBC,
 then you also need the development header files that define the ODBC API function prototypes,
 ODBC data types, etc.
 To install UnixODBC development files you can use the following command.
@@ -40,7 +40,7 @@ sudo apt-get update
 sudo apt-get install unixodbc-dev
 ```
 
-2. Configuring SingleStore ODBC Connector as a UnixODBC Driver on Linux
+2. Configuring SingleStore ODBC Driver as a UnixODBC Driver on Linux
 
 Create a template file similar to the following,
 with a name like SingleStore_odbc_driver_template.ini.
