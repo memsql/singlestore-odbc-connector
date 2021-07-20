@@ -771,7 +771,7 @@ ODBC_TEST(bulk_insert_all_datatypes)
     /*
     is_num(rowsFetched, NUM_ROWS);
     for (i = 0; i < NUM_ROWS; i++) {
-      is_num(rowStatusArray[i], SQL_ROW_SUCCESS); // TODO PLAT-5555
+      is_num(rowStatusArray[i], SQL_ROW_SUCCESS);  // TODO PLAT-5555
     }*/
 
     // Free the statement
