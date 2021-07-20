@@ -1045,7 +1045,7 @@ MA_ODBC_TESTS my_tests[]=
   {t_odbc149, "odbc149_ts_col_insert" , NORMAL, ALL_DRIVERS},
   {bulk_insert_all_datatypes, "bulk_insert_all_datatypes" , NORMAL, ALL_DRIVERS},
   {unsupported_bulk_operations, "unsupported_bulk_operations" , NORMAL, ALL_DRIVERS},
-  {bulk_load_data, "bulk_load_data" , NORMAL, ALL_DRIVERS},
+  {bulk_load_data, "bulk_load_data" , CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
   {bulk_ignore_column, "bulk_ignore_column" , NORMAL, ALL_DRIVERS},
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };

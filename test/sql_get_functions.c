@@ -139,11 +139,11 @@ ODBC_TEST(single_odbc_function)
 
   for (i = 0; i < sizeof(function_supports)/sizeof(FUNCTION_SUPPORT); i++)
   {
-    if (function_supports[i].is_supported == SQL_TRUE) {
+    if (iOdbc() && function_supports[i].is_supported == SQL_FALSE) {
+        CHECK_DBC_ERR(Connection, SQLGetFunctions(Connection, function_supports[i].function, &exists), "HY095", 0, "Function type out of range");
+    } else {
       CHECK_DBC_RC(Connection, SQLGetFunctions(Connection, function_supports[i].function, &exists));
       IS(exists == function_supports[i].is_supported)
-    } else {
-      CHECK_DBC_ERR(Connection, SQLGetFunctions(Connection, function_supports[i].function, &exists), "HY095", 0, "Function type out of range");
     }
   }
   return OK;
