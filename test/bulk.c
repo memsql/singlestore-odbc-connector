@@ -748,7 +748,7 @@ ODBC_TEST(bulk_insert_all_datatypes)
     // Bind columns
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_SSHORT, &rowsInsert[0].id, 0, NULL));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_CHAR, rowsInsert[0].c_char, BUFF_SIZE, NULL));
-    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_WCHAR, rowsInsert[0].c_wchar, BUFF_SIZE*sizeof(SQLWCHAR), &rowsSelect[0].c_wchar_len));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_WCHAR, rowsInsert[0].c_wchar, BUFF_SIZE*sizeof(SQLWCHAR), iOdbc() ? &rowsSelect[0].c_wchar_len : NULL));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_C_SSHORT, &rowsInsert[0].c_sshort, 0, NULL));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 5, SQL_C_USHORT, &rowsInsert[0].c_ushort, 0, NULL));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 6, SQL_C_SLONG, &rowsInsert[0].c_slong, 0, NULL));
@@ -763,7 +763,7 @@ ODBC_TEST(bulk_insert_all_datatypes)
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 15, SQL_C_BINARY, &rowsInsert[0].c_binary, BUFF_SIZE, &rowsInsert[0].c_binary_len));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 16, SQL_C_TYPE_DATE, &rowsInsert[0].c_type_date, 0, NULL));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 17, SQL_C_TYPE_TIME, &rowsInsert[0].c_type_time, 0, NULL));
-    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 18, SQL_C_TYPE_TIMESTAMP, &rowsInsert[0].c_type_timestamp, 0, &rowsInsert[0].c_timestamp_len));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 18, SQL_C_TYPE_TIMESTAMP, &rowsInsert[0].c_type_timestamp, 0, iOdbc() ? &rowsInsert[0].c_timestamp_len : NULL));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 19, SQL_C_NUMERIC, &rowsInsert[0].c_numeric, 0, NULL));
 
     // Perform bulk insert. It should insert NUM_ROWS new rows to the table
@@ -802,7 +802,7 @@ ODBC_TEST(bulk_insert_all_datatypes)
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 15, SQL_C_BINARY, &rowsSelect[0].c_binary, BUFF_SIZE, &rowsSelect[0].c_binary_len));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 16, SQL_C_TYPE_DATE, &rowsSelect[0].c_type_date, 0, NULL));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 17, SQL_C_TYPE_TIME, &rowsSelect[0].c_type_time, 0, NULL));
-    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 18, SQL_C_TYPE_TIMESTAMP, &rowsSelect[0].c_type_timestamp, 0, &rowsSelect[0].c_timestamp_len));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 18, SQL_C_TYPE_TIMESTAMP, &rowsSelect[0].c_type_timestamp, 0, iOdbc() ? &rowsSelect[0].c_timestamp_len : NULL));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 19, SQL_C_NUMERIC, &rowsSelect[0].c_numeric, 0, NULL));
 
     CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
