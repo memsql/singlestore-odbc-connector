@@ -3,7 +3,6 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-#define _LARGEFILE64_SOURCE     /* See feature_test_macros(7) */
 #include <sys/types.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
