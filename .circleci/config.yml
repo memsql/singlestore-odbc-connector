@@ -62,11 +62,14 @@ jobs:
         type: string
       test_driver:
         type: string
+      driver_type:
+        type: string
     executor: win/default
     environment:
       BUILD_TYPE: << parameters.build_type >>
       TEST_DRIVER: << parameters.test_driver >>
       TEST_DSN: << parameters.test_dsn >>
+      DRIVER_TYPE: << parameters.driver_type >>
     steps:
       - checkout
       - run:
@@ -94,12 +97,15 @@ jobs:
         type: string
       driver_name:
         type: string
+      driver_type:
+        type: string
     macos:
       xcode: 11.0.0
     environment:
       BUILD_TYPE: << parameters.build_type >>
       TEST_DSN: << parameters.test_dsn >>
       DRIVER_NAME: << parameters.driver_name >>
+      DRIVER_TYPE: << parameters.driver_type >>
       TEST_SCHEMA: odbc_test
       CONTINUOUS_INTEGRATION: true
     steps:
@@ -107,10 +113,19 @@ jobs:
           name: Define Environment Variables
           command: |
             echo 'export TEST_DRIVER=$DRIVER_NAME' >> $BASH_ENV
-            echo 'export TEST_SERVER=$MEMSQL_HOST' >> $BASH_ENV
             echo 'export TEST_UID=$MEMSQL_USER' >> $BASH_ENV
             echo 'export TEST_PORT=$MEMSQL_PORT' >> $BASH_ENV
             echo 'export TEST_PASSWORD=$MEMSQL_PASSWORD' >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: Define Host Variable
+          command: |
+            if [ "$DRIVER_TYPE" = "unicode" ]
+            then
+              echo 'export TEST_SERVER=$HOST_MAC_UNICODE' >> $BASH_ENV
+            else
+              echo 'export TEST_SERVER=$HOST_MAC_ANSI' >> $BASH_ENV
+            fi
             source $BASH_ENV
       - setup-environment-macos
       - checkout
@@ -179,6 +194,7 @@ jobs:
 
   build-linux-in-docker:
     #    We need docker based jobs because CircleCI has only ubuntu Linux executor and we need to test our connector on Debian and CentOS too
+    #    This job use a `$MEMSQL_HOST` variable which point to `mac-ansi` host. Because of that we can't run this job and `macos-ansi` job simultaneously
     parameters:
       os_version:
         type: string
@@ -243,7 +259,7 @@ jobs:
           command: |
             .circleci\build-windows.ps1
       - store_artifacts:
-          path: C:\Users\circleci\project\wininstall\singlestore-connector-odbc-0.8.2-beta-win64.msi
+          path: C:\Users\circleci\project\wininstall\singlestore-connector-odbc-1.0.0-win64.msi
 
   publish-macos:
     parameters:
@@ -262,7 +278,7 @@ jobs:
           command: |
             ./.circleci/build-osx.sh
       - store_artifacts:
-          path: /Users/distiller/project/osxinstall/singlestore-connector-odbc-0.8.2-beta-osx-x86_64.pkg
+          path: /Users/distiller/project/osxinstall/singlestore-connector-odbc-1.0.0-osx-x86_64.pkg
 
   publish-linux:
     parameters:
@@ -289,9 +305,14 @@ jobs:
       - run:
           name: Create archive
           command: |
-            tar -zcvf singlestore-connector-odbc-0.8.2-beta-<< parameters.os_name >>-amd64.tar.gz /root/project/linuxinstall/README.md /root/project/libssodbca.so /root/project/libssodbcw.so
+            cd /root/project
+            mkdir singlestore-connector-odbc-1.0.0-<< parameters.os_name >>-amd64
+            cp linuxinstall/README.md singlestore-connector-odbc-1.0.0-<< parameters.os_name >>-amd64
+            cp libssodbca.so singlestore-connector-odbc-1.0.0-<< parameters.os_name >>-amd64
+            cp libssodbcw.so singlestore-connector-odbc-1.0.0-<< parameters.os_name >>-amd64
+            tar -zcvf singlestore-connector-odbc-1.0.0-<< parameters.os_name >>-amd64.tar.gz singlestore-connector-odbc-1.0.0-<< parameters.os_name >>-amd64
       - store_artifacts:
-          path: /root/project/singlestore-connector-odbc-0.8.2-beta-<< parameters.os_name >>-amd64.tar.gz
+          path: /root/project/singlestore-connector-odbc-1.0.0-<< parameters.os_name >>-amd64.tar.gz
 
 workflows:
   test:
@@ -309,7 +330,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC 0.8.2-beta Unicode Driver
+                - SingleStore ODBC 1.0.0 Unicode Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
               with_sanitizer:
@@ -327,7 +348,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC 0.8.2-beta Unicode Driver
+                - SingleStore ODBC 1.0.0 Unicode Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
       - build-ubuntu:
@@ -343,46 +364,10 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC 0.8.2-beta ANSI Driver
+                - SingleStore ODBC 1.0.0 ANSI Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
-#      - build-windows:
-#          name: build-windows-unicode-<< matrix.build_type >>
-#          matrix:
-#            parameters:
-#              build_type:
-#                - RelWithDebInfo
-#              test_dsn:
-#                - ssodbc_test_w
-#              test_driver:
-#                - SingleStore ODBC 0.8.2-beta Unicode Driver
-#      - build-windows:
-#          requires:
-#            - build-windows-unicode-RelWithDebInfo
-#          name: build-windows-ansi-<< matrix.build_type >>
-#          matrix:
-#            parameters:
-#              build_type:
-#                - RelWithDebInfo
-#              test_dsn:
-#                - ssodbc_test_a
-#              test_driver:
-#                - SingleStore ODBC 0.8.2-beta ANSI Driver
       - build-macos:
-#          requires:
-#            - build-windows-ansi-RelWithDebInfo
-          name: build-macos-unicode-<< matrix.build_type >>
-          matrix:
-            parameters:
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - ssodbc_test_w
-              driver_name:
-                - SingleStore ODBC 0.8.2-beta Unicode Driver
-      - build-macos:
-          requires:
-            - build-macos-unicode-RelWithDebInfo
           name: build-macos-ansi-<< matrix.build_type >>
           matrix:
             parameters:
@@ -391,7 +376,45 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               driver_name:
-                - SingleStore ODBC 0.8.2-beta ANSI Driver
+                - SingleStore ODBC 1.0.0 ANSI Driver
+              driver_type:
+                - ansi
+      - build-windows:
+          name: build-windows-unicode-<< matrix.build_type >>
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_w
+              test_driver:
+                - SingleStore ODBC 1.0.0 Unicode Driver
+              driver_type:
+                - unicode
+      - build-macos:
+          name: build-macos-unicode-<< matrix.build_type >>
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_w
+              driver_name:
+                - SingleStore ODBC 1.0.0 Unicode Driver
+              driver_type:
+                - unicode
+      - build-windows:
+          name: build-windows-ansi-<< matrix.build_type >>
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_a
+              test_driver:
+                - SingleStore ODBC 1.0.0 ANSI Driver
+              driver_type:
+                - ansi
   daily:
     triggers:
       - schedule:
@@ -414,7 +437,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC 0.8.2-beta Unicode Driver
+                - SingleStore ODBC 1.0.0 Unicode Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
               with_sanitizer:
@@ -432,7 +455,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC 0.8.2-beta Unicode Driver
+                - SingleStore ODBC 1.0.0 Unicode Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
       - build-ubuntu:
@@ -448,7 +471,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC 0.8.2-beta Unicode Driver
+                - SingleStore ODBC 1.0.0 Unicode Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.1.13-11ddea2a3a-3.0.0-1.9.3
       - build-ubuntu:
@@ -464,7 +487,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC 0.8.2-beta Unicode Driver
+                - SingleStore ODBC 1.0.0 Unicode Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
       - build-ubuntu:
@@ -480,7 +503,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC 0.8.2-beta ANSI Driver
+                - SingleStore ODBC 1.0.0 ANSI Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
       - build-ubuntu:
@@ -496,7 +519,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC 0.8.2-beta ANSI Driver
+                - SingleStore ODBC 1.0.0 ANSI Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.1.13-11ddea2a3a-3.0.0-1.9.3
       - build-ubuntu:
@@ -512,7 +535,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC 0.8.2-beta ANSI Driver
+                - SingleStore ODBC 1.0.0 ANSI Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
       - build-linux-in-docker:
@@ -526,7 +549,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC 0.8.2-beta Unicode Driver
+                - SingleStore ODBC 1.0.0 Unicode Driver
       - build-linux-in-docker:
           requires:
             - build-debian-8-unicode-RelWithDebInfo
@@ -540,7 +563,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC 0.8.2-beta ANSI Driver
+                - SingleStore ODBC 1.0.0 ANSI Driver
       - build-linux-in-docker:
           requires:
             - build-debian-8-ansi-RelWithDebInfo
@@ -554,7 +577,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC 0.8.2-beta Unicode Driver
+                - SingleStore ODBC 1.0.0 Unicode Driver
       - build-linux-in-docker:
           requires:
             - build-debian-9-unicode-RelWithDebInfo
@@ -568,7 +591,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC 0.8.2-beta ANSI Driver
+                - SingleStore ODBC 1.0.0 ANSI Driver
       - build-linux-in-docker:
           requires:
             - build-debian-9-ansi-RelWithDebInfo
@@ -582,7 +605,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC 0.8.2-beta Unicode Driver
+                - SingleStore ODBC 1.0.0 Unicode Driver
       - build-linux-in-docker:
           requires:
             - build-debian-10-unicode-RelWithDebInfo
@@ -596,7 +619,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC 0.8.2-beta ANSI Driver
+                - SingleStore ODBC 1.0.0 ANSI Driver
       - build-linux-in-docker:
           requires:
             - build-debian-10-ansi-RelWithDebInfo
@@ -610,7 +633,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC 0.8.2-beta Unicode Driver
+                - SingleStore ODBC 1.0.0 Unicode Driver
       - build-linux-in-docker:
           requires:
             - build-centos-7-unicode-RelWithDebInfo
@@ -624,7 +647,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC 0.8.2-beta ANSI Driver
+                - SingleStore ODBC 1.0.0 ANSI Driver
       - build-linux-in-docker:
           requires:
             - build-centos-7-ansi-RelWithDebInfo
@@ -638,7 +661,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC 0.8.2-beta Unicode Driver
+                - SingleStore ODBC 1.0.0 Unicode Driver
       - build-linux-in-docker:
           requires:
             - build-centos-8-unicode-RelWithDebInfo
@@ -652,7 +675,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC 0.8.2-beta ANSI Driver
+                - SingleStore ODBC 1.0.0 ANSI Driver
       - build-macos:
           requires:
             - build-centos-8-ansi-RelWithDebInfo
@@ -664,7 +687,9 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               driver_name:
-                - SingleStore ODBC 0.8.2-beta Unicode Driver
+                - SingleStore ODBC 1.0.0 Unicode Driver
+              driver_type:
+                - unicode
       - build-macos:
           requires:
             - build-macos-unicode-RelWithDebInfo
@@ -676,7 +701,9 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               driver_name:
-                - SingleStore ODBC 0.8.2-beta ANSI Driver
+                - SingleStore ODBC 1.0.0 ANSI Driver
+              driver_type:
+                - ansi
       - build-windows:
           requires:
             - build-macos-ansi-RelWithDebInfo
@@ -688,7 +715,9 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC 0.8.2-beta Unicode Driver
+                - SingleStore ODBC 1.0.0 Unicode Driver
+              driver_type:
+                - unicode
       - build-windows:
           requires:
             - build-windows-unicode-RelWithDebInfo
@@ -700,8 +729,9 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC 0.8.2-beta ANSI Driver
-
+                - SingleStore ODBC 1.0.0 ANSI Driver
+              driver_type:
+                - ansi
   publish:
     jobs:
       - publish-windows:

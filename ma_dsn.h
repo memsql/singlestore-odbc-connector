@@ -100,6 +100,7 @@ typedef struct st_madb_dsn
   char    *DSNName;
   char    *Driver;
   char    *Description;
+  char *App;
   /*** Connection parameters ***/
   char    *ServerName;
   my_bool IsNamedPipe;

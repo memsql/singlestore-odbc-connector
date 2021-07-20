@@ -395,6 +395,9 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC ConnectionHandle,
 
     MDBUG_C_ENTER(Dbc, "SQLGetInfo");
     MDBUG_C_DUMP(Dbc, InfoType, d);
+    /* Linux DM overflows output buffer when SQLGetInfoW() is called with ANSI driver.
+     * The DM thinks that BufferLength is in SQLWCHARs, not in bytes.
+     */
     ret= Dbc->Methods->GetInfo(Dbc, InfoType, InfoValuePtr, BufferLength, StringLengthPtr, FALSE);
 
     MDBUG_C_RETURN(Dbc, ret, &Dbc->Error);
@@ -462,7 +465,7 @@ SQLRETURN SQL_API SQLNativeSql(SQLHDBC ConnectionHandle,
     ADJUST_LENGTH(InStatementStart, TextLength1);
     InStatementEnd = InStatementStart + TextLength1;
     InStatementIterator = &InStatementStart;
-    if (MADB_UnescapeQuery(&Dbc->Error, &res, InStatementIterator, &InStatementEnd, 0)) {
+    if (MADB_UnescapeQuery(Dbc, &Dbc->Error, &res, InStatementIterator, &InStatementEnd, 0)) {
         return Dbc->Error.ReturnValue;
     }
 

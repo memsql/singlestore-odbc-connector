@@ -28,7 +28,7 @@
 #include <stdarg.h>
 #include "ma_odbc.h"
 #include "escape_sequences/ast.h"
-void yyerror (void *scanner, MADB_Error *error, MADB_DynString *res, char *s)
+void yyerror (void *scanner, MADB_Error *error, MADB_Dbc *Dbc, MADB_DynString *res, char *s)
 {
 	if (strcmp(s, "syntax error") == 0)
 	{
@@ -156,8 +156,13 @@ char *getSingleStoreInterval(char *interval)
 	return matchValue(odbcIntervals, appropriateSingleStoreIntervals, odbcIntervalsSize, interval);
 }
 
-char *getSingleStoreDataType(char *dataType)
+static const char *getSingleStoreDataType(MADB_Dbc *Dbc, const char *dataType)
 {
+	if (Dbc->Dsn && Dbc->Dsn->App && !strcmp(Dbc->Dsn->App, "SingleStore Power BI Direct Query Connector")
+		&& dataType && !strcasecmp(dataType, "SQL_DECIMAL"))
+	{
+		return "DOUBLE";
+	}
 	return matchValue(supportedForConversionDataTypes,
 		appropriateSingleStoreDataTypes,
 		supportedForConversionDataTypesSize,
@@ -179,7 +184,7 @@ struct ASTNode* allocateNode(int childrenCount, ...);
 
 #define YYALOCATION_ERROR do \
 { \
-	yyerror(scanner, error, res, "Failed to allocate memory for escape sequence parsing");\
+	yyerror(scanner, error, Dbc, res, "Failed to allocate memory for escape sequence parsing");\
 	YYABORT;\
 } while(0)
 
@@ -189,8 +194,10 @@ struct ASTNode* allocateNode(int childrenCount, ...);
 %pure-parser
 %lex-param {void *scanner}
 %lex-param {MADB_Error *error}
+%lex-param {MADB_Dbc *Dbc}
 %parse-param {void *scanner}
 %parse-param {MADB_Error *error}
+%parse-param {MADB_Dbc *Dbc}
 %parse-param {MADB_DynString *res}
 
 %union
@@ -429,7 +436,7 @@ function_call:
 	}
 	| CONVERT OPENING_ROUND_BRACKET lexeme COMMA LEXEME CLOSING_ROUND_BRACKET
 	{
-		struct ASTNode *correctDataTypeName = newLeaf(getSingleStoreDataType($5));
+		struct ASTNode *correctDataTypeName = newLeaf(getSingleStoreDataType(Dbc, $5));
 		free($5);
 
 		// "$3 :> correctDataTypeName"

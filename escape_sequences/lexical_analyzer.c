@@ -540,7 +540,7 @@ static const flex_int16_t yy_chk[282] =
   51 Franklin St., Fifth Floor, Boston, MA 02110, USA
 *************************************************************************************/
 #include "escape_sequences/parser.h"
-#define YY_DECL int yylex(YYSTYPE * yylval_param, yyscan_t yyscanner, MADB_Error *error)
+#define YY_DECL int yylex(YYSTYPE * yylval_param, yyscan_t yyscanner, MADB_Error *error, MADB_Dbc *Dbc)
 int yylex();
 
 #define INITIAL 0
