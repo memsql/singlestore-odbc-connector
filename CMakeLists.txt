@@ -328,7 +328,9 @@ IF (WITH_SANITIZER)
   SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined -fsanitize=leak -fsanitize=address")
 ENDIF(WITH_SANITIZER)
 
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-implicit-function-declaration")
+IF(WITH_IODBC)
+  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-implicit-function-declaration")
+ENDIF(WITH_IODBC)
 
 # We need to determine the last parameter for SQLColAttribute:
 # Older UnixODBC version expect SQLPOINTER while Windows expects SQLLEN *
