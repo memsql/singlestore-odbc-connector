@@ -60,10 +60,6 @@ ODBC_TEST(client_side_prepare)
     SQLINTEGER nParam = -16;
     SQLLEN nParamInd = SQL_NULL_DATA;
 
-    /* Fails on MAC, disable for now */
-    if(cPlatform == MAC)
-      return SKIP; /* TODO: fix the test */
-
     OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS csps");
     char *createTableQuery = "CREATE TABLE csps(a char(10), b varchar(20), c numeric(10,3), d int, e bigint unsigned, "
                              "f datetime(6), g binary(5), h bit(64), i tinyint, j time, k date, l double, n int)";
@@ -756,10 +752,6 @@ ODBC_TEST(client_side_get_data_many_types)
     SQLLEN lParamLen;
     SQLINTEGER nParam = -16;
     SQLLEN nParamInd = SQL_NULL_DATA;
-
-    /* Fails on MAC, disable for now */
-    if(cPlatform == MAC)
-      return SKIP; /* TODO: fix the test */
 
     OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS cs_getdata");
     char *createTableQuery = "CREATE TABLE cs_getdata(a char(10), b varchar(20), c numeric(10,3), d int, e bigint unsigned, "

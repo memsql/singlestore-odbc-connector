@@ -40,10 +40,6 @@ ODBC_TEST(buffers_native_sql) {
     const char* query;
     const char* long_query;
 
-    /* Fails on MAC, disable for now */
-    if(cPlatform == MAC)
-      return SKIP; /* TODO: fix the test */
-
     // Normal run
     query = "SELECT (1, 2, 3)";
     strcpy(in_buf, query);
@@ -173,10 +169,6 @@ ODBC_TEST(buffers_native_sql_w) {
     SQLINTEGER out_len, buff_size;
     const char* query;
     const char* long_query;
-
-    /* Fails on MAC, disable for now */
-    if(cPlatform == MAC)
-      return SKIP; /* TODO: fix the test */
 
     // Normal run
     query = "SELECT (1, 2, 3)";
@@ -330,10 +322,6 @@ ODBC_TEST(buffers_exec_direct) {
     SQLINTEGER out_id;
     SQLCHAR out_text[10];
 
-    /* Fails on MAC, disable for now */
-    if(cPlatform == MAC)
-      return SKIP; /* TODO: fix the test */
-
     // Simple use
     query = "CREATE TABLE " TABLE "(id INT, text VARCHAR(16))";
     strcpy(in_buf, query);
@@ -398,10 +386,6 @@ ODBC_TEST(buffers_exec_direct_w) {
     SQLINTEGER in_id = 3;
     SQLINTEGER out_id;
     SQLWCHAR out_text[10];
-
-    /* Fails on MAC, disable for now */
-    if(cPlatform == MAC)
-      return SKIP; /* TODO: fix the test */
 
     // Simple use
     query = "CREATE TABLE " TABLE "(id INT, text VARCHAR(16))";
@@ -817,10 +801,6 @@ static int test_proc_columns_w() {
 
 ODBC_TEST(buffers_proc_columns) {
     int res;
-
-    /* Fails on MAC, disable for now */
-    if(cPlatform == MAC)
-      return SKIP; /* TODO: fix the test */
 
     OK_SIMPLE_STMT(Stmt, "CREATE FUNCTION aaa (a11 INT, aa1 INT) RETURNS INT AS BEGIN RETURN 0; END");
     OK_SIMPLE_STMT(Stmt, "CREATE PROCEDURE bbb (b22 INT) AS BEGIN SET b22 = 0; END");
