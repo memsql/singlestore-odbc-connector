@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <locale.h>
 
 #ifdef _WIN32
 # define _WINSOCKAPI_
@@ -1237,6 +1238,9 @@ int connect_and_run_tests(MA_ODBC_TESTS *tests, BOOL ProvideWConnection, BOOL No
     }
 
     ODBC_Disconnect(Env,Connection,Stmt);
+    Env=Connection=Stmt=NULL;
+    ODBC_Disconnect(Env, wConnection, wStmt);
+    wConnection=wStmt=NULL;
 
     if (failed)
     {
@@ -1329,12 +1333,7 @@ int run_tests_ex(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
     }
   }
 
-  if (cPlatform == LINUX)
-  {
-    /* A hack for UNIX ODBC - its string transcoding is broken for the first connection (env?) */
-    ODBC_Connect(&Env,&Connection,&Stmt);
-    ODBC_Disconnect(Env,Connection,Stmt);
-  }
+  setlocale(LC_CTYPE, "");
 
   cleanup();
 

@@ -23,6 +23,15 @@
 #include <ma_parse.h>
 #include <odbc_3_api.h>
 
+//#define TRACE_ANSI_ON
+#ifdef TRACE_ANSI_ON
+#define TRACE_ANSI printf("%s\n", __PRETTY_FUNCTION__);
+#define TRACE_ANSI_INT(val) printf("%s %d\n", __PRETTY_FUNCTION__, val);
+#else
+#define TRACE_ANSI
+#define TRACE_ANSI_INT(val)
+#endif // TRACE_ANSI_ON
+
 /* {{{ SQLColAttribute */
 SQLRETURN SQL_API SQLColAttribute (SQLHSTMT StatementHandle,
                                    SQLUSMALLINT ColumnNumber,
@@ -39,6 +48,9 @@ SQLRETURN SQL_API SQLColAttribute (SQLHSTMT StatementHandle,
 {
     MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
     SQLRETURN ret;
+
+    TRACE_ANSI
+
     if (!Stmt)
         return SQL_INVALID_HANDLE;
 
@@ -70,6 +82,9 @@ SQLRETURN SQL_API SQLColAttributes(SQLHSTMT hstmt,
                                    SQLLEN * pfDesc)
 {
     MADB_Stmt *Stmt= (MADB_Stmt *)hstmt;
+
+    TRACE_ANSI
+
     if (!Stmt)
         return SQL_INVALID_HANDLE;
 
@@ -93,6 +108,8 @@ SQLRETURN SQL_API SQLColumnPrivileges(SQLHSTMT StatementHandle,
 {
     MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
     SQLRETURN ret;
+
+    TRACE_ANSI
 
     if (!Stmt)
         return SQL_INVALID_HANDLE;
@@ -120,6 +137,9 @@ SQLRETURN SQL_API SQLColumns(SQLHSTMT StatementHandle,
 {
     MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
     SQLRETURN ret;
+
+    TRACE_ANSI
+
     if (!Stmt)
         return SQL_INVALID_HANDLE;
 
@@ -145,6 +165,8 @@ SQLRETURN SQL_API SQLConnect(SQLHDBC ConnectionHandle,
 {
     MADB_Dbc *Dbc= (MADB_Dbc*)ConnectionHandle;
 
+    TRACE_ANSI
+
     if (!Dbc)
         return SQL_INVALID_HANDLE;
 
@@ -167,6 +189,8 @@ SQLRETURN SQL_API SQLDataSources(SQLHENV EnvironmentHandle,
 {
     SQLRETURN ret= SQL_ERROR;
 
+    TRACE_ANSI
+
     return ret;
 }
 /* }}} */
@@ -184,6 +208,9 @@ SQLRETURN SQL_API SQLDescribeCol(SQLHSTMT StatementHandle,
 {
     MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
     SQLRETURN ret;
+
+    TRACE_ANSI
+
     if (!Stmt)
         return SQL_INVALID_HANDLE;
 
@@ -213,6 +240,9 @@ SQLRETURN SQL_API SQLDriverConnect(SQLHDBC ConnectionHandle,
 {
     MADB_Dbc *Dbc= (MADB_Dbc *)ConnectionHandle;
     SQLRETURN ret;
+
+    TRACE_ANSI
+
     if (!Dbc)
         return SQL_INVALID_HANDLE;
 
@@ -247,6 +277,8 @@ SQLRETURN SQL_API SQLDrivers(SQLHENV EnvironmentHandle,
 {
     SQLRETURN ret= SQL_ERROR;
 
+    TRACE_ANSI
+
     return ret;
 }
 /* }}} */
@@ -258,6 +290,8 @@ SQLRETURN SQL_API SQLExecDirect(SQLHSTMT StatementHandle,
 {
     MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
     SQLRETURN ret;
+
+    TRACE_ANSI
 
     if (!Stmt)
         ret= SQL_INVALID_HANDLE;
@@ -274,6 +308,8 @@ SQLRETURN SQL_API SQLGetConnectAttr(SQLHDBC ConnectionHandle,
                                     SQLINTEGER BufferLength,
                                     SQLINTEGER *StringLengthPtr)
 {
+    TRACE_ANSI_INT(Attribute)
+
     if (ConnectionHandle == SQL_NULL_HDBC)
         return SQL_INVALID_HANDLE;
     MADB_CLEAR_ERROR(&((MADB_Dbc *)ConnectionHandle)->Error);
@@ -286,6 +322,8 @@ SQLRETURN SQL_API SQLGetConnectAttr(SQLHDBC ConnectionHandle,
 SQLRETURN SQL_API SQLGetConnectOption(SQLHDBC ConnectionHandle, SQLUSMALLINT Option, SQLPOINTER ValuePtr)
 {
     MADB_Dbc *Dbc= (MADB_Dbc *)ConnectionHandle;
+
+    TRACE_ANSI_INT(Option)
 
     if (!Dbc)
         return SQL_INVALID_HANDLE;
@@ -304,6 +342,9 @@ SQLRETURN SQL_API SQLGetCursorName(
         SQLSMALLINT *   NameLengthPtr)
 {
     MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
+
+    TRACE_ANSI
+
     if (!Stmt)
         return SQL_INVALID_HANDLE;
     MADB_CLEAR_ERROR(&Stmt->Error);
@@ -320,6 +361,8 @@ SQLRETURN SQL_API SQLGetDescField(SQLHDESC DescriptorHandle,
                                   SQLINTEGER BufferLength,
                                   SQLINTEGER *StringLengthPtr)
 {
+    TRACE_ANSI
+
     if (!DescriptorHandle)
         return SQL_INVALID_HANDLE;
     MADB_CLEAR_ERROR(&((MADB_Desc*)DescriptorHandle)->Error);
@@ -342,6 +385,9 @@ SQLRETURN SQL_API SQLGetDescRec(SQLHDESC DescriptorHandle,
                                 SQLSMALLINT *NullablePtr)
 {
     MADB_Desc *Desc= (MADB_Desc *)DescriptorHandle;
+
+    TRACE_ANSI
+
     if (!Desc)
         return SQL_INVALID_HANDLE;
     MADB_CLEAR_ERROR(&Desc->Error);
@@ -360,6 +406,8 @@ SQLRETURN SQL_API SQLGetDiagField(SQLSMALLINT HandleType,
                                   SQLSMALLINT BufferLength,
                                   SQLSMALLINT *StringLengthPtr)
 {
+    TRACE_ANSI
+
     if (!Handle)
         return SQL_INVALID_HANDLE;
     return MADB_GetDiagField(HandleType, Handle, RecNumber, DiagIdentifier, DiagInfoPtr, BufferLength, StringLengthPtr, FALSE);
@@ -375,6 +423,8 @@ SQLRETURN SQL_API SQLGetDiagRec(SQLSMALLINT HandleType,
                                 SQLSMALLINT BufferLength,
                                 SQLSMALLINT *TextLengthPtr)
 {
+    TRACE_ANSI
+
     return MA_SQLGetDiagRec(HandleType, Handle, RecNumber, SQLState, NativeErrorPtr,
                             MessageText, BufferLength, TextLengthPtr);
 }
@@ -389,6 +439,9 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC ConnectionHandle,
 {
     MADB_Dbc *Dbc= (MADB_Dbc *)ConnectionHandle;
     SQLRETURN ret;
+
+    TRACE_ANSI_INT(InfoType)
+
     if (!Dbc)
         return SQL_INVALID_HANDLE;
     MADB_CLEAR_ERROR(&Dbc->Error);
@@ -410,6 +463,8 @@ SQLRETURN SQL_API SQLGetStmtAttr(SQLHSTMT StatementHandle,
                                  SQLINTEGER BufferLength,
                                  SQLINTEGER *StringLengthPtr)
 {
+    TRACE_ANSI_INT(Attribute)
+
     if (StatementHandle == SQL_NULL_HSTMT)
     {
         return SQL_INVALID_HANDLE;
@@ -425,6 +480,9 @@ SQLRETURN SQL_API SQLGetTypeInfo(SQLHSTMT StatementHandle,
                                  SQLSMALLINT DataType)
 {
     MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
+
+    TRACE_ANSI_INT(DataType)
+
     if (!Stmt)
         return SQL_INVALID_HANDLE;
     MADB_CLEAR_ERROR(&Stmt->Error);
@@ -446,6 +504,8 @@ SQLRETURN SQL_API SQLNativeSql(SQLHDBC ConnectionHandle,
     char *InStatementStart, *InStatementEnd;
     char **InStatementIterator;
     MADB_DynString res;
+
+    TRACE_ANSI
 
     if (!Dbc)
         return SQL_INVALID_HANDLE;
@@ -480,6 +540,8 @@ SQLRETURN SQL_API SQLPrepare(SQLHSTMT StatementHandle,
 {
     MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
 
+    TRACE_ANSI
+
     if (StatementHandle == SQL_NULL_HSTMT)
     {
         return SQL_INVALID_HANDLE;
@@ -508,6 +570,8 @@ SQLRETURN SQL_API SQLPrimaryKeys(SQLHSTMT StatementHandle,
 {
     MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
     SQLRETURN ret;
+
+    TRACE_ANSI
 
     MDBUG_C_ENTER(Stmt->Connection, "SQLPrimaryKeys");
     MDBUG_C_DUMP(Stmt->Connection, StatementHandle, 0x);
@@ -544,6 +608,8 @@ SQLRETURN SQL_API SQLProcedureColumns(SQLHSTMT StatementHandle,
 {
     MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
 
+    TRACE_ANSI
+
     if (!Stmt)
         return SQL_INVALID_HANDLE;
     MADB_CLEAR_ERROR(&Stmt->Error);
@@ -565,6 +631,8 @@ SQLRETURN SQL_API SQLProcedures(SQLHSTMT StatementHandle,
 {
     MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
 
+    TRACE_ANSI
+
     if (!Stmt)
         return SQL_INVALID_HANDLE;
     MADB_CLEAR_ERROR(&Stmt->Error);
@@ -579,6 +647,8 @@ SQLRETURN SQL_API SQLSetConnectAttr(SQLHDBC ConnectionHandle,
                                     SQLPOINTER ValuePtr,
                                     SQLINTEGER StringLength)
 {
+    TRACE_ANSI_INT(Attribute)
+
     if (ConnectionHandle == SQL_NULL_HDBC)
         return SQL_INVALID_HANDLE;
     MADB_CLEAR_ERROR(&((MADB_Dbc *)ConnectionHandle)->Error);
@@ -591,6 +661,8 @@ SQLRETURN SQL_API SQLSetConnectOption(SQLHDBC Hdbc, SQLUSMALLINT Option, SQLULEN
 {
     SQLINTEGER StringLength= 0;
     SQLRETURN ret;
+
+    TRACE_ANSI_INT(Option)
 
     if (!Hdbc)
         return SQL_INVALID_HANDLE;
@@ -610,6 +682,9 @@ SQLRETURN SQL_API SQLSetCursorName(SQLHSTMT StatementHandle,
                                    SQLSMALLINT NameLength)
 {
     MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
+
+    TRACE_ANSI
+
     if (!Stmt)
         return SQL_INVALID_HANDLE;
     MADB_CLEAR_ERROR(&Stmt->Error);
@@ -626,6 +701,9 @@ SQLRETURN SQL_API SQLSetDescField(SQLHDESC DescriptorHandle,
                                   SQLINTEGER BufferLength)
 {
     MADB_Desc *Desc= (MADB_Desc *)DescriptorHandle;
+
+    TRACE_ANSI
+
     if (!Desc)
         return SQL_INVALID_HANDLE;
     MADB_CLEAR_ERROR(&Desc->Error);
@@ -648,6 +726,9 @@ SQLRETURN SQL_API SQLSetDescRec(SQLHDESC DescriptorHandle,
                                 SQLLEN *IndicatorPtr)
 {
     MADB_Desc *Desc= (MADB_Desc *)DescriptorHandle;
+
+    TRACE_ANSI
+
     MADB_NOT_IMPLEMENTED(Desc);
 }
 /* }}} */
@@ -658,6 +739,8 @@ SQLRETURN SQL_API SQLSetStmtAttr(SQLHSTMT StatementHandle,
                                  SQLPOINTER ValuePtr,
                                  SQLINTEGER StringLength)
 {
+    TRACE_ANSI_INT(Attribute)
+
     if (StatementHandle == SQL_NULL_HSTMT)
     {
         return SQL_INVALID_HANDLE;
@@ -681,6 +764,9 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT StatementHandle,
                                     SQLUSMALLINT Nullable)
 {
     MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
+
+    TRACE_ANSI
+
     if (!Stmt)
         return SQL_INVALID_HANDLE;
     MADB_CLEAR_ERROR(&Stmt->Error);
@@ -704,6 +790,8 @@ SQLRETURN SQL_API SQLStatistics(SQLHSTMT StatementHandle,
 {
     MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
 
+    TRACE_ANSI
+
     if (!Stmt)
         return SQL_INVALID_HANDLE;
     MADB_CLEAR_ERROR(&Stmt->Error);
@@ -723,6 +811,8 @@ SQLRETURN SQL_API SQLTablePrivileges(SQLHSTMT StatementHandle,
                                      SQLSMALLINT NameLength3)
 {
     MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
+
+    TRACE_ANSI
 
     if (!Stmt)
         return SQL_INVALID_HANDLE;
@@ -745,6 +835,9 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT StatementHandle,
                             SQLSMALLINT NameLength4)
 {
     MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
+
+    TRACE_ANSI
+
     if (!Stmt)
         return SQL_INVALID_HANDLE;
     MADB_CLEAR_ERROR(&Stmt->Error);
@@ -763,6 +856,8 @@ SQLRETURN SQL_API SQLError(SQLHENV Env, SQLHDBC Dbc, SQLHSTMT Stmt,
     SQLSMALLINT HandleType= 0;
     SQLHANDLE   Handle=     NULL;
     MADB_Error *error;
+
+    TRACE_ANSI
 
     if (Stmt)
     {
