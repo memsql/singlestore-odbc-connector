@@ -255,7 +255,7 @@ ODBC_TEST(t_bug16224)
 
   ERR_SIMPLE_STMT(Stmt, "This is an invalid Query! (odbc test)");
 
-  CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, 0,
+  CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, iOdbc() ? 1 : 0,
                                  SQL_DIAG_NUMBER, &diagcnt,
                                  SQL_IS_INTEGER, NULL));
   is_num(diagcnt, 1);

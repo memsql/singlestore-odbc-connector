@@ -626,6 +626,7 @@ static int query_and_check_N(const char* const catalog, const char* const proced
     fetched = SQLFetch(Stmt);
     if(!remaining) {
         if(fetched == SQL_NO_DATA) {
+            SQLCloseCursor(Stmt);
             return OK;
         }
 
@@ -713,6 +714,7 @@ static int query_and_check_W(const char* const catalog, const char* const proced
     fetched = SQLFetch(Stmt);
     if(!remaining) {
         if(fetched == SQL_NO_DATA) {
+            SQLCloseCursor(Stmt);
             return OK;
         }
 
@@ -766,6 +768,8 @@ static int query_and_check_WN(const char* const catalog, const char* const proce
         SQLCHAR column_name[50];
         SQLSMALLINT column_type;
         SQLLEN catLen;
+        SQLLEN procLen;
+        SQLLEN colLen;
     } ProcDataWN;
 
     static ProcDataWN result[NUM_PROC_FIELDS + 1];
@@ -795,8 +799,8 @@ static int query_and_check_WN(const char* const catalog, const char* const proce
 
     CHECK_STMT_RC(Stmt, SQLProcedureColumnsW(Stmt, pCat, SQL_NTS, CW(""), 0, pProc, SQL_NTS, pCol, SQL_NTS));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_CHAR, result[0].catalog, sizeof(result[0].catalog), &result[0].catLen));
-    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_WCHAR, result[0].procedure, sizeof(result[0].procedure), NULL));
-    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_C_CHAR, result[0].column_name, sizeof(result[0].column_name), NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_WCHAR, result[0].procedure, sizeof(result[0].procedure), iOdbc() ? &result[0].procLen : NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_C_CHAR, result[0].column_name, sizeof(result[0].column_name), iOdbc() ? &result[0].colLen : NULL));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 5, SQL_C_SHORT, &result[0].column_type, 0, NULL));
     CHECK_STMT_RC(Stmt, SQLSetStmtAttrW(Stmt, SQL_ATTR_ROW_BIND_TYPE, (SQLPOINTER)sizeof(result[0]), 0));
     CHECK_STMT_RC(Stmt, SQLSetStmtAttrW(Stmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)(NUM_PROC_FIELDS + 1), 0));
@@ -804,6 +808,7 @@ static int query_and_check_WN(const char* const catalog, const char* const proce
     fetched = SQLFetch(Stmt);
     if(!remaining) {
         if(fetched == SQL_NO_DATA) {
+            SQLCloseCursor(Stmt);
             return OK;
         }
 
@@ -850,6 +855,7 @@ static int query_and_check_NW(const char* const catalog, const char* const proce
         SQLCHAR procedure[50];
         SQLWCHAR column_name[50];
         SQLSMALLINT column_type;
+        SQLLEN catLen;
         SQLLEN procLen;
         SQLLEN colLen;
     } ProcDataN;
@@ -864,7 +870,7 @@ static int query_and_check_NW(const char* const catalog, const char* const proce
     memset(result, 0, sizeof(result));
 
     CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, (SQLCHAR*)catalog, SQL_NTS, (SQLCHAR *)"", 0, (SQLCHAR*)procedure, SQL_NTS, (SQLCHAR*)column, SQL_NTS));
-    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_WCHAR, result[0].catalog, sizeof(result[0].catalog),NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_WCHAR, result[0].catalog, sizeof(result[0].catalog), iOdbc() ? &result[0].catLen : NULL));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_CHAR, result[0].procedure, sizeof(result[0].procedure), &result[0].procLen));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_C_WCHAR, result[0].column_name, sizeof(result[0].column_name), &result[0].colLen));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 5, SQL_C_SHORT, &result[0].column_type, 0, NULL));
@@ -874,6 +880,7 @@ static int query_and_check_NW(const char* const catalog, const char* const proce
     fetched = SQLFetch(Stmt);
     if(!remaining) {
         if(fetched == SQL_NO_DATA) {
+            SQLCloseCursor(Stmt);
             return OK;
         }
 

@@ -133,10 +133,10 @@ ODBC_TEST(buffers_native_sql) {
     IS(!strncmp(in_buf, out_buf, 14));
 
     // Bad use
-    CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, NULL, 0, out_buf, 15, NULL), "HY009", iOdbc() ? 1 : 0, NULL_ARG_ERROR);
+    CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, NULL, 0, out_buf, 15, NULL), "HY009", iOdbc() ? -1 : 0, NULL_ARG_ERROR);
     IS(strlen(out_buf) == 14);
 
-    CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, NULL, SQL_NTS, out_buf, 15, NULL), "HY009", iOdbc() ? 1 : 0, NULL_ARG_ERROR);
+    CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, NULL, SQL_NTS, out_buf, 15, NULL), "HY009", iOdbc() ? -1 : 0, NULL_ARG_ERROR);
     IS(strlen(out_buf) == 14);
 
     out_len = 10;
@@ -276,10 +276,10 @@ ODBC_TEST(buffers_native_sql_w) {
     IS(!sqlwcharcmp(in_buf, out_buf, 14));
 
     // Bad use
-    CHECK_DBC_ERR(Connection, SQLNativeSqlW(Connection, NULL, 0, out_buf, 15, NULL), "HY009", iOdbc() ? 1 : 0, NULL_ARG_ERROR);
+    CHECK_DBC_ERR(Connection, SQLNativeSqlW(Connection, NULL, 0, out_buf, 15, NULL), "HY009", iOdbc() ? -1 : 0, NULL_ARG_ERROR);
     IS(sqlwcharlen(out_buf) == 14);
 
-    CHECK_DBC_ERR(Connection, SQLNativeSqlW(Connection, NULL, SQL_NTS, out_buf, 15, NULL), "HY009", iOdbc() ? 1 : 0, NULL_ARG_ERROR);
+    CHECK_DBC_ERR(Connection, SQLNativeSqlW(Connection, NULL, SQL_NTS, out_buf, 15, NULL), "HY009", iOdbc() ? -1 : 0, NULL_ARG_ERROR);
     IS(sqlwcharlen(out_buf) == 14);
 
     out_len = 10;
@@ -398,10 +398,13 @@ ODBC_TEST(buffers_exec_direct_w) {
     CHECK_STMT_RC(Stmt, SQLExecDirectW(Stmt, in_buf, SQL_NTS));
     IS(sqlwcharequal(in_buf, CW(query)));
 
+    SQLLEN len1;
+    SQLLEN len2;
+
     // Shortcut in buff
     CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_SLONG, SQL_INTEGER, 0, 0, &in_id, 0, NULL));
-    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_SLONG, &out_id, 0, NULL));
-    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_WCHAR, &out_text, sizeof(out_text), NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_SLONG, &out_id, 0, iOdbc() ? &len1 : NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_WCHAR, &out_text, sizeof(out_text), iOdbc() ? &len2 : NULL));
 
     query = "SELECT * FROM " TABLE " WHERE id = ?";
     long_query = "SELECT * FROM " TABLE " WHERE id = ?BLAH";
