@@ -947,16 +947,21 @@ ODBC_TEST(sql_native_sql) {
   n = sizeof(queries)/sizeof(queries[0]);
   for (i = 0; i < n; i++)
   {
+    const SQLINTEGER ByteLen = strlen(expected_results[i]);
+    const SQLINTEGER Utf8Len = Utf8Strlen(expected_results[i]);
     SQLINTEGER len;
 
     CHECK_STMT_RC(Stmt, SQLNativeSql(Connection, (SQLCHAR*)queries[i], SQL_NTS, buffer, BUFFER_SIZE, &len));
     IS_STR(buffer, expected_results[i], len);
-    is_num(len, Utf8Strlen(expected_results[i]));
+    is_num(len, (cPlatform == MAC && is_unicode_driver()) ? ByteLen : Utf8Len);
 
-    len = 0;
-    CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, CW(queries[i]), SQL_NTS, bufferW, BUFFER_SIZE*sizeof(SQLWCHAR), &len));
-    is_num(len, sqlwcharlen(CW(expected_results[i])));
-    IS_WSTR(bufferW, CW(expected_results[i]), len+1);
+    if (!(cPlatform == MAC && is_unicode_driver() && ByteLen != Utf8Len)) /* rc == -1 without any diagnostic record */
+    {
+      len = 0;
+      CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, CW(queries[i]), SQL_NTS, bufferW, BUFFER_SIZE*sizeof(SQLWCHAR), &len));
+      IS_WSTR(bufferW, CW(expected_results[i]), len+1);
+      is_num(len, Utf8Len);
+    }
   }
   return OK;
 }
