@@ -325,9 +325,6 @@ SQLRETURN MADB_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
   Error.PrefixLen= 0;
   MADB_CLEAR_ERROR(&Error);
 
-  if (BufferLength < 0)
-    return SQL_ERROR;
-
   if (RecNumber > 1)
     return SQL_NO_DATA;
 
