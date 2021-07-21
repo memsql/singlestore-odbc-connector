@@ -104,7 +104,9 @@ unsigned int GetMultiStatements(MADB_Stmt *Stmt, BOOL ExecDirect)
     MDBUG_C_PRINT(Stmt->Connection, "-->inited&preparing %0x(%d,%s)", Stmt->MultiStmts[i], i, p);
 
     // For the client-side prepared statements we don't want to do anything besides allocating the MultiStmt objects.
-    if (MADB_SSPS_ENABLED(Stmt))
+    // We prepare only the first statement
+    // All other will be prepared during SQLExecute
+    if (MADB_SSPS_ENABLED(Stmt) && i == 0)
     {
         if (mysql_stmt_prepare(Stmt->MultiStmts[i], p, (unsigned long) strlen(p)))
         {
@@ -128,11 +130,6 @@ unsigned int GetMultiStatements(MADB_Stmt *Stmt, BOOL ExecDirect)
             }
             return 1;
         }
-
-        if (mysql_stmt_param_count(Stmt->MultiStmts[i]) > MaxParams)
-        {
-            MaxParams = mysql_stmt_param_count(Stmt->MultiStmts[i]);
-        }
     }
 
     p+= strlen(p) + 1;
@@ -146,15 +143,6 @@ unsigned int GetMultiStatements(MADB_Stmt *Stmt, BOOL ExecDirect)
     {
       MADB_DescSetIrdMetadata(Stmt, mysql_fetch_fields(FetchMetadata(Stmt)), mysql_stmt_field_count(Stmt->stmt));
     }
-  }
-
-  if (MaxParams)
-  {
-    if (Stmt->params)
-    {
-      MADB_FREE(Stmt->params);
-    }
-    Stmt->params= (MYSQL_BIND *)MADB_CALLOC(sizeof(MYSQL_BIND) * MaxParams);
   }
 
   return 0;

@@ -1980,10 +1980,27 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
       if (Stmt->MultiStmts && Stmt->MultiStmts[StatementNr] != NULL)
       {
         Stmt->stmt= Stmt->MultiStmts[StatementNr];
+        if (CurQuery >= QueriesEnd)
+        {
+          /* Something went wrong(with parsing). But we've got here, and everything worked. Giving it chance to fail later.
+             This shouldn't really happen */
+          MDBUG_C_PRINT(Stmt->Connection, "Got past end of query direct-executing %s on stmt #%u", Stmt->Query.RefinedText, StatementNr);
+          continue;
+        }
+
+        if (StatementNr != 0)
+        {
+          if (mysql_stmt_prepare(Stmt->stmt, CurQuery, (unsigned long)strlen(CurQuery)))
+          {
+            return MADB_SetNativeError(&Stmt->Error, SQL_HANDLE_STMT, Stmt->stmt);
+          }
+        }
+
+        CurQuery+= strlen(CurQuery) + 1;
       }
       else
       {
-        /* We have direct execution, since otherwise it'd already prepared, and thus Stmt->MultiStmts would be set */
+        /* We have direct execution, since otherwise Stmt->MultiStmts would be set */
         if (CurQuery >= QueriesEnd)
         {
           /* Something went wrong(with parsing). But we've got here, and everything worked. Giving it chance to fail later.

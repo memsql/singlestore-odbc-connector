@@ -263,10 +263,7 @@ ODBC_TEST(t_odbc95)
   CHECK_DBC_RC(Connection, SQLGetInfo(Connection, SQL_DBMS_VER, server_version, sizeof(server_version), NULL));
   sscanf((char*)server_version, "%02d.%02d.%06d", &major, &minor, &patch);
 
-  // SQL_SUCCESS is expected for the CSPS and for servers older than 7.1
-  ExpectedReturnCode = NoSsps || major * 10000 + minor * 100 < 70100 ? SQL_SUCCESS : SQL_ERROR;
-
-  EXPECT_STMT(Stmt, SQLPrepare(Stmt, (SQLCHAR*)"SELECT 1;INSERT INTO non_existing VALUES(2)", SQL_NTS), ExpectedReturnCode);
+  CHECK_STMT_RC(Stmt, SQLPrepare(Stmt, (SQLCHAR*)"SELECT 1;INSERT INTO non_existing VALUES(2)", SQL_NTS));
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_DROP));
   Stmt= NULL;
 
@@ -638,6 +635,34 @@ ODBC_TEST(t_odbc219)
   return OK;
 }
 
+ODBC_TEST(multistatement_ddl)
+{
+  SQLLEN rowCount;
+  SQLINTEGER a;
+
+  CHECK_STMT_RC(Stmt, SQLExecDirect(Stmt, (SQLCHAR *)"CREATE TABLE multi_statement(a INT);"
+                                  "INSERT INTO multi_statement VALUES (1);"
+                                  "SELECT a FROM multi_statement;"
+                                  "SELECT a+1 FROM multi_statement;", SQL_NTS));
+
+  CHECK_STMT_RC(Stmt, SQLMoreResults(Stmt));
+  SQLRowCount(Stmt, &rowCount);
+  is_num(rowCount, 1);
+
+  CHECK_STMT_RC(Stmt, SQLMoreResults(Stmt));
+  CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, &a, 0, NULL));
+  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+  is_num(a, 1);
+  EXPECT_STMT(Stmt, SQLFetch(Stmt), SQL_NO_DATA);
+
+  CHECK_STMT_RC(Stmt, SQLMoreResults(Stmt));
+  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+  is_num(a, 2);
+  EXPECT_STMT(Stmt, SQLFetch(Stmt), SQL_NO_DATA);
+
+  return OK;
+}
+
 
 MA_ODBC_TESTS my_tests[]=
 {
@@ -658,6 +683,7 @@ MA_ODBC_TESTS my_tests[]=
   {t_odbc177, "t_odbc177", KNOWN_FAILURE, ALL_DRIVERS},
   {t_odbc169, "t_odbc169", NORMAL, ALL_DRIVERS},
   {t_odbc219, "t_odbc219", NORMAL, ALL_DRIVERS},
+  {multistatement_ddl, "multistatement_ddl", NORMAL, ALL_DRIVERS},
   {NULL, NULL}
 };
 
