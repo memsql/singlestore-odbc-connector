@@ -950,16 +950,13 @@ ODBC_TEST(sql_native_sql) {
     SQLINTEGER len;
 
     CHECK_STMT_RC(Stmt, SQLNativeSql(Connection, (SQLCHAR*)queries[i], SQL_NTS, buffer, BUFFER_SIZE, &len));
-    is_num(len, strlen(expected_results[i]));
     IS_STR(buffer, expected_results[i], len);
+    is_num(len, Utf8Strlen(expected_results[i]));
 
-    if (!is_ansi_driver())
-    {
-      len = 0;
-      CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, CW(queries[i]), SQL_NTS, bufferW, BUFFER_SIZE*sizeof(SQLWCHAR), &len));
-      is_num(len, sqlwcharlen(CW(expected_results[i])));
-      IS_WSTR(bufferW, CW(expected_results[i]), len+1);
-    }
+    len = 0;
+    CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, CW(queries[i]), SQL_NTS, bufferW, BUFFER_SIZE*sizeof(SQLWCHAR), &len));
+    is_num(len, sqlwcharlen(CW(expected_results[i])));
+    IS_WSTR(bufferW, CW(expected_results[i]), len+1);
   }
   return OK;
 }
@@ -1080,11 +1077,8 @@ ODBC_TEST(sql_native_sql_errors) {
     int len;
     EXPECT_DBC(Stmt, SQLNativeSql(Connection, (SQLCHAR *)queries[i], SQL_NTS, buffer, BUFFER_SIZE, &len), SQL_ERROR);
 
-    if (!is_ansi_driver())
-    {
-      len = 0;
-      EXPECT_DBC(Stmt, SQLNativeSqlW(Connection, CW(queries[i]), SQL_NTS, bufferW, BUFFER_SIZE*sizeof(SQLWCHAR), &len), SQL_ERROR);
-    }
+    len = 0;
+    EXPECT_DBC(Stmt, SQLNativeSqlW(Connection, CW(queries[i]), SQL_NTS, bufferW, BUFFER_SIZE*sizeof(SQLWCHAR), &len), SQL_ERROR);
   }
 
   return OK;

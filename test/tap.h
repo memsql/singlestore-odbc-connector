@@ -1237,10 +1237,10 @@ int connect_and_run_tests(MA_ODBC_TESTS *tests, BOOL ProvideWConnection, BOOL No
         fflush(stdout);
     }
 
+    ODBC_Disconnect(NULL, wConnection, wStmt);
+    wConnection=wStmt=NULL;
     ODBC_Disconnect(Env,Connection,Stmt);
     Env=Connection=Stmt=NULL;
-    ODBC_Disconnect(Env, wConnection, wStmt);
-    wConnection=wStmt=NULL;
 
     if (failed)
     {
@@ -1565,6 +1565,14 @@ size_t sqlwcharlen(const SQLWCHAR *s)
     size_t i;
     for(i = 0; s[i]; ++i) {}
     return i;
+}
+
+size_t Utf8Strlen(const char* s)
+{
+    /* From stackoverflow */
+    size_t len = 0;
+    while (*s) len += (*s++ & 0xc0) != 0x80;
+    return len;
 }
 
 

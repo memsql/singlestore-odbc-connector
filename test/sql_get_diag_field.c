@@ -178,7 +178,6 @@ int CheckChar(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMALLINT RecNumber, S
   // It's ok, because users shouldn't use Unicode functions with ANSI driver
   // and ANSI functions with Unicode driver
   // Thus, we are testing only SQLGetDiagField with ANSI driver and SQLGetDiagFieldW with Unicode one
-  if (is_ansi_driver())
   {
     SQLCHAR string_value[BUFF_SIZE];
     SQLSMALLINT length = 0;
@@ -186,7 +185,8 @@ int CheckChar(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMALLINT RecNumber, S
     CHECK_STMT_RC(Stmt, SQLGetDiagField(HandleType, Handle, RecNumber, DiagIdentifier, string_value, BUFF_SIZE, &length));
     is_num(length, strlen(CorrectValue));
     IS_STR(string_value, CorrectValue, length + 1);
-  } else
+  }
+  if (is_unicode_driver()) //TODO: PLAT-5560
   {
     SQLWCHAR stringw_value[BUFF_SIZE];
     SQLSMALLINT length = 0;
