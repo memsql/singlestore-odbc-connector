@@ -36,7 +36,7 @@
 ODBC_TEST(buffers_native_sql) {
     SQLCHAR in_buf[BUF_SIZE];
     SQLCHAR out_buf[BUF_SIZE];
-    SQLINTEGER out_len;
+    SQLINTEGER out_len, buff_size;
     const char* query;
     const char* long_query;
 
@@ -92,7 +92,11 @@ ODBC_TEST(buffers_native_sql) {
 
     query = "INSERT INTO thetable VALUES (1, 2, none)";
     strcpy(in_buf, query);
-    CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, in_buf, SQL_NTS, out_buf, SQL_NTS, &out_len), "HY090", 0, "Invalid string or buffer length");
+    if (iOdbc() && is_unicode_driver()) {
+      CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, in_buf, SQL_NTS, out_buf, SQL_NTS, &out_len), "HY001", 1, "Memory allocation error");
+    } else {
+      CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, in_buf, SQL_NTS, out_buf, SQL_NTS, &out_len), "HY090", 0, "Invalid string or buffer length");
+    }
 
     query = "SELECT (1, 2, 3)";
     strcpy(in_buf, query);
@@ -107,14 +111,23 @@ ODBC_TEST(buffers_native_sql) {
     strcpy(in_buf, long_query);
     CHECK_DBC_RC(Connection, SQLNativeSql(Connection, in_buf, strlen(query), out_buf, BUF_SIZE, &out_len));
     IS(!strcmp(in_buf, long_query));
-    IS(!strcmp(query, out_buf));
-    IS(out_len == strlen(query));
+    if (iOdbc() && is_unicode_driver()) {
+      IS(!strcmp(long_query, out_buf));
+      IS(out_len == strlen(long_query));
+    } else {
+      IS(!strcmp(query, out_buf));
+      IS(out_len == strlen(query));
+    }
 
     query = "INSERT INTO thetable VALUES (1, 2, none)";
     strcpy(in_buf, query);
     CHECK_DBC_RC(Connection, SQLNativeSql(Connection, in_buf, 0, out_buf, BUF_SIZE, &out_len));
     IS(!strcmp(in_buf, query));
-    IS(out_buf[0] == 0);
+    if (iOdbc() && is_unicode_driver()) {
+      IS(out_buf[0] == 'I');
+    } else {
+      IS(out_buf[0] == 0);
+    }
 
     // Shortcut out buff
     query = "SELECT (1, 2, 3)";
@@ -140,9 +153,15 @@ ODBC_TEST(buffers_native_sql) {
     IS(strlen(out_buf) == 14);
 
     out_len = 10;
-    CHECK_DBC_RC(Connection, SQLNativeSql(Connection, in_buf, 0, out_buf, 15, &out_len));
-    IS(strlen(out_buf) == 0);
-    IS(out_len == 0);
+    buff_size = 15;
+    CHECK_DBC_RC(Connection, SQLNativeSql(Connection, in_buf, 0, out_buf, buff_size, &out_len));
+    if (iOdbc() && is_unicode_driver()) {
+        IS(strlen(out_buf) == buff_size - 1);
+        IS(out_len == 40);
+    } else {
+        IS(strlen(out_buf) == 0);
+        IS(out_len == 0);
+    }
 
     *in_buf = 0;
     out_len = 10;
@@ -154,7 +173,7 @@ ODBC_TEST(buffers_native_sql) {
     query = "DELETE FROM thetable WHERE id = 1";
     strcpy(in_buf, query);
     // S1090 is returned on MacOS instead of HY090, but error message is correct
-    CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, in_buf, -1, out_buf, BUF_SIZE, &out_len), iOdbc() ? "S1090" : "HY090", 0, INVALID_BUF_SIZE_ERROR);
+    CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, in_buf, -1, out_buf, BUF_SIZE, &out_len), iOdbc() ? "S1090" : "HY090", iOdbc() ? -1 : 0, INVALID_BUF_SIZE_ERROR);
 
     query = "SELECT (1, 2, 3)";
     strcpy(in_buf, query);
@@ -240,7 +259,7 @@ ODBC_TEST(buffers_native_sql_w) {
     in_buf = CW(long_query);
     CHECK_DBC_RC(Connection, SQLNativeSqlW(Connection, in_buf, strlen(query), out_buf, BUF_SIZE, &out_len));
     IS(sqlwcharequal(in_buf, CW(long_query)));
-    if (iOdbc()) {
+    if (iOdbc() && is_ansi_driver()) {
       //iODBC keeps out_buf the same as in_buf in this case
       IS(sqlwcharequal(out_buf, CW(long_query)));
       IS(out_len == strlen(long_query));
@@ -253,7 +272,7 @@ ODBC_TEST(buffers_native_sql_w) {
     in_buf = CW(query);
     CHECK_DBC_RC(Connection, SQLNativeSqlW(Connection, in_buf, 0, out_buf, BUF_SIZE, &out_len));
     IS(sqlwcharequal(in_buf, CW(query)));
-    if(iOdbc()) {
+    if(iOdbc() && is_ansi_driver()) {
       IS(out_buf[0] == 'I');
     } else {
       IS(out_buf[0] == 0);
@@ -285,7 +304,7 @@ ODBC_TEST(buffers_native_sql_w) {
     out_len = 10;
     buff_size = 15;
     CHECK_DBC_RC(Connection, SQLNativeSqlW(Connection, in_buf, 0, out_buf, buff_size, &out_len));
-    if (iOdbc()) {
+    if (iOdbc() && is_ansi_driver()) {
       IS(sqlwcharlen(out_buf) == buff_size - 1);
       IS(out_len == 40);
     } else {
@@ -303,7 +322,7 @@ ODBC_TEST(buffers_native_sql_w) {
     query = "DELETE FROM thetable WHERE id = 1";
     in_buf = CW(query);
     // S1090 is returned on MacOS instead of HY090, but error message is correct
-    CHECK_DBC_ERR(Connection, SQLNativeSqlW(Connection, in_buf, -1, out_buf, BUF_SIZE, &out_len), iOdbc() ? "S1090" : "HY090", iOdbc() ? 1 : 0, INVALID_BUF_SIZE_ERROR);
+    CHECK_DBC_ERR(Connection, SQLNativeSqlW(Connection, in_buf, -1, out_buf, BUF_SIZE, &out_len), iOdbc() ? "S1090" : "HY090", iOdbc() ? -1 : 0, INVALID_BUF_SIZE_ERROR);
 
     query = "SELECT (1, 2, 3)";
     in_buf = CW(query);
@@ -419,13 +438,17 @@ ODBC_TEST(buffers_exec_direct_w) {
     CLOSE(Stmt);
 
     // Bad use
-    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, NULL, 0), "HY009", 0, NULL_ARG_ERROR);
+    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, NULL, 0), "HY009", iOdbc() ? -1 : 0, NULL_ARG_ERROR);
 
-    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, NULL, SQL_NTS), "HY009", 0, NULL_ARG_ERROR);
+    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, NULL, SQL_NTS), "HY009", iOdbc() ? -1 : 0, NULL_ARG_ERROR);
 
-    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, in_buf, 0), "HY090", 0, "Invalid string or buffer length");
+    if (iOdbc()) {
+      CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, in_buf, 0), "42000", 0, "Syntax error or access violation");
+    } else {
+      CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, in_buf, 0), "HY090", 0, "Invalid string or buffer length");
+    }
 
-    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, in_buf, -1), "HY090", 0, "Invalid string or buffer length");
+    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, in_buf, -1), iOdbc() ? "S1090" : "HY090", 0, "Invalid string or buffer length");
 
     *in_buf = 0;
     CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, in_buf, BUF_SIZE), "42000", 0, "Syntax error or access violation");
