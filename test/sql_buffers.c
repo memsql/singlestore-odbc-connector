@@ -93,7 +93,7 @@ ODBC_TEST(buffers_native_sql) {
     query = "INSERT INTO thetable VALUES (1, 2, none)";
     strcpy(in_buf, query);
     if (iOdbc() && is_unicode_driver()) {
-      CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, in_buf, SQL_NTS, out_buf, SQL_NTS, &out_len), "HY001", 1, "Memory allocation error");
+      CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, in_buf, SQL_NTS, out_buf, SQL_NTS, &out_len), "HY001", -1, "Memory allocation error");
     } else {
       CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, in_buf, SQL_NTS, out_buf, SQL_NTS, &out_len), "HY090", 0, "Invalid string or buffer length");
     }
