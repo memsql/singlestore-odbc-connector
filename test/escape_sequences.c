@@ -953,9 +953,9 @@ ODBC_TEST(sql_native_sql) {
 
     CHECK_STMT_RC(Stmt, SQLNativeSql(Connection, (SQLCHAR*)queries[i], SQL_NTS, buffer, BUFFER_SIZE, &len));
     IS_STR(buffer, expected_results[i], len);
-    is_num(len, (cPlatform == MAC && is_unicode_driver()) ? ByteLen : Utf8Len);
+    is_num(len, (cPlatform == WINDOWS && is_unicode_driver()) ? ByteLen : Utf8Len); /* Win DM does strlen() somewhere */
 
-    if (!(cPlatform == MAC && is_unicode_driver() && ByteLen != Utf8Len)) /* rc == -1 without any diagnostic record */
+    if (!(cPlatform == MAC && is_ansi_driver() && ByteLen != Utf8Len)) /* rc == -1 without any diagnostic record */
     {
       len = 0;
       CHECK_STMT_RC(Stmt, SQLNativeSqlW(Connection, CW(queries[i]), SQL_NTS, bufferW, BUFFER_SIZE*sizeof(SQLWCHAR), &len));
