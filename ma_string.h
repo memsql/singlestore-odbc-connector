@@ -46,6 +46,7 @@ SQLLEN     MbstrCharLen(const char *str, SQLINTEGER OctetLen, MARIADB_CHARSET_IN
 SQLINTEGER SqlwcsCharLen(SQLWCHAR *str, SQLLEN octets);
 SQLLEN     SqlwcsLen(SQLWCHAR *str, SQLLEN buff_length);
 SQLLEN     SafeStrlen(SQLCHAR *str, SQLLEN buff_length);
+SQLLEN     Utf8Charlen(const SQLCHAR* const str, const SQLLEN buff_length);
 
 #define IDENTIFIER_BUFFER_OVERHEAD  3
 my_bool ProcessIdentifierString(INOUT char* out, const char* in, const size_t len);

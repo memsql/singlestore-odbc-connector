@@ -525,7 +525,8 @@ SQLRETURN SQL_API SQLNativeSql(SQLHDBC ConnectionHandle,
         return Dbc->Error.ReturnValue;
     }
 
-    Length= (SQLINTEGER)MADB_SetString(0, OutStatementText, BufferLength, (char *)res.str, res.length, &Dbc->Error);
+    Length= (SQLINTEGER)Utf8Charlen(res.str, res.length);
+    MADB_SetString(NULL, OutStatementText, BufferLength, (char *)res.str, res.length, &Dbc->Error);
     MADB_DynstrFree(&res);
     if (TextLength2Ptr)
         *TextLength2Ptr= Length;

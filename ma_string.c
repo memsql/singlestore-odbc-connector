@@ -589,6 +589,20 @@ SQLLEN SafeStrlen(SQLCHAR *str, SQLLEN buff_length)
   return result;
 }
 
+SQLLEN Utf8Charlen(const SQLCHAR* const str, const SQLLEN buff_length)
+{
+    size_t len = 0;
+    int i;
+    for (i = 0; i < buff_length && str[i]; ++i)
+    {
+        if ((str[i] & 0xc0) != 0x80)
+        {
+            ++len;
+        }
+    }
+    return len;
+}
+
 /* Parse and quote Identifier Arguments -- used when SQL_ATTR_METADATA_ID is TRUE
  * https://docs.microsoft.com/en-us/sql/odbc/reference/develop-app/identifier-arguments?view=sql-server-ver15
  *
