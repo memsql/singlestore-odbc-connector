@@ -386,6 +386,7 @@ SQLRETURN MADB_StmtExecDirect(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER T
   BOOL      ExecDirect= TRUE;
 
   ret= Stmt->Methods->Prepare(Stmt, StatementText, TextLength, ExecDirect);
+  Stmt->PrepareDone = FALSE;
   /* In case statement is not supported, we use mysql_query instead */
   if (!SQL_SUCCEEDED(ret))
   {
@@ -503,6 +504,9 @@ void MADB_StmtReset(MADB_Stmt *Stmt)
     Stmt->State= MADB_SS_INITED;
     MADB_CLEAR_ERROR(&Stmt->Error);
   }
+
+  Stmt->NeedsPrepare = FALSE;
+  Stmt->PrepareDone = FALSE;
 }
 /* }}} */
 
@@ -565,6 +569,7 @@ SQLRETURN MADB_RegularPrepare(MADB_Stmt *Stmt)
     Stmt->params= (MYSQL_BIND *)MADB_CALLOC(sizeof(MYSQL_BIND) * Stmt->ParamCount);
   }
 
+  Stmt->PrepareDone = TRUE;
   return SQL_SUCCESS;
 }
 /* }}} */
@@ -577,6 +582,16 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
   BOOL          HasParameters= 0;
 
   MDBUG_C_PRINT(Stmt->Connection, "%sMADB_StmtPrepare", "\t->");
+
+  if (Stmt->State >= MADB_SS_EXECUTED && MADB_STMT_COLUMN_COUNT(Stmt) > 0)
+  {
+    /* UnixODBC DM does not allow SQLCloseCursor() after SQLPrepare() so reset the cursor here */
+    LOCK_MARIADB(Stmt->Connection);
+    MADB_StmtReset(Stmt);
+    UNLOCK_MARIADB(Stmt->Connection);
+    /* Still return the error so that the user knows that the cursor has not been closed */
+    return MADB_SetError(&Stmt->Error, MADB_ERR_HY010, NULL, 0);
+  }
 
   LOCK_MARIADB(Stmt->Connection);
 
@@ -621,6 +636,7 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
     // for now.
     if (MADB_SSPS_ENABLED(Stmt) && ExecDirect != FALSE)
     {
+      Stmt->PrepareDone = TRUE;
       return MADB_EDPrepare(Stmt);
     }
     /* We had error preparing any of statements */
@@ -631,6 +647,7 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
 
     /* all statemtens successfully prepared */
     UNLOCK_MARIADB(Stmt->Connection);
+    Stmt->PrepareDone = TRUE;
     return SQL_SUCCESS;
   }
 
@@ -726,6 +743,7 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
     ! (QUERY_IS_MULTISTMT(Stmt->Query) && !Stmt->Query.BatchAllowed))
   {
     Stmt->State= MADB_SS_EMULATED;
+    Stmt->PrepareDone = TRUE;
     return SQL_SUCCESS;
   }
 
@@ -741,6 +759,7 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
           Stmt->params= (MYSQL_BIND *)MADB_CALLOC(sizeof(MYSQL_BIND) * Stmt->ParamCount);
       }
       Stmt->State = MADB_SS_PREPARED;
+      Stmt->PrepareDone = TRUE;
       return SQL_SUCCESS;
   }
   return MADB_RegularPrepare(Stmt);
@@ -1836,6 +1855,12 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
   MDBUG_C_PRINT(Stmt->Connection, "%sMADB_StmtExecute", "\t->");
 
   MADB_CLEAR_ERROR(&Stmt->Error);
+
+  if ((Stmt->NeedsPrepare && !Stmt->PrepareDone)
+      || (Stmt->State >= MADB_SS_EXECUTED && MADB_STMT_COLUMN_COUNT(Stmt) > 0))
+  {
+    return MADB_SetError(&Stmt->Error, MADB_ERR_HY010, NULL, 0);
+  }
 
   if (Stmt->State == MADB_SS_EMULATED)
   {

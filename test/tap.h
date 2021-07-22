@@ -859,19 +859,25 @@ do {                                                  \
 }while(0)
 
 // Shorthands
+#define SEQUENCE_ERROR  "HY010", 0, "Function sequence error"
 #define CURSOR_STATE_ERROR    "24000", -1, "Invalid cursor state"
 #define NULL_PTR_ERROR    "HY009", 0, "Invalid use of null pointer"
 
 #define PREPARE(stmt, query)                    CHECK_STMT_RC(stmt, SQLPrepare(stmt, (SQLCHAR*)query, SQL_NTS))
+#define PREPARE_SEQUENCE_ERR(stmt, query)       CHECK_STMT_ERR(stmt, SQLPrepare(stmt, (SQLCHAR*)query, SQL_NTS), SEQUENCE_ERROR)
 #define PREPARE_CURSOR_ERR(stmt, query)         CHECK_STMT_ERR(stmt, SQLPrepare(stmt, (SQLCHAR*)query, SQL_NTS), CURSOR_STATE_ERROR)
 #define EXEC_DIRECT(stmt, query)                CHECK_STMT_RC(stmt, SQLExecDirect(stmt, (SQLCHAR*)query, SQL_NTS))
+#define EXEC_DIRECT_SEQUENCE_ERR(stmt, query)   CHECK_STMT_ERR(stmt, SQLExecDirect(stmt, (SQLCHAR*)query, SQL_NTS), SEQUENCE_ERROR)
 #define EXEC_DIRECT_CURSOR_ERR(stmt, query)     CHECK_STMT_ERR(stmt, SQLExecDirect(stmt, (SQLCHAR*)query, SQL_NTS), CURSOR_STATE_ERROR)
 #define EXECUTE(stmt)                           CHECK_STMT_RC(stmt, SQLExecute(stmt))
+#define EXECUTE_SEQUENCE_ERR(stmt)              CHECK_STMT_ERR(stmt, SQLExecute(stmt), SEQUENCE_ERROR)
 #define EXECUTE_CURSOR_ERR(stmt)                CHECK_STMT_ERR(stmt, SQLExecute(stmt), CURSOR_STATE_ERROR)
 #define FETCH(stmt)                             CHECK_STMT_RC(stmt, SQLFetch(stmt))
 #define FETCH_NO_DATA(stmt)                     EXPECT_STMT(stmt, SQLFetch(stmt), SQL_NO_DATA)
+#define FETCH_SEQUENCE_ERR(stmt)                CHECK_STMT_ERR(stmt, SQLFetch(stmt), SEQUENCE_ERROR)
 #define FETCH_CURSOR_ERR(stmt)                  CHECK_STMT_ERR(stmt, SQLFetch(stmt), CURSOR_STATE_ERROR)
 #define CLOSE(stmt)                             CHECK_STMT_RC(stmt, SQLCloseCursor(stmt))
+#define CLOSE_CURSOR_ERR(stmt)                  CHECK_STMT_ERR(stmt, SQLCloseCursor(stmt), CURSOR_STATE_ERROR)
 #define UNBIND(stmt)                            CHECK_STMT_RC(Stmt, SQLFreeStmt(stmt, SQL_UNBIND)); \
                                                 CHECK_STMT_RC(Stmt, SQLFreeStmt(stmt, SQL_RESET_PARAMS))
 #define FREE_HANDLE(stmt)                       CHECK_STMT_RC(stmt, SQLFreeHandle(SQL_HANDLE_STMT, stmt))

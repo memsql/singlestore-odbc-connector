@@ -587,6 +587,7 @@ SQLRETURN SQL_API SQLExecute(SQLHSTMT StatementHandle)
   MDBUG_C_ENTER(Stmt->Connection, "SQLExecute");
   MDBUG_C_DUMP(Stmt->Connection, Stmt, 0x);
 
+  Stmt->NeedsPrepare = TRUE;
   return Stmt->Methods->Execute(Stmt, FALSE);
 }
 /* }}} */

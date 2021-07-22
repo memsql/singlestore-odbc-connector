@@ -63,6 +63,7 @@ ODBC_TEST(execute_1_before_fetch_1) {
     // Re-executing a statement discards the results from the previous execution (SQLExecute)
     PREPARE(Stmt, QUERY_SELECT_WITH_PARAMS_SINGLE_ROW);
     EXECUTE(Stmt);
+    PREPARE_SEQUENCE_ERR(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
     PREPARE(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
     EXECUTE(Stmt);
     FETCH_CURSOR_ERR(Stmt);
@@ -72,41 +73,45 @@ ODBC_TEST(execute_1_before_fetch_1) {
     IS(out_id == 1 && !strcmp("aa", out_text)); out_id = 0, *out_text = 0;
     CLOSE(Stmt);
     EXECUTE(Stmt);
+    EXECUTE_SEQUENCE_ERR(Stmt);
+    CLOSE_CURSOR_ERR(Stmt);
+    FETCH_SEQUENCE_ERR(Stmt);
+    PREPARE_SEQUENCE_ERR(Stmt, QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW);
+    EXECUTE_SEQUENCE_ERR(Stmt);
+    PREPARE(Stmt, QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW);
     EXECUTE(Stmt);
     FETCH(Stmt);
     IS(out_id == 1 && !strcmp("aa", out_text)); out_id = 0, *out_text = 0;
     CLOSE(Stmt);
     EXEC_DIRECT(Stmt, QUERY_UPDATE_WITH_PARAMS);
     FETCH_CURSOR_ERR(Stmt);
-    // The code below fails on Windows with "Function sequence error" - DM checks the statement's state
-    EXECUTE(Stmt);      // TODO: Stmt was prepared by the EXEC_DIRECT above and is QUERY_UPDATE_WITH_PARAMS, this is bug PLAT-5605
-    FETCH_CURSOR_ERR(Stmt);
-    EXEC_DIRECT(Stmt, QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW);
-    EXECUTE(Stmt);      // TODO: Stmt was prepared by the EXEC_DIRECT above and is QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW, this is bug PLAT-5605
+    EXECUTE_SEQUENCE_ERR(Stmt);
+    FETCH_SEQUENCE_ERR(Stmt);
+    EXEC_DIRECT(Stmt, QUERY_SELECT_WITHOUT_PARAMS_MULTIPLE_ROWS);
     FETCH(Stmt);
     IS(out_id == 1 && !strcmp("aa", out_text)); out_id = 0, *out_text = 0;
+    EXECUTE_SEQUENCE_ERR(Stmt);
+    FETCH(Stmt);
+    IS(out_id == 2 && !strcmp("bc", out_text)); out_id = 0, *out_text = 0;
     CLOSE(Stmt);
 
     // Re-executing a statement discards the results from the previous execution (SQLExecDirect)
-    /* TODO: PLAT-5605 Something wrong happens here:
-     * FETCH fails, but PREPARE should have failed instead if the Stmt has pending results
     EXEC_DIRECT(Stmt, QUERY_SELECT_WITH_PARAMS_SINGLE_ROW);
+    EXEC_DIRECT_SEQUENCE_ERR(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
     EXEC_DIRECT(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
-    FETCH_ERR(Stmt);
+    FETCH_CURSOR_ERR(Stmt);
     EXEC_DIRECT(Stmt, QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW);
-    PREPARE(Stmt, QUERY_DELETE_WITHOUT_PARAMS);   <- should have failed here
-    //PREPARE_ERR(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
-    //PREPARE(Stmt, QUERY_SELECT_WITH_PARAMS_SINGLE_ROW);
-    FETCH(Stmt);       <- fails here
-    IS(out_id == 1 && !strcmp("aa", out_text)); out_id = 0, *out_text = 0;
-    PREPARE_ERR(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
-    CLOSE(Stmt);
+    PREPARE_SEQUENCE_ERR(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
+    PREPARE(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
+    PREPARE(Stmt, QUERY_SELECT_WITH_PARAMS_SINGLE_ROW);
+    FETCH_SEQUENCE_ERR(Stmt);
     PREPARE(Stmt, QUERY_SELECT_WITH_PARAMS_SINGLE_ROW);
     EXECUTE(Stmt);
     FETCH(Stmt);
-    IS(out_id == 1 && !strcmp("aa", out_text)); out_id = 0, *out_text = 0;
+    IS(out_id == 3 && !strcmp("ca", out_text)); out_id = 0, *out_text = 0;
+    CLOSE(Stmt);
     EXEC_DIRECT(Stmt, QUERY_UPDATE_WITH_PARAMS);
-    CLOSE(Stmt);*/
+    CLOSE_CURSOR_ERR(Stmt);
 
     // A prepared non-executed statement can be reused for SQLExecDirect
     PREPARE(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
@@ -116,8 +121,11 @@ ODBC_TEST(execute_1_before_fetch_1) {
     CLOSE(Stmt);
     PREPARE(Stmt, QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW);
     EXEC_DIRECT(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
-    //EXECUTE(Stmt);   /* TODO: PLAT-5605, EXECUTE repeats the statement from EXEC_DIRECT */
-    //FETCH_CURSOR_ERR(Stmt);
+    EXECUTE_SEQUENCE_ERR(Stmt);
+    PREPARE(Stmt, QUERY_UPDATE_WITH_PARAMS);
+    EXECUTE(Stmt);
+    EXECUTE(Stmt);
+    FETCH_CURSOR_ERR(Stmt);
 
     UNBIND(Stmt);
     return OK;
