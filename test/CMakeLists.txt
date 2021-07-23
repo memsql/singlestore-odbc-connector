@@ -17,14 +17,7 @@ INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR})
 
 ENABLE_TESTING()
 
-SET (ODBC_TESTS
-        "basic" "types" "blob" "desc" "info" "tran" "catalog1" "catalog2"
-        "use_result" "scroll" "bulk" "prepare" "datetime" "keys"
-        "curext" "relative" "unicode" "cursor" "dyn_cursor"
-        "error" "escape_sequences" "param" "result1" "result2" "multistatement"
-        "sqlcolumns" "sql_procedure_columns" "sql_get_type_info" "sql_special_columns"
-        "client_side" "sql_get_info" "sql_row_count" "sql_get_functions"
-        "sql_get_diag_field" "sql_get_diag_rec" "sql_execute" "sql_buffers" "connect")
+SET (ODBC_TESTS "unicode")
 SET(COMMON_TEST_SOURCES tap.h)
 
 # Interactive makes sense on WIN32 only atm
@@ -68,17 +61,3 @@ FOREACH (ODBC_TEST ${ODBC_TESTS})
   ENDIF()
   SET_TARGET_PROPERTIES(odbc_${ODBC_TEST} PROPERTIES C_STANDARD 90)
 ENDFOREACH()
-
-ADD_EXECUTABLE(odbc_connstring connstring.c ${CMAKE_SOURCE_DIR}/ma_dsn.c ${COMMON_TEST_SOURCES})
-TARGET_LINK_LIBRARIES(odbc_connstring ${ODBC_LIBS} ${ODBC_INSTLIBS} mariadbclient ${PLATFORM_DEPENDENCIES})
-FOREACH(CONNECTOR_DRIVER_TYPE_SHORT ${CONNECTOR_DRIVER_TYPES_SHORT})
-  ADD_DEPENDENCIES(odbc_connstring ssodbc${CONNECTOR_DRIVER_TYPE_SHORT})
-ENDFOREACH(CONNECTOR_DRIVER_TYPE_SHORT)
-ADD_TEST(odbc_connstring ${EXECUTABLE_OUTPUT_PATH}/odbc_connstring)
-SET_TESTS_PROPERTIES(odbc_connstring PROPERTIES TIMEOUT 240)
-IF(NOT WIN32)
-  SET_PROPERTY(TEST odbc_connstring APPEND PROPERTY
-          ENVIRONMENT ODBCINI=${CMAKE_BINARY_DIR}/test/odbc.ini)
-  SET_PROPERTY(TEST odbc_connstring APPEND PROPERTY
-          ENVIRONMENT ODBCSYSINI=${CMAKE_BINARY_DIR}/test)
-ENDIF()
