@@ -74,7 +74,6 @@ ODBC_TEST(execute_1_before_fetch_1) {
     CLOSE(Stmt);
     EXECUTE(Stmt);
     EXECUTE_SEQUENCE_ERR(Stmt);
-    FETCH_SEQUENCE_ERR(Stmt);
     PREPARE_SEQUENCE_ERR(Stmt, QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW);
     EXECUTE_SEQUENCE_ERR(Stmt);
     PREPARE(Stmt, QUERY_SELECT_WITHOUT_PARAMS_SINGLE_ROW);
@@ -85,7 +84,11 @@ ODBC_TEST(execute_1_before_fetch_1) {
     EXEC_DIRECT(Stmt, QUERY_UPDATE_WITH_PARAMS);
     FETCH_CURSOR_ERR(Stmt);
     EXECUTE_SEQUENCE_ERR(Stmt);
+#ifdef _WIN32
+    FETCH_CURSOR_ERR(Stmt);
+#else
     FETCH_SEQUENCE_ERR(Stmt);
+#endif
     EXEC_DIRECT(Stmt, QUERY_SELECT_WITHOUT_PARAMS_MULTIPLE_ROWS);
     FETCH(Stmt);
     IS(out_id == 1 && !strcmp("aa", out_text)); out_id = 0, *out_text = 0;
