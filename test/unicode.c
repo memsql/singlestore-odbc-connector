@@ -93,7 +93,7 @@ ODBC_TEST(sqlconnect)
   CHECK_DBC_RC(hdbc1, SQLConnectW(hdbc1,
                             wdsn, SQL_NTS,
                             wuid, SQL_NTS,
-                            (SQLWCHAR *)L"123456789012345678901234567890123456789012345678901234567890", SQL_NTS));
+                            CW("01234567890123456789012345678901234567890123456789"), SQL_NTS));
   CHECK_DBC_RC(hdbc1, SQLDisconnect(hdbc1));
   CHECK_DBC_RC(hdbc1, SQLFreeConnect(hdbc1));
 
