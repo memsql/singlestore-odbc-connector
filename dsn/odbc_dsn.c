@@ -899,7 +899,8 @@ BOOL DSNDialog(HWND     hwndParent,
           }
         }
       }
-      
+
+      MADB_DSN_SetDefaults(Dsn);
       MADB_ParseConnString(Dsn, (char *)lpszAttributes, SQL_NTS, Delimiter);
 
       /* Need to set driver after connstring parsing, and before saving */
