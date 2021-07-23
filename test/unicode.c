@@ -90,6 +90,10 @@ ODBC_TEST(sqlconnect)
   HDBC hdbc1;
 
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc1));
+  SQLConnect(hdbc1,
+             (SQLCHAR *) "ssodbc_test_a", SQL_NTS,
+             (SQLCHAR *) "root", SQL_NTS,
+             (SQLCHAR *) "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", SQL_NTS);
   CHECK_DBC_RC(hdbc1, SQLConnectW(hdbc1,
                             wdsn, SQL_NTS,
                             wuid, SQL_NTS,
