@@ -318,6 +318,7 @@ struct st_ma_odbc_stmt
   int                       PutParam;
   my_bool                   NeedsPrepare;
   my_bool                   PrepareDone;
+  my_bool                   Fetching;
   my_bool                   RebindParams;
   my_bool                   bind_done;
   long long                 AffectedRows;

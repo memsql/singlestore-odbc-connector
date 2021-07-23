@@ -84,6 +84,7 @@ int run_sql_special_columns(SQLHANDLE Stmt, const SQLSMALLINT *ExpDataType) {
     SQLLEN rowCount;
     CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rowCount));
     is_num(rowCount, 17); // Full table has 17 columns.
+    CLOSE(Stmt);
 
     OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_types");
     CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));

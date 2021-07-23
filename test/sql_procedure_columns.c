@@ -626,6 +626,7 @@ static int query_and_check_N(const char* const catalog, const char* const proced
     fetched = SQLFetch(Stmt);
     if(!remaining) {
         if(fetched == SQL_NO_DATA) {
+            CLOSE(Stmt);
             return OK;
         }
 
@@ -713,6 +714,7 @@ static int query_and_check_W(const char* const catalog, const char* const proced
     fetched = SQLFetch(Stmt);
     if(!remaining) {
         if(fetched == SQL_NO_DATA) {
+            CLOSE(Stmt);
             return OK;
         }
 
@@ -804,6 +806,7 @@ static int query_and_check_WN(const char* const catalog, const char* const proce
     fetched = SQLFetch(Stmt);
     if(!remaining) {
         if(fetched == SQL_NO_DATA) {
+            CLOSE(Stmt);
             return OK;
         }
 
@@ -874,6 +877,7 @@ static int query_and_check_NW(const char* const catalog, const char* const proce
     fetched = SQLFetch(Stmt);
     if(!remaining) {
         if(fetched == SQL_NO_DATA) {
+            CLOSE(Stmt);
             return OK;
         }
 
@@ -952,6 +956,7 @@ static int query_and_check_non_ascii_N(const char* const catalog, const char* co
     fetched = SQLFetch(Stmt);
     if(!remaining) {
         if(fetched == SQL_NO_DATA) {
+            CLOSE(Stmt);
             return OK;
         }
 
@@ -1040,6 +1045,7 @@ static int query_and_check_non_ascii_W(const char* const catalog, const char* co
     fetched = SQLFetch(Stmt);
     if(!remaining) {
         if(fetched == SQL_NO_DATA) {
+            CLOSE(Stmt);
             return OK;
         }
 

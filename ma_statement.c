@@ -507,6 +507,7 @@ void MADB_StmtReset(MADB_Stmt *Stmt)
 
   Stmt->NeedsPrepare = FALSE;
   Stmt->PrepareDone = FALSE;
+  Stmt->Fetching = FALSE;
 }
 /* }}} */
 
@@ -1856,8 +1857,9 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
 
   MADB_CLEAR_ERROR(&Stmt->Error);
 
-  if ((Stmt->NeedsPrepare && !Stmt->PrepareDone)
-      || (Stmt->State >= MADB_SS_EXECUTED && MADB_STMT_COLUMN_COUNT(Stmt) > 0))
+  if (!Stmt->Fetching
+      && ((Stmt->NeedsPrepare && !Stmt->PrepareDone)
+          || (Stmt->State >= MADB_SS_EXECUTED && MADB_STMT_COLUMN_COUNT(Stmt) > 0)))
   {
     return MADB_SetError(&Stmt->Error, MADB_ERR_HY010, NULL, 0);
   }
@@ -5383,7 +5385,9 @@ SQLRETURN MADB_RefreshDynamicCursor(MADB_Stmt *Stmt)
   long long AffectedRows=   Stmt->AffectedRows;
   SQLLEN    LastRowFetched= Stmt->LastRowFetched;
 
+  Stmt->Fetching = TRUE;
   ret= Stmt->Methods->Execute(Stmt, FALSE);
+  Stmt->Fetching = FALSE;
 
   Stmt->Cursor.Position= CurrentRow;
   if (Stmt->Cursor.Position > 0 && (my_ulonglong)Stmt->Cursor.Position >= mysql_stmt_num_rows(Stmt->stmt))

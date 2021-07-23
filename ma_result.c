@@ -141,6 +141,11 @@ SQLRETURN MADB_StmtMoreResults(MADB_Stmt *Stmt)
   {
     if (Stmt->MultiStmtNr == STMT_COUNT(Stmt->Query) - 1)
     {
+      /* Unix DM does not let us close the cursor after the MADB_StmtMoreResults() call */
+      if (Stmt->Ird)
+      {
+        MADB_DescFree(Stmt->Ird, TRUE);
+      }
       return SQL_NO_DATA;
     }
 
@@ -194,6 +199,11 @@ SQLRETURN MADB_StmtMoreResults(MADB_Stmt *Stmt)
   {
       if (!mysql_more_results(Stmt->stmt->mysql))
       {
+          /* Unix DM does not let us close the cursor after the MADB_StmtMoreResults() call */
+          if (Stmt->Ird)
+          {
+            MADB_DescFree(Stmt->Ird, TRUE);
+          }
           return SQL_NO_DATA;
       }
 
@@ -240,6 +250,11 @@ SQLRETURN MADB_StmtMoreResults(MADB_Stmt *Stmt)
   }
   else
   {
+    /* Unix DM does not let us close the cursor after the MADB_StmtMoreResults() call */
+    if (Stmt->Ird)
+    {
+      MADB_DescFree(Stmt->Ird, TRUE);
+    }
     return SQL_NO_DATA;
   }
   

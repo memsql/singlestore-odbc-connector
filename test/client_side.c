@@ -22,7 +22,9 @@
 ODBC_TEST(client_side_show)
 {
     OK_SIMPLE_STMT(Stmt, "SHOW USERS");
+    CLOSE(Stmt);
     OK_SIMPLE_STMT(Stmt, "SHOW DATABASES");
+    CLOSE(Stmt);
     OK_SIMPLE_STMT(Stmt, "SHOW TABLES");
 
     CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
@@ -643,8 +645,10 @@ ODBC_TEST(client_side_get_data)
 
     // Running these SELECTs multiple times just to verify that we release the results properly.
     OK_SIMPLE_STMT(Stmt, "SELECT a, b FROM cs_getdata ORDER BY a");
+    CLOSE(Stmt);
     CHECK_STMT_RC(Stmt, SQLPrepare(Stmt, (SQLCHAR *) "SELECT a, b FROM cs_getdata ORDER BY a", SQL_NTS));
     CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
+    CLOSE(Stmt);
     CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
 
     SQLCHAR aCol[10];
@@ -1279,10 +1283,12 @@ ODBC_TEST(client_side_multistatements)
     // Running these SELECTs multiple times just to verify that we release the results properly.
     OK_SIMPLE_STMT(Stmt,
                    "SELECT a, b FROM cs_multistatements WHERE a=? AND b=? ORDER BY a; SELECT a FROM cs_multistatements WHERE a=?");
+    CLOSE(Stmt);
     CHECK_STMT_RC(Stmt, SQLPrepare(Stmt,
                                    (SQLCHAR *) "SELECT a, b FROM cs_multistatements WHERE a=? AND b=? ORDER BY a; SELECT a FROM cs_multistatements WHERE a=?",
                                    SQL_NTS));
     CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
+    CLOSE(Stmt);
     CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
 
     SQLCHAR aCol[10];

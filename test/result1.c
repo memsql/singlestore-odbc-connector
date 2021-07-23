@@ -1332,6 +1332,7 @@ ODBC_TEST(t_colattributes)
                                  NULL, &isauto));
   is_num(isauto, SQL_TRUE);
 
+  CLOSE(Stmt);
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_colattr");
 
   return OK;
@@ -1725,6 +1726,7 @@ ODBC_TEST(t_binary_collation)
                                 &decimal_digits, &nullable));
 
   is_num(data_type, SQL_CHAR);
+  CLOSE(Stmt);
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_binary_collation");
   return OK;

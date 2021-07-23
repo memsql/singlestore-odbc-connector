@@ -48,6 +48,7 @@ ODBC_TEST(test_CONO1)
 
   SQLRowCount(Stmt, &rowCount);
   diag("row_count: %u", rowCount);
+  CLOSE(Stmt);
 
   CHECK_STMT_RC(Stmt, SQLExecDirectW(Stmt, CW("SET SQL_MODE=''"), SQL_NTS));
 
@@ -547,6 +548,7 @@ ODBC_TEST(sqlcolattribute)
                                    wbuff, sizeof(wbuff), &len, NULL));
   is_num(len, 7 * sizeof(SQLWCHAR));
   IS_WSTR(wbuff, CW("integer"), 8);
+  CLOSE(hstmt1);
 
   OK_SIMPLE_STMT(hstmt1, "DROP TABLE IF EXISTS t_colattrib");
 

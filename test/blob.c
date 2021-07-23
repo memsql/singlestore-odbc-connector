@@ -714,6 +714,7 @@ ODBC_TEST(t_bug9781)
                                 &decimal_digits, &nullable));
 
   is_num(data_type, SQL_LONGVARBINARY);
+  CLOSE(Stmt);
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_bug9781");
   return OK;

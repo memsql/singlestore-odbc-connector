@@ -45,6 +45,7 @@ ODBC_TEST(test_CONO1)
   SQLRowCount(Stmt, &rowCount);
   diag("row_count: %u", rowCount);
 
+  CLOSE(Stmt);
   OK_SIMPLE_STMT(Stmt, "SET SQL_MODE=''");
 
   ret= SQLColumns(Stmt, NULL, 0, NULL, 0, (SQLCHAR*)"cono1", SQL_NTS, NULL, 0);
@@ -1050,6 +1051,7 @@ ODBC_TEST(t_bug28820)
     is_num(length, 90);
   }
 
+  CLOSE(Stmt);
   OK_SIMPLE_STMT(Stmt, "drop table if exists t_bug28820");
   return OK;
 }
@@ -1068,7 +1070,8 @@ ODBC_TEST(t_count)
   length= 0;
   CHECK_STMT_RC(Stmt, SQLDescribeCol(Stmt, 1, dummy, sizeof(dummy), NULL,
                                      NULL, &length, NULL, NULL));
-  
+
+  CLOSE(Stmt);
   OK_SIMPLE_STMT(Stmt, "drop table if exists t_count");
   return OK;
 }
