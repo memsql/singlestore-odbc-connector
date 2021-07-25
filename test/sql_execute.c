@@ -32,6 +32,7 @@ ODBC_TEST(execute_1_before_fetch_1) {
     SQLINTEGER in_id = 3;
     SQLINTEGER out_id;
     SQLCHAR out_text[10];
+    SQLRETURN ret;
 
     OK_SIMPLE_STMT(Stmt, "CREATE TABLE " TABLE "(id INT, text VARCHAR(16))");
     OK_SIMPLE_STMT(Stmt, "INSERT INTO " TABLE " VALUES (1, 'aa'), (2, 'bc'), (3, 'ca')");
@@ -84,11 +85,21 @@ ODBC_TEST(execute_1_before_fetch_1) {
     EXEC_DIRECT(Stmt, QUERY_UPDATE_WITH_PARAMS);
     FETCH_CURSOR_ERR(Stmt);
     EXECUTE_SEQUENCE_ERR(Stmt);
-#ifdef _WIN32
-    FETCH_CURSOR_ERR(Stmt);
-#else
-    FETCH_SEQUENCE_ERR(Stmt);
-#endif
+    ret = SQLFetch(Stmt);
+    IS(ret == SQL_ERROR);
+    switch(cPlatform) {
+    case LINUX:
+        CHECK_STMT_ERR(Stmt, ret, SEQUENCE_ERROR);
+        break;
+    case WINDOWS:
+        CHECK_STMT_ERR(Stmt, ret, CURSOR_STATE_ERROR);
+        break;
+    case MAC:
+        CHECK_STMT_ERR(Stmt, ret, "S1010", 0, "Function sequence error");
+        break;
+    default:
+        assert(0);
+    }
     EXEC_DIRECT(Stmt, QUERY_SELECT_WITHOUT_PARAMS_MULTIPLE_ROWS);
     FETCH(Stmt);
     IS(out_id == 1 && !strcmp("aa", out_text)); out_id = 0, *out_text = 0;
