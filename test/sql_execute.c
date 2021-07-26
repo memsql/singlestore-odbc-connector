@@ -137,7 +137,7 @@ ODBC_TEST(execute_1_before_fetch_1) {
         CHECK_STMT_ERR(Stmt, ret, SEQUENCE_ERROR);
         break;
     case MAC:
-        CHECK_STMT_ERR(Stmt, ret, "S1010", 1, "Function sequence error");
+        CHECK_STMT_ERR(Stmt, ret, "S1010", -1, "Function sequence error");
         break;
     default:
         assert(0);
