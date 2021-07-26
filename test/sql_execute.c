@@ -129,7 +129,19 @@ ODBC_TEST(execute_1_before_fetch_1) {
     PREPARE_SEQUENCE_ERR(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
     PREPARE(Stmt, QUERY_DELETE_WITHOUT_PARAMS);
     PREPARE(Stmt, QUERY_SELECT_WITH_PARAMS_SINGLE_ROW);
-    FETCH_SEQUENCE_ERR(Stmt);
+    ret = SQLFetch(Stmt);
+    IS(ret == SQL_ERROR);
+    switch(cPlatform) {
+    case LINUX:
+    case WINDOWS:
+        CHECK_STMT_ERR(Stmt, ret, SEQUENCE_ERROR);
+        break;
+    case MAC:
+        CHECK_STMT_ERR(Stmt, ret, "S1010", 0, "Function sequence error");
+        break;
+    default:
+        assert(0);
+    }
     PREPARE(Stmt, QUERY_SELECT_WITH_PARAMS_SINGLE_ROW);
     EXECUTE(Stmt);
     FETCH(Stmt);
