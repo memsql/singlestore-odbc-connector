@@ -103,7 +103,19 @@ ODBC_TEST(execute_1_before_fetch_1) {
     EXEC_DIRECT(Stmt, QUERY_SELECT_WITHOUT_PARAMS_MULTIPLE_ROWS);
     FETCH(Stmt);
     IS(out_id == 1 && !strcmp("aa", out_text)); out_id = 0, *out_text = 0;
-    EXECUTE_SEQUENCE_ERR(Stmt);
+    ret = SQLExecute(Stmt);
+    IS(ret == SQL_ERROR);
+    switch(cPlatform) {
+    case LINUX:
+    case WINDOWS:
+        CHECK_STMT_ERR(Stmt, ret, SEQUENCE_ERROR);
+        break;
+    case MAC:
+        CHECK_STMT_ERR(Stmt, ret, CURSOR_STATE_ERROR);
+        break;
+    default:
+        assert(0);
+    }
     FETCH(Stmt);
     IS(out_id == 2 && !strcmp("bc", out_text)); out_id = 0, *out_text = 0;
     CLOSE(Stmt);
