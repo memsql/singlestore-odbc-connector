@@ -263,10 +263,7 @@ ODBC_TEST(t_odbc95)
   CHECK_DBC_RC(Connection, SQLGetInfo(Connection, SQL_DBMS_VER, server_version, sizeof(server_version), NULL));
   sscanf((char*)server_version, "%02d.%02d.%06d", &major, &minor, &patch);
 
-  // SQL_SUCCESS is expected for the CSPS and for servers older than 7.1
-  ExpectedReturnCode = NoSsps || major * 10000 + minor * 100 < 70100 ? SQL_SUCCESS : SQL_ERROR;
-
-  EXPECT_STMT(Stmt, SQLPrepare(Stmt, (SQLCHAR*)"SELECT 1;INSERT INTO non_existing VALUES(2)", SQL_NTS), ExpectedReturnCode);
+  CHECK_STMT_RC(Stmt, SQLPrepare(Stmt, (SQLCHAR*)"SELECT 1;INSERT INTO non_existing VALUES(2)", SQL_NTS));
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_DROP));
   Stmt= NULL;
 
