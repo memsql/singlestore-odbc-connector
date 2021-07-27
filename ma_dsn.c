@@ -637,7 +637,7 @@ BOOL MADB_ReadConnString(MADB_Dsn *Dsn, const char *String, int Length, char Del
      from the system information." https://msdn.microsoft.com/en-us/library/ms715433%28v=vs.85%29.aspx */
   if (Dsn->DSNName && MADB_IS_EMPTY(Dsn->Driver))
   {
-    MADB_ReadDSN(Dsn, NULL, FALSE);
+    MADB_ReadDSN(Dsn, NULL, TRUE);
     /* This redundancy is needed to be able to reset options set in the DSN, e.g. if DSN has Reconnect option selected, and
        connection string has AUTO_RECONNECT=0. Connection string should have precedence */
     MADB_ParseConnString(Dsn, String, Length, Delimiter);
