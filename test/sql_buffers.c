@@ -21,14 +21,12 @@
 
 #define BUF_SIZE    1000
 
-#ifdef _WIN32 || __APPLE__
-#define NULL_ARG_ERROR  "Invalid argument value"
-#define INVALID_BUF_SIZE_ERROR  "Invalid string or buffer length"
-#elif __APPLE__
+#if defined(_WIN32) || defined(__APPLE__)
+  #define NULL_ARG_ERROR  "Invalid argument value"
 #else
-#define NULL_ARG_ERROR  "Invalid use of null pointer"
-#define INVALID_BUF_SIZE_ERROR  "Invalid string or buffer length"
+  #define NULL_ARG_ERROR  "Invalid use of null pointer"
 #endif
+#define INVALID_BUF_SIZE_ERROR  "Invalid string or buffer length"
 
 
 ODBC_TEST(buffers_native_sql) {
