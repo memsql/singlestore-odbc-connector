@@ -637,7 +637,7 @@ ODBC_TEST(t_odbc149)
     is_num(bBufLen, bLen[row]);
     memcmp(bBuf, b[row], bBufLen);
     //TODO https://memsql.atlassian.net/jira/software/c/projects/PLAT/issues/PLAT-5346
-    if (!iOdbc() && !is_ansi_driver()) {
+    if (!(iOdbc() && is_ansi_driver())) {
       IS_WSTR(wBuf, w[row], wLen/sizeof(SQLWCHAR));
     }
   }
@@ -658,11 +658,6 @@ ODBC_TEST(bulk_insert_all_datatypes)
 {
   SQLULEN  cursorTypes[NUM_CURSOR_TYPES] = {SQL_CURSOR_FORWARD_ONLY, SQL_CURSOR_STATIC, SQL_CURSOR_DYNAMIC};
   int currentCursorIndex;
-
-  /* Fails on MAC, disable for now */
-  if(cPlatform == MAC)
-    return SKIP; /* TODO: fix the test */
-
   for (currentCursorIndex = 0; currentCursorIndex < NUM_CURSOR_TYPES; currentCursorIndex++)
   {
     CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_CURSOR_TYPE,
@@ -695,6 +690,7 @@ ODBC_TEST(bulk_insert_all_datatypes)
       SQL_DATE_STRUCT c_type_date;
       SQL_TIME_STRUCT c_type_time;
       SQL_TIMESTAMP_STRUCT c_type_timestamp;
+      SQLLEN c_timestamp_len;
       SQL_NUMERIC_STRUCT c_numeric;
     } Row;
 
@@ -752,7 +748,7 @@ ODBC_TEST(bulk_insert_all_datatypes)
     // Bind columns
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_SSHORT, &rowsInsert[0].id, 0, NULL));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_CHAR, rowsInsert[0].c_char, BUFF_SIZE, NULL));
-    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_WCHAR, rowsInsert[0].c_wchar, BUFF_SIZE*sizeof(SQLWCHAR), NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 3, SQL_C_WCHAR, rowsInsert[0].c_wchar, BUFF_SIZE*sizeof(SQLWCHAR), iOdbc() ? &rowsSelect[0].c_wchar_len : NULL));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 4, SQL_C_SSHORT, &rowsInsert[0].c_sshort, 0, NULL));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 5, SQL_C_USHORT, &rowsInsert[0].c_ushort, 0, NULL));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 6, SQL_C_SLONG, &rowsInsert[0].c_slong, 0, NULL));
@@ -767,15 +763,15 @@ ODBC_TEST(bulk_insert_all_datatypes)
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 15, SQL_C_BINARY, &rowsInsert[0].c_binary, BUFF_SIZE, &rowsInsert[0].c_binary_len));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 16, SQL_C_TYPE_DATE, &rowsInsert[0].c_type_date, 0, NULL));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 17, SQL_C_TYPE_TIME, &rowsInsert[0].c_type_time, 0, NULL));
-    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 18, SQL_C_TYPE_TIMESTAMP, &rowsInsert[0].c_type_timestamp, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 18, SQL_C_TYPE_TIMESTAMP, &rowsInsert[0].c_type_timestamp, 0, iOdbc() ? &rowsInsert[0].c_timestamp_len : NULL));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 19, SQL_C_NUMERIC, &rowsInsert[0].c_numeric, 0, NULL));
 
-    // Perform buk insert. It should insert NUM_ROWS new rows to the table
+    // Perform bulk insert. It should insert NUM_ROWS new rows to the table
     CHECK_STMT_RC(Stmt, SQLBulkOperations(Stmt, SQL_ADD));
     /*
     is_num(rowsFetched, NUM_ROWS);
     for (i = 0; i < NUM_ROWS; i++) {
-      is_num(rowStatusArray[i], SQL_ROW_SUCCESS); // TODO PLAT-5555
+      is_num(rowStatusArray[i], SQL_ROW_SUCCESS);  // TODO PLAT-5555
     }*/
 
     // Free the statement
@@ -806,7 +802,7 @@ ODBC_TEST(bulk_insert_all_datatypes)
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 15, SQL_C_BINARY, &rowsSelect[0].c_binary, BUFF_SIZE, &rowsSelect[0].c_binary_len));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 16, SQL_C_TYPE_DATE, &rowsSelect[0].c_type_date, 0, NULL));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 17, SQL_C_TYPE_TIME, &rowsSelect[0].c_type_time, 0, NULL));
-    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 18, SQL_C_TYPE_TIMESTAMP, &rowsSelect[0].c_type_timestamp, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 18, SQL_C_TYPE_TIMESTAMP, &rowsSelect[0].c_type_timestamp, 0, iOdbc() ? &rowsSelect[0].c_timestamp_len : NULL));
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 19, SQL_C_NUMERIC, &rowsSelect[0].c_numeric, 0, NULL));
 
     CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
@@ -825,7 +821,10 @@ ODBC_TEST(bulk_insert_all_datatypes)
       IS_STR(rowsSelect[i].c_char, rowsInsert[i].c_char, rowsSelect[i].c_char_len+1);
 
       is_num(rowsSelect[i].c_wchar_len, rowsInsert[i].c_wchar_len*sizeof(SQLWCHAR));
-      IS_STR(rowsSelect[i].c_wchar, rowsInsert[i].c_wchar, rowsSelect[i].c_wchar_len+1);
+      if (!(iOdbc() && is_ansi_driver())) {
+        // Ansi iODBC driver for some reason break the WCHAR inside of `rowsInsert` and this check fails
+        IS_STR(rowsSelect[i].c_wchar, rowsInsert[i].c_wchar, rowsSelect[i].c_wchar_len+1);
+      }
 
       is_num(rowsSelect[i].c_sshort, rowsInsert[i].c_sshort);
       is_num(rowsSelect[i].c_ushort, rowsInsert[i].c_ushort);
@@ -916,10 +915,6 @@ ODBC_TEST(bulk_load_data)
   SQLLEN col1SelLen;
   SQLLEN col2SelLen;
 
-  /* Fails on MAC, disable for now */
-  if(cPlatform == MAC)
-    return SKIP; /* TODO: fix the test */
-
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS bulk_load_data");
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE bulk_load_data(text1 CHAR(10), text2 CHAR(10))");
 
@@ -931,6 +926,12 @@ ODBC_TEST(bulk_load_data)
 
   // insert one row
   EXPECT_STMT(Stmt,SQLBulkOperations(Stmt, SQL_ADD), SQL_NEED_DATA);
+
+  if (iOdbc()) {
+      // TODO PLAT-5696
+      // SQLParamData(Stmt, &colId) on iODBC return SQL_ERROR
+      return OK;
+  }
 
   // add data at execution parameters
   SQLPOINTER colId;

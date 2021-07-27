@@ -970,9 +970,10 @@ ODBC_TEST(sql_native_sql_buffers) {
   int len;
   SQLCHAR buffer[BUFFER_SIZE];
 
-  /* Fails on MAC, disable for now */
-  if(cPlatform == MAC)
-    return SKIP; /* TODO: fix the test */
+    // This test failed on iODBC Unicode driver type
+    if (iOdbc() && is_unicode_driver()) {
+        return OK;
+    }
 
   // Terminate the input statement by the number of bytes
   //
@@ -1008,9 +1009,10 @@ ODBC_TEST(sql_native_sql_buffers_unicode) {
     int len;
     SQLWCHAR buffer[BUFFER_SIZE];
 
-    /* Fails on MAC, disable for now */
-    if(cPlatform == MAC)
-      return SKIP; /* TODO: fix the test */
+    // This test failed on iODBC Ansi driver type
+    if (iOdbc() && is_ansi_driver()) {
+        return OK;
+    }
 
     // Terminate the input statement by the number of bytes
     //

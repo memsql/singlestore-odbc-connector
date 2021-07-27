@@ -60,10 +60,6 @@ ODBC_TEST(client_side_prepare)
     SQLINTEGER nParam = -16;
     SQLLEN nParamInd = SQL_NULL_DATA;
 
-    /* Fails on MAC, disable for now */
-    if(cPlatform == MAC)
-      return SKIP; /* TODO: fix the test */
-
     OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS csps");
     char *createTableQuery = "CREATE TABLE csps(a char(10), b varchar(20), c numeric(10,3), d int, e bigint unsigned, "
                              "f datetime(6), g binary(5), h bit(64), i tinyint, j time, k date, l double, n int)";
@@ -168,7 +164,10 @@ ODBC_TEST(client_side_prepare)
     CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 13, SQL_C_LONG, &nCol, sizeof(nCol), &nColInd));
     if (SQL_SUCCEEDED(SQLFetch(Stmt)))
     {
-        IS_WSTR(aCol, aParam, aColLen);
+        if (!(iOdbc() && is_ansi_driver())) {
+          // iODBC Ansi DM works bad with WCHARs
+          IS_WSTR(aCol, aParam, aColLen);
+        }
         IS_STR(bCol, bParam, bColLen);
         IS_STR(cCol.val, cParam.val, strlen(cCol.val));
         is_num(dCol, dParam);
@@ -757,10 +756,6 @@ ODBC_TEST(client_side_get_data_many_types)
     SQLINTEGER nParam = -16;
     SQLLEN nParamInd = SQL_NULL_DATA;
 
-    /* Fails on MAC, disable for now */
-    if(cPlatform == MAC)
-      return SKIP; /* TODO: fix the test */
-
     OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS cs_getdata");
     char *createTableQuery = "CREATE TABLE cs_getdata(a char(10), b varchar(20), c numeric(10,3), d int, e bigint unsigned, "
                              "f datetime(6), g binary(5), h bit(64), i tinyint, j time, k date, l double, n int)";
@@ -861,7 +856,10 @@ ODBC_TEST(client_side_get_data_many_types)
     CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 12, SQL_C_DOUBLE, &lCol, sizeof(lCol), &lColLen));
     CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 13, SQL_C_LONG, &nCol, sizeof(nCol), &nColInd));
 
-    IS_WSTR(aCol, aParam, aColLen);
+    if (!(iOdbc() && is_ansi_driver())) {
+      // iODBC Ansi DM works bad with WCHARs
+      IS_WSTR(aCol, aParam, aColLen);
+    }
     IS_STR(bCol, bParam, bColLen);
     IS_STR(cCol.val, cParam.val, strlen(cCol.val));
     is_num(dCol, dParam);

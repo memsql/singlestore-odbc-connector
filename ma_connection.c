@@ -899,25 +899,26 @@ SQLRETURN MADB_DbcGetFunctions(MADB_Dbc *Dbc, SQLUSMALLINT FunctionId, SQLUSMALL
       SQLUSMALLINT function= MADB_supported_api[i]; 
       SupportedPtr[function >> 4]|= (1 << (function & 0x000F));
     }
-    break;
+    return SQL_SUCCESS;
   case SQL_API_ALL_FUNCTIONS:
     /* Set all to SQL_FALSE (0) */
     memset(SupportedPtr, 0, sizeof(SQLUSMALLINT) * 100);
     for (i=0; i < Elements; i++)
       if (MADB_supported_api[i] < 100)
         SupportedPtr[MADB_supported_api[i]]= SQL_TRUE;
-    break;
+    return SQL_SUCCESS;
   default:
     *SupportedPtr= SQL_FALSE;
     for (i=0; i < Elements; i++)
       if (MADB_supported_api[i] == FunctionId)
       {
         *SupportedPtr= SQL_TRUE;
-        break;
+        return SQL_SUCCESS;
       }
     break;
   }
-  return SQL_SUCCESS;
+  return MADB_SetError(&Dbc->Error, MADB_ERR_HY095, "Function type out of range",
+                  mysql_errno(Dbc->mariadb));
 }
 /* }}} */
 

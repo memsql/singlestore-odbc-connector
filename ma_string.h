@@ -50,7 +50,6 @@ SQLLEN     SafeStrlen(SQLCHAR *str, SQLLEN buff_length);
 #define IDENTIFIER_BUFFER_OVERHEAD  3
 my_bool ProcessIdentifierString(INOUT char* out, const char* in, const size_t len);
 
-
 /* Calculate string length (if needed) and check for some input error
  *
  * ptr should be a string without zero chars inside

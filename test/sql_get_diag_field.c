@@ -26,11 +26,8 @@ ODBC_TEST(sql_diag_cursor_row_count)
   SQLHANDLE Hdbc, HdbcNoCache;
   SQLCHAR conn[512];
   SQLHANDLE Hstmt, HstmtNoCache;
+  SQLSMALLINT recordNumber = iOdbc() ? 1 : 0;
   int i;
-
-  /* Fails on MAC, disable for now */
-  if(cPlatform == MAC)
-    return SKIP; /* TODO: fix the test */
 
   sprintf((char *)conn, "DSN=%s;DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;NO_CACHE=1;OPTIONS=%lu;%s;%s",
           my_dsn, my_drivername, my_servername, my_uid, my_pwd, my_schema, my_options|32 /* MADB_OPT_FLAG_DYNAMIC_CURSOR */, ma_strport, add_connstr);
@@ -66,7 +63,7 @@ ODBC_TEST(sql_diag_cursor_row_count)
     CHECK_STMT_RC(Hstmt, SQLSetStmtAttr(Hstmt, SQL_ATTR_CURSOR_TYPE, cursors[i], 0));
     OK_SIMPLE_STMT(Hstmt, "SELECT * FROM sql_diag_cursor_row_count");
     CHECK_STMT_RC(Hstmt, SQLFetch(Hstmt)); // TODO PLAT-5583
-    CHECK_STMT_RC(Hstmt, SQLGetDiagField(SQL_HANDLE_STMT, Hstmt, 0, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
+    CHECK_STMT_RC(Hstmt, SQLGetDiagField(SQL_HANDLE_STMT, Hstmt, recordNumber, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
     FAIL_IF_NE_INT(rowCount, 2,
                    "SQLGetDiagField with SQL_DIAG_CURSOR_ROW_COUNT should return row count for select statement");
     CHECK_STMT_RC(Hstmt, SQLFreeStmt(Hstmt, SQL_CLOSE));
@@ -74,7 +71,7 @@ ODBC_TEST(sql_diag_cursor_row_count)
     CHECK_STMT_RC(HstmtNoCache, SQLSetStmtAttr(HstmtNoCache, SQL_ATTR_CURSOR_TYPE, cursors[i], 0));
     OK_SIMPLE_STMT(HstmtNoCache, "SELECT * FROM sql_diag_cursor_row_count");
     CHECK_STMT_RC(HstmtNoCache, SQLFetch(HstmtNoCache)); // TODO PLAT-5583
-    CHECK_STMT_RC(HstmtNoCache, SQLGetDiagField(SQL_HANDLE_STMT, HstmtNoCache, 0, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
+    CHECK_STMT_RC(HstmtNoCache, SQLGetDiagField(SQL_HANDLE_STMT, HstmtNoCache, recordNumber, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
     CHECK_STMT_RC(HstmtNoCache, SQLFreeStmt(HstmtNoCache, SQL_CLOSE));
     if (cursors[i] == SQL_CURSOR_FORWARD_ONLY)
     {
@@ -90,22 +87,25 @@ ODBC_TEST(sql_diag_cursor_row_count)
   // Test SQL_DIAG_CURSOR_ROW_COUNT with multistatement
   OK_SIMPLE_STMT(Stmt, "SELECT * FROM sql_diag_cursor_row_count; SELECT 1");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt)); // TODO PLAT-5583
-  CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, 0, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
+  CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, recordNumber, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
   FAIL_IF_NE_INT(rowCount, 2,
                  "SQLGetDiagField with SQL_DIAG_CURSOR_ROW_COUNT should return correct values for multistatement");
 
   CHECK_STMT_RC(Stmt, SQLMoreResults(Stmt));
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt)); // TODO PLAT-5583
-  CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, 0, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
+  CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, recordNumber, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
   FAIL_IF_NE_INT(rowCount, 1,
                  "SQLGetDiagField with SQL_DIAG_CURSOR_ROW_COUNT should return correct values for multistatement");
 
   EXPECT_STMT(Stmt, SQLMoreResults(Stmt), SQL_NO_DATA);
   EXPECT_STMT(Stmt, SQLFetch(Stmt), SQL_ERROR);
-  CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, 0, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
-  FAIL_IF_NE_INT(rowCount, 0,
+  if (iOdbc()) {
+    EXPECT_STMT(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, recordNumber, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL), SQL_ERROR);
+  } else {
+    CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, recordNumber, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
+    FAIL_IF_NE_INT(rowCount, 0,
                  "SQLGetDiagField with SQL_DIAG_CURSOR_ROW_COUNT should return 0 when no data left");
-
+  }
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
@@ -116,7 +116,7 @@ ODBC_TEST(sql_diag_cursor_row_count)
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 0, 0, ids, 0, NULL));
   CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt)); // TODO PLAT-5583
-  CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, 0, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
+  CHECK_STMT_RC(Stmt, SQLGetDiagField(SQL_HANDLE_STMT, Stmt, recordNumber, SQL_DIAG_CURSOR_ROW_COUNT, &rowCount, 0, NULL));
   // SELECT statement with several sets of parameters returns result only for the last set
   FAIL_IF_NE_INT(rowCount, 1,
                  "SQLGetDiagField with SQL_DIAG_CURSOR_ROW_COUNT should return correct values when SQL_ATTR_PARAMSET_SIZE is not 1");
@@ -219,10 +219,6 @@ ODBC_TEST(sql_diag_record_fields)
   char version[10];
   char errMsg[512];
 
-  /* Fails on MAC, disable for now */
-  if(cPlatform == MAC)
-    return SKIP; /* TODO: fix the test */
-
   // get S2 version
   OK_SIMPLE_STMT(Stmt, "SELECT @@memsql_version");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
@@ -267,7 +263,9 @@ ODBC_TEST(sql_diag_record_fields)
   IS_OK(CheckChar(SQL_HANDLE_DBC, Hdbc, 1, SQL_DIAG_SQLSTATE, "IM002"));
   IS_OK(CheckChar(SQL_HANDLE_DBC, Hdbc, 1, SQL_DIAG_CLASS_ORIGIN, "ODBC 3.0"));
   IS_OK(CheckChar(SQL_HANDLE_DBC, Hdbc, 1, SQL_DIAG_SUBCLASS_ORIGIN, "ODBC 3.0"));
-  IS_OK(CheckChar(SQL_HANDLE_DBC, Hdbc, 1, SQL_DIAG_SERVER_NAME, ""));
+  if (!iOdbc()) {
+    IS_OK(CheckChar(SQL_HANDLE_DBC, Hdbc, 1, SQL_DIAG_SERVER_NAME, ""));
+  }
   CHECK_DBC_RC(Hdbc, SQLGetDiagField(SQL_HANDLE_DBC, Hdbc, 1, SQL_DIAG_NATIVE, &nativeErrorCode, 0, NULL));
   FAIL_IF_NE_INT(nativeErrorCode, 0,
                  "SQLGetDiagField should return 0 if no native error code presented");
@@ -299,10 +297,6 @@ ODBC_TEST(errors)
 {
   ERR_SIMPLE_STMT(Stmt, "Some wrong query");
   SQLCHAR state[100];
-
-  /* Fails on MAC, disable for now */
-  if(cPlatform == MAC)
-    return SKIP; /* TODO: fix the test */
 
   // invalid handle
   FAIL_IF(SQLGetDiagField(SQL_HANDLE_STMT, NULL, 1, SQL_DIAG_SQLSTATE, state, BUFF_SIZE, NULL) != SQL_INVALID_HANDLE,

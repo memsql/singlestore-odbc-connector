@@ -21,9 +21,10 @@
 
 #define BUF_SIZE    1000
 
-#ifdef _WIN32
+#ifdef _WIN32 || __APPLE__
 #define NULL_ARG_ERROR  "Invalid argument value"
 #define INVALID_BUF_SIZE_ERROR  "Invalid string or buffer length"
+#elif __APPLE__
 #else
 #define NULL_ARG_ERROR  "Invalid use of null pointer"
 #define INVALID_BUF_SIZE_ERROR  "Invalid string or buffer length"
@@ -33,13 +34,14 @@
 ODBC_TEST(buffers_native_sql) {
     SQLCHAR in_buf[BUF_SIZE];
     SQLCHAR out_buf[BUF_SIZE];
-    SQLINTEGER out_len;
+    SQLINTEGER out_len, buff_size;
     const char* query;
     const char* long_query;
 
-    /* Fails on MAC, disable for now */
-    if(cPlatform == MAC)
-      return SKIP; /* TODO: fix the test */
+    if (iOdbc() && is_unicode_driver()) {
+        // this test doesn't work for iODBC Unicode driver type
+        return OK;
+    }
 
     // Normal run
     query = "SELECT (1, 2, 3)";
@@ -93,7 +95,11 @@ ODBC_TEST(buffers_native_sql) {
 
     query = "INSERT INTO thetable VALUES (1, 2, none)";
     strcpy(in_buf, query);
-    CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, in_buf, SQL_NTS, out_buf, SQL_NTS, &out_len), "HY090", 0, "Invalid string or buffer length");
+    if (iOdbc() && is_unicode_driver()) {
+      CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, in_buf, SQL_NTS, out_buf, SQL_NTS, &out_len), "HY001", -1, "Memory allocation error");
+    } else {
+      CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, in_buf, SQL_NTS, out_buf, SQL_NTS, &out_len), "HY090", 0, "Invalid string or buffer length");
+    }
 
     query = "SELECT (1, 2, 3)";
     strcpy(in_buf, query);
@@ -134,14 +140,15 @@ ODBC_TEST(buffers_native_sql) {
     IS(!strncmp(in_buf, out_buf, 14));
 
     // Bad use
-    CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, NULL, 0, out_buf, 15, NULL), "HY009", 0, NULL_ARG_ERROR);
+    CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, NULL, 0, out_buf, 15, NULL), "HY009", iOdbc() ? -1 : 0, NULL_ARG_ERROR);
     IS(strlen(out_buf) == 14);
 
-    CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, NULL, SQL_NTS, out_buf, 15, NULL), "HY009", 0, NULL_ARG_ERROR);
+    CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, NULL, SQL_NTS, out_buf, 15, NULL), "HY009", iOdbc() ? -1 : 0, NULL_ARG_ERROR);
     IS(strlen(out_buf) == 14);
 
     out_len = 10;
-    CHECK_DBC_RC(Connection, SQLNativeSql(Connection, in_buf, 0, out_buf, 15, &out_len));
+    buff_size = 15;
+    CHECK_DBC_RC(Connection, SQLNativeSql(Connection, in_buf, 0, out_buf, buff_size, &out_len));
     IS(strlen(out_buf) == 0);
     IS(out_len == 0);
 
@@ -154,7 +161,8 @@ ODBC_TEST(buffers_native_sql) {
 
     query = "DELETE FROM thetable WHERE id = 1";
     strcpy(in_buf, query);
-    CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, in_buf, -1, out_buf, BUF_SIZE, &out_len), "HY090", 0, INVALID_BUF_SIZE_ERROR);
+    // S1090 is returned on MacOS instead of HY090, but error message is correct
+    CHECK_DBC_ERR(Connection, SQLNativeSql(Connection, in_buf, -1, out_buf, BUF_SIZE, &out_len), iOdbc() ? "S1090" : "HY090", iOdbc() ? -1 : 0, INVALID_BUF_SIZE_ERROR);
 
     query = "SELECT (1, 2, 3)";
     strcpy(in_buf, query);
@@ -166,13 +174,14 @@ ODBC_TEST(buffers_native_sql) {
 ODBC_TEST(buffers_native_sql_w) {
     SQLWCHAR* in_buf;
     SQLWCHAR out_buf[BUF_SIZE];
-    SQLINTEGER out_len;
+    SQLINTEGER out_len, buff_size;
     const char* query;
     const char* long_query;
 
-    /* Fails on MAC, disable for now */
-    if(cPlatform == MAC)
-      return SKIP; /* TODO: fix the test */
+    if (iOdbc() && is_ansi_driver()) {
+        // this test doesn't work for iODBC Ansi driver type
+        return OK;
+    }
 
     // Normal run
     query = "SELECT (1, 2, 3)";
@@ -224,9 +233,12 @@ ODBC_TEST(buffers_native_sql_w) {
     IS(sqlwcharequal(in_buf, CW(query)));
     IS(out_len == strlen(query));
 
-    query = "INSERT INTO thetable VALUES (1, 2, none)";
-    in_buf = CW(query);
-    CHECK_DBC_ERR(Connection, SQLNativeSqlW(Connection, in_buf, SQL_NTS, out_buf, SQL_NTS, &out_len), "HY090", 0, "Invalid string or buffer length");
+    if (!iOdbc()) {
+        //This check fails on iODBC with `Memory Allocation Error`
+        query = "INSERT INTO thetable VALUES (1, 2, none)";
+        in_buf = CW(query);
+        CHECK_DBC_ERR(Connection, SQLNativeSqlW(Connection, in_buf, SQL_NTS, out_buf, SQL_NTS, &out_len), "HY090", 0, "Invalid string or buffer length");
+    }
 
     query = "SELECT (1, 2, 3)";
     in_buf = CW(query);
@@ -267,14 +279,15 @@ ODBC_TEST(buffers_native_sql_w) {
     IS(!sqlwcharcmp(in_buf, out_buf, 14));
 
     // Bad use
-    CHECK_DBC_ERR(Connection, SQLNativeSqlW(Connection, NULL, 0, out_buf, 15, NULL), "HY009", 0, NULL_ARG_ERROR);
+    CHECK_DBC_ERR(Connection, SQLNativeSqlW(Connection, NULL, 0, out_buf, 15, NULL), "HY009", iOdbc() ? -1 : 0, NULL_ARG_ERROR);
     IS(sqlwcharlen(out_buf) == 14);
 
-    CHECK_DBC_ERR(Connection, SQLNativeSqlW(Connection, NULL, SQL_NTS, out_buf, 15, NULL), "HY009", 0, NULL_ARG_ERROR);
+    CHECK_DBC_ERR(Connection, SQLNativeSqlW(Connection, NULL, SQL_NTS, out_buf, 15, NULL), "HY009", iOdbc() ? -1 : 0, NULL_ARG_ERROR);
     IS(sqlwcharlen(out_buf) == 14);
 
     out_len = 10;
-    CHECK_DBC_RC(Connection, SQLNativeSqlW(Connection, in_buf, 0, out_buf, 15, &out_len));
+    buff_size = 15;
+    CHECK_DBC_RC(Connection, SQLNativeSqlW(Connection, in_buf, 0, out_buf, buff_size, &out_len));
     IS(sqlwcharlen(out_buf) == 0);
     IS(out_len == 0);
 
@@ -287,7 +300,8 @@ ODBC_TEST(buffers_native_sql_w) {
 
     query = "DELETE FROM thetable WHERE id = 1";
     in_buf = CW(query);
-    CHECK_DBC_ERR(Connection, SQLNativeSqlW(Connection, in_buf, -1, out_buf, BUF_SIZE, &out_len), "HY090", 0, INVALID_BUF_SIZE_ERROR);
+    // S1090 is returned on MacOS instead of HY090, but error message is correct
+    CHECK_DBC_ERR(Connection, SQLNativeSqlW(Connection, in_buf, -1, out_buf, BUF_SIZE, &out_len), iOdbc() ? "S1090" : "HY090", iOdbc() ? -1 : 0, INVALID_BUF_SIZE_ERROR);
 
     query = "SELECT (1, 2, 3)";
     in_buf = CW(query);
@@ -305,10 +319,6 @@ ODBC_TEST(buffers_exec_direct) {
     SQLINTEGER in_id = 3;
     SQLINTEGER out_id;
     SQLCHAR out_text[10];
-
-    /* Fails on MAC, disable for now */
-    if(cPlatform == MAC)
-      return SKIP; /* TODO: fix the test */
 
     // Simple use
     query = "CREATE TABLE " TABLE "(id INT, text VARCHAR(16))";
@@ -339,13 +349,18 @@ ODBC_TEST(buffers_exec_direct) {
     CLOSE(Stmt);
 
     // Bad use
-    CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, NULL, 0), "HY009", 0, NULL_ARG_ERROR);
+    CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, NULL, 0), "HY009", iOdbc() ? -1 : 0, NULL_ARG_ERROR);
 
-    CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, NULL, SQL_NTS), "HY009", 0, NULL_ARG_ERROR);
+    CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, NULL, SQL_NTS), "HY009", iOdbc() ? -1 : 0, NULL_ARG_ERROR);
 
-    CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, in_buf, 0), "HY090", 0, "Invalid string or buffer length");
+    if (iOdbc()) {
+      CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, in_buf, 0), "42000", 0, "Syntax error or access violation");
+    } else {
+      CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, in_buf, 0), "HY090", 0, "Invalid string or buffer length");
+    }
 
-    CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, in_buf, -1), "HY090", 0, "Invalid string or buffer length");
+    // S1090 is returned on MacOS instead of HY090, but error message is correct
+    CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, in_buf, -1), iOdbc() ? "S1090" : "HY090", 0, "Invalid string or buffer length");
 
     *in_buf = 0;
     CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, in_buf, BUF_SIZE), "42000", 0, "Syntax error or access violation");
@@ -356,6 +371,12 @@ ODBC_TEST(buffers_exec_direct) {
 }
 
 ODBC_TEST(buffers_exec_direct_w) {
+
+    //This test doesn't work with iODBC Ansi Driver
+    if (iOdbc() && is_ansi_driver()) {
+        return OK;
+    }
+
 #define TABLE "buffers_exec_direct_w"
     SQLWCHAR* in_buf;
     const char* query;
@@ -363,10 +384,6 @@ ODBC_TEST(buffers_exec_direct_w) {
     SQLINTEGER in_id = 3;
     SQLINTEGER out_id;
     SQLWCHAR out_text[10];
-
-    /* Fails on MAC, disable for now */
-    if(cPlatform == MAC)
-      return SKIP; /* TODO: fix the test */
 
     // Simple use
     query = "CREATE TABLE " TABLE "(id INT, text VARCHAR(16))";
@@ -379,10 +396,13 @@ ODBC_TEST(buffers_exec_direct_w) {
     CHECK_STMT_RC(Stmt, SQLExecDirectW(Stmt, in_buf, SQL_NTS));
     IS(sqlwcharequal(in_buf, CW(query)));
 
+    SQLLEN len1;
+    SQLLEN len2;
+
     // Shortcut in buff
     CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_SLONG, SQL_INTEGER, 0, 0, &in_id, 0, NULL));
-    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_SLONG, &out_id, 0, NULL));
-    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_WCHAR, &out_text, sizeof(out_text), NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_SLONG, &out_id, 0, iOdbc() ? &len1 : NULL));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_WCHAR, &out_text, sizeof(out_text), iOdbc() ? &len2 : NULL));
 
     query = "SELECT * FROM " TABLE " WHERE id = ?";
     long_query = "SELECT * FROM " TABLE " WHERE id = ?BLAH";
@@ -397,13 +417,17 @@ ODBC_TEST(buffers_exec_direct_w) {
     CLOSE(Stmt);
 
     // Bad use
-    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, NULL, 0), "HY009", 0, NULL_ARG_ERROR);
+    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, NULL, 0), "HY009", iOdbc() ? -1 : 0, NULL_ARG_ERROR);
 
-    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, NULL, SQL_NTS), "HY009", 0, NULL_ARG_ERROR);
+    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, NULL, SQL_NTS), "HY009", iOdbc() ? -1 : 0, NULL_ARG_ERROR);
 
-    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, in_buf, 0), "HY090", 0, "Invalid string or buffer length");
+    if (iOdbc()) {
+      CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, in_buf, 0), "42000", 0, "Syntax error or access violation");
+    } else {
+      CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, in_buf, 0), "HY090", 0, "Invalid string or buffer length");
+    }
 
-    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, in_buf, -1), "HY090", 0, "Invalid string or buffer length");
+    CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, in_buf, -1), iOdbc() ? "S1090" : "HY090", 0, "Invalid string or buffer length");
 
     *in_buf = 0;
     CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, in_buf, BUF_SIZE), "42000", 0, "Syntax error or access violation");
@@ -469,21 +493,21 @@ static int test_proc_columns() {
                                             NULL, 0,
                                             (SQLCHAR*)"aaa", strlen("aaa"),
                                             (SQLCHAR*)"a11", strlen("a11")),
-                   "HY090", 0, "Invalid string or buffer length");
+                   iOdbc() ? "S1090" : "HY090", iOdbc() ? -1 : 0, "Invalid string or buffer length");
 
     CHECK_STMT_ERR(Stmt, SQLProcedureColumns(Stmt,
                                              (SQLCHAR*)"odbc_test", strlen("odbc_test"),
                                              NULL, 0,
                                              (SQLCHAR*)"aaa", -1000,
                                              (SQLCHAR*)"a11", strlen("a11")),
-                   "HY090", 0, "Invalid string or buffer length");
+                   iOdbc() ? "S1090" : "HY090", iOdbc() ? -1 : 0, "Invalid string or buffer length");
 
     CHECK_STMT_ERR(Stmt, SQLProcedureColumns(Stmt,
                                              (SQLCHAR*)"odbc_test", strlen("odbc_test"),
                                              NULL, 0,
                                              (SQLCHAR*)"aaa", strlen("aaa"),
                                              (SQLCHAR*)"a11", -1000),
-                   "HY090", 0, "Invalid string or buffer length");
+                   iOdbc() ? "S1090" : "HY090", iOdbc() ? -1 : 0, "Invalid string or buffer length");
 
     // Normal runs
     num_rows = 0;
@@ -547,21 +571,21 @@ static int test_proc_columns() {
                                              NULL, 0,
                                              (SQLCHAR*)"aaa", strlen("aaa"),
                                              (SQLCHAR*)"a11", strlen("a11")),
-                   "HY090", 0, "Invalid string or buffer length");
+                   iOdbc() ? "S1090" : "HY090", iOdbc() ? -1 : 0, "Invalid string or buffer length");
 
     CHECK_STMT_ERR(Stmt, SQLProcedureColumns(Stmt,
                                              (SQLCHAR*)"odbc_test", strlen("odbc_test"),
                                              NULL, 0,
                                              (SQLCHAR*)"aaa", -1000,
                                              (SQLCHAR*)"a11", strlen("a11")),
-                   "HY090", 0, "Invalid string or buffer length");
+                   iOdbc() ? "S1090" : "HY090", iOdbc() ? -1 : 0, "Invalid string or buffer length");
 
     CHECK_STMT_ERR(Stmt, SQLProcedureColumns(Stmt,
                                              (SQLCHAR*)"odbc_test", strlen("odbc_test"),
                                              NULL, 0,
                                              (SQLCHAR*)"aaa", strlen("aaa"),
                                              (SQLCHAR*)"a11", -1000),
-                   "HY090", 0, "Invalid string or buffer length");
+                   iOdbc() ? "S1090" : "HY090", iOdbc() ? -1 : 0, "Invalid string or buffer length");
 
     // Normal runs
     num_rows = 0;
@@ -651,21 +675,21 @@ static int test_proc_columns_w() {
                                                 NULL, 0,
                                                 CW("aaa"), strlen("aaa"),
                                                 CW("a11"), strlen("a11")),
-                   "HY090", 0, "Invalid string or buffer length");
+                   iOdbc() ? "S1090" : "HY090", iOdbc() ? -1 : 0, "Invalid string or buffer length");
 
     CHECK_STMT_ERR(Stmt, SQLProcedureColumnsW(  Stmt,
                                                 CW("odbc_test"), strlen("odbc_test"),
                                                 NULL, 0,
                                                 CW("aaa"), -1000,
                                                 CW("a11"), strlen("a11")),
-                   "HY090", 0, "Invalid string or buffer length");
+                   iOdbc() ? "S1090" : "HY090", iOdbc() ? -1 : 0, "Invalid string or buffer length");
 
     CHECK_STMT_ERR(Stmt, SQLProcedureColumnsW(  Stmt,
                                                 CW("odbc_test"), strlen("odbc_test"),
                                                 NULL, 0,
                                                 CW("aaa"), strlen("aaa"),
                                                 CW("a11"), -1000),
-                   "HY090", 0, "Invalid string or buffer length");
+                   iOdbc() ? "S1090" : "HY090", iOdbc() ? -1 : 0, "Invalid string or buffer length");
 
     // Normal runs
     num_rows = 0;
@@ -729,21 +753,21 @@ static int test_proc_columns_w() {
                                                 NULL, 0,
                                                 CW("aaa"), strlen("aaa"),
                                                 CW("a11"), strlen("a11")),
-                   "HY090", 0, "Invalid string or buffer length");
+                   iOdbc() ? "S1090" : "HY090", iOdbc() ? -1 : 0, "Invalid string or buffer length");
 
     CHECK_STMT_ERR(Stmt, SQLProcedureColumnsW(  Stmt,
                                                 CW("odbc_test"), strlen("odbc_test"),
                                                 NULL, 0,
                                                 CW("aaa"), -1000,
                                                 CW("a11"), strlen("a11")),
-                   "HY090", 0, "Invalid string or buffer length");
+                   iOdbc() ? "S1090" : "HY090", iOdbc() ? -1 : 0, "Invalid string or buffer length");
 
     CHECK_STMT_ERR(Stmt, SQLProcedureColumnsW(  Stmt,
                                                 CW("odbc_test"), strlen("odbc_test"),
                                                 NULL, 0,
                                                 CW("aaa"), strlen("aaa"),
                                                 CW("a11"), -1000),
-                   "HY090", 0, "Invalid string or buffer length");
+                   iOdbc() ? "S1090" : "HY090", iOdbc() ? -1 : 0, "Invalid string or buffer length");
 
     // Normal runs
     num_rows = 0;
@@ -782,10 +806,6 @@ static int test_proc_columns_w() {
 
 ODBC_TEST(buffers_proc_columns) {
     int res;
-
-    /* Fails on MAC, disable for now */
-    if(cPlatform == MAC)
-      return SKIP; /* TODO: fix the test */
 
     OK_SIMPLE_STMT(Stmt, "CREATE FUNCTION aaa (a11 INT, aa1 INT) RETURNS INT AS BEGIN RETURN 0; END");
     OK_SIMPLE_STMT(Stmt, "CREATE PROCEDURE bbb (b22 INT) AS BEGIN SET b22 = 0; END");

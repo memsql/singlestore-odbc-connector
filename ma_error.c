@@ -367,7 +367,7 @@ SQLRETURN MADB_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
     // TODO PLAT-5589
     break;
   case SQL_DIAG_NUMBER:
-    *(SQLINTEGER *)DiagInfoPtr= (Err->ReturnValue == SQL_SUCCESS) ? 0:1;
+    *(SQLINTEGER *)DiagInfoPtr= (Err->ReturnValue == SQL_SUCCESS) ? 0 : 1;
     break;
   case SQL_DIAG_RETURNCODE:
     *(SQLRETURN *)DiagInfoPtr= Err->ReturnValue;
@@ -441,7 +441,6 @@ SQLRETURN MADB_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
                            isWChar ? BufferLength / sizeof(SQLWCHAR) : BufferLength, Err->SqlState, strlen(Err->SqlState), &Error);
     if (StringLengthPtr)
       *StringLengthPtr= (SQLSMALLINT)Length;
-   
     break;
   case SQL_DIAG_SUBCLASS_ORIGIN:
     if (BufferLength < 0)

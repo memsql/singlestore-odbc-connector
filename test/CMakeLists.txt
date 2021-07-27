@@ -37,7 +37,9 @@ IF(NOT WIN32)
 ENDIF()
 # iOdbc has
 IF(WITH_IODBC)
-  SET(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-Wno-pointer-sign")
+#  Doesn't work with newer Clang
+# -Wno-pointer-sign: command not found
+#  SET(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-Wno-pointer-sign")
 ENDIF()
 FOREACH (ODBC_TEST ${ODBC_TESTS})
   IF (${ODBC_TEST} STREQUAL "interactive")

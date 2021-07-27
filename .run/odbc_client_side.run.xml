@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="odbc_client_side" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" WORKING_DIR="file://$CMakeCurrentGenerationDir$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="singlestore_connector_odbc" TARGET_NAME="odbc_client_side" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="singlestore_connector_odbc" RUN_TARGET_NAME="odbc_client_side">
+  <configuration default="false" name="odbc_client_side" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$CMakeCurrentGenerationDir$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="singlestore_connector_odbc" TARGET_NAME="odbc_client_side" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="singlestore_connector_odbc" RUN_TARGET_NAME="odbc_client_side">
     <envs>
       <env name="ODBCINI" value="./test/odbc.ini" />
-      <env name="ODBCSYSINI" value="./test" />
+      <env name="ODBCINSTINI" value="./test/odbcinst.ini" />
     </envs>
     <method v="2">
       <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
