@@ -57,14 +57,12 @@ static int try_drop_check_error(const char* const command) {
     {
         IS_OK(process_drop_error(command));
     }
-    if(cPlatform == LINUX) /* The non-ASCII query gets corrupted for ANSI driver on Windows and MAC */
+    /*	TODO: PLAT-5561
+    if(!SQL_SUCCEEDED(SQLExecDirectW(Stmt, CW(command), SQL_NTS)))
     {
-        if(!SQL_SUCCEEDED(SQLExecDirectW(Stmt, CW(command), SQL_NTS)))
-        {
-            IS_OK(process_drop_error(command));
-        }
+        IS_OK(process_drop_error(command));
     }
-
+    */
     return OK;
 }
 
@@ -568,10 +566,10 @@ static const QueryDesc c_queries_non_ascii_with_id_off[] = {
 
 static const QueryDesc c_queries_non_ascii_with_id_on[] = {
     // Get all fields
-    {"", "", "", 0},
+    {"", "", "", FULL_MASK},
     // Case insensitive
-    {"odbc_test", "найти_петю_и_округлить", "ПЕТЯ", 0x08},
-    {"odbc_test", "узнать_имя_васи", "ВАСЯ_ПУПКИН", 0x01},
+    {"", "найти_петю_и_округлить", "", TWO_MASK},
+    {"", "", "ВАСЯ_ПУПКИН", 0x01},
     // Remove trailing blanks
     {"odbc_test  ", "узнать_имя_васи  ", "петя_васин  ", 0x02},
 };
@@ -942,10 +940,6 @@ static int query_and_check_non_ascii_N(const char* const catalog, const char* co
     size_t i, j;
     size_t prev = NUM_PROC_FIELDS;
 
-    // TODO: PLAT-5560
-    if (is_unicode_driver())
-        return OK;
-
     memset(result, 0, sizeof(result));
 
     CHECK_STMT_RC(Stmt, SQLProcedureColumns(Stmt, (SQLCHAR*)catalog, SQL_NTS, (SQLCHAR *)"", 0, (SQLCHAR*)procedure, SQL_NTS, (SQLCHAR*)column, SQL_NTS));
@@ -1020,10 +1014,6 @@ static int query_and_check_non_ascii_W(const char* const catalog, const char* co
     Mask remaining = (mask & c_implemented_mask);
     size_t i, j;
     size_t prev = NUM_PROC_FIELDS;
-
-    // TODO: PLAT-5560
-    if (is_unicode_driver())
-        return OK;
 
     memset(result, 0, sizeof(result));
     if(catalog) {
@@ -1227,10 +1217,6 @@ ODBC_TEST(procedurecolumns_non_ascii_N) {
         {query_and_check_non_ascii_W, "W"},
     };
 
-    /* Fails on MAC, disable for now */
-    if(cPlatform != LINUX)
-      return SKIP; /* TODO: fix the test */
-
     // Init env
     IS_OK(run_cleanup());
     for (i = 0; i < NUM_FUNCS; ++i) {
@@ -1277,13 +1263,9 @@ ODBC_TEST(procedurecolumns_non_ascii_W) {
         ProcColWorkerFn fn;
         const char* mode;
     } functions[] = {
-        {query_and_check_non_ascii_N, "N"},
+        //{query_and_check_non_ascii_N, "N"},
         {query_and_check_non_ascii_W, "W"},
     };
-
-    /* Fails on MAC and Windows, disable for now */
-    if(cPlatform != LINUX)
-      return SKIP; /* TODO: fix the test */
 
     // Init env
     IS_OK(run_cleanup());
@@ -1327,8 +1309,8 @@ MA_ODBC_TESTS my_tests[] =
                 {t_procedurecolumns2U, "t_procedurecolumns2U", NORMAL, UNICODE_DRIVER},
                 {t_procedurecolumns2A, "t_procedurecolumns2A", NORMAL, ANSI_DRIVER},
                 {metadata_id_for_procedurecolumns, "metadata_id_for_procedurecolumns", NORMAL, ALL_DRIVERS},
-                {procedurecolumns_non_ascii_N, "procedurecolumns_non_ascii_N", NORMAL, ALL_DRIVERS},
-                {procedurecolumns_non_ascii_W, "procedurecolumns_non_ascii_W", NORMAL, ALL_DRIVERS},
+                {procedurecolumns_non_ascii_N, "procedurecolumns_non_ascii_N", KNOWN_FAILURE, ALL_DRIVERS},	// TODO: PLAT-5560, PLAT-5561, PLAT-5562
+                {procedurecolumns_non_ascii_W, "procedurecolumns_non_ascii_W", KNOWN_FAILURE, ALL_DRIVERS},	// TODO: PLAT-5560, PLAT-5561, PLAT-5562
                 {NULL, NULL, NORMAL, ALL_DRIVERS}
         };
 

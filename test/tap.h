@@ -1329,13 +1329,6 @@ int run_tests_ex(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
     }
   }
 
-  if (cPlatform == LINUX)
-  {
-    /* A hack for UNIX ODBC - its string transcoding is broken for the first connection (env?) */
-    ODBC_Connect(&Env,&Connection,&Stmt);
-    ODBC_Disconnect(Env,Connection,Stmt);
-  }
-
   cleanup();
 
   fprintf(stdout, "Running tests in the client-side prepared statements mode...\n");
