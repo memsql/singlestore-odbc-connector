@@ -304,25 +304,6 @@ BOOL MADB_DirectoryExists(const char *Path)
 
 char* MADB_GetDefaultPluginsDir(char* Buffer, size_t Size)
 {
-  HMODULE hModule = GetModuleHandle(MADB_DRIVER_NAME);
-  wchar_t wOurLocation[_MAX_PATH];
-  const char *PluginsSubDirName= "\\"MADB_DEFAULT_PLUGINS_SUBDIR;
-  HRESULT hr;
-
-  memset(Buffer, 0, Size);
-  GetModuleFileNameW(hModule, wOurLocation, _MAX_PATH);
-  hr= PathCchRemoveFileSpec(wOurLocation, _MAX_PATH);
-
-  WideCharToMultiByte(GetACP(), 0, wOurLocation, -1, Buffer, (int)Size, NULL, NULL);
-  if (strlen(Buffer) < Size - strlen(PluginsSubDirName))
-  {
-    strcpy(Buffer + strlen(Buffer), PluginsSubDirName);
-
-    if (MADB_DirectoryExists(Buffer) != FALSE)
-    {
-      return Buffer;
-    }
-  }
   return NULL;
 }
 
