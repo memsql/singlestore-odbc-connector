@@ -95,7 +95,6 @@ struct st_ma_stmt_methods
   SQLRETURN (*BulkOperations)(MADB_Stmt *Stmt, SQLSMALLINT Operation);
   SQLRETURN (*RefreshDynamicCursor)(MADB_Stmt *Stmt);
   SQLRETURN (*RefreshRowPtrs)(MADB_Stmt *Stmt);
-  SQLRETURN (*GetOutParams)(MADB_Stmt *Stmt, int CurrentOffset);
 };
 
 SQLRETURN    MADB_StmtInit          (MADB_Dbc *Connection, SQLHANDLE *pHStmt);
@@ -108,7 +107,7 @@ SQLRETURN    MADB_StmtFetchColumn(MADB_Stmt* Stmt, MYSQL_BIND *bind, unsigned in
 SQLRETURN    MADB_FetchCsps(MADB_Stmt* Stmt);
 SQLRETURN    MADB_FetchColumnCsps(MADB_Stmt* Stmt, MYSQL_BIND *bind, unsigned int column, unsigned long offset);
 
-void         MADB_CspsFreeResult(MADB_Stmt *Stmt, MYSQL_RES** CspsRes, MYSQL_STMT* stmt);
+void         MADB_CspsFreeResult(MADB_Stmt *Stmt, MYSQL_RES** CspsRes, MYSQL* stmt);
 void         MADB_CspsCopyResult(MADB_Stmt *Stmt, MYSQL_RES* CspsRes, MYSQL_STMT* stmt);
 void         MADB_CspsFreeDAE(MADB_Stmt *Stmt);
 

@@ -288,7 +288,7 @@ struct st_ma_odbc_stmt
   MADB_StmtOptions          Options;
   MADB_Error                Error;
   MADB_Cursor               Cursor;
-  MYSQL_STMT                *stmt;
+  //MYSQL_STMT                *stmt;
   MYSQL_RES                 *metadata;
   MADB_List                 ListItem;
   MADB_QUERY                Query;
@@ -302,19 +302,15 @@ struct st_ma_odbc_stmt
   MADB_Stmt                 *PositionedCursor;
   my_bool                   PositionedCommand;
   enum MADB_StmtState       State;
-  MYSQL_STMT                **MultiStmts;
+  //MYSQL_STMT                **MultiStmts;
   unsigned int              MultiStmtNr;
-  // CspsResult and CspsMultiStmtResult fields are only storing the result sets for the client-side prepared statements.
-  // They're convenient to work with because we can fully release the memory via C driver API.
-  // That's pretty much the only reason for keeping those.
-  // NOTE: no cursor logic, fetching, update, insert or delete operations, etc. should happen on these fields,
-  // the corresponding MYSQL_STMT object is responsible for that.
   MYSQL_RES                 *CspsResult;
   MYSQL_RES                 **CspsMultiStmtResult;
+  long long                 *CspsMultiStmtAffectedRows;
   unsigned int              MultiStmtMaxParam;
   SQLLEN                    LastRowFetched;
   MYSQL_BIND                *result;
-  MYSQL_BIND                *params;
+  //MYSQL_BIND                *params;
   int                       PutParam;
   my_bool                   RebindParams;
   my_bool                   bind_done;

@@ -27,16 +27,16 @@ char *MADB_GetTableName(MADB_Stmt *Stmt)
   unsigned  int i;
   if (Stmt->TableName && Stmt->TableName[0])
     return Stmt->TableName;
-  if (!mysql_stmt_field_count(Stmt->stmt))
+  if (!Stmt->CspsResult->field_count)
     return NULL;
 
-  for (i=0; i < mysql_stmt_field_count(Stmt->stmt); i++)
+  for (i=0; i < Stmt->CspsResult->field_count; i++)
   {
-    if (Stmt->stmt->fields[i].org_table)
+    if (Stmt->CspsResult->fields[i].org_table)
     {
       if (!TableName)
-        TableName= Stmt->stmt->fields[i].org_table;
-      if (strcmp(TableName, Stmt->stmt->fields[i].org_table))
+        TableName= Stmt->CspsResult->fields[i].org_table;
+      if (strcmp(TableName, Stmt->CspsResult->fields[i].org_table))
       {
         MADB_SetError(&Stmt->Error, MADB_ERR_HY000, "Couldn't identify unique table name", 0);
         return NULL;
@@ -55,16 +55,16 @@ char *MADB_GetCatalogName(MADB_Stmt *Stmt)
   unsigned int i= 0;
   if (Stmt->CatalogName && Stmt->CatalogName[0])
     return Stmt->CatalogName;
-  if (!mysql_stmt_field_count(Stmt->stmt))
+  if (!Stmt->CspsResult->field_count)
     return NULL;
 
-  for (i=0; i < mysql_stmt_field_count(Stmt->stmt); i++)
+  for (i=0; i < Stmt->CspsResult->field_count; i++)
   {
-    if (Stmt->stmt->fields[i].org_table)
+    if (Stmt->CspsResult->fields[i].org_table)
     {
       if (!CatalogName)
-        CatalogName= Stmt->stmt->fields[i].db;
-      if (strcmp(CatalogName, Stmt->stmt->fields[i].db))
+        CatalogName= Stmt->CspsResult->fields[i].db;
+      if (strcmp(CatalogName, Stmt->CspsResult->fields[i].db))
       {
         MADB_SetError(&Stmt->Error, MADB_ERR_HY000, "Couldn't identify unique catalog name", 0);
         return NULL;
@@ -115,7 +115,7 @@ my_bool MADB_DynStrUpdateSet(MADB_Stmt *Stmt, MADB_DynString *DynString)
       MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
       return TRUE;
     }
-    if (MADB_DynStrAppendQuoted(DynString, Stmt->stmt->fields[i].org_name))
+    if (MADB_DynStrAppendQuoted(DynString, Stmt->CspsResult->fields[i].org_name))
     {
       MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
       return TRUE;
@@ -126,7 +126,7 @@ my_bool MADB_DynStrUpdateSet(MADB_Stmt *Stmt, MADB_DynString *DynString)
       return TRUE;
     }
   }
-  if (IgnoredColumns == mysql_stmt_field_count(Stmt->stmt))
+  if (IgnoredColumns == Stmt->CspsResult->field_count)
   {
     MADB_SetError(&Stmt->Error, MADB_ERR_21S02, NULL, 0);
     return TRUE;
@@ -161,7 +161,7 @@ my_bool MADB_DynStrInsertSet(MADB_Stmt *Stmt, MADB_DynString *DynString)
         (MADB_DynstrAppend(DynString, ",") || MADB_DynstrAppend(&ColVals, ",")))
       goto dynerror;
 
-    if (MADB_DynStrAppendQuoted(DynString, Stmt->stmt->fields[i].org_name) ||
+    if (MADB_DynStrAppendQuoted(DynString, Stmt->CspsResult->fields[i].org_name) ||
         MADB_DynstrAppend(&ColVals, "?"))
        goto dynerror;
 
@@ -187,14 +187,14 @@ my_bool MADB_DynStrGetColumns(MADB_Stmt *Stmt, MADB_DynString *DynString)
     MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
     return TRUE;
   }
-  for (i=0; i < mysql_stmt_field_count(Stmt->stmt); i++)
+  for (i=0; i < Stmt->CspsResult->field_count; i++)
   {
     if (i && MADB_DynstrAppend(DynString, ", "))
     {
       MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
       return TRUE;
     }
-    if (MADB_DynStrAppendQuoted(DynString, Stmt->stmt->fields[i].org_name))
+    if (MADB_DynStrAppendQuoted(DynString, Stmt->CspsResult->fields[i].org_name))
     {
       MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
       return TRUE;
@@ -241,7 +241,7 @@ my_bool MADB_DynStrGetWhere(MADB_Stmt *Stmt, MADB_DynString *DynString, char *Ta
     MA_SQLAllocHandle(SQL_HANDLE_STMT, Stmt->Connection, (SQLHANDLE*)&CountStmt);
     _snprintf(StmtStr, 256, "SELECT * FROM `%s` LIMIT 0", TableName);
     CountStmt->Methods->ExecDirect(CountStmt, (char *)StmtStr, SQL_NTS);
-    FieldCount= mysql_stmt_field_count(((MADB_Stmt *)CountStmt)->stmt);
+    FieldCount= ((MADB_Stmt *)CountStmt)->CspsResult->field_count;
     CountStmt->Methods->StmtFree(CountStmt, SQL_DROP);
 
     if (FieldCount != MADB_STMT_COLUMN_COUNT(Stmt))
@@ -318,7 +318,7 @@ my_bool MADB_DynStrGetValues(MADB_Stmt *Stmt, MADB_DynString *DynString)
     MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
     return TRUE;
   }
-  for (i=0; i < mysql_stmt_field_count(Stmt->stmt); i++)
+  for (i=0; i < Stmt->CspsResult->field_count; i++)
   {
     if (MADB_DynstrAppend(DynString, (i) ? ",?" : "?"))
     {
@@ -352,7 +352,7 @@ char *MADB_GetInsertStatement(MADB_Stmt *Stmt)
   p= StmtStr;
   
   p+= _snprintf(StmtStr, 1024, "INSERT INTO `%s` (", TableName);
-  for (i=0; i < mysql_stmt_field_count(Stmt->stmt); i++)
+  for (i=0; i < Stmt->CspsResult->field_count; i++)
   {
     if (strlen(StmtStr) > Length - NAME_LEN - 4/* comma + 2 ticks + terminating NULL */)
     {
@@ -363,14 +363,14 @@ char *MADB_GetInsertStatement(MADB_Stmt *Stmt)
         goto error;
       }
     }
-    p+= _snprintf(p, Length - strlen(StmtStr), "%s`%s`", (i==0) ? "" : ",", Stmt->stmt->fields[i].org_name);
+    p+= _snprintf(p, Length - strlen(StmtStr), "%s`%s`", (i==0) ? "" : ",", Stmt->CspsResult->fields[i].org_name);
   }
   p+= _snprintf(p, Length - strlen(StmtStr), ") VALUES (");
 
-  if (strlen(StmtStr) > Length - mysql_stmt_field_count(Stmt->stmt)*2 - 1)/* , and ? for each column  + (- 1 comma for 1st column + closing ')')
+  if (strlen(StmtStr) > Length - Stmt->CspsResult->field_count*2 - 1)/* , and ? for each column  + (- 1 comma for 1st column + closing ')')
                                                                             + terminating NULL */
   {
-    Length= strlen(StmtStr) + mysql_stmt_field_count(Stmt->stmt)*2 + 1;
+    Length= strlen(StmtStr) + Stmt->CspsResult->field_count*2 + 1;
     if (!(StmtStr= MADB_REALLOC(StmtStr, Length)))
     {
       MADB_SetError(&Stmt->Error, MADB_ERR_HY013, NULL, 0);
@@ -378,7 +378,7 @@ char *MADB_GetInsertStatement(MADB_Stmt *Stmt)
     }
   }
 
-  for (i=0; i < mysql_stmt_field_count(Stmt->stmt); i++)
+  for (i=0; i < Stmt->CspsResult->field_count; i++)
   {
     p+= _snprintf(p, Length - strlen(StmtStr), "%s?", (i==0) ? "" : ",");
   }

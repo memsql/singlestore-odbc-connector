@@ -145,7 +145,7 @@ SQLRETURN SQL_API SQLBindCol(SQLHSTMT StatementHandle,
   MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
   SQLRETURN ret;
   MADB_CLEAR_ERROR(&Stmt->Error);
-  MADB_CHECK_STMT_HANDLE(Stmt,stmt);  
+  //MADB_CHECK_STMT_HANDLE(Stmt,stmt);
 
   MDBUG_C_ENTER(Stmt->Connection, "SQLBindCol");
   MDBUG_C_DUMP(Stmt->Connection, Stmt, 0x);
@@ -190,7 +190,7 @@ SQLRETURN MA_SQLBindParameter(SQLHSTMT StatementHandle,
   MDBUG_C_DUMP(Stmt->Connection, BufferLength, d);
   MDBUG_C_DUMP(Stmt->Connection, StrLen_or_IndPtr, 0x);
       
-  MADB_CHECK_STMT_HANDLE(Stmt,stmt);
+  //MADB_CHECK_STMT_HANDLE(Stmt,stmt);
   ret= Stmt->Methods->BindParam(Stmt, ParameterNumber, InputOutputType, ValueType, ParameterType, ColumnSize, DecimalDigits,
                                   ParameterValuePtr, BufferLength, StrLen_or_IndPtr);
 
@@ -337,8 +337,8 @@ SQLRETURN SQL_API SQLCloseCursor(SQLHSTMT StatementHandle)
   MDBUG_C_ENTER(Stmt->Connection, "SQLCloseCursor");
   MDBUG_C_DUMP(Stmt->Connection, StatementHandle, 0x);
 
-  if (!Stmt->stmt || 
-     (!mysql_stmt_field_count(Stmt->stmt) && 
+  if (!Stmt->CspsResult ||
+     (!Stmt->CspsResult->field_count &&
        Stmt->Connection->Environment->OdbcVersion >= SQL_OV_ODBC3))
   {
     MADB_SetError(&Stmt->Error, MADB_ERR_24000, NULL, 0);
@@ -857,7 +857,7 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT StatementHandle,
   }
 
   /* reset offsets for other columns. Doing that here since "internal" calls should not do that */
-  for (i=0; i < mysql_stmt_field_count(Stmt->stmt); i++)
+  for (i=0; i < Stmt->CspsResult->field_count; i++)
   {
     if (i != Col_or_Param_Num - 1)
     {
@@ -1052,7 +1052,7 @@ SQLRETURN SQL_API SQLNumParams(SQLHSTMT StatementHandle,
 {
   MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
 
-  MADB_CHECK_STMT_HANDLE(Stmt, stmt);
+  // MADB_CHECK_STMT_HANDLE(Stmt, stmt);
   MADB_CLEAR_ERROR(&Stmt->Error);
 
   return Stmt->Methods->ParamCount(Stmt, ParameterCountPtr);
@@ -1064,7 +1064,7 @@ SQLRETURN SQL_API SQLNumResultCols(SQLHSTMT StatementHandle,
     SQLSMALLINT *ColumnCountPtr)
 {
   MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
-  MADB_CHECK_STMT_HANDLE(Stmt, stmt);
+  // MADB_CHECK_STMT_HANDLE(Stmt, stmt);
   MADB_CLEAR_ERROR(&Stmt->Error);
 
   return Stmt->Methods->ColumnCount(Stmt, ColumnCountPtr);
@@ -1112,7 +1112,7 @@ SQLRETURN SQL_API SQLRowCount(SQLHSTMT StatementHandle,
 {
   MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
 
-  MADB_CHECK_STMT_HANDLE(Stmt, stmt);
+  //MADB_CHECK_STMT_HANDLE(Stmt, stmt);
   MADB_CLEAR_ERROR(&Stmt->Error);
 
   return Stmt->Methods->RowCount(Stmt, RowCountPtr);

@@ -353,7 +353,7 @@ SQLRETURN MADB_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
   case SQL_DIAG_CURSOR_ROW_COUNT:
     if (!Stmt)
       return SQL_ERROR;
-    *(SQLLEN *)DiagInfoPtr= (Stmt->result) ?(SQLLEN)mysql_stmt_num_rows(Stmt->stmt) : 0;
+    *(SQLLEN *)DiagInfoPtr= (Stmt->CspsResult) ?(SQLLEN)mysql_num_rows(Stmt->CspsResult) : 0;
     break;
   case SQL_DIAG_DYNAMIC_FUNCTION:
     if (!Stmt)
@@ -376,7 +376,7 @@ SQLRETURN MADB_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
     if (HandleType != SQL_HANDLE_STMT ||
         !Stmt)
       return SQL_ERROR;
-    *(SQLLEN *)DiagInfoPtr= (Stmt->stmt) ? (SQLLEN)mysql_stmt_affected_rows(Stmt->stmt) : 0;
+    *(SQLLEN *)DiagInfoPtr= Stmt->AffectedRows;
     break;
   case SQL_DIAG_CLASS_ORIGIN:
     if (BufferLength < 0)
@@ -419,9 +419,9 @@ SQLRETURN MADB_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
       if (BufferLength < 0)
         return SQL_ERROR;
       char *ServerName= "";
-      if (Stmt && Stmt->stmt)
+      if (Stmt && Stmt->Connection && Stmt->Connection->mariadb)
       {
-        mariadb_get_infov(Stmt->stmt->mysql, MARIADB_CONNECTION_HOST, (void*)&ServerName);
+        mariadb_get_infov(Stmt->Connection->mariadb, MARIADB_CONNECTION_HOST, (void*)&ServerName);
       }
       else if (Dbc && Dbc->mariadb)
       {
