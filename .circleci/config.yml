@@ -317,11 +317,104 @@ jobs:
 workflows:
   test:
     jobs:
-      - publish-windows:
+      - build-ubuntu:
+          name: build-ubuntu-sanitizer-unicode-7.3.2-<< matrix.build_type >>
+          matrix:
+            parameters:
+              machine_class:
+                - large
+              memsql_password:
+                - password
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_w
+              test_driver:
+                - SingleStore ODBC 1.0.1 Unicode Driver
+              memsql_image:
+                - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
+              with_sanitizer:
+                - true
+      - build-ubuntu:
+          name: build-ubuntu-unicode-7.3.2-<< matrix.build_type >>
+          matrix:
+            parameters:
+              machine_class:
+                - large
+              memsql_password:
+                - password
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_w
+              test_driver:
+                - SingleStore ODBC 1.0.1 Unicode Driver
+              memsql_image:
+                - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
+      - build-ubuntu:
+          name: build-ubuntu-ansi-7.3.2-<< matrix.build_type >>
+          matrix:
+            parameters:
+              machine_class:
+                - large
+              memsql_password:
+                - password
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_a
+              test_driver:
+                - SingleStore ODBC 1.0.1 ANSI Driver
+              memsql_image:
+                - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
+      - build-macos:
+          name: build-macos-ansi-<< matrix.build_type >>
           matrix:
             parameters:
               build_type:
                 - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_a
+              driver_name:
+                - SingleStore ODBC 1.0.1 ANSI Driver
+              driver_type:
+                - ansi
+      - build-windows:
+          name: build-windows-unicode-<< matrix.build_type >>
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_w
+              test_driver:
+                - SingleStore ODBC 1.0.1 Unicode Driver
+              driver_type:
+                - unicode
+      - build-macos:
+          name: build-macos-unicode-<< matrix.build_type >>
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_w
+              driver_name:
+                - SingleStore ODBC 1.0.1 Unicode Driver
+              driver_type:
+                - unicode
+      - build-windows:
+          name: build-windows-ansi-<< matrix.build_type >>
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_a
+              test_driver:
+                - SingleStore ODBC 1.0.1 ANSI Driver
+              driver_type:
+                - ansi
   daily:
     triggers:
       - schedule:
