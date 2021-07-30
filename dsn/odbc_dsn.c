@@ -109,26 +109,14 @@ MADB_DsnMap DsnMap[] = {
 #define CBGROUP_RESETBIT(_Dsn, MapIdx)  *GET_FIELD_PTR(_Dsn, DsnMap[MapIdx].Key, char)&= ~CBGROUP_BIT(MapIdx)
 
 MADB_OptionsMap OptionsMap[]= {
-  {1, rbPipe,                          MADB_OPT_FLAG_NAMED_PIPE},
   {2, ckReconnect,                     MADB_OPT_FLAG_AUTO_RECONNECT},
   {2, ckConnectPrompt,                 MADB_OPT_FLAG_NO_PROMPT},
-  {2, ckCompressed,                    MADB_OPT_FLAG_COMPRESSED_PROTO},
   {2, ckUseMycnf,                      MADB_OPT_FLAG_USE_CNF},
-  {3, ckIgnoreSchema,                  MADB_OPT_FLAG_NO_SCHEMA},
-  {3, ckIgnoreSpace,                   MADB_OPT_FLAG_IGNORE_SPACE},
   {3, ckMultiStmt,                     MADB_OPT_FLAG_MULTI_STATEMENTS},
-  {LASTPAGE, ckIgnoreSchema,           MADB_OPT_FLAG_NO_SCHEMA},
   {LASTPAGE, ckEnableDynamicCursor,    MADB_OPT_FLAG_DYNAMIC_CURSOR},
-  {LASTPAGE, ckDisableDriverCursor,    MADB_OPT_FLAG_NO_DEFAULT_CURSOR},
   {LASTPAGE, ckDontCacheForwardCursor, MADB_OPT_FLAG_NO_CACHE},
   {LASTPAGE, ckForwardCursorOnly,      MADB_OPT_FLAG_FORWARD_CURSOR},
   {LASTPAGE, ckReturnMatchedRows,      MADB_OPT_FLAG_FOUND_ROWS},
-  {LASTPAGE, ckEnableSQLAutoIsNull,    MADB_OPT_FLAG_AUTO_IS_NULL},
-  {LASTPAGE, ckPadCharFullLength,      MADB_OPT_FLAG_PAD_SPACE},
-  {LASTPAGE, ckNullDate,               MADB_OPT_FLAG_ZERO_DATE_TO_MIN},
-  {LASTPAGE, ckDebug,                  MADB_OPT_FLAG_DEBUG},
-  {LASTPAGE, ckReturnMatchedRows,      MADB_OPT_FLAG_FOUND_ROWS},
-  {LASTPAGE, ckIgnoreSpace,            MADB_OPT_FLAG_IGNORE_SPACE},
   /* last element */
   {0, 0, 0}
 };
