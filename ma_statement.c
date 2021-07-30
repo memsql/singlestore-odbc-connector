@@ -3565,7 +3565,7 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
   unsigned long   CurrentOffset= InternalUse == TRUE ? 0 : Stmt->CharOffset[Offset]; /* We are supposed not get bookmark column here */
   my_bool         Error;
   MADB_DescRecord *IrdRec= NULL;
-  MYSQL_FIELD     *Field= mysql_fetch_field_direct(Stmt->metadata, Offset);
+  MYSQL_FIELD     *Field= mysql_fetch_field_direct(Stmt->CspsResult, Offset);
 
   MADB_CLEAR_ERROR(&Stmt->Error);
 

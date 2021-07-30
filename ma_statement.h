@@ -128,6 +128,10 @@ void         MADB_CspsFreeDAE(MADB_Stmt *Stmt);
 #define MADB_SSPS_ENABLED(aStmt) (aStmt)->Connection->Dsn->NoSsps == FALSE
 #define MADB_SSPS_DISABLED(aStmt) !(MADB_SSPS_ENABLED(aStmt))
 #define NO_CACHE(aStmt) ((aStmt)->Options.CursorType == SQL_CURSOR_FORWARD_ONLY && (aStmt)->Connection->Dsn->NoCache)
+
+#define MADB_NUM_ROWS(aStmt) ((aStmt) && (aStmt)->CspsResult ? mysql_num_rows((aStmt)->CspsResult) : 0)
+#define MADB_FIELD_COUNT(aStmt) ((aStmt) && (aStmt)->CspsResult ? Stmt->CspsResult->field_count : 0)
+
 /************** SQLColumns       *************/
 #define MADB_DATA_TYPE_ODBC2 \
     " WHEN 'date' THEN " XSTR(SQL_DATE) \

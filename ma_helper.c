@@ -28,16 +28,9 @@ void CloseMultiStatements(MADB_Stmt *Stmt)
   for (i=0; i < STMT_COUNT(Stmt->Query); ++i)
   {
     MADB_CspsFreeResult(Stmt, &Stmt->CspsMultiStmtResult[i], Stmt->Connection->mariadb);
-    // MDBUG_C_PRINT(Stmt->Connection, "-->closing %0x", Stmt->MultiStmts[i]);
-    // if (Stmt->MultiStmts[i] != NULL)
-    // {
-    //   mysql_stmt_close(Stmt->MultiStmts[i]);
-    // }
   }
   MADB_FREE(Stmt->CspsMultiStmtResult);
-  // MADB_FREE(Stmt->MultiStmts);
   Stmt->CspsResult = NULL;
-  // Stmt->stmt= NULL;
 }
 
 
@@ -91,71 +84,11 @@ unsigned int GetMultiStatements(MADB_Stmt *Stmt, BOOL ExecDirect)
   char        *p= Stmt->Query.RefinedText;
 
   Stmt->MultiStmtNr= 0;
-  // Stmt->MultiStmts= (MYSQL_STMT **)MADB_CALLOC(sizeof(MYSQL_STMT) * STMT_COUNT(Stmt->Query));
 
   if (MADB_SSPS_DISABLED(Stmt))
   {
       Stmt->CspsMultiStmtResult = (MYSQL_RES**)MADB_CALLOC(sizeof(MYSQL_RES) * STMT_COUNT(Stmt->Query));
   }
-
-//  while (p < Stmt->Query.RefinedText + Stmt->Query.RefinedLength)
-//  {
-//    Stmt->MultiStmts[i]= i == 0 ? Stmt->stmt : MADB_NewStmtHandle(Stmt);
-//    MDBUG_C_PRINT(Stmt->Connection, "-->inited&preparing %0x(%d,%s)", Stmt->MultiStmts[i], i, p);
-//
-//    // For the client-side prepared statements we don't want to do anything besides allocating the MultiStmt objects.
-//    if (MADB_SSPS_ENABLED(Stmt))
-//    {
-//        if (mysql_stmt_prepare(Stmt->MultiStmts[i], p, (unsigned long) strlen(p)))
-//        {
-//            MADB_SetNativeError(&Stmt->Error, SQL_HANDLE_STMT, Stmt->MultiStmts[i]);
-//            CloseMultiStatements(Stmt);
-//
-//            /* Last paranoid attempt make sure that we did not have a parsing error.
-//               More to preserve "backward-compatibility" - we did this before, but before trying to
-//               prepare "multi-statement". */
-//            if (i == 0 && Stmt->Error.NativeError != 1295 /*ER_UNSUPPORTED_PS*/)
-//            {
-//                Stmt->stmt = MADB_NewStmtHandle(Stmt);
-//                if (mysql_stmt_prepare(Stmt->stmt, STMT_STRING(Stmt), (unsigned long) strlen(STMT_STRING(Stmt))))
-//                {
-//                    MADB_STMT_CLOSE_STMT(Stmt);
-//                } else
-//                {
-//                    MADB_DeleteSubqueries(&Stmt->Query);
-//                    return 0;
-//                }
-//            }
-//            return 1;
-//        }
-//
-//        if (mysql_stmt_param_count(Stmt->MultiStmts[i]) > MaxParams)
-//        {
-//            MaxParams = mysql_stmt_param_count(Stmt->MultiStmts[i]);
-//        }
-//    }
-//
-//    p+= strlen(p) + 1;
-//    ++i;
-//  }
-
-//  if(MADB_SSPS_ENABLED(Stmt))
-//  {
-//    /* If we have result returning query - fill descriptor records with metadata */
-//    if (mysql_stmt_field_count(Stmt->stmt) > 0)
-//    {
-//      MADB_DescSetIrdMetadata(Stmt, mysql_fetch_fields(FetchMetadata(Stmt)), mysql_stmt_field_count(Stmt->stmt));
-//    }
-//  }
-
-//  if (MaxParams)
-//  {
-//    if (Stmt->params)
-//    {
-//      MADB_FREE(Stmt->params);
-//    }
-//    Stmt->params= (MYSQL_BIND *)MADB_CALLOC(sizeof(MYSQL_BIND) * MaxParams);
-//  }
 
   return 0;
 }
@@ -369,7 +302,7 @@ MYSQL_RES *MADB_GetDefaultColumnValues(MADB_Stmt *Stmt, MYSQL_FIELD *fields)
       MADB_DynstrAppend(&DynStr, "' AND COLUMN_NAME IN ("))
     goto error;
 
-  for (i=0; i < mysql_field_count(Stmt->Connection->mariadb); i++)
+  for (i=0; i < MADB_FIELD_COUNT(Stmt); i++)
   {
     MADB_DescRecord *Rec= MADB_DescGetInternalRecord(Stmt->Ard, i, MADB_DESC_READ);
 
