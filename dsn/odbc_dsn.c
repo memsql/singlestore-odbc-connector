@@ -376,7 +376,13 @@ void GetDialogFields()
   while (OptionsMap[i].Item != 0)
   {
     if (GetButtonState(OptionsMap[i].Page, OptionsMap[i].Item))
-      Dsn->Options|= OptionsMap[i].value; 
+    {
+      FILE *f;
+      f = fopen("C:\\test.txt", "w");
+      fprintf(f, "SETTING OPTIONS: %lu \n", OptionsMap[i].value);
+      fclose(f);
+      Dsn->Options|= OptionsMap[i].value;
+    }
     i++;
   }
 }
