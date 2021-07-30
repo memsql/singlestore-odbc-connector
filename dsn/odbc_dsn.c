@@ -179,6 +179,10 @@ my_bool SetDialogFields()
                            Val ? BST_CHECKED : BST_UNCHECKED, 0);
     if (Val && OptionsMap[i].Item == rbPipe)
     {
+      FILE *f;
+      f = fopen("C:\\test.txt", "w");
+      fprintf(f, "SETTING PIPE, OPTIONS: %d %lu %lu\n", Dsn->Options, OptionsMap[i].value, OptionsMap[i].Item);
+      fclose(f);
       SendMessage(GetDlgItem(hwndTab[OptionsMap[i].Page], lblServerName), WM_SETTEXT, 0, (LPARAM)"Named pipe:");
 		  ShowWindow(GetDlgItem(hwndTab[OptionsMap[i].Page], lblPort), SW_HIDE);
       ShowWindow(GetDlgItem(hwndTab[OptionsMap[i].Page], txtPort), SW_HIDE);
