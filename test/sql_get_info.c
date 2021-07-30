@@ -305,7 +305,7 @@ ODBC_TEST(driver_information)
   CHECK_CHAR(Hdbc, SQL_DATA_SOURCE_NAME, "");
   CHECK_DBC_RC(Hdbc, SQLDisconnect(Hdbc));
 
-  CHECK_CHAR(Connection, SQL_DRIVER_NAME, WindowsDM(Connection) ? (is_unicode_driver() ? "ssodbcw.so" : "ssodbca.so") : (is_unicode_driver() ? "libssodbcw.so" : "libssodbca.so"));
+  CHECK_CHAR(Connection, SQL_DRIVER_NAME, WindowsDM(Connection) ? (is_unicode_driver() ? "ssodbcw.dll" : "ssodbca.dll") : (is_unicode_driver() ? "libssodbcw.so" : "libssodbca.so"));
   CHECK_CHAR(Connection, SQL_DRIVER_ODBC_VER, "03.51");
   CHECK_CHAR(Connection, SQL_DRIVER_VER, "01.00.0001");
   // CHECK_U_INTEGER(Connection, SQL_DRIVER_AWARE_POOLING_SUPPORTED, SQL_DRIVER_AWARE_POOLING_NOT_CAPABLE); TODO PLAT-5514
