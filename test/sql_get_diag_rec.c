@@ -93,7 +93,7 @@ ODBC_TEST(sql_get_diag_rec)
   FAIL_IF(SQLGetDiagRec(SQL_HANDLE_STMT, Stmt, 1, NULL, NULL, NULL, 0, NULL) != SQL_NO_DATA,
           "Expected no data error")
   ERR_SIMPLE_STMT(Stmt, "Some wrong query");
-  sprintf(errMsg, "[ss-1.0.0][%s]You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Some wrong query' at line 1", version);
+  sprintf(errMsg, "[ss-1.0.1][%s]You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Some wrong query' at line 1", version);
   IS_OK(CheckRec(SQL_HANDLE_STMT, Stmt, 1, "42000", 1064, errMsg))
 
   // output buffer is too small
@@ -101,7 +101,7 @@ ODBC_TEST(sql_get_diag_rec)
           "Expected no data error")
   FAIL_IF(SQLGetConnectAttr(Connection, SQL_ATTR_CURRENT_CATALOG,
                              catalog, sizeof(catalog), &catalogLength) != SQL_SUCCESS_WITH_INFO, "expected SUCCESS_WITH_INFO");
-  IS_OK(CheckRec(SQL_HANDLE_DBC, Connection, 1, "01004", 0, (iOdbc() || UnixOdbc()) ? "[ss-1.0.0]String data, right-truncated" : "[Microsoft][ODBC Driver Manager] Data truncated"));
+  IS_OK(CheckRec(SQL_HANDLE_DBC, Connection, 1, "01004", 0, (iOdbc() || UnixOdbc()) ? "[ss-1.0.1]String data, right-truncated" : "[Microsoft][ODBC Driver Manager] Data truncated"));
 
   // wrong DSN
   SQLAllocHandle(SQL_HANDLE_DBC, Env, &Hdbc);
