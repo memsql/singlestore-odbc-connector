@@ -218,7 +218,7 @@ my_bool MADB_DynStrGetWhere(MADB_Stmt *Stmt, MADB_DynString *DynString, char *Ta
 
   for (i= 0; i < MADB_STMT_COLUMN_COUNT(Stmt); i++)
   {
-    MYSQL_FIELD *field= mysql_fetch_field_direct(FetchMetadata(Stmt), i);
+    MYSQL_FIELD *field= mysql_fetch_field_direct(Stmt->CspsResult, i);
     if (field->flags & PRI_KEY_FLAG)
       PrimaryCount++;
     if (field->flags & UNIQUE_KEY_FLAG)
@@ -254,7 +254,7 @@ my_bool MADB_DynStrGetWhere(MADB_Stmt *Stmt, MADB_DynString *DynString, char *Ta
     goto memerror;
   for (i= 0; i < MADB_STMT_COLUMN_COUNT(Stmt); i++)
   {
-    MYSQL_FIELD *field= mysql_fetch_field_direct(Stmt->metadata, i);
+    MYSQL_FIELD *field= mysql_fetch_field_direct(Stmt->CspsResult, i);
     if (field->flags & Flag || !Flag)
     {
       if (MADB_DynstrAppend(DynString, " AND ") ||

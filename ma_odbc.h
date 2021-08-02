@@ -289,7 +289,7 @@ struct st_ma_odbc_stmt
   MADB_Error                Error;
   MADB_Cursor               Cursor;
   //MYSQL_STMT                *stmt;
-  MYSQL_RES                 *metadata;
+  //MYSQL_RES                 *metadata;
   MADB_List                 ListItem;
   MADB_QUERY                Query;
   SQLSMALLINT               ParamCount;

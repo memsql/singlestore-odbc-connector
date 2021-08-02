@@ -143,7 +143,7 @@ int MADB_KeyTypeCount(MADB_Dbc *Connection, char *TableName, int KeyFlag)
 
   for (i=0; i < mysql_field_count(Stmt->Connection->mariadb); i++)
   {
-    Field= mysql_fetch_field_direct(Stmt->metadata, i);
+    Field= mysql_fetch_field_direct(Stmt->CspsResult, i);
     if (Field->flags & KeyFlag)
     {
       ++Count;

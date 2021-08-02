@@ -255,7 +255,7 @@ SQLRETURN MADB_StmtFree(MADB_Stmt *Stmt, SQLUSMALLINT Option)
         UNLOCK_MARIADB(Stmt->Connection);
       }
 
-      ResetMetadata(&Stmt->metadata, NULL);
+      //ResetMetadata(&Stmt->metadata, NULL);
 
       MADB_FREE(Stmt->result);
       MADB_FREE(Stmt->CharOffset);
@@ -285,7 +285,7 @@ SQLRETURN MADB_StmtFree(MADB_Stmt *Stmt, SQLUSMALLINT Option)
     MADB_FREE(Stmt->Cursor.Name);
     MADB_FREE(Stmt->CatalogName);
     MADB_FREE(Stmt->TableName);
-    ResetMetadata(&Stmt->metadata, NULL);
+    //ResetMetadata(&Stmt->metadata, NULL);
 
     /* For explicit descriptors we only remove reference to the stmt*/
     if (Stmt->Apd->AppType)
@@ -426,14 +426,6 @@ MADB_Stmt *MADB_FindCursor(MADB_Stmt *Stmt, const char *CursorName)
 }
 /* }}} */
 
-/* {{{ FetchMetadata */
-MYSQL_RES* FetchMetadata(MADB_Stmt *Stmt)
-{
-  ResetMetadata(&Stmt->metadata, Stmt->CspsResult);
-  return Stmt->metadata;
-}
-/* }}} */
-
 /* {{{ MADB_StmtReset - reseting Stmt handler for new use. Has to be called inside a lock */
 void MADB_StmtReset(MADB_Stmt *Stmt)
 {
@@ -474,7 +466,7 @@ void MADB_StmtReset(MADB_Stmt *Stmt)
     RESET_DAE_STATUS(Stmt);
 
   case MADB_SS_PREPARED:
-    ResetMetadata(&Stmt->metadata, NULL);
+    //ResetMetadata(&Stmt->metadata, NULL);
 
     Stmt->PositionedCursor= NULL;
     Stmt->Ird->Header.Count= 0;
@@ -2443,7 +2435,7 @@ SQLRETURN MADB_PrepareBind(MADB_Stmt *Stmt, int RowNumber)
     case SQL_C_INTERVAL_HOUR_TO_MINUTE:
     case SQL_C_INTERVAL_HOUR_TO_SECOND:
       {
-        MYSQL_FIELD *Field= mysql_fetch_field_direct(Stmt->metadata, i);
+        MYSQL_FIELD *Field= mysql_fetch_field_direct(Stmt->CspsResult, i);
         MADB_FREE(ArdRec->InternalBuffer);
         if (IrdRec->ConciseType == SQL_CHAR || IrdRec->ConciseType == SQL_VARCHAR)
         {
