@@ -1643,6 +1643,7 @@ static int CspsInitStatementFromMultistatement( MADB_Stmt* const Stmt,
         {
             //Stmt->MultiStmts= (MYSQL_STMT **)MADB_CALLOC(sizeof(MYSQL_STMT) * STMT_COUNT(Stmt->Query));
             Stmt->CspsMultiStmtResult = (MYSQL_RES **) MADB_CALLOC(sizeof(MYSQL_RES) * STMT_COUNT(Stmt->Query));
+            Stmt->CspsMultiStmtAffectedRows = (long long*)MADB_CALLOC(sizeof(long long) * STMT_COUNT(Stmt->Query));
         }
 
         //Stmt->MultiStmts[StatementNr]= Stmt->stmt;

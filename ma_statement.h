@@ -129,8 +129,9 @@ void         MADB_CspsFreeDAE(MADB_Stmt *Stmt);
 #define NO_CACHE(aStmt) ((aStmt)->Options.CursorType == SQL_CURSOR_FORWARD_ONLY && (aStmt)->Connection->Dsn->NoCache)
 
 #define MADB_NUM_ROWS(aStmt) ((aStmt) && (aStmt)->CspsResult ? mysql_num_rows((aStmt)->CspsResult) : 0)
-#define MADB_FIELD_COUNT(aStmt) ((aStmt) && (aStmt)->CspsResult ? Stmt->CspsResult->field_count : 0)
-#define MADB_FIELDS(aStmt) ((aStmt) && (aStmt)->CspsResult ? Stmt->CspsResult->fields : NULL)
+#define MADB_FIELD_COUNT(aStmt) ((aStmt) && (aStmt)->CspsResult ? (aStmt)->CspsResult->field_count : 0)
+#define MADB_FIELDS(aStmt) ((aStmt) && (aStmt)->CspsResult ? (aStmt)->CspsResult->fields : NULL)
+#define MADB_FIELD(aStmt, fieldnr) ((aStmt) && (aStmt)->CspsResult ? mysql_fetch_field_direct((aStmt)->CspsResult, (fieldnr)) : NULL)
 
 /************** SQLColumns       *************/
 #define MADB_DATA_TYPE_ODBC2 \

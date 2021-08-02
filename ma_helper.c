@@ -88,6 +88,7 @@ unsigned int GetMultiStatements(MADB_Stmt *Stmt, BOOL ExecDirect)
   if (MADB_SSPS_DISABLED(Stmt))
   {
       Stmt->CspsMultiStmtResult = (MYSQL_RES**)MADB_CALLOC(sizeof(MYSQL_RES) * STMT_COUNT(Stmt->Query));
+      Stmt->CspsMultiStmtAffectedRows = (long long*)MADB_CALLOC(sizeof(long long) * STMT_COUNT(Stmt->Query));
   }
 
   return 0;
@@ -141,9 +142,9 @@ int MADB_KeyTypeCount(MADB_Dbc *Connection, char *TableName, int KeyFlag)
     goto end;
   }
 
-  for (i=0; i < mysql_field_count(Stmt->Connection->mariadb); i++)
+  for (i=0; i < MADB_FIELD_COUNT(Stmt); i++)
   {
-    Field= mysql_fetch_field_direct(Stmt->CspsResult, i);
+    Field= MADB_FIELD(Stmt, i);
     if (Field->flags & KeyFlag)
     {
       ++Count;
