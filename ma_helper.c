@@ -1262,7 +1262,10 @@ void MADB_InstallStmt(MADB_Stmt *Stmt)
 //    MADB_StmtResetResultStructures(Stmt);
 //    MADB_DescSetIrdMetadata(Stmt, mysql_fetch_fields(FetchMetadata(Stmt)), mysql_stmt_field_count(Stmt->stmt));
 //  }
-  if (!Stmt->CspsMultiStmtResult[Stmt->MultiStmtNr])
+
+  Stmt->CspsResult = Stmt->CspsMultiStmtResult[Stmt->MultiStmtNr];
+
+  if (MADB_FIELD_COUNT(Stmt))
   {
     MADB_DescFree(Stmt->Ird, TRUE);
     Stmt->AffectedRows= Stmt->CspsMultiStmtAffectedRows[Stmt->MultiStmtNr];

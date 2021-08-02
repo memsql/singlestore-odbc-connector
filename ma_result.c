@@ -27,9 +27,9 @@ void MADB_StmtResetResultStructures(MADB_Stmt *Stmt)
   if (size)
   {
     Stmt->CharOffset= (unsigned long *)MADB_REALLOC((char *)Stmt->CharOffset, size);
-    memset(Stmt->CharOffset, 0, sizeof(long) * Stmt->CspsResult->field_count);
+    memset(Stmt->CharOffset, 0, sizeof(long) * MADB_FIELD_COUNT(Stmt));
     Stmt->Lengths= (unsigned long *)MADB_REALLOC((char *)Stmt->Lengths, size);
-    memset(Stmt->Lengths, 0, sizeof(long) * Stmt->CspsResult->field_count);
+    memset(Stmt->Lengths, 0, sizeof(long) * MADB_FIELD_COUNT(Stmt));
   }
   else
   {
@@ -53,14 +53,14 @@ SQLRETURN MoveNext(MADB_Stmt *Stmt, unsigned long long Offset)
     unsigned int i;
     char        *SavedFlag;
 
-    SavedFlag= (char*)MADB_CALLOC(Stmt->CspsResult->field_count);
+    SavedFlag= (char*)MADB_CALLOC(MADB_FIELD_COUNT(Stmt));
 
     if (SavedFlag == NULL)
     {
       return SQL_ERROR;
     }
 
-    for (i=0; i < Stmt->CspsResult->field_count; i++)
+    for (i=0; i < MADB_FIELD_COUNT(Stmt); i++)
     {
       SavedFlag[i]= Stmt->result[i].flags & MADB_BIND_DUMMY;
 
@@ -76,7 +76,7 @@ SQLRETURN MoveNext(MADB_Stmt *Stmt, unsigned long long Offset)
       }
     }
 
-    for (i=0; i < Stmt->CspsResult->field_count; i++)
+    for (i=0; i < MADB_FIELD_COUNT(Stmt); i++)
     {
       Stmt->result[i].flags &= (~MADB_BIND_DUMMY | SavedFlag[i]);
     }
@@ -128,6 +128,14 @@ SQLRETURN MADB_StmtMoreResults(MADB_Stmt *Stmt)
 {
   SQLRETURN ret= SQL_SUCCESS;
 
+  if (!Stmt->CspsResult)
+  {
+    return MADB_SetError(&Stmt->Error, MADB_ERR_08S01, NULL, 0);
+  }
+
+  /* We can't have it in MADB_StmtResetResultStructures, as it breaks dyn_cursor functionality.
+     Thus we free-ing bind structs on move to new result only */
+  MADB_FREE(Stmt->result);
 
   if (Stmt->CspsMultiStmtResult)
   {
@@ -200,7 +208,7 @@ SQLRETURN MADB_StmtMoreResults(MADB_Stmt *Stmt)
               Stmt->CspsResult = mysql_store_result(Stmt->Connection->mariadb);
               //MADB_CspsCopyResult(Stmt, Stmt->CspsResult, Stmt->stmt);
 
-              MADB_DescSetIrdMetadata(Stmt, Stmt->CspsResult->fields, Stmt->CspsResult->field_count);
+              MADB_DescSetIrdMetadata(Stmt, MADB_FIELDS(Stmt), MADB_FIELD_COUNT(Stmt));
               Stmt->AffectedRows= 0;
           }
           else

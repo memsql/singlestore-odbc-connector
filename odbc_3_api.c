@@ -338,7 +338,7 @@ SQLRETURN SQL_API SQLCloseCursor(SQLHSTMT StatementHandle)
   MDBUG_C_DUMP(Stmt->Connection, StatementHandle, 0x);
 
   if (!Stmt->CspsResult ||
-     (!Stmt->CspsResult->field_count &&
+     (!MADB_FIELD_COUNT(Stmt) &&
        Stmt->Connection->Environment->OdbcVersion >= SQL_OV_ODBC3))
   {
     MADB_SetError(&Stmt->Error, MADB_ERR_24000, NULL, 0);
@@ -857,7 +857,7 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT StatementHandle,
   }
 
   /* reset offsets for other columns. Doing that here since "internal" calls should not do that */
-  for (i=0; i < Stmt->CspsResult->field_count; i++)
+  for (i=0; i < MADB_FIELD_COUNT(Stmt); i++)
   {
     if (i != Col_or_Param_Num - 1)
     {
