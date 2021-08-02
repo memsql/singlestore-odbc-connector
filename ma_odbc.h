@@ -469,7 +469,6 @@ case SQL_TYPE_DATE
 #include <ma_driver.h>
 #include <ma_helper.h>
 #include <ma_typeconv.h>
-#include <ma_fake_request.h>
 
 /* SQLFunction calls inside MariaDB Connector/ODBC needs to be mapped,
  * on non Windows platforms these function calls will call the driver

@@ -42,8 +42,8 @@ MADB_TypeInfo TypeInfoV3[]=
     {"tinytext",SQL_WLONGVARCHAR,255,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"tinytext",0,0,0,0,10, SQL_WLONGVARCHAR},
     {"enum",SQL_WVARCHAR,65535,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"enum",0,0,0,0,10, SQL_WVARCHAR},
     {"set",SQL_WVARCHAR,64,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"set",0,0,0,0,10, SQL_WVARCHAR},
-    {"varchar",SQL_WVARCHAR,255,"\'","\'","length",1,0,SQL_SEARCHABLE,0,0,0,"varchar",0,0,0,0,10, SQL_WVARCHAR},
-    {"char",SQL_WCHAR,255,"\'","\'","length",1,0,SQL_SEARCHABLE,0,0,0,"char",0,0,0,0,10, SQL_WCHAR},
+    {"varchar",SQL_WVARCHAR,255,"\'","\'","'length'",1,0,SQL_SEARCHABLE,0,0,0,"varchar",0,0,0,0,10, SQL_WVARCHAR},
+    {"char",SQL_WCHAR,255,"\'","\'","'length'",1,0,SQL_SEARCHABLE,0,0,0,"char",0,0,0,0,10, SQL_WCHAR},
     {"bit",SQL_BIT,8,"","","NULL",1,1,SQL_SEARCHABLE,0,0,0,"bit",0,0,0,0,10, SQL_BIT},
     {"bool",SQL_TINYINT,1,"","","NULL",1,1,SQL_SEARCHABLE,0,0,0,"bool",0,0,0,0,10, SQL_BIT},
     {"boolean",SQL_TINYINT,1,"","","NULL",1,1,SQL_SEARCHABLE,0,0,0,"boolean",0,0,0,0,10, SQL_BIT},
@@ -58,18 +58,18 @@ MADB_TypeInfo TypeInfoV3[]=
     {"tinyblob",SQL_LONGVARBINARY,255,"\'","\'","NULL",1,1,SQL_SEARCHABLE,0,0,0,"tinyblob",0,0,0,0,10, SQL_LONGVARBINARY},
     {"geography",SQL_VARBINARY,255,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"geography",0,0,0,0,10, SQL_VARBINARY},
     {"geographypoint",SQL_VARBINARY,20,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"geographypoint",0,0,0,0,10, SQL_VARBINARY},
-    {"varbinary",SQL_VARBINARY,255,"\'","\'","length",1,1,SQL_SEARCHABLE,0,0,0,"varbinary",0,0,0,0,10, SQL_VARBINARY},
-    {"binary",SQL_BINARY,255,"\'","\'","length",1,1,SQL_SEARCHABLE,0,0,0,"binary",0,0,0,0,10, SQL_BINARY},
+    {"varbinary",SQL_VARBINARY,255,"\'","\'","'length'",1,1,SQL_SEARCHABLE,0,0,0,"varbinary",0,0,0,0,10, SQL_VARBINARY},
+    {"binary",SQL_BINARY,255,"\'","\'","'length'",1,1,SQL_SEARCHABLE,0,0,0,"binary",0,0,0,0,10, SQL_BINARY},
     {"json",SQL_LONGVARCHAR,16777216,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"json",0,0,0,0,10, SQL_LONGVARCHAR},
     {"longtext",SQL_LONGVARCHAR,2147483647,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"longtext",0,0,0,0,10, SQL_LONGVARCHAR},
     {"mediumtext",SQL_LONGVARCHAR,16777215,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"mediumtext",0,0,0,0,10, SQL_LONGVARCHAR},
     {"text",SQL_LONGVARCHAR,65535,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"text",0,0,0,0,10, SQL_LONGVARCHAR},
     {"tinytext",SQL_LONGVARCHAR,255,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"tinytext",0,0,0,0,10, SQL_LONGVARCHAR},
-    {"char",SQL_CHAR,255,"\'","\'","length",1,0,SQL_SEARCHABLE,0,0,0,"char",0,0,0,0,10, SQL_CHAR},
-    {"numeric",SQL_NUMERIC,65,"","","precision,scale",1,0,SQL_SEARCHABLE,0,0,1,"numeric", -308,308,0,0,10, SQL_NUMERIC},
-    {"dec",SQL_DECIMAL,65,"","","precision,scale",1,0,SQL_SEARCHABLE,0,0,1,"dec",-308,308,0,0,10, SQL_DECIMAL},
-    {"decimal",SQL_DECIMAL,65,"","","precision,scale",1,0,SQL_SEARCHABLE,0,0,1,"decimal",-308,308,0,0,10, SQL_DECIMAL},
-    {"fixed",SQL_DECIMAL,65,"","","precision,scale",1,0,SQL_SEARCHABLE,0,0,1,"fixed",-308,308,0,0,10, SQL_DECIMAL},
+    {"char",SQL_CHAR,255,"\'","\'","'length'",1,0,SQL_SEARCHABLE,0,0,0,"char",0,0,0,0,10, SQL_CHAR},
+    {"numeric",SQL_NUMERIC,65,"","","'precision,scale'",1,0,SQL_SEARCHABLE,0,0,1,"numeric", -308,308,0,0,10, SQL_NUMERIC},
+    {"dec",SQL_DECIMAL,65,"","","'precision,scale'",1,0,SQL_SEARCHABLE,0,0,1,"dec",-308,308,0,0,10, SQL_DECIMAL},
+    {"decimal",SQL_DECIMAL,65,"","","'precision,scale'",1,0,SQL_SEARCHABLE,0,0,1,"decimal",-308,308,0,0,10, SQL_DECIMAL},
+    {"fixed",SQL_DECIMAL,65,"","","'precision,scale'",1,0,SQL_SEARCHABLE,0,0,1,"fixed",-308,308,0,0,10, SQL_DECIMAL},
     {"int",SQL_INTEGER,10,"","","NULL",1,0,SQL_SEARCHABLE,SQL_FALSE,0,1,"int",0,0,0,0,10, SQL_INTEGER},
     {"int unsigned",SQL_INTEGER,10,"","","NULL",1,0,SQL_SEARCHABLE,1,0,1,"int unsigned",0,0,0,0,10, SQL_INTEGER},
     {"integer",SQL_INTEGER,10,"","","NULL",1,0,SQL_SEARCHABLE,SQL_FALSE,0,1,"integer",0,0,0,0,10, SQL_INTEGER},
@@ -79,17 +79,17 @@ MADB_TypeInfo TypeInfoV3[]=
     {"smallint",SQL_SMALLINT,5,"","","NULL",1,0,SQL_SEARCHABLE,SQL_FALSE,0,1,"smallint",0,0,0,0,10, SQL_SMALLINT},
     {"smallint unsigned",SQL_SMALLINT,5,"","","NULL",1,0,SQL_SEARCHABLE,1,0,1,"smallint unsigned",0,0,0,0,10, SQL_SMALLINT},
     {"year",SQL_SMALLINT,4,"","","NULL",1,0,SQL_SEARCHABLE,SQL_FALSE,0,1,"year",0,0,0,0,10, SQL_SMALLINT},
-    {"float",SQL_FLOAT,10,"","","precision,scale",1,0,SQL_SEARCHABLE,0,0,1,"float",-38,38,0,0,10, SQL_FLOAT},
-    {"double",SQL_DOUBLE,17,"","","precision,scale",1,0,SQL_SEARCHABLE,0,0,1,"double",-308,308,0,0,10, SQL_DOUBLE},
-    {"double precision",SQL_DOUBLE,17,"","","precision,scale",1,0,SQL_SEARCHABLE,0,0,1,"double precision",-308,308,0,0,10, SQL_DOUBLE},
-    {"real",SQL_DOUBLE,17,"","","precision,scale",1,0,SQL_SEARCHABLE,0,0,1,"real",-308,308,0,0,10, SQL_DOUBLE},
+    {"float",SQL_FLOAT,10,"","","'precision,scale'",1,0,SQL_SEARCHABLE,0,0,1,"float",-38,38,0,0,10, SQL_FLOAT},
+    {"double",SQL_DOUBLE,17,"","","'precision,scale'",1,0,SQL_SEARCHABLE,0,0,1,"double",-308,308,0,0,10, SQL_DOUBLE},
+    {"double precision",SQL_DOUBLE,17,"","","'precision,scale'",1,0,SQL_SEARCHABLE,0,0,1,"double precision",-308,308,0,0,10, SQL_DOUBLE},
+    {"real",SQL_DOUBLE,17,"","","'precision,scale'",1,0,SQL_SEARCHABLE,0,0,1,"real",-308,308,0,0,10, SQL_DOUBLE},
     {"enum",SQL_VARCHAR,65535,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"enum",0,0,0,0,10, SQL_VARCHAR},
     {"set",SQL_VARCHAR,64,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"set",0,0,0,0,10, SQL_VARCHAR},
-    {"varchar",SQL_VARCHAR,255,"\'","\'","length",1,0,SQL_SEARCHABLE,0,0,0,"varchar",0,0,0,0,10, SQL_VARCHAR},
+    {"varchar",SQL_VARCHAR,255,"\'","\'","'length'",1,0,SQL_SEARCHABLE,0,0,0,"varchar",0,0,0,0,10, SQL_VARCHAR},
     {"date",SQL_TYPE_DATE,10,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"date",0,0,0,0,10, SQL_DATETIME},
     {"time",SQL_TYPE_TIME,8,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"time",0,0,0,0,10, SQL_DATETIME},
     {"datetime",SQL_TYPE_TIMESTAMP,16,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"datetime",0,0,0,0,10, SQL_DATETIME},
-    {"timestamp",SQL_TYPE_TIMESTAMP,16,"\'","\'","scale",1,0,SQL_SEARCHABLE,0,0,0,"timestamp",0,0,0,0,10, SQL_DATETIME},
+    {"timestamp",SQL_TYPE_TIMESTAMP,16,"\'","\'","'scale'",1,0,SQL_SEARCHABLE,0,0,0,"timestamp",0,0,0,0,10, SQL_DATETIME},
 };
 
 MADB_TypeInfo TypeInfoV2[]=
@@ -102,8 +102,8 @@ MADB_TypeInfo TypeInfoV2[]=
     {"tinytext",SQL_WLONGVARCHAR,255,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"tinytext",0,0,0,0,10, SQL_WLONGVARCHAR},
     {"enum",SQL_WVARCHAR,65535,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"enum",0,0,0,0,10, SQL_WVARCHAR},
     {"set",SQL_WVARCHAR,64,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"set",0,0,0,0,10, SQL_WVARCHAR},
-    {"varchar",SQL_WVARCHAR,255,"\'","\'","length",1,0,SQL_SEARCHABLE,0,0,0,"varchar",0,0,0,0,10, SQL_WVARCHAR},
-    {"char",SQL_WCHAR,255,"\'","\'","length",1,0,SQL_SEARCHABLE,0,0,0,"char",0,0,0,0,10, SQL_WCHAR},
+    {"varchar",SQL_WVARCHAR,255,"\'","\'","'length'",1,0,SQL_SEARCHABLE,0,0,0,"varchar",0,0,0,0,10, SQL_WVARCHAR},
+    {"char",SQL_WCHAR,255,"\'","\'","'length'",1,0,SQL_SEARCHABLE,0,0,0,"char",0,0,0,0,10, SQL_WCHAR},
     {"bit",SQL_BIT,8,"","","NULL",1,1,SQL_SEARCHABLE,0,0,0,"bit",0,0,0,0,10, SQL_BIT},
     {"bool",SQL_TINYINT,1,"","","NULL",1,1,SQL_SEARCHABLE,0,0,0,"bool",0,0,0,0,10, SQL_BIT},
     {"boolean",SQL_TINYINT,1,"","","NULL",1,1,SQL_SEARCHABLE,0,0,0,"boolean",0,0,0,0,10, SQL_BIT},
@@ -118,18 +118,18 @@ MADB_TypeInfo TypeInfoV2[]=
     {"tinyblob",SQL_LONGVARBINARY,255,"\'","\'","NULL",1,1,SQL_SEARCHABLE,0,0,0,"tinyblob",0,0,0,0,10, SQL_LONGVARBINARY},
     {"geography",SQL_VARBINARY,255,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"geography",0,0,0,0,10, SQL_VARBINARY},
     {"geographypoint",SQL_VARBINARY,20,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"geographypoint",0,0,0,0,10, SQL_VARBINARY},
-    {"varbinary",SQL_VARBINARY,255,"\'","\'","length",1,1,SQL_SEARCHABLE,0,0,0,"varbinary",0,0,0,0,10, SQL_VARBINARY},
-    {"binary",SQL_BINARY,255,"\'","\'","length",1,1,SQL_SEARCHABLE,0,0,0,"binary",0,0,0,0,10, SQL_BINARY},
+    {"varbinary",SQL_VARBINARY,255,"\'","\'","'length'",1,1,SQL_SEARCHABLE,0,0,0,"varbinary",0,0,0,0,10, SQL_VARBINARY},
+    {"binary",SQL_BINARY,255,"\'","\'","'length'",1,1,SQL_SEARCHABLE,0,0,0,"binary",0,0,0,0,10, SQL_BINARY},
     {"json",SQL_LONGVARCHAR,16777216,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"json",0,0,0,0,10, SQL_LONGVARCHAR},
     {"longtext",SQL_LONGVARCHAR,2147483647,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"longtext",0,0,0,0,10, SQL_LONGVARCHAR},
     {"mediumtext",SQL_LONGVARCHAR,16777215,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"mediumtext",0,0,0,0,10, SQL_LONGVARCHAR},
     {"text",SQL_LONGVARCHAR,65535,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"text",0,0,0,0,10, SQL_LONGVARCHAR},
     {"tinytext",SQL_LONGVARCHAR,255,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"tinytext",0,0,0,0,10, SQL_LONGVARCHAR},
-    {"char",SQL_CHAR,255,"\'","\'","length",1,0,SQL_SEARCHABLE,0,0,0,"char",0,0,0,0,10, SQL_CHAR},
-    {"numeric",SQL_NUMERIC,65,"","","precision,scale",1,0,SQL_SEARCHABLE,0,0,1,"numeric", -308,308,0,0,10, SQL_NUMERIC}, /* Todo: ?? */
-    {"dec",SQL_DECIMAL,65,"","","precision,scale",1,0,SQL_SEARCHABLE,0,0,1,"dec",-308,308,0,0,10, SQL_DECIMAL},
-    {"decimal",SQL_DECIMAL,65,"","","precision,scale",1,0,SQL_SEARCHABLE,0,0,1,"decimal",-308,308,0,0,10, SQL_DECIMAL},
-    {"fixed",SQL_DECIMAL,65,"","","precision,scale",1,0,SQL_SEARCHABLE,0,0,1,"fixed",-308,308,0,0,10, SQL_DECIMAL},
+    {"char",SQL_CHAR,255,"\'","\'","'length'",1,0,SQL_SEARCHABLE,0,0,0,"char",0,0,0,0,10, SQL_CHAR},
+    {"numeric",SQL_NUMERIC,65,"","","'precision,scale'",1,0,SQL_SEARCHABLE,0,0,1,"numeric", -308,308,0,0,10, SQL_NUMERIC}, /* Todo: ?? */
+    {"dec",SQL_DECIMAL,65,"","","'precision,scale'",1,0,SQL_SEARCHABLE,0,0,1,"dec",-308,308,0,0,10, SQL_DECIMAL},
+    {"decimal",SQL_DECIMAL,65,"","","'precision,scale'",1,0,SQL_SEARCHABLE,0,0,1,"decimal",-308,308,0,0,10, SQL_DECIMAL},
+    {"fixed",SQL_DECIMAL,65,"","","'precision,scale'",1,0,SQL_SEARCHABLE,0,0,1,"fixed",-308,308,0,0,10, SQL_DECIMAL},
     {"int",SQL_INTEGER,10,"","","NULL",1,0,SQL_SEARCHABLE,SQL_FALSE,0,1,"int",0,0,0,0,10, SQL_INTEGER},
     {"int unsigned",SQL_INTEGER,10,"","","NULL",1,0,SQL_SEARCHABLE,1,0,1,"int unsigned",0,0,0,0,10, SQL_INTEGER},
     {"integer",SQL_INTEGER,10,"","","NULL",1,0,SQL_SEARCHABLE,SQL_FALSE,0,1,"integer",0,0,0,0,10,SQL_INTEGER},
@@ -139,51 +139,34 @@ MADB_TypeInfo TypeInfoV2[]=
     {"smallint",SQL_SMALLINT,5,"","","NULL",1,0,SQL_SEARCHABLE,SQL_FALSE,0,1,"smallint",0,0,0,0,10, SQL_SMALLINT},
     {"smallint unsigned",SQL_SMALLINT,5,"","","NULL",1,0,SQL_SEARCHABLE,SQL_TRUE,0,1,"smallint unsigned",0,0,0,0,10, SQL_SMALLINT},
     {"year",SQL_SMALLINT,4,"","","NULL",1,0,SQL_SEARCHABLE,SQL_FALSE,0,1,"year",0,0,0,0,10, SQL_SMALLINT},
-    {"float",SQL_FLOAT,10,"","","precision,scale",1,0,SQL_SEARCHABLE,0,0,1,"float",-38,38,0,0,10, SQL_FLOAT},
-    {"double",SQL_DOUBLE,17,"","","precision,scale",1,0,SQL_SEARCHABLE,0,0,1,"double",-308,308,0,0,10, SQL_DOUBLE},
-    {"double precision",SQL_DOUBLE,17,"","","precision,scale",1,0,SQL_SEARCHABLE,0,0,1,"double precision",-308,308,0,0,10, SQL_DOUBLE},
-    {"real",SQL_DOUBLE,17,"","","precision,scale",1,0,SQL_SEARCHABLE,0,0,1,"real",-308,308,0,0,10, SQL_DOUBLE},
+    {"float",SQL_FLOAT,10,"","","'precision,scale'",1,0,SQL_SEARCHABLE,0,0,1,"float",-38,38,0,0,10, SQL_FLOAT},
+    {"double",SQL_DOUBLE,17,"","","'precision,scale'",1,0,SQL_SEARCHABLE,0,0,1,"double",-308,308,0,0,10, SQL_DOUBLE},
+    {"double precision",SQL_DOUBLE,17,"","","'precision,scale'",1,0,SQL_SEARCHABLE,0,0,1,"double precision",-308,308,0,0,10, SQL_DOUBLE},
+    {"real",SQL_DOUBLE,17,"","","'precision,scale'",1,0,SQL_SEARCHABLE,0,0,1,"real",-308,308,0,0,10, SQL_DOUBLE},
     {"date",SQL_DATE,10,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"date",0,0,0,0,10, SQL_DATETIME},
     {"time",SQL_TIME,18,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"time",0,0,0,0,10, SQL_DATETIME},
     {"datetime",SQL_TIMESTAMP,27,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"datetime",0,0,0,0,10, SQL_DATETIME},
-    {"timestamp",SQL_TIMESTAMP,27,"\'","\'","scale",1,0,SQL_SEARCHABLE,0,0,0,"timestamp",0,0,0,0,10, SQL_DATETIME},
+    {"timestamp",SQL_TIMESTAMP,27,"\'","\'","'scale'",1,0,SQL_SEARCHABLE,0,0,0,"timestamp",0,0,0,0,10, SQL_DATETIME},
     {"enum",SQL_VARCHAR,65535,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"enum",0,0,0,0,10, SQL_VARCHAR},
     {"set",SQL_VARCHAR,64,"\'","\'","NULL",1,0,SQL_SEARCHABLE,0,0,0,"set",0,0,0,0,10, SQL_VARCHAR},
-    {"varchar",SQL_VARCHAR,255,"\'","\'","length",1,0,SQL_SEARCHABLE,0,0,0,"varchar",0,0,0,0,10, SQL_VARCHAR},
+    {"varchar",SQL_VARCHAR,255,"\'","\'","'length'",1,0,SQL_SEARCHABLE,0,0,0,"varchar",0,0,0,0,10, SQL_VARCHAR},
 };
 
-static MADB_ShortTypeInfo gtiDefType[19]= {{0, 0, 0, 0}, {SQL_SMALLINT, 0, 0, 0}, {SQL_INTEGER, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0},
+static MADB_ShortTypeInfo gtiDefType[19]= {{SQL_VARCHAR, 0, SQL_TRUE, 0}, {SQL_SMALLINT, 0, 0, 0}, {SQL_INTEGER, 0, 0, 0}, {SQL_VARCHAR, 0, SQL_TRUE, 0}, {SQL_VARCHAR, 0, SQL_TRUE, 0}, {SQL_VARCHAR, 0, SQL_TRUE, 0},
                                  /*7*/     {SQL_SMALLINT, 0, 0, 0}, {SQL_SMALLINT, 0, 0, 0}, {SQL_SMALLINT, 0, 0, 0}, {SQL_SMALLINT, 0, 0, 0},
-                                 /*11*/    {SQL_SMALLINT, 0, 0, 0}, {SQL_SMALLINT, 0, 0, 0}, {0, 0, 0, 0}, {SQL_SMALLINT, 0, 0, 0}, {SQL_SMALLINT, 0, 0, 0},
+                                 /*11*/    {SQL_SMALLINT, 0, 0, 0}, {SQL_SMALLINT, 0, 0, 0}, {SQL_VARCHAR, 0, SQL_TRUE, 0}, {SQL_SMALLINT, 0, 0, 0}, {SQL_SMALLINT, 0, 0, 0},
                                  /*16*/    {SQL_SMALLINT, 0, 0, 0}, {SQL_SMALLINT, 0, 0, 0}, {SQL_INTEGER, 0, 0, 0}, {SQL_SMALLINT, 0, 0, 0} };
 
-short allocAndFormatInt(char** buf, int value)
-{
-    // maximum 11 chars for a signed integers.
-    if(!(*buf = MADB_CALLOC(12))) { return 1; }
-    sprintf(*buf, "%d", value);
-    return 0;
-}
-
-void freeData(char ***data, int dataLen)
-{
-    const int rowFreeIDs[14] = {1, 2, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18};
-    int i, j;
-    for(i = 0; i < dataLen; i++) {
-        for(j = 0; j < 14; j++){
-            if(data[i][rowFreeIDs[j]]) {
-                free(data[i][rowFreeIDs[j]]);
-            }
-        }
-        free(data[i]);
-    }
-}
 
 /* {{{ MADB_GetTypeInfo */
 SQLRETURN MADB_GetTypeInfo(SQLHSTMT StatementHandle,
                            SQLSMALLINT DataType)
 {
   MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
+  SQLRETURN ret;
+  my_bool   isFirst= TRUE;
+  char      StmtStr[10000];
+  char      *p= StmtStr;
   int       i;
   MADB_TypeInfo *TypeInfo= TypeInfoV3;
 
@@ -206,51 +189,63 @@ SQLRETURN MADB_GetTypeInfo(SQLHSTMT StatementHandle,
     }
   }
 
-  int dataLen = 0;
-  char** data[TYPES_COUNT];
-  for (i=0;i < TYPES_COUNT; i++)
+  StmtStr[0]= 0;
+  for (i=0;i<TYPES_COUNT; i++)
   {
-      if (DataType == SQL_ALL_TYPES ||
-          TypeInfo[i].DataType == DataType) {
-          int j = 0, fail = 0;
-          data[dataLen] = malloc(sizeof(char*) * TYPE_INFO_FIELDS_COUNT);
-          data[dataLen][j++] = TypeInfo[i].TypeName,
-          fail += allocAndFormatInt(&data[dataLen][j++], TypeInfo[i].DataType);
-          fail += allocAndFormatInt(&data[dataLen][j++], TypeInfo[i].ColumnSize);
-          data[dataLen][j++] = TypeInfo[i].LiteralPrefix;
-          data[dataLen][j++] = TypeInfo[i].LiteralSuffix;
-          if (strcmp(TypeInfo[i].CreateParams, "NULL") == 0) {
-              data[dataLen][j++] = NULL;
-          } else {
-              data[dataLen][j++] = TypeInfo[i].CreateParams;
-          }
-          fail += allocAndFormatInt(&data[dataLen][j++], TypeInfo[i].Nullable);
-          fail += allocAndFormatInt(&data[dataLen][j++], TypeInfo[i].CaseSensitive);
-          fail += allocAndFormatInt(&data[dataLen][j++], TypeInfo[i].Searchable);
-          fail += allocAndFormatInt(&data[dataLen][j++], TypeInfo[i].Unsigned);
-          fail += allocAndFormatInt(&data[dataLen][j++], TypeInfo[i].FixedPrecScale);
-          fail += allocAndFormatInt(&data[dataLen][j++], TypeInfo[i].AutoUniqueValue);
-          data[dataLen][j++] = TypeInfo[i].LocalTypeName;
-          fail += allocAndFormatInt(&data[dataLen][j++], TypeInfo[i].MinimumScale);
-          fail += allocAndFormatInt(&data[dataLen][j++], TypeInfo[i].MaximumScale);
-          fail += allocAndFormatInt(&data[dataLen][j++], TypeInfo[i].SqlDataType);
-          fail += allocAndFormatInt(&data[dataLen][j++], TypeInfo[i].SqlDateTimeSub);
-          fail += allocAndFormatInt(&data[dataLen][j++], TypeInfo[i].NumPrecRadix);
-          fail += allocAndFormatInt(&data[dataLen][j], TypeInfo[i].IntervalPrecision);
-          if (fail) {
-              freeData(data, dataLen);
-              return MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to allocate memory for type info data", 0);
-          }
-          dataLen++;
+    if (DataType == SQL_ALL_TYPES ||
+        TypeInfo[i].DataType == DataType)
+    {
+      if(isFirst)
+      {
+        isFirst= FALSE;
+        p+= _snprintf(p, 10000 - strlen(StmtStr),
+                      "SELECT \"%s\" AS TYPE_NAME, %d AS DATA_TYPE, %lu AS COLUMN_SIZE, \"%s\" AS LITERAL_PREFIX, "
+                      "\"%s\" AS LITERAL_SUFFIX, %s AS CREATE_PARAMS, %d AS NULLABLE, %d AS CASE_SENSITIVE, "
+                      "%d AS SEARCHABLE, %d AS UNSIGNED_ATTRIBUTE, %d AS FIXED_PREC_SCALE, %d AS AUTO_UNIQUE_VALUE, "
+                      "\"%s\" AS LOCAL_TYPE_NAME, %d AS MINIMUM_SCALE, %d AS MAXIMUM_SCALE, "
+                      "%d AS SQL_DATA_TYPE, "
+                      "%d AS SQL_DATETIME_SUB, %d AS NUM_PREC_RADIX, %d AS INTERVAL_PRECISION ",
+                      TypeInfo[i].TypeName,TypeInfo[i].DataType,TypeInfo[i].ColumnSize,TypeInfo[i].LiteralPrefix,
+                      TypeInfo[i].LiteralSuffix,TypeInfo[i].CreateParams,TypeInfo[i].Nullable,TypeInfo[i].CaseSensitive,
+                      TypeInfo[i].Searchable,TypeInfo[i].Unsigned,TypeInfo[i].FixedPrecScale,TypeInfo[i].AutoUniqueValue,
+                      TypeInfo[i].LocalTypeName,TypeInfo[i].MinimumScale,TypeInfo[i].MaximumScale,
+                      TypeInfo[i].SqlDataType,
+                      TypeInfo[i].SqlDateTimeSub,TypeInfo[i].NumPrecRadix, TypeInfo[i].IntervalPrecision);
       }
+      else
+        p+= _snprintf(p, 10000 - strlen(StmtStr),
+                      "UNION ALL SELECT \"%s\", %d, %lu , \"%s\", "
+                      "\"%s\", %s, %d, %d, "
+                      "%d, %d, %d, %d, "
+                      "\"%s\", %d, %d, "
+                      "%d, "
+                      "%d, %d, %d ",
+                      TypeInfo[i].TypeName,TypeInfo[i].DataType,TypeInfo[i].ColumnSize,TypeInfo[i].LiteralPrefix,
+                      TypeInfo[i].LiteralSuffix,TypeInfo[i].CreateParams,TypeInfo[i].Nullable,TypeInfo[i].CaseSensitive,
+                      TypeInfo[i].Searchable,TypeInfo[i].Unsigned,TypeInfo[i].FixedPrecScale,TypeInfo[i].AutoUniqueValue,
+                      TypeInfo[i].LocalTypeName,TypeInfo[i].MinimumScale,TypeInfo[i].MaximumScale,
+                      TypeInfo[i].SqlDataType,
+                      TypeInfo[i].SqlDateTimeSub,TypeInfo[i].NumPrecRadix, TypeInfo[i].IntervalPrecision);
+    }
   }
 
-  if (!SQL_SUCCEEDED(MADB_FakeRequest(Stmt, fieldNames, fieldTypes, TYPE_INFO_FIELDS_COUNT, (char ***) data, dataLen))) {
-      freeData((char ***) data, dataLen);
-      return Stmt->Error.ReturnValue;
+  // If the DataType argument specifies a data type which is valid for the version of ODBC supported by the driver, but is not supported by the driver, then it will return an empty result set.
+  if (!StmtStr[0])
+  {
+    p+= _snprintf(p, 10000 - strlen(StmtStr),
+                  "SELECT \"\" AS TYPE_NAME, 0 AS DATA_TYPE, 0 AS COLUMN_SIZE, \"\" AS LITERAL_PREFIX, "
+                  "\"\" AS LITERAL_SUFFIX, NULL AS CREATE_PARAMS, 0 AS NULLABLE, 0 AS CASE_SENSITIVE, "
+                  "0 AS SEARCHABLE, 0 AS UNSIGNED_ATTRIBUTE, 0 AS FIXED_PREC_SCALE, 0 AS AUTO_UNIQUE_VALUE, "
+                  "\"\" AS LOCAL_TYPE_NAME, 0 AS MINIMUM_SCALE, 0 AS MAXIMUM_SCALE, "
+                  "0 AS SQL_DATA_TYPE, "
+                  "0 AS SQL_DATETIME_SUB, 0 AS NUM_PREC_RADIX, 0 AS INTERVAL_PRECISION LIMIT 0");
   }
-  MADB_FixColumnDataTypes(Stmt, gtiDefType);
-  freeData((char ***) data, dataLen);
-  return SQL_SUCCESS;
+
+  ret= Stmt->Methods->ExecDirect(Stmt, StmtStr, SQL_NTS);
+  if (SQL_SUCCEEDED(ret))
+  {
+    MADB_FixColumnDataTypes(Stmt, gtiDefType);
+  }
+  return ret;
 }
 /* }}} */
