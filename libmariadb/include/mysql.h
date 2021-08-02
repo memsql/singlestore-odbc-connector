@@ -164,11 +164,6 @@ extern const char *SQLSTATE_UNKNOWN;
 
   typedef MYSQL_ROWS *MYSQL_ROW_OFFSET;	/* offset to current row */
 
-  enum enum_result_type {
-      MYSQL_REGULAR_RESULT,
-      MYSQL_FAKE_RESULT
-  };
-
   typedef struct st_mysql_data {
     MYSQL_ROWS *data;
     void *embedded_info;
@@ -176,7 +171,6 @@ extern const char *SQLSTATE_UNKNOWN;
     unsigned long long rows;
     unsigned int fields;
     void *extension;
-    enum enum_result_type type;
   } MYSQL_DATA;
 
   enum mysql_option 
@@ -879,8 +873,6 @@ struct st_mariadb_methods {
   int (*db_stmt_read_all_rows)(MYSQL_STMT *stmt);
   int (*db_stmt_fetch)(MYSQL_STMT *stmt, unsigned char **row);
   int (*db_stmt_fetch_to_bind)(MYSQL_STMT *stmt, unsigned char *row);
-  int (*db_stmt_fetch_fake)(MYSQL_STMT *stmt, unsigned char ***row);
-  int (*db_stmt_fetch_to_bind_fake)(MYSQL_STMT *stmt, unsigned char **row);
   void (*db_stmt_flush_unbuffered)(MYSQL_STMT *stmt);
   void (*set_error)(MYSQL *mysql, unsigned int error_nr, const char *sqlstate, const char *format, ...);
   void (*invalidate_stmts)(MYSQL *mysql, const char *function_name);
