@@ -392,7 +392,7 @@ ODBC_TEST(diff_column_binding)
 ODBC_TEST(t_odbc159)
 {
   unsigned int j= 0, ExpectedRows[]= {0, 0, 2};
-  SQLLEN Rows, ExpRowCount[]= {0, 0, 0};
+  SQLLEN Rows, ExpRowCount[]= {0, 0, 2};
   SQLSMALLINT ColumnsCount, expCols[]= {0,0,16};
   SQLRETURN rc;
   OK_SIMPLE_STMT(Stmt,"DROP TABLE IF EXISTS _temp_odbc159_key;");
@@ -548,7 +548,7 @@ ODBC_TEST(t_odbc169)
                           {"8", "7", "Row #4"}
                         };
   unsigned int i, RsIndex= 0, ExpectedRows[]= {1, 3, 3, 3, 0, 4};
-  SQLLEN Rows, ExpRowCount[]= {0, 0, 0, 0, 1, 0};
+  SQLLEN Rows, ExpRowCount[]= {1, 3, 3, 3, 1, 4};
   SQLSMALLINT ColumnsCount, expCols[]= {1, 3, 3, 2, 0, 3};
   SQLRETURN rc;
   SQLSMALLINT Column, Row= 0;
