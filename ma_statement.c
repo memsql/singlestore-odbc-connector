@@ -3116,8 +3116,7 @@ SQLRETURN MADB_StmtFetch(MADB_Stmt *Stmt)
       *p= (long)Stmt->Cursor.Position;
     }
     /************************ Fetch! ********************************/
-    rc = MADB_SSPS_DISABLED(Stmt) && Stmt->stmt->result.type != MYSQL_FAKE_RESULT
-              ? MADB_FetchCsps(Stmt) : mysql_stmt_fetch(Stmt->stmt);
+    rc = MADB_SSPS_DISABLED(Stmt) ? MADB_FetchCsps(Stmt) : mysql_stmt_fetch(Stmt->stmt);
 
     *ProcessedPtr += 1;
 
