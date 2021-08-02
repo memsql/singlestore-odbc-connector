@@ -130,6 +130,7 @@ void         MADB_CspsFreeDAE(MADB_Stmt *Stmt);
 
 #define MADB_NUM_ROWS(aStmt) ((aStmt) && (aStmt)->CspsResult ? mysql_num_rows((aStmt)->CspsResult) : 0)
 #define MADB_FIELD_COUNT(aStmt) ((aStmt) && (aStmt)->CspsResult ? Stmt->CspsResult->field_count : 0)
+#define MADB_FIELDS(aStmt) ((aStmt) && (aStmt)->CspsResult ? Stmt->CspsResult->fields : NULL)
 
 /************** SQLColumns       *************/
 #define MADB_DATA_TYPE_ODBC2 \

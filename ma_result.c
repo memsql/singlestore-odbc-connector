@@ -23,7 +23,7 @@
 /* {{{ MADB_StmtResetResultStructures */
 void MADB_StmtResetResultStructures(MADB_Stmt *Stmt)
 {
-  const int size = sizeof(long) * Stmt->CspsResult->field_count;
+  const int size = sizeof(long) * MADB_FIELD_COUNT(Stmt);
   if (size)
   {
     Stmt->CharOffset= (unsigned long *)MADB_REALLOC((char *)Stmt->CharOffset, size);

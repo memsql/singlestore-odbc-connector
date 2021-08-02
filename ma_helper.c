@@ -1269,6 +1269,6 @@ void MADB_InstallStmt(MADB_Stmt *Stmt)
   {
     Stmt->AffectedRows = 0;
     MADB_StmtResetResultStructures(Stmt);
-    MADB_DescSetIrdMetadata(Stmt, Stmt->CspsResult->fields, Stmt->CspsResult->field_count);
+    MADB_DescSetIrdMetadata(Stmt, MADB_FIELDS(Stmt), MADB_FIELD_COUNT(Stmt));
   }
 }
