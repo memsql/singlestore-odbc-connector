@@ -2495,6 +2495,37 @@ SQLRETURN MADB_PrepareBind(MADB_Stmt *Stmt, int RowNumber)
                                                             &Stmt->result[i].buffer_length);
       break;
     }
+
+    /* set length values for numeric types */
+    switch(Stmt->result[i].buffer_type) {
+      case MYSQL_TYPE_NULL:
+        *Stmt->result[i].length= Stmt->result[i].length_value= 0;
+        break;
+      case MYSQL_TYPE_TINY:
+        *Stmt->result[i].length= Stmt->result[i].length_value= 1;
+        break;
+      case MYSQL_TYPE_SHORT:
+      case MYSQL_TYPE_YEAR:
+        *Stmt->result[i].length= Stmt->result[i].length_value= 2;
+        break;
+      case MYSQL_TYPE_INT24:
+      case MYSQL_TYPE_LONG:
+      case MYSQL_TYPE_FLOAT:
+        *Stmt->result[i].length= Stmt->result[i].length_value= 4;
+        break;
+      case MYSQL_TYPE_LONGLONG:
+      case MYSQL_TYPE_DOUBLE:
+        *Stmt->result[i].length= Stmt->result[i].length_value= 8;
+        break;
+      case MYSQL_TYPE_TIME:
+      case MYSQL_TYPE_DATE:
+      case MYSQL_TYPE_DATETIME:
+      case MYSQL_TYPE_TIMESTAMP:
+        *Stmt->result[i].length= Stmt->result[i].length_value= sizeof(MYSQL_TIME);
+        break;
+      default:
+        break;
+    }
   }
 
   return SQL_SUCCESS;
