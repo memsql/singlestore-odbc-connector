@@ -5684,10 +5684,10 @@ SQLRETURN MADB_StmtFetchScroll(MADB_Stmt *Stmt, SQLSMALLINT FetchOrientation,
   // mysql_stmt_num_rows returns incorrect number of rows
   //
   {
-    Stmt->Cursor.Position= (SQLLEN)MIN((my_ulonglong)Position, Stmt->CspsResult->row_count);
+    Stmt->Cursor.Position= (SQLLEN)MIN((my_ulonglong)Position, MADB_NUM_ROWS(Stmt));
   }
 
-  if (Position < 0 || (!NO_CACHE(Stmt) && (my_ulonglong)Position > Stmt->CspsResult->row_count - 1))
+  if (Position < 0 || (!NO_CACHE(Stmt) && (my_ulonglong)Position > MADB_NUM_ROWS(Stmt) - 1))
   {
     /* We need to put cursor before RS start, not only return error */
     if (Position < 0)
