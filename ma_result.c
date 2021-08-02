@@ -204,7 +204,7 @@ SQLRETURN MADB_StmtMoreResults(MADB_Stmt *Stmt)
               //MADB_CspsCopyResult(Stmt, Stmt->CspsResult, Stmt->stmt);
 
               MADB_DescSetIrdMetadata(Stmt, MADB_FIELDS(Stmt), MADB_FIELD_COUNT(Stmt));
-              Stmt->AffectedRows= 0;
+              Stmt->AffectedRows= -1;
           }
           else
           {
