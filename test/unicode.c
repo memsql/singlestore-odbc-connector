@@ -1459,7 +1459,8 @@ ODBC_TEST(t_odbc72)
 
 ODBC_TEST(t_odbc203)
 {
-  wchar_t Query[][100]= {L"SELECT 1 Col1; SELECT * from t_odbc203 ORDER BY col1", L"SELECT * from t_odbc203 ORDER BY col1 DESC; SELECT col3, col2 from t_odbc203 ORDER BY col1",
+  wchar_t Query[][100]= {L"SELECT 1 Col1; SELECT * from t_odbc203 ORDER BY col1",
+                          L"SELECT * from t_odbc203 ORDER BY col1 DESC; SELECT col3, col2 from t_odbc203 ORDER BY col1",
                         L"INSERT INTO t_odbc203 VALUES(8, 7, 'Row #4');SELECT * from t_odbc203 ORDER BY col1"};
   wchar_t Expected[][3][7]={{L"1", L"", L""},        /* RS 1*/
                             {L"1", L"2", L"Row 1"},  /* RS 2*/
@@ -1479,7 +1480,7 @@ ODBC_TEST(t_odbc203)
                             {L"8", L"7", L"Row #4"}
                            };
   unsigned int i, RsIndex= 0, ExpectedRows[]= {1, 3, 3, 3, 0, 4, 1};
-  SQLLEN Rows, ExpRowCount[]= {0, 0, 0, 0, 1, 0, 0};
+  SQLLEN Rows, ExpRowCount[]= {1, 3, 3, 3, 1, 4, 0};
   SQLSMALLINT ColumnsCount, expCols[]= {1, 3, 3, 2, 0, 3, 1};
   SQLRETURN rc;
   SQLSMALLINT Column, Row= 0;

@@ -1790,11 +1790,11 @@ static void CspsReceiveStatementResults(MADB_Stmt* const Stmt, const SQLRETURN r
             // Save the result so it can be released later.
             Stmt->CspsResult = cspsResult;
         }
+        Stmt->AffectedRows = -1;
     }
     else // field_count is zero, so the query does not return a result.
     {
-        // Update affected rows only if the statement does not return a result.
-        if (SQL_SUCCEEDED(ret) && !Stmt->CspsMultiStmtResult)
+        if (SQL_SUCCEEDED(ret))
         {
             Stmt->AffectedRows += mysql_affected_rows(Stmt->Connection->mariadb);
         }
@@ -1840,7 +1840,6 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
   if (MADB_SSPS_DISABLED(Stmt))
   {
       LOCK_MARIADB(Stmt->Connection);
-      Stmt->AffectedRows = 0;
 
       if (Stmt->Ipd->Header.RowsProcessedPtr)
       {
@@ -1851,6 +1850,7 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
 
       for (StatementNr= 0; StatementNr < STMT_COUNT(Stmt->Query); ++StatementNr)
       {
+          Stmt->AffectedRows = 0;
           if (QUERY_IS_MULTISTMT(Stmt->Query)
               && CspsInitStatementFromMultistatement(Stmt, StatementNr, CurQuery, QueriesEnd, &ParamPosId))
           {
@@ -1930,8 +1930,6 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
 
           // Set the field metadata.
           MADB_DescSetIrdMetadata(Stmt, MADB_FIELDS(Stmt), MADB_FIELD_COUNT(Stmt));
-
-          Stmt->AffectedRows= -1;
       }
 
       Stmt->State = MADB_SS_EXECUTED;
@@ -5454,7 +5452,7 @@ SQLRETURN MADB_StmtSetPos(MADB_Stmt *Stmt, SQLSETPOSIROW RowNumber, SQLUSMALLINT
           return Stmt->Error.ReturnValue;
         }
 
-        ResetMetadata(&Stmt->DaeStmt->DefaultsResult, MADB_GetDefaultColumnValues(Stmt, MADB_FIELD_COUNT(Stmt)));
+        ResetMetadata(&Stmt->DaeStmt->DefaultsResult, MADB_GetDefaultColumnValues(Stmt, MADB_FIELDS(Stmt)));
 
         Stmt->DataExecutionType= MADB_DAE_ADD;
         ret= Stmt->Methods->Prepare(Stmt->DaeStmt, DynStmt.str, SQL_NTS, FALSE);

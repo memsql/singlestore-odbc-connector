@@ -128,11 +128,6 @@ SQLRETURN MADB_StmtMoreResults(MADB_Stmt *Stmt)
 {
   SQLRETURN ret= SQL_SUCCESS;
 
-  if (!Stmt->CspsResult)
-  {
-    return MADB_SetError(&Stmt->Error, MADB_ERR_08S01, NULL, 0);
-  }
-
   /* We can't have it in MADB_StmtResetResultStructures, as it breaks dyn_cursor functionality.
      Thus we free-ing bind structs on move to new result only */
   MADB_FREE(Stmt->result);

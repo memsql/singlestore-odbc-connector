@@ -1265,13 +1265,13 @@ void MADB_InstallStmt(MADB_Stmt *Stmt)
 
   Stmt->CspsResult = Stmt->CspsMultiStmtResult[Stmt->MultiStmtNr];
 
-  if (MADB_FIELD_COUNT(Stmt))
+  if (!MADB_FIELD_COUNT(Stmt))
   {
     MADB_DescFree(Stmt->Ird, TRUE);
     Stmt->AffectedRows= Stmt->CspsMultiStmtAffectedRows[Stmt->MultiStmtNr];
   } else
   {
-    Stmt->AffectedRows = 0;
+    Stmt->AffectedRows = -1;
     MADB_StmtResetResultStructures(Stmt);
     MADB_DescSetIrdMetadata(Stmt, MADB_FIELDS(Stmt), MADB_FIELD_COUNT(Stmt));
   }
