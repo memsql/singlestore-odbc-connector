@@ -1730,13 +1730,6 @@ static int CspsRunStatementQuery(   MADB_Stmt* const Stmt,
     if (mysql_reset_connection(Stmt->Connection->mariadb) && mysql_real_query(Stmt->Connection->mariadb, query->str, query->length)) {
         ++*ErrorCount;
         ret = MADB_SetNativeError(&Stmt->Error, SQL_HANDLE_DBC, Stmt->Connection->mariadb);
-    } else
-    {
-        // Update affected rows for queries which don't return results.
-        if (mysql_field_count(Stmt->Connection->mariadb) == 0)
-        {
-            Stmt->AffectedRows += mysql_affected_rows(Stmt->Connection->mariadb);
-        }
     }
 
     // We need to unset InternalLength, i.e. reset dae length counters for next stmt.
@@ -1919,6 +1912,7 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
 
               // Store the result in the appropriate multistatement.
               Stmt->CspsMultiStmtResult[StatementNr] = Stmt->CspsResult;
+              Stmt->CspsMultiStmtAffectedRows[StatementNr] = Stmt->AffectedRows;
               Stmt->CspsResult = NULL;
           }
       }
