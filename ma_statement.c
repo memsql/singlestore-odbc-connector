@@ -2906,6 +2906,10 @@ SQLRETURN MADB_FetchCsps(MADB_Stmt *Stmt)
         {
             Stmt->result[i].length = &Stmt->result[i].length_value;
         }
+        if (!Stmt->result[i].error)
+        {
+          Stmt->result[i].error = &Stmt->result[i].error_value;
+        }
 
         if (row[i] == NULL)
         {
