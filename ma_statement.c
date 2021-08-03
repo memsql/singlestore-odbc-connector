@@ -751,14 +751,7 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
   // If server-side prepared statements are disabled, simply store the query on the client and wait for SQLExecute.
   if (MADB_SSPS_DISABLED(Stmt))
   {
-      if ((Stmt->ParamCount = Stmt->Query.ParamPositions.elements))
-      {
-          if (Stmt->params)
-          {
-              MADB_FREE(Stmt->params);
-          }
-          Stmt->params= (MYSQL_BIND *)MADB_CALLOC(sizeof(MYSQL_BIND) * Stmt->ParamCount);
-      }
+      Stmt->ParamCount = Stmt->Query.ParamPositions.elements;
       Stmt->State = MADB_SS_PREPARED;
       return SQL_SUCCESS;
   }
