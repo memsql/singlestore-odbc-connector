@@ -47,6 +47,7 @@ void CloseMultiStatements(MADB_Stmt *Stmt)
     MADB_FREE(Stmt->MultiStmts);
     Stmt->stmt= NULL;
   }
+  MADB_FREE(Stmt->MultiStmtAffectedRows);
 }
 
 
