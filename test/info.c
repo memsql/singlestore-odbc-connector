@@ -603,12 +603,13 @@ ODBC_TEST(odbc84_62)
 
   CHECK_STMT_RC(Stmt1, SQLGetTypeInfo(Stmt1, SQL_WVARCHAR));
   CHECK_STMT_RC(Stmt1, SQLFetch(Stmt1));
-  SQLRowCount(Stmt, &resNum);
+  SQLRowCount(Stmt1, &resNum);
+  printf("ROW COUNT %ld\n", resNum);
   for(i = 0; i < resNum; i++) {
-    if (!strcmp(my_fetch_str(Stmt, params, 1), "varchar")) {
-      IS_STR(my_fetch_str(Stmt, params, 6), "length", sizeof("length"));
+    if (!strcmp(my_fetch_str(Stmt1, params, 1), "varchar")) {
+      IS_STR(my_fetch_str(Stmt1, params, 6), "length", sizeof("length"));
     } else {
-      IS_STR(my_fetch_str(Stmt, params, 6), "(Null)", sizeof("(Null)"));
+      IS_STR(my_fetch_str(Stmt1, params, 6), "(Null)", sizeof("(Null)"));
     }
   }
   CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
@@ -632,12 +633,12 @@ ODBC_TEST(odbc84_62)
 
   CHECK_STMT_RC(Stmt1, SQLGetTypeInfo(Stmt1, SQL_VARCHAR));
   CHECK_STMT_RC(Stmt1, SQLFetch(Stmt1));
-  SQLRowCount(Stmt, &resNum);
+  SQLRowCount(Stmt1, &resNum);
   for(i = 0; i < resNum; i++) {
-    if (!strcmp(my_fetch_str(Stmt, params, 1), "varchar")) {
-      IS_STR(my_fetch_str(Stmt, params, 6), "length", sizeof("length"));
+    if (!strcmp(my_fetch_str(Stmt1, params, 1), "varchar")) {
+      IS_STR(my_fetch_str(Stmt1, params, 6), "length", sizeof("length"));
     } else {
-      IS_STR(my_fetch_str(Stmt, params, 6), "(Null)", sizeof("(Null)"));
+      IS_STR(my_fetch_str(Stmt1, params, 6), "(Null)", sizeof("(Null)"));
     }
   }
   CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
