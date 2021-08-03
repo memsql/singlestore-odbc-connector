@@ -62,9 +62,15 @@ SQLRETURN MoveNext(MADB_Stmt *Stmt, unsigned long long Offset)
 
     for (i=0; i < MADB_FIELD_COUNT(Stmt); i++)
     {
-      SavedFlag[i]= Stmt->result[i].flags & MADB_BIND_DUMMY;
-
-      Stmt->result[i].flags|= MADB_BIND_DUMMY;
+      if (MADB_SSPS_DISABLED(Stmt))
+      {
+        SavedFlag[i]= Stmt->result[i].flags & MADB_BIND_DUMMY;
+        Stmt->result[i].flags|= MADB_BIND_DUMMY;
+      } else
+      {
+        SavedFlag[i]= Stmt->stmt->bind[i].flags & MADB_BIND_DUMMY;
+        Stmt->stmt->bind[i].flags|= MADB_BIND_DUMMY;
+      }
     }
 
     while (Offset--)
@@ -78,7 +84,13 @@ SQLRETURN MoveNext(MADB_Stmt *Stmt, unsigned long long Offset)
 
     for (i=0; i < MADB_FIELD_COUNT(Stmt); i++)
     {
-      Stmt->result[i].flags &= (~MADB_BIND_DUMMY | SavedFlag[i]);
+      if (MADB_SSPS_DISABLED(Stmt))
+      {
+        Stmt->result[i].flags &= (~MADB_BIND_DUMMY | SavedFlag[i]);
+      } else
+      {
+        Stmt->stmt->bind[i].flags &= (~MADB_BIND_DUMMY | SavedFlag[i]);
+      }
     }
 
     MADB_FREE(SavedFlag);
