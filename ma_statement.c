@@ -2994,6 +2994,12 @@ SQLRETURN MADB_StmtFetch(MADB_Stmt *Stmt)
           MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
           return Stmt->Error.ReturnValue;
       }
+      for (j = 0; j < MADB_FIELD_COUNT(Stmt); j++)
+      {
+        Stmt->result[j].error = &Stmt->result[j].error_value;
+        Stmt->result[j].is_null = &Stmt->result[j].is_null_value;
+        Stmt->result[j].length = &Stmt->result[j].length_value;
+      }
       if (Rows2Fetch > 1 && MADB_SSPS_ENABLED(Stmt))
       {
           // We need something to be bound after executing for MoveNext function
@@ -3576,7 +3582,7 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
     return Stmt->Error.ReturnValue;
   }
 
-  if (Stmt->result[Offset].is_null != NULL && *Stmt->result[Offset].is_null != '\0')
+  if (Stmt->result[Offset].is_null_value)
   {
     if (!StrLen_or_IndPtr)
     {
