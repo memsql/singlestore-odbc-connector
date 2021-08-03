@@ -1904,7 +1904,7 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
     Stmt->AffectedRows= 0;
     if (QUERY_IS_MULTISTMT(Stmt->Query))
     {
-      if (Stmt->CspsMultiStmtResult && Stmt->MultiStmts[StatementNr] != NULL)
+      if (Stmt->MultiStmts && Stmt->MultiStmts[StatementNr] != NULL)
       {
         Stmt->stmt= Stmt->MultiStmts[StatementNr];
       }
