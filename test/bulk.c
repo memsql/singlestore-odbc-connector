@@ -1040,7 +1040,7 @@ ODBC_TEST(bulk_ignore_column)
 
 MA_ODBC_TESTS my_tests[]=
 {
-/*  {t_bulk_insert_nts, "t_bulk_insert_nts", NORMAL, ALL_DRIVERS},
+  {t_bulk_insert_nts, "t_bulk_insert_nts", NORMAL, ALL_DRIVERS},
   {t_bulk_insert_test, "t_bulk_insert_test", NORMAL, ALL_DRIVERS},
   {t_bulk_insert, "t_bulk_insert", NORMAL, ALL_DRIVERS},
   {t_mul_pkdel, "t_mul_pkdel", NORMAL, ALL_DRIVERS},
@@ -1048,11 +1048,11 @@ MA_ODBC_TESTS my_tests[]=
   {t_bulk_insert_rows, "t_bulk_insert_rows", NORMAL, ALL_DRIVERS},
   {t_odbc90, "odbc90_insert_with_ts_col", NORMAL, ALL_DRIVERS},
   {t_bulk_delete, "t_bulk_delete", NORMAL, ALL_DRIVERS},
-  {t_odbc149, "odbc149_ts_col_insert" , NORMAL, ALL_DRIVERS},*/
+  {t_odbc149, "odbc149_ts_col_insert" , NORMAL, ALL_DRIVERS},
   {bulk_insert_all_datatypes, "bulk_insert_all_datatypes" , NORMAL, ALL_DRIVERS},
- /* {unsupported_bulk_operations, "unsupported_bulk_operations" , NORMAL, ALL_DRIVERS},
+  {unsupported_bulk_operations, "unsupported_bulk_operations" , NORMAL, ALL_DRIVERS},
   {bulk_load_data, "bulk_load_data" , CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
-  {bulk_ignore_column, "bulk_ignore_column" , NORMAL, ALL_DRIVERS},*/
+  {bulk_ignore_column, "bulk_ignore_column" , NORMAL, ALL_DRIVERS},
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
