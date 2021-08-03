@@ -3005,6 +3005,14 @@ SQLRETURN MADB_StmtFetch(MADB_Stmt *Stmt)
           // We need something to be bound after executing for MoveNext function
           mysql_stmt_bind_result(Stmt->stmt, Stmt->result);
       }
+  } else
+  {
+    for (j = 0; j < MADB_FIELD_COUNT(Stmt); j++)
+    {
+      Stmt->result[j].is_null_value = '\0';
+      Stmt->result[j].error_value = '\0';
+      Stmt->result[j].length_value = '\0';
+    }
   }
 
   if (Stmt->Ard->Header.ArrayStatusPtr)
