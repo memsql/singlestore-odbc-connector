@@ -1152,7 +1152,7 @@ SQLRETURN MADB_DoExecute(MADB_Stmt *Stmt)
 
   /**************************** mysql_stmt_bind_param **********************************/
   unsigned int arr_size = 0;
-  //mysql_stmt_attr_set(Stmt->stmt, STMT_ATTR_ARRAY_SIZE, (void*)&arr_size);
+  mysql_stmt_attr_set(Stmt->stmt, STMT_ATTR_ARRAY_SIZE, (void*)&arr_size);
 
   if (Stmt->ParamCount)
   {
