@@ -2024,7 +2024,7 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
         Stmt->Ipd->Header.ArrayStatusPtr[j]= SQL_SUCCEEDED(ret) ? SQL_PARAM_SUCCESS :
           (j == Stmt->Apd->Header.ArraySize - 1) ? SQL_PARAM_ERROR : SQL_PARAM_DIAG_UNAVAILABLE;
       }
-      if (!mysql_stmt_field_count(Stmt->stmt) && SQL_SUCCEEDED(ret) && !Stmt->MultiStmts)
+      if (!mysql_stmt_field_count(Stmt->stmt) && SQL_SUCCEEDED(ret))
       {
         Stmt->AffectedRows+= mysql_stmt_affected_rows(Stmt->stmt);
       }
