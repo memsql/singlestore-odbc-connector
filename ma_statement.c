@@ -2545,7 +2545,7 @@ SQLRETURN MADB_FixFetchedValues(MADB_Stmt *Stmt, int RowNumber, MYSQL_ROW_OFFSET
       IrdRec= MADB_DescGetInternalRecord(Stmt->Ird, i, MADB_DESC_READ);
       /* assert(IrdRec != NULL) */
 
-      if (*Stmt->result[i].is_null)
+      if (Stmt->result[i].is_null_value)
       {
         if (IndicatorPtr)
         {
@@ -2987,19 +2987,19 @@ SQLRETURN MADB_StmtFetch(MADB_Stmt *Stmt)
       return SQL_NO_DATA;
   }
 
-    if (Stmt->result == NULL)
-    {
-        if (!(Stmt->result = (MYSQL_BIND *) MADB_CALLOC(sizeof(MYSQL_BIND) * MADB_FIELD_COUNT(Stmt))))
-        {
-            MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
-            return Stmt->Error.ReturnValue;
-        }
-        if (Rows2Fetch > 1 && MADB_SSPS_ENABLED(Stmt))
-        {
-            // We need something to be bound after executing for MoveNext function
-            mysql_stmt_bind_result(Stmt->stmt, Stmt->result);
-        }
-    }
+  if (Stmt->result == NULL)
+  {
+      if (!(Stmt->result = (MYSQL_BIND *) MADB_CALLOC(sizeof(MYSQL_BIND) * MADB_FIELD_COUNT(Stmt))))
+      {
+          MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
+          return Stmt->Error.ReturnValue;
+      }
+      if (Rows2Fetch > 1 && MADB_SSPS_ENABLED(Stmt))
+      {
+          // We need something to be bound after executing for MoveNext function
+          mysql_stmt_bind_result(Stmt->stmt, Stmt->result);
+      }
+  }
 
   if (Stmt->Ard->Header.ArrayStatusPtr)
   {

@@ -137,12 +137,12 @@ void         MADB_CspsFreeDAE(MADB_Stmt *Stmt);
                                                                    ((aStmt) && (aStmt)->stmt ? mysql_fetch_fields(FetchMetadata(Stmt)) : NULL))
 #define MADB_FIELD(aStmt, fieldnr)    (MADB_SSPS_DISABLED(aStmt) ? ((aStmt) && (aStmt)->CspsResult ? mysql_fetch_field_direct((aStmt)->CspsResult, (fieldnr)) : NULL) : \
                                                                    ((aStmt) && (aStmt)->stmt ? (&(aStmt)->stmt->fields[(fieldnr)]) : NULL))
-#define MADB_DATA_SEEK(aStmt, offset) (MADB_SSPS_DISABLED(aStmt) ? mysql_stmt_data_seek((aStmt)->stmt, (offset)) : \
-                                                                   mysql_data_seek((aStmt)->CspsResult, (offset)))
-#define MADB_ROW_SEEK(aStmt, cursor)  (MADB_SSPS_DISABLED(aStmt) ? mysql_stmt_row_seek((aStmt)->stmt, (cursor)) : \
-                                                                   mysql_row_seek((aStmt)->CspsResult, (cursor)))
-#define MADB_ROW_TELL(aStmt)          (MADB_SSPS_DISABLED(aStmt) ? mysql_stmt_row_tell((aStmt)->stmt) : \
-                                                                   mysql_row_tell((aStmt)->CspsResult))
+#define MADB_DATA_SEEK(aStmt, offset) (MADB_SSPS_DISABLED(aStmt) ? mysql_data_seek((aStmt)->CspsResult, (offset)) : \
+                                                                   mysql_stmt_data_seek((aStmt)->stmt, (offset)))
+#define MADB_ROW_SEEK(aStmt, cursor)  (MADB_SSPS_DISABLED(aStmt) ? mysql_row_seek((aStmt)->CspsResult, (cursor)) : \
+                                                                   mysql_stmt_row_seek((aStmt)->stmt, (cursor)))
+#define MADB_ROW_TELL(aStmt)          (MADB_SSPS_DISABLED(aStmt) ? mysql_row_tell((aStmt)->CspsResult) : \
+                                                                   mysql_stmt_row_tell((aStmt)->stmt))
 
 /************** SQLColumns       *************/
 #define MADB_DATA_TYPE_ODBC2 \
