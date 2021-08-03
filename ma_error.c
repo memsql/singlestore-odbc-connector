@@ -353,7 +353,7 @@ SQLRETURN MADB_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
   case SQL_DIAG_CURSOR_ROW_COUNT:
     if (!Stmt)
       return SQL_ERROR;
-    *(SQLLEN *)DiagInfoPtr= (SQLLEN)MADB_NUM_ROWS(Stmt);
+    *(SQLLEN *)DiagInfoPtr= (Stmt->result) ? (SQLLEN)MADB_NUM_ROWS(Stmt) : 0;
     break;
   case SQL_DIAG_DYNAMIC_FUNCTION:
     if (!Stmt)
