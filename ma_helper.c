@@ -25,12 +25,28 @@ void CloseMultiStatements(MADB_Stmt *Stmt)
 {
   unsigned int i;
 
-  for (i=0; i < STMT_COUNT(Stmt->Query); ++i)
+  if (MADB_SSPS_DISABLED(Stmt))
   {
-    MADB_CspsFreeResult(Stmt, &Stmt->CspsMultiStmtResult[i], Stmt->Connection->mariadb);
+    for (i=0; i < STMT_COUNT(Stmt->Query); ++i)
+    {
+      MDBUG_C_PRINT(Stmt->Connection, "-->closing %0x", Stmt->CspsMultiStmtResult[i]);
+      MADB_CspsFreeResult(Stmt, &Stmt->CspsMultiStmtResult[i], Stmt->Connection->mariadb);
+    }
+    MADB_FREE(Stmt->CspsMultiStmtResult);
+    Stmt->CspsResult = NULL;
+  } else
+  {
+    for (i=0; i < STMT_COUNT(Stmt->Query); ++i)
+    {
+      MDBUG_C_PRINT(Stmt->Connection, "-->closing %0x", Stmt->MultiStmts[i]);
+      if (Stmt->MultiStmts[i] != NULL)
+      {
+        mysql_stmt_close(Stmt->MultiStmts[i]);
+      }
+    }
+    MADB_FREE(Stmt->MultiStmts);
+    Stmt->stmt= NULL;
   }
-  MADB_FREE(Stmt->CspsMultiStmtResult);
-  Stmt->CspsResult = NULL;
 }
 
 
@@ -84,11 +100,63 @@ unsigned int GetMultiStatements(MADB_Stmt *Stmt, BOOL ExecDirect)
   char        *p= Stmt->Query.RefinedText;
 
   Stmt->MultiStmtNr= 0;
+  Stmt->MultiStmtAffectedRows = (long long*)MADB_CALLOC(sizeof(long long) * STMT_COUNT(Stmt->Query));
 
   if (MADB_SSPS_DISABLED(Stmt))
   {
       Stmt->CspsMultiStmtResult = (MYSQL_RES**)MADB_CALLOC(sizeof(MYSQL_RES) * STMT_COUNT(Stmt->Query));
-      Stmt->CspsMultiStmtAffectedRows = (long long*)MADB_CALLOC(sizeof(long long) * STMT_COUNT(Stmt->Query));
+  } else
+  {
+    Stmt->MultiStmts= (MYSQL_STMT **)MADB_CALLOC(sizeof(MYSQL_STMT) * STMT_COUNT(Stmt->Query));
+
+    while (p < Stmt->Query.RefinedText + Stmt->Query.RefinedLength) {
+      Stmt->MultiStmts[i] = i == 0 ? Stmt->stmt : MADB_NewStmtHandle(Stmt);
+      MDBUG_C_PRINT(Stmt->Connection, "-->inited&preparing %0x(%d,%s)", Stmt->MultiStmts[i], i, p);
+
+      // For the client-side prepared statements we don't want to do anything besides allocating the MultiStmt objects.
+      if (MADB_SSPS_ENABLED(Stmt)) {
+        if (mysql_stmt_prepare(Stmt->MultiStmts[i], p, (unsigned long) strlen(p))) {
+          MADB_SetNativeError(&Stmt->Error, SQL_HANDLE_STMT, Stmt->MultiStmts[i]);
+          CloseMultiStatements(Stmt);
+
+          /* Last paranoid attempt make sure that we did not have a parsing error.
+             More to preserve "backward-compatibility" - we did this before, but before trying to
+             prepare "multi-statement". */
+          if (i == 0 && Stmt->Error.NativeError != 1295 /*ER_UNSUPPORTED_PS*/) {
+            Stmt->stmt = MADB_NewStmtHandle(Stmt);
+            if (mysql_stmt_prepare(Stmt->stmt, STMT_STRING(Stmt), (unsigned long) strlen(STMT_STRING(Stmt)))) {
+              MADB_STMT_CLOSE_STMT(Stmt);
+            } else {
+              MADB_DeleteSubqueries(&Stmt->Query);
+              return 0;
+            }
+          }
+          return 1;
+        }
+
+        if (mysql_stmt_param_count(Stmt->MultiStmts[i]) > MaxParams) {
+          MaxParams = mysql_stmt_param_count(Stmt->MultiStmts[i]);
+        }
+      }
+
+      p += strlen(p) + 1;
+      ++i;
+    }
+
+    /* If we have result returning query - fill descriptor records with metadata */
+    if (mysql_stmt_field_count(Stmt->stmt) > 0)
+    {
+      MADB_DescSetIrdMetadata(Stmt, mysql_fetch_fields(FetchMetadata(Stmt)), mysql_stmt_field_count(Stmt->stmt));
+    }
+
+    if (MaxParams)
+    {
+      if (Stmt->params)
+      {
+        MADB_FREE(Stmt->params);
+      }
+      Stmt->params= (MYSQL_BIND *)MADB_CALLOC(sizeof(MYSQL_BIND) * MaxParams);
+    }
   }
 
   return 0;
@@ -1249,26 +1317,18 @@ BOOL MADB_IsIntType(SQLSMALLINT ConciseType)
 /* Now it's more like installing result */
 void MADB_InstallStmt(MADB_Stmt *Stmt)
 {
-//  Stmt->stmt= stmt;
-//
-//  if (mysql_stmt_field_count(Stmt->stmt) == 0)
-//  {
-//    MADB_DescFree(Stmt->Ird, TRUE);
-//    Stmt->AffectedRows= mysql_stmt_affected_rows(Stmt->stmt);
-//  }
-//  else
-//  {
-//    Stmt->AffectedRows= 0;
-//    MADB_StmtResetResultStructures(Stmt);
-//    MADB_DescSetIrdMetadata(Stmt, mysql_fetch_fields(FetchMetadata(Stmt)), mysql_stmt_field_count(Stmt->stmt));
-//  }
-
-  Stmt->CspsResult = Stmt->CspsMultiStmtResult[Stmt->MultiStmtNr];
+  if (MADB_SSPS_DISABLED(Stmt))
+  {
+    Stmt->CspsResult = Stmt->CspsMultiStmtResult[Stmt->MultiStmtNr];
+  } else
+  {
+    Stmt->stmt= Stmt->MultiStmts[Stmt->MultiStmtNr];
+  }
 
   if (!MADB_FIELD_COUNT(Stmt))
   {
     MADB_DescFree(Stmt->Ird, TRUE);
-    Stmt->AffectedRows= Stmt->CspsMultiStmtAffectedRows[Stmt->MultiStmtNr];
+    Stmt->AffectedRows= Stmt->MultiStmtAffectedRows[Stmt->MultiStmtNr];
   } else
   {
     Stmt->AffectedRows = -1;

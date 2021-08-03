@@ -1461,7 +1461,7 @@ ODBC_TEST(t_odbc203)
 {
   wchar_t Query[][100]= {L"SELECT 1 Col1; SELECT * from t_odbc203 ORDER BY col1",
                           L"SELECT * from t_odbc203 ORDER BY col1 DESC; SELECT col3, col2 from t_odbc203 ORDER BY col1",
-                        L"INSERT INTO t_odbc203 VALUES(8, 7, 'Row #4');SELECT * from t_odbc203 ORDER BY col1"};
+                          L"INSERT INTO t_odbc203 VALUES(8, 7, 'Row #4');SELECT * from t_odbc203 ORDER BY col1"};
   wchar_t Expected[][3][7]={{L"1", L"", L""},        /* RS 1*/
                             {L"1", L"2", L"Row 1"},  /* RS 2*/
                             {L"3", L"4", L"Row 2"},

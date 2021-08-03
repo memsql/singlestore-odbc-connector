@@ -100,6 +100,7 @@ struct st_ma_stmt_methods
 SQLRETURN    MADB_StmtInit          (MADB_Dbc *Connection, SQLHANDLE *pHStmt);
 void         MADB_StmtReset         (MADB_Stmt *Stmt);
 SQLUSMALLINT MapColAttributeDescType(SQLUSMALLINT FieldIdentifier);
+MYSQL_RES*   FetchMetadata          (MADB_Stmt *Stmt);
 SQLRETURN    MADB_DoExecute(MADB_Stmt *Stmt);
 
 SQLRETURN    MADB_StmtFetchColumn(MADB_Stmt* Stmt, MYSQL_BIND *bind, unsigned int column, unsigned long offset);
@@ -112,7 +113,7 @@ void         MADB_CspsFreeDAE(MADB_Stmt *Stmt);
 
 #define MADB_MAX_CURSOR_NAME 64 * 3 + 1
 #define MADB_CHECK_STMT_HANDLE(a,b)\
-  if (!(a) || !(a)->b)\
+  if (!(a) || (MADB_SSPS_ENABLED(a) && !(a)->b))\
     return SQL_INVALID_HANDLE
 
 #define MADB_STMT_COLUMN_COUNT(aStmt) (aStmt)->Ird->Header.Count
@@ -128,10 +129,20 @@ void         MADB_CspsFreeDAE(MADB_Stmt *Stmt);
 #define MADB_SSPS_DISABLED(aStmt) !(MADB_SSPS_ENABLED(aStmt))
 #define NO_CACHE(aStmt) ((aStmt)->Options.CursorType == SQL_CURSOR_FORWARD_ONLY && (aStmt)->Connection->Dsn->NoCache)
 
-#define MADB_NUM_ROWS(aStmt) ((aStmt) && (aStmt)->CspsResult ? mysql_num_rows((aStmt)->CspsResult) : 0)
-#define MADB_FIELD_COUNT(aStmt) ((aStmt) && (aStmt)->CspsResult ? (aStmt)->CspsResult->field_count : 0)
-#define MADB_FIELDS(aStmt) ((aStmt) && (aStmt)->CspsResult ? (aStmt)->CspsResult->fields : NULL)
-#define MADB_FIELD(aStmt, fieldnr) ((aStmt) && (aStmt)->CspsResult ? mysql_fetch_field_direct((aStmt)->CspsResult, (fieldnr)) : NULL)
+#define MADB_NUM_ROWS(aStmt)          (MADB_SSPS_DISABLED(aStmt) ? ((aStmt) && (aStmt)->CspsResult ? mysql_num_rows((aStmt)->CspsResult) : 0) : \
+                                                                   ((aStmt) && (aStmt)->stmt ? mysql_stmt_num_rows((aStmt)->stmt) : 0))
+#define MADB_FIELD_COUNT(aStmt)       (MADB_SSPS_DISABLED(aStmt) ? ((aStmt) && (aStmt)->CspsResult ? (aStmt)->CspsResult->field_count : 0) : \
+                                                                   ((aStmt) && (aStmt)->stmt ? mysql_stmt_field_count((aStmt)->stmt) : 0))
+#define MADB_FIELDS(aStmt)            (MADB_SSPS_DISABLED(aStmt) ? ((aStmt) && (aStmt)->CspsResult ? mysql_fetch_fields((aStmt)->CspsResult) : NULL) : \
+                                                                   ((aStmt) && (aStmt)->stmt ? mysql_fetch_fields(FetchMetadata(Stmt)) : NULL))
+#define MADB_FIELD(aStmt, fieldnr)    (MADB_SSPS_DISABLED(aStmt) ? ((aStmt) && (aStmt)->CspsResult ? mysql_fetch_field_direct((aStmt)->CspsResult, (fieldnr)) : NULL) : \
+                                                                   ((aStmt) && (aStmt)->stmt ? (&(aStmt)->stmt->fields[(fieldnr)]) : NULL))
+#define MADB_DATA_SEEK(aStmt, offset) (MADB_SSPS_DISABLED(aStmt) ? mysql_stmt_data_seek((aStmt)->stmt, (offset)) : \
+                                                                   mysql_data_seek((aStmt)->CspsResult, (offset)))
+#define MADB_ROW_SEEK(aStmt, cursor)  (MADB_SSPS_DISABLED(aStmt) ? mysql_stmt_row_seek((aStmt)->stmt, (cursor)) : \
+                                                                   mysql_row_seek((aStmt)->CspsResult, (cursor)))
+#define MADB_ROW_TELL(aStmt)          (MADB_SSPS_DISABLED(aStmt) ? mysql_stmt_row_tell((aStmt)->stmt) : \
+                                                                   mysql_row_tell((aStmt)->CspsResult))
 
 /************** SQLColumns       *************/
 #define MADB_DATA_TYPE_ODBC2 \

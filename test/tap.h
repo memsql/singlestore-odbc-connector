@@ -1336,7 +1336,14 @@ int run_tests_ex(MA_ODBC_TESTS *tests, BOOL ProvideWConnection)
   int csps_fail = connect_and_run_tests(tests, ProvideWConnection, NoSsps);
   fprintf(stdout, "Tests %s in the client-side prepared statements mode!\n\n", csps_fail ? "failed" : "passed");
 
-  return csps_fail;
+  cleanup();
+
+  fprintf(stdout, "Running tests in the server-side prepared statements mode...\n");
+  NoSsps = 0;
+  int ssps_fail = connect_and_run_tests(tests, ProvideWConnection, NoSsps);
+  fprintf(stdout, "Tests %s in the server-side prepared statements mode!\n\n", ssps_fail ? "failed" : "passed");
+
+  return csps_fail || ssps_fail;
 }
 
 int run_tests(MA_ODBC_TESTS *tests)

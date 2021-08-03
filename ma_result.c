@@ -69,7 +69,7 @@ SQLRETURN MoveNext(MADB_Stmt *Stmt, unsigned long long Offset)
 
     while (Offset--)
     {
-      if (!SQL_SUCCEEDED(MADB_FetchCsps(Stmt)))
+      if (MADB_SSPS_DISABLED(Stmt) ? !SQL_SUCCEEDED(MADB_FetchCsps(Stmt)) : mysql_stmt_fetch(Stmt->stmt) == 1)
       {
           result= SQL_ERROR;
           break;
@@ -87,16 +87,24 @@ SQLRETURN MoveNext(MADB_Stmt *Stmt, unsigned long long Offset)
 }
 /* }}} */
 
-// TODO ???
 /* {{{ MADB_StmtDataSeek */
 SQLRETURN MADB_StmtDataSeek(MADB_Stmt *Stmt, my_ulonglong FetchOffset)
 {
-  if (!Stmt || !Stmt->CspsResult || !Stmt->CspsResult->data)
+  if (MADB_SSPS_DISABLED(Stmt))
   {
-   return SQL_NO_DATA_FOUND;
+    if (!Stmt->CspsResult || !Stmt->CspsResult->data)
+    {
+      return SQL_NO_DATA_FOUND;
+    }
+  } else
+  {
+    if (!Stmt->stmt || !Stmt->stmt->result.data)
+    {
+      return SQL_NO_DATA_FOUND;
+    }
   }
 
-  mysql_data_seek(Stmt->CspsResult, FetchOffset);
+  MADB_DATA_SEEK(Stmt, FetchOffset);
 
   return SQL_SUCCESS;  
 }
@@ -128,11 +136,20 @@ SQLRETURN MADB_StmtMoreResults(MADB_Stmt *Stmt)
 {
   SQLRETURN ret= SQL_SUCCESS;
 
+  if (MADB_SSPS_ENABLED(Stmt) && !Stmt->stmt)
+  {
+    return MADB_SetError(&Stmt->Error, MADB_ERR_08S01, NULL, 0);
+  }
+  if (MADB_SSPS_DISABLED(Stmt) && Stmt->AffectedRows == -1 && !Stmt->CspsResult)
+  {
+    return MADB_SetError(&Stmt->Error, MADB_ERR_08S01, NULL, 0);
+  }
+
   /* We can't have it in MADB_StmtResetResultStructures, as it breaks dyn_cursor functionality.
      Thus we free-ing bind structs on move to new result only */
   MADB_FREE(Stmt->result);
 
-  if (Stmt->CspsMultiStmtResult)
+  if (Stmt->CspsMultiStmtResult || Stmt->MultiStmts)
   {
     if (Stmt->MultiStmtNr == STMT_COUNT(Stmt->Query) - 1)
     {
@@ -201,7 +218,6 @@ SQLRETURN MADB_StmtMoreResults(MADB_Stmt *Stmt)
           if (mysql_field_count(Stmt->Connection->mariadb) > 0)
           {
               Stmt->CspsResult = mysql_store_result(Stmt->Connection->mariadb);
-              //MADB_CspsCopyResult(Stmt, Stmt->CspsResult, Stmt->stmt);
 
               MADB_DescSetIrdMetadata(Stmt, MADB_FIELDS(Stmt), MADB_FIELD_COUNT(Stmt));
               Stmt->AffectedRows= -1;
@@ -218,54 +234,42 @@ SQLRETURN MADB_StmtMoreResults(MADB_Stmt *Stmt)
       return ret;
   }
 
-//  if (mysql_stmt_more_results(Stmt->stmt))
-//  {
-//    mysql_stmt_free_result(Stmt->stmt);
-//  }
-//  else
-//  {
-//    return SQL_NO_DATA;
-//  }
-//
-//  LOCK_MARIADB(Stmt->Connection);
-//  if (mysql_stmt_next_result(Stmt->stmt) > 0)
-//  {
-//    UNLOCK_MARIADB(Stmt->Connection);
-//    return MADB_SetNativeError(&Stmt->Error, SQL_HANDLE_STMT, Stmt->stmt);
-//  }
-//
-//  MADB_StmtResetResultStructures(Stmt);
-//
-//  if (mysql_stmt_field_count(Stmt->stmt) == 0)
-//  {
-//    MADB_DescFree(Stmt->Ird, TRUE);
-//    Stmt->AffectedRows= mysql_stmt_affected_rows(Stmt->stmt);
-//  }
-//  else
-//  {
-//    unsigned int ServerStatus;
-//
-//    MADB_DescSetIrdMetadata(Stmt, mysql_fetch_fields(FetchMetadata(Stmt)), mysql_stmt_field_count(Stmt->stmt));
-//    Stmt->AffectedRows= 0;
-//
-//    mariadb_get_infov(Stmt->Connection->mariadb, MARIADB_CONNECTION_SERVER_STATUS, (void*)&ServerStatus);
-//
-//    if (ServerStatus & SERVER_PS_OUT_PARAMS)
-//    {
-//      Stmt->State= MADB_SS_OUTPARAMSFETCHED;
-//      ret= Stmt->Methods->GetOutParams(Stmt, 0);
-//    }
-//    else
-//    {
-//      if (!NO_CACHE(Stmt))
-//      {
-//        mysql_stmt_store_result(Stmt->stmt);
-//        mysql_stmt_data_seek(Stmt->stmt, 0);
-//      }
-//    }
-//  }
-//  UNLOCK_MARIADB(Stmt->Connection);
-//
+  if (mysql_stmt_more_results(Stmt->stmt))
+  {
+    mysql_stmt_free_result(Stmt->stmt);
+  }
+  else
+  {
+    return SQL_NO_DATA;
+  }
+
+  LOCK_MARIADB(Stmt->Connection);
+  if (mysql_stmt_next_result(Stmt->stmt) > 0)
+  {
+    UNLOCK_MARIADB(Stmt->Connection);
+    return MADB_SetNativeError(&Stmt->Error, SQL_HANDLE_STMT, Stmt->stmt);
+  }
+
+  MADB_StmtResetResultStructures(Stmt);
+
+  if (mysql_stmt_field_count(Stmt->stmt) == 0)
+  {
+    MADB_DescFree(Stmt->Ird, TRUE);
+    Stmt->AffectedRows= mysql_stmt_affected_rows(Stmt->stmt);
+  }
+  else
+  {
+    MADB_DescSetIrdMetadata(Stmt, mysql_fetch_fields(FetchMetadata(Stmt)), mysql_stmt_field_count(Stmt->stmt));
+    Stmt->AffectedRows= -1;
+
+    if (!NO_CACHE(Stmt))
+    {
+      mysql_stmt_store_result(Stmt->stmt);
+      mysql_stmt_data_seek(Stmt->stmt, 0);
+    }
+  }
+  UNLOCK_MARIADB(Stmt->Connection);
+
   return ret;
 }
 /* }}} */
