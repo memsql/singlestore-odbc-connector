@@ -447,7 +447,9 @@ MYSQL_RES* FetchMetadata(MADB_Stmt *Stmt)
 /* {{{ MADB_StmtReset - reseting Stmt handler for new use. Has to be called inside a lock */
 void MADB_StmtReset(MADB_Stmt *Stmt)
 {
-  if (!QUERY_IS_MULTISTMT(Stmt->Query) || (Stmt->CspsMultiStmtResult == NULL && Stmt->MultiStmts == NULL))
+  if (!QUERY_IS_MULTISTMT(Stmt->Query) ||
+      (MADB_SSPS_DISABLED(Stmt) && Stmt->CspsMultiStmtResult == NULL) ||
+      (MADB_SSPS_ENABLED(Stmt) && Stmt->MultiStmts == NULL))
   {
     if (Stmt->State > MADB_SS_PREPARED)
     {
