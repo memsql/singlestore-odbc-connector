@@ -668,8 +668,7 @@ SQLRETURN MADB_DbcConnectDB(MADB_Dbc *Connection,
   if (Dsn->IsNamedPipe) /* DSN_OPTION(Connection, MADB_OPT_FLAG_NAMED_PIPE) */
     mysql_optionsv(Connection->mariadb, MYSQL_OPT_NAMED_PIPE, (void *)Dsn->ServerName);
 
-  if (DSN_OPTION(Connection, MADB_OPT_FLAG_NO_SCHEMA))
-    client_flags|= CLIENT_NO_SCHEMA;
+  client_flags|= CLIENT_NO_SCHEMA;
   if (DSN_OPTION(Connection, MADB_OPT_FLAG_IGNORE_SPACE))
     client_flags|= CLIENT_IGNORE_SPACE;
 
