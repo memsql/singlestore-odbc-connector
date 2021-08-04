@@ -205,10 +205,6 @@ SQLRETURN MADB_StmtFree(MADB_Stmt *Stmt, SQLUSMALLINT Option)
         if (MADB_SSPS_DISABLED(Stmt))
         {
           MADB_CspsFreeResult(Stmt, &Stmt->CspsResult, Stmt->Connection->mariadb);
-          LOCK_MARIADB(Stmt->Connection);
-          MDBUG_C_PRINT(Stmt->Connection, "-->resetting %0x", Stmt->Connection->mariadb);
-          mysql_reset_connection(Stmt->Connection->mariadb);
-          UNLOCK_MARIADB(Stmt->Connection);
         } else
         {
           MDBUG_C_PRINT(Stmt->Connection, "mysql_stmt_free_result(%0x)", Stmt->stmt);
@@ -228,10 +224,6 @@ SQLRETURN MADB_StmtFree(MADB_Stmt *Stmt, SQLUSMALLINT Option)
           if (MADB_SSPS_DISABLED(Stmt) && Stmt->CspsMultiStmtResult[i] != NULL)
           {
             MADB_CspsFreeResult(Stmt, &Stmt->CspsMultiStmtResult[i], Stmt->Connection->mariadb);
-            LOCK_MARIADB(Stmt->Connection);
-            MDBUG_C_PRINT(Stmt->Connection, "-->resetting %0x", Stmt->Connection->mariadb);
-            mysql_reset_connection(Stmt->Connection->mariadb);
-            UNLOCK_MARIADB(Stmt->Connection);
           } else if (MADB_SSPS_ENABLED(Stmt) && Stmt->MultiStmts[i] != NULL)
           {
             MDBUG_C_PRINT(Stmt->Connection, "mysql_stmt_free_result(%0x)(%u)", Stmt->MultiStmts[i], i);
@@ -1689,7 +1681,13 @@ static int CspsRunStatementQuery(   MADB_Stmt* const Stmt,
                                     const unsigned ParamOffset)
 {
     SQLRETURN ret= SQL_SUCCESS;
-    mysql_reset_connection(Stmt->Connection->mariadb);
+    // if we have SELECT query and several sets of parameters then we need to clear the result
+    // returned for previous set of parameters
+    if (mysql_field_count(Stmt->Connection->mariadb) > 0)
+    {
+      MYSQL_RES* res = mysql_use_result(Stmt->Connection->mariadb);
+      mysql_free_result(res);
+    }
     if (mysql_real_query(Stmt->Connection->mariadb, query->str, query->length)) {
         ++*ErrorCount;
         ret = MADB_SetNativeError(&Stmt->Error, SQL_HANDLE_DBC, Stmt->Connection->mariadb);
