@@ -1598,7 +1598,7 @@ static int CspsInitStatementFromMultistatement( MADB_Stmt* const Stmt,
     unsigned ParamCount = 0;
     unsigned long ParamIdx;
 
-    if (Stmt->CspsMultiStmtResult)
+    if (Stmt->CspsMultiStmtResult && Stmt->Query.BatchAllowed)
     {
         Stmt->CspsResult= Stmt->CspsMultiStmtResult[StatementNr];
     }
