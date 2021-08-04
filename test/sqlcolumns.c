@@ -32,7 +32,10 @@ int run_sql_columns(SQLHANDLE Stmt, const SQLSMALLINT *ExpDataType, const SQLSMA
                              "longblob", "mediumblob", "blob", "tinyblob", "bit",
                              "json", "geography", "geographypoint", "enum", "set"};
     SQLINTEGER ExpColSize[33] = {3, 5, 7, 10, 20, 22, 12, 10, 10, 8, 19, 26, 19, 26, 4, 11, 1, 13, 17,
-                                 2147483647, 16777215, 65535, 255, 2147483647, 16777215, 65535, 255, 1, -1, -1, -1, 1,
+                                 ServerNotOlderThan(Connection, 7, 5, 0) ? 1431655765 : 2147483647,
+                                 ServerNotOlderThan(Connection, 7, 5, 0) ? 5592405 : 16777215,
+                                 ServerNotOlderThan(Connection, 7, 5, 0) ? 21845 : 65535,
+                                 ServerNotOlderThan(Connection, 7, 5, 0) ? 85 : 255, 2147483647, 16777215, 65535, 255, 1, -1, -1, -1, 1,
                                  1};
     SQLSMALLINT ExpDecimalDigits[33] = {0, 0, 0, 0, 0, 6, 0, 5, 0, 0, 0, 6, 0, 6,
                                         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
@@ -42,7 +45,7 @@ int run_sql_columns(SQLHANDLE Stmt, const SQLSMALLINT *ExpDataType, const SQLSMA
                                       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 
     OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_types");
-    OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_types (a TINYINT, b SMALLINT, c MEDIUMINT, d INT UNSIGNED, e BIGINT UNSIGNED, f DOUBLE, g FLOAT,"
+    OK_SIMPLE_STMT(Stmt, "CREATE ROWSTORE TABLE t_types (a TINYINT, b SMALLINT, c MEDIUMINT, d INT UNSIGNED, e BIGINT UNSIGNED, f DOUBLE, g FLOAT,"
                          "h DECIMAL(10, 5), i DATE, j TIME, k DATETIME, l DATETIME(6), m TIMESTAMP, n TIMESTAMP(6), o YEAR,"
                          "p CHAR(11), q BINARY, r VARCHAR(13), s VARBINARY(17), t LONGTEXT, u MEDIUMTEXT, v TEXT, w TINYTEXT,"
                          "x LONGBLOB, y MEDIUMBLOB, z BLOB, aa TINYBLOB, ab BIT(1),"

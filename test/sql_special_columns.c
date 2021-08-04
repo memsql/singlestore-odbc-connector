@@ -25,11 +25,12 @@ int run_sql_special_columns(SQLHANDLE Stmt, const SQLSMALLINT *ExpDataType) {
     const int ExpNumOfRowsFetched = 10;
 
     char *ExpTypeName[10] = {"int unsigned", "bigint", "double", "decimal", "date", "datetime", "timestamp", "char", "binary", "text"};
-    SQLINTEGER ExpColSize[10] = {10, 19, 22, 10, 10, 19, 26, 11, 1, 65535};
+    SQLINTEGER ExpColSize[10] = {10, 19, 22, 10, 10, 19, 26, 11, 1,
+                                 ServerNotOlderThan(Connection, 7, 5, 0) ? 21845 : 65535};
     SQLSMALLINT ExpDecimalDigits[10] = {0, 0, 6, 5, 0, 0, 6, -1, -1, -1};
 
     OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_types");
-    OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_types (a INT UNSIGNED, b BIGINT, c DOUBLE, d DECIMAL(10, 5), "
+    OK_SIMPLE_STMT(Stmt, "CREATE ROWSTORE TABLE t_types (a INT UNSIGNED, b BIGINT, c DOUBLE, d DECIMAL(10, 5), "
                          "e DATE, f DATETIME, g TIMESTAMP(6), h CHAR(11), i BINARY, j TEXT, "
                          "aa TINYINT, ab SMALLINT, ac FLOAT, ad TIME, ae TINYTEXT, af VARBINARY(15), ag BLOB, "
                          "PRIMARY KEY(a, b, c, d, e, f, g, h, i, j))");

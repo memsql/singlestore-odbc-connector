@@ -340,7 +340,7 @@ ODBC_TEST(t_catalog)
 ODBC_TEST(tmysql_specialcols)
 {
   OK_SIMPLE_STMT(Stmt,"drop table if exists tmysql_specialcols");
-  OK_SIMPLE_STMT(Stmt,"create table tmysql_specialcols(col1 int primary key, col2 varchar(30), col3 int)");
+  OK_SIMPLE_STMT(Stmt,"create rowstore table tmysql_specialcols(col1 int primary key, col2 varchar(30), col3 int)");
     
 
   OK_SIMPLE_STMT(Stmt,"create index tmysql_ind1 on tmysql_specialcols(col1)");
@@ -650,7 +650,7 @@ ODBC_TEST(tmysql_showkeys)
 
   OK_SIMPLE_STMT(Stmt,"drop table if exists tmysql_spk");
 
-  OK_SIMPLE_STMT(Stmt,"create table tmysql_spk(col1 int primary key)");
+  OK_SIMPLE_STMT(Stmt,"create rowstore table tmysql_spk(col1 int primary key)");
    
   CHECK_DBC_RC(Connection, SQLTransact(NULL,Connection,SQL_COMMIT));
     

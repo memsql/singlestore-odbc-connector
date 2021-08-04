@@ -124,7 +124,7 @@ ODBC_TEST(t_bug36441)
   SQLLEN      keyname_len, key_seq_len, rowCount;
 
 OK_SIMPLE_STMT(Stmt, "drop table if exists t_bug36441_0123456789");
-  OK_SIMPLE_STMT(Stmt, "create table t_bug36441_0123456789("
+  OK_SIMPLE_STMT(Stmt, "create rowstore table t_bug36441_0123456789("
 	              "pk_for_table1 integer not null auto_increment,"
 	              "c1_for_table1 varchar(128) not null,"
 	              "c2_for_table1 binary(32) null,"
@@ -341,19 +341,19 @@ ODBC_TEST(t_sqlprocedurecolumns)
        5,  8,       2,  10,     SQL_NULLABLE, "", 0,  SQL_DOUBLE,   0,  0,    7,  "YES"},
 
     /*cat    schem  proc_name                  col_name     col_type          data_type    type_name */
-    {my_schema, 0,     "procedure_columns_test1", "re_param8", SQL_PARAM_INPUT, SQL_DECIMAL,  "newdecimal",
+    {my_schema, 0,     "procedure_columns_test1", "re_param8", SQL_PARAM_INPUT, SQL_DECIMAL,  ServerNotOlderThan(Connection, 7, 5, 0) ? "decimal unsigned" : "newdecimal",
     /*size buf_len  dec radix  nullable      rem def sql_data_type sub octet pos nullable*/
       10,  12,       3,  10,    SQL_NULLABLE, "", 0,  SQL_DECIMAL,   0,  0,    8,  "YES"},
 
     /*cat    schem  proc_name                  col_name     col_type          data_type type_name */
     {my_schema, 0,     "procedure_columns_test1", "re_param9", SQL_PARAM_INPUT, SQL_WCHAR,  "char",
     /*size buf_len  dec radix  nullable      rem def sql_data_type sub octet pos nullable*/
-      96,  288,      0,  0,     SQL_NULLABLE, "", 0,  SQL_WCHAR,     0,  288,    9,  "YES"},
+      ServerNotOlderThan(Connection, 7, 5, 0) ? 32 : 96,  ServerNotOlderThan(Connection, 7, 5, 0) ? 96 : 288,      0,  0,     SQL_NULLABLE, "", 0,  SQL_WCHAR,     0,  ServerNotOlderThan(Connection, 7, 5, 0) ? 96 : 288,    9,  "YES"},
 
     /*cat    schem  proc_name                  col_name      col_type           data_type    type_name */
     {my_schema, 0,     "procedure_columns_test1", "re_param10", SQL_PARAM_INPUT, SQL_WVARCHAR, "varchar",
     /*size buf_len  dec radix  nullable      rem def sql_data_type sub octet pos nullable*/
-      192,  576,      0,  0,     SQL_NULLABLE, "", 0,  SQL_WVARCHAR,  0,  576,   10, "YES"},
+      ServerNotOlderThan(Connection, 7, 5, 0) ? 64 : 192,  ServerNotOlderThan(Connection, 7, 5, 0) ? 192 : 576,      0,  0,     SQL_NULLABLE, "", 0,  SQL_WVARCHAR,  0,  ServerNotOlderThan(Connection, 7, 5, 0) ? 192 : 576,   10, "YES"},
 
     /*cat    schem  proc_name                  col_name      col_type         data_type          type_name */
     {my_schema, 0,     "procedure_columns_test1", "re_param11", SQL_PARAM_INPUT, SQL_LONGVARBINARY, "mediumblob",
@@ -363,12 +363,12 @@ ODBC_TEST(t_sqlprocedurecolumns)
     /*cat    schem  proc_name                  col_name     col_type          data_type    type_name */
     {my_schema, 0,     "procedure_columns_test1", "re_param12", SQL_PARAM_INPUT, SQL_DOUBLE,  "double",
     /*size buf_len  dec radix  nullable      rem def sql_data_type sub octet pos nullable*/
-      50,  8,       31,  10,     SQL_NULLABLE, "", 0,  SQL_DOUBLE,   0,  0,    13,  "YES"},
+      ServerNotOlderThan(Connection, 7, 5, 0) ? 22 : 50,  8,       ServerNotOlderThan(Connection, 7, 5, 0) ? 6 : 31,  10,     SQL_NULLABLE, "", 0,  SQL_DOUBLE,   0,  0,    13,  "YES"},
 
     /*cat    schem  proc_name                  col_name     col_type         data_type  type_name */
     { my_schema, 0,     "procedure_columns_test1", "re_param13", SQL_PARAM_INPUT, SQL_FLOAT,  "float",
     /*size buf_len  dec radix  nullable      rem def sql_data_type sub octet pos nullable*/
-      50,   4,       31,  10,     SQL_NULLABLE, "", 0,  SQL_FLOAT,     0,  0,    14,  "YES" },
+      ServerNotOlderThan(Connection, 7, 5, 0) ? 12 : 50,   4,       ServerNotOlderThan(Connection, 7, 5, 0) ? 0 : 31,  10,     SQL_NULLABLE, "", 0,  SQL_FLOAT,     0,  0,    14,  "YES" },
     /*----------------------------------------------------------------------------------------------------*/
     /*cat    schem  proc_name                  col_name     col_type         data_type          type_name */
     {my_schema, 0,     "procedure_columns_test2", "re_paramA", SQL_PARAM_INPUT, SQL_LONGVARBINARY, "blob",
@@ -408,30 +408,30 @@ ODBC_TEST(t_sqlprocedurecolumns)
     /*cat    schem  proc_name                  col_name      col_type          data_type          type_name */
     {my_schema, 0,     "procedure_columns_test2", "re_param H", SQL_PARAM_INPUT, SQL_WLONGVARCHAR, "mediumtext",
     /*size     buf_len   dec radix  nullable      rem def sql_data_type       sub octet     pos nullable*/
-      50331645, 150994935, 0,  0,     SQL_NULLABLE, "", 0,  SQL_WLONGVARCHAR,  0,  150994935, 8, "YES"},
+      ServerNotOlderThan(Connection, 7, 5, 0) ? 5592405 : 50331645, ServerNotOlderThan(Connection, 7, 5, 0) ? 16777215 : 150994935, 0,  0,     SQL_NULLABLE, "", 0,  SQL_WLONGVARCHAR,  0,  ServerNotOlderThan(Connection, 7, 5, 0) ? 16777215 : 150994935, 8, "YES"},
 
     /*cat    schem  proc_name                  col_name      col_type         data_type       type_name */
     {my_schema, 0,     "procedure_columns_test2", "re_paramI", SQL_PARAM_INPUT, SQL_WLONGVARCHAR, "text",
     /*size      buf_len   dec radix  nullable      rem def sql_data_type    sub octet  pos nullable*/
-      196605,    589815,    0,  0,     SQL_NULLABLE, "", 0,  SQL_WLONGVARCHAR, 0,  589815,  9, "YES"},
+      ServerNotOlderThan(Connection, 7, 5, 0) ? 21845 : 196605,    ServerNotOlderThan(Connection, 7, 5, 0) ? 65535 : 589815,    0,  0,     SQL_NULLABLE, "", 0,  SQL_WLONGVARCHAR, 0,  ServerNotOlderThan(Connection, 7, 5, 0) ? 65535 : 589815,  9, "YES"},
 
     /*cat    schem  proc_name                  col_name     col_type         data_type       type_name */
     {my_schema, 0,     "procedure_columns_test2", "re_paramJ", SQL_PARAM_INPUT, SQL_WLONGVARCHAR, "mediumtext",
     /*size     buf_len   dec radix  nullable      rem def sql_data_type    sub octet     pos nullable*/
-      50331645, 150994935, 0,  0,     SQL_NULLABLE, "", 0,  SQL_WLONGVARCHAR, 0,  150994935, 10, "YES"},
+      ServerNotOlderThan(Connection, 7, 5, 0) ? 5592405 : 50331645, ServerNotOlderThan(Connection, 7, 5, 0) ? 16777215 : 150994935, 0,  0,     SQL_NULLABLE, "", 0,  SQL_WLONGVARCHAR, 0,  ServerNotOlderThan(Connection, 7, 5, 0) ? 16777215 : 150994935, 10, "YES"},
 
     /*cat    schem  proc_name                  col_name    col_type              data_type        type_name */
     {my_schema, 0,     "procedure_columns_test2", "re_paramK", SQL_PARAM_INPUT, SQL_WLONGVARCHAR, "longtext",
     /*size        buf_len      dec radix  nullable      rem def sql_data_type    sub octet        pos nullable*/
-     2147483647L, 2147483647L, 0,  0,     SQL_NULLABLE, "", 0,  SQL_WLONGVARCHAR, 0,  2147483647L, 11, "YES"},
+      ServerNotOlderThan(Connection, 7, 5, 0) ?  1431655765 : 2147483647L, 2147483647L, 0,  0,     SQL_NULLABLE, "", 0,  SQL_WLONGVARCHAR, 0,  2147483647L, 11, "YES"},
 
     /*cat    schem  proc_name                  col_name     col_type         data_type        type_name */
     {my_schema, 0,     "procedure_columns_test2", "re_paramL", SQL_PARAM_INPUT, SQL_WLONGVARCHAR, "tinytext",
     /*size   buf_len dec radix  nullable      rem def sql_data_type    sub octet pos nullable*/
-     765,    2295,    0,  0,     SQL_NULLABLE, "", 0,  SQL_WLONGVARCHAR, 0,  2295,  12, "YES"},
+     ServerNotOlderThan(Connection, 7, 5, 0) ? 85 : 765,    ServerNotOlderThan(Connection, 7, 5, 0) ? 255 : 2295,    0,  0,     SQL_NULLABLE, "", 0,  SQL_WLONGVARCHAR, 0,  ServerNotOlderThan(Connection, 7, 5, 0) ? 255 : 2295,  12, "YES"},
 
     /*cat    schem  proc_name                  col_name     col_type         data_type    type_name */
-    {my_schema, 0,     "procedure_columns_test2", "re_paramM", SQL_PARAM_INPUT, SQL_DECIMAL,  "newdecimal",
+    {my_schema, 0,     "procedure_columns_test2", "re_paramM", SQL_PARAM_INPUT, SQL_DECIMAL,  ServerNotOlderThan(Connection, 7, 5, 0) ? "decimal" : "newdecimal",
     /*size buf_len  dec radix  nullable      rem def sql_data_type sub octet pos nullable*/
       8,   10,      2,  10,    SQL_NULLABLE, "", 0,  SQL_DECIMAL,   0,  0,   13,  "YES"},
     /*----------------------------------------------------------------------------------------------------*/
@@ -672,7 +672,7 @@ ODBC_TEST(t_bug57182)
   IS_STR(my_fetch_str(Stmt, buff, 3), "bug57182", 9);
   IS_STR(my_fetch_str(Stmt, buff, 4), "name", 5);
   IS_STR(my_fetch_str(Stmt, buff, 7), "varchar", 8);
-  is_num(my_fetch_int(Stmt, 8), 60);
+  is_num(my_fetch_int(Stmt, 8), ServerNotOlderThan(Connection, 7, 5, 0) ? 20 : 60);
 
   FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA, "No data expected");
   
@@ -727,7 +727,7 @@ ODBC_TEST(t_bug55870)
   OK_SIMPLE_STMT(Stmt, "drop table if exists bug55870r");
   OK_SIMPLE_STMT(Stmt, "drop table if exists bug55870_2");
   OK_SIMPLE_STMT(Stmt, "drop table if exists bug55870");
-  OK_SIMPLE_STMT(Stmt, "create table bug55870(a int not null primary key, "
+  OK_SIMPLE_STMT(Stmt, "create rowstore table bug55870(a int not null primary key, "
     "b varchar(20) not null, c varchar(100) not null, INDEX(b)) ENGINE=InnoDB");
 
   /* There should be no problems with I_S version of SQLTablePrivileges. Thus need connection
@@ -834,9 +834,9 @@ ODBC_TEST(bug12824839)
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS b12824839");
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS b12824839a");
-  OK_SIMPLE_STMT(Stmt, "CREATE TABLE b12824839 "
+  OK_SIMPLE_STMT(Stmt, "CREATE ROWSTORE TABLE b12824839 "
                 "(id int primary key, vc_col varchar(32), int_col int)");
-  OK_SIMPLE_STMT(Stmt, "CREATE TABLE b12824839a "
+  OK_SIMPLE_STMT(Stmt, "CREATE ROWSTORE TABLE b12824839a "
                 "(id int, vc_col varchar(32), int_col int,"
                 "primary key(id,int_col))");
 
@@ -1172,7 +1172,7 @@ ODBC_TEST(odbc119)
   SQLLEN  RowCount;
 
   OK_SIMPLE_STMT(Stmt, "drop table if exists t_odbc119");
-  OK_SIMPLE_STMT(Stmt, "create table t_odbc119(id int not null auto_increment PRIMARY KEY, "
+  OK_SIMPLE_STMT(Stmt, "create rowstore table t_odbc119(id int not null auto_increment PRIMARY KEY, "
     "ui_p1 INT NOT NULL, iu_p2 INT NOT NULL, a varchar(100) not null, KEY `INDEX` (`a`), UNIQUE KEY `UNIQUE` (ui_p1, iu_p2, id)) ENGINE=InnoDB");
 
   CHECK_STMT_RC(Stmt, SQLStatistics(Stmt, NULL, SQL_NTS, NULL, SQL_NTS,
@@ -1380,7 +1380,7 @@ ODBC_TEST(odbc231)
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, COLUMN_SIZE, SQL_C_SLONG, &ColumnSize, 0, &ColumnSizeLen));
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, BUFFER_LENGTH, SQL_C_ULONG, &BufferLength, 0, &BufferLengthLen));
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  is_num((unsigned)ColumnSize, 0x7fffffff);
+  is_num((unsigned)ColumnSize, ServerNotOlderThan(Connection, 7, 5, 0) ? 0x55555555 : 0x7fffffff);
   is_num(ColumnSizeLen, sizeof(SQLINTEGER));
   diag("Longtext size: %lu(%lx) type %s %s, buffer length: %lu(%lx) type %s %s", ColumnSize, ColumnSize, OdbcTypeAsString((SQLSMALLINT)Type1, NULL),
     Unsigned1 ? "Unsigned" : "Signed", BufferLength, BufferLength, OdbcTypeAsString((SQLSMALLINT)Type2, NULL), Unsigned2 ? "Unsigned" : "Signed");

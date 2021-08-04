@@ -1740,7 +1740,15 @@ static int CspsRunStatementQuery(   MADB_Stmt* const Stmt,
 {
     SQLRETURN ret= SQL_SUCCESS;
 
-    if (mysql_reset_connection(Stmt->stmt->mysql) && mysql_real_query(Stmt->stmt->mysql, query->str, query->length)) {
+    // if we have SELECT query and several sets of parameters then we need to clear the result
+    // returned for previous set of parameters
+    if (mysql_field_count(Stmt->Connection->mariadb) > 0)
+    {
+      MYSQL_RES* res = mysql_use_result(Stmt->Connection->mariadb);
+      mysql_free_result(res);
+    }
+
+    if (mysql_real_query(Stmt->stmt->mysql, query->str, query->length)) {
         ++*ErrorCount;
         ret = MADB_SetNativeError(&Stmt->Error, SQL_HANDLE_DBC, Stmt->stmt->mysql);
     } else

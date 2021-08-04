@@ -106,14 +106,23 @@ int run_sql_procedurecolumns_routine_type(SQLHANDLE Stmt, const SQLSMALLINT *Exp
     _snprintf(createStmtStr, crLength, CREATE_ROUTINE_TEMPLATE, RoutineType);
 
     char *ExpTypeName[33] = {"tinyint", "smallint", "mediumint unsigned", "int", "bigint unsigned", "double", "float",
-                             "newdecimal", "date", "time", "datetime", "datetime", "timestamp", "timestamp", "year",
+                             ServerNotOlderThan(Connection, 7, 5, 0) ? "decimal" : "newdecimal", "date", "time", "datetime", "datetime", "timestamp", "timestamp", "year",
                              "char", "binary", "varchar", "varbinary", "longtext", "mediumtext", "text", "tinytext",
                              "longblob", "mediumblob", "blob", "tinyblob", "bit",
                              "json", "geography", "geographypoint", "enum", "set"};
-    SQLINTEGER ExpColSize[33] = {3, 5, 8, 10, 20, 50, 50, 10, 10, 8, 19, 26, 19, 26, 4, 33, 1, 39, 17,
-                                 2147483647, 50331645, 196605, 765, 2147483647, 16777215, 65535, 255, -1, -1, -1, -1, -1,
-                                 -1};
-    SQLSMALLINT ExpDecimalDigits[33] = {0, 0, 0, 0, 0, 31, 31, 5, 0, 0, 0, 6, 0, 6,
+    SQLINTEGER ExpColSize[33] = {3, 5, 8, 10, 20,
+                                 ServerNotOlderThan(Connection, 7, 5, 0) ? 22 : 50,
+                                 ServerNotOlderThan(Connection, 7, 5, 0) ? 12 : 50, 10, 10, 8, 19, 26, 19, 26, 4,
+                                 ServerNotOlderThan(Connection, 7, 5, 0) ? 11 : 33, 1,
+                                 ServerNotOlderThan(Connection, 7, 5, 0) ? 13 : 39, 17,
+                                 ServerNotOlderThan(Connection, 7, 5, 0) ? 1431655765 : 2147483647,
+                                 ServerNotOlderThan(Connection, 7, 5, 0) ? 5592405 : 50331645,
+                                 ServerNotOlderThan(Connection, 7, 5, 0) ? 21845 : 196605,
+                                 ServerNotOlderThan(Connection, 7, 5, 0) ? 85 : 765, 2147483647, 16777215, 65535, 255,
+                                 -1, -1, -1, -1, -1, -1};
+    SQLSMALLINT ExpDecimalDigits[33] = {0, 0, 0, 0, 0,
+                                        ServerNotOlderThan(Connection, 7, 5, 0) ? 6 : 31,
+                                        ServerNotOlderThan(Connection, 7, 5, 0) ? 0 : 31, 5, 0, 0, 0, 6, 0, 6,
                                         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
     SQLSMALLINT ExpNumPrecRadix[33] = {10, 10, 10, 10, 10, 10, 10, 10, -1, -1, -1, -1, -1, -1,
                                        10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
