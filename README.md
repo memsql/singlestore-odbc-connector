@@ -1,4 +1,4 @@
-# SingleStore ODBC 1.0.1 Driver
+# SingleStore ODBC 1.0.2 Driver
 ![logo](singlestore_logo_horizontal_color_on-white_rgb.png)
 
 This is a GA release of the SingleStore ODBC Driver.
