@@ -45,11 +45,18 @@ int run_sql_columns(SQLHANDLE Stmt, const SQLSMALLINT *ExpDataType, const SQLSMA
                                       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 
     OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_types");
-    OK_SIMPLE_STMT(Stmt, "CREATE ROWSTORE TABLE t_types (a TINYINT, b SMALLINT, c MEDIUMINT, d INT UNSIGNED, e BIGINT UNSIGNED, f DOUBLE, g FLOAT,"
-                         "h DECIMAL(10, 5), i DATE, j TIME, k DATETIME, l DATETIME(6), m TIMESTAMP, n TIMESTAMP(6), o YEAR,"
-                         "p CHAR(11), q BINARY, r VARCHAR(13), s VARBINARY(17), t LONGTEXT, u MEDIUMTEXT, v TEXT, w TINYTEXT,"
-                         "x LONGBLOB, y MEDIUMBLOB, z BLOB, aa TINYBLOB, ab BIT(1),"
-                         "ac JSON, ad GEOGRAPHY, ae GEOGRAPHYPOINT, af ENUM('e'), ag SET('s'))");
+    OK_SIMPLE_STMT(Stmt, ServerNotOlderThan(Connection, 7, 3, 0) ?
+                                                                 "CREATE ROWSTORE TABLE t_types (a TINYINT, b SMALLINT, c MEDIUMINT, d INT UNSIGNED, e BIGINT UNSIGNED, f DOUBLE, g FLOAT,"
+                                                                 "h DECIMAL(10, 5), i DATE, j TIME, k DATETIME, l DATETIME(6), m TIMESTAMP, n TIMESTAMP(6), o YEAR,"
+                                                                 "p CHAR(11), q BINARY, r VARCHAR(13), s VARBINARY(17), t LONGTEXT, u MEDIUMTEXT, v TEXT, w TINYTEXT,"
+                                                                 "x LONGBLOB, y MEDIUMBLOB, z BLOB, aa TINYBLOB, ab BIT(1),"
+                                                                 "ac JSON, ad GEOGRAPHY, ae GEOGRAPHYPOINT, af ENUM('e'), ag SET('s'))" :
+
+                                                                 "CREATE TABLE t_types (a TINYINT, b SMALLINT, c MEDIUMINT, d INT UNSIGNED, e BIGINT UNSIGNED, f DOUBLE, g FLOAT,"
+                                                                 "h DECIMAL(10, 5), i DATE, j TIME, k DATETIME, l DATETIME(6), m TIMESTAMP, n TIMESTAMP(6), o YEAR,"
+                                                                 "p CHAR(11), q BINARY, r VARCHAR(13), s VARBINARY(17), t LONGTEXT, u MEDIUMTEXT, v TEXT, w TINYTEXT,"
+                                                                 "x LONGBLOB, y MEDIUMBLOB, z BLOB, aa TINYBLOB, ab BIT(1),"
+                                                                 "ac JSON, ad GEOGRAPHY, ae GEOGRAPHYPOINT, af ENUM('e'), ag SET('s'))");
 
     CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLColumns(Stmt, ExpTableCat, SQL_NTS, NULL, 0,
                                                       (SQLCHAR *) "t_types", SQL_NTS, NULL, 0));

@@ -437,7 +437,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC 1.0.1 Unicode Driver
+                - SingleStore ODBC 1.0.2 Unicode Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.5.6-9e799dbf4f-3.2.11-1.11.10
               with_sanitizer:
@@ -455,7 +455,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC 1.0.1 Unicode Driver
+                - SingleStore ODBC 1.0.2 Unicode Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.5.6-9e799dbf4f-3.2.11-1.11.10
       - build-ubuntu:
@@ -471,27 +471,9 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC 1.0.1 ANSI Driver
+                - SingleStore ODBC 1.0.2 ANSI Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.5.6-9e799dbf4f-3.2.11-1.11.10
-      - build-ubuntu:
-          name: build-ubuntu-sanitizer-unicode-7.3.2-<< matrix.build_type >>
-          matrix:
-            parameters:
-              machine_class:
-                - large
-              memsql_password:
-                - password
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - ssodbc_test_w
-              test_driver:
-                - SingleStore ODBC 1.0.2 Unicode Driver
-              memsql_image:
-                - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
-              with_sanitizer:
-                - true
       - build-ubuntu:
           name: build-ubuntu-unicode-7.3.2-<< matrix.build_type >>
           matrix:

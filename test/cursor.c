@@ -2643,7 +2643,10 @@ ODBC_TEST(bug10563)
   SQLLEN nlen;
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_bug10563");
-  OK_SIMPLE_STMT(Stmt, "CREATE ROWSTORE TABLE t_bug10563 (a INT, b INT, PRIMARY KEY (b), UNIQUE (b))");
+  OK_SIMPLE_STMT(Stmt, ServerNotOlderThan(Connection, 7, 3, 0) ?
+                                                               "CREATE ROWSTORE TABLE t_bug10563 (a INT, b INT, PRIMARY KEY (b), UNIQUE (b))" :
+                                                               "CREATE TABLE t_bug10563 (a INT, b INT, PRIMARY KEY (b), UNIQUE (b))"
+                 );
   OK_SIMPLE_STMT(Stmt, "INSERT INTO t_bug10563 VALUES (1,3),(1,4)");
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));

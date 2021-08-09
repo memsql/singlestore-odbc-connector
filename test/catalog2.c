@@ -124,14 +124,25 @@ ODBC_TEST(t_bug36441)
   SQLLEN      keyname_len, key_seq_len, rowCount;
 
 OK_SIMPLE_STMT(Stmt, "drop table if exists t_bug36441_0123456789");
-  OK_SIMPLE_STMT(Stmt, "create rowstore table t_bug36441_0123456789("
-	              "pk_for_table1 integer not null auto_increment,"
-	              "c1_for_table1 varchar(128) not null,"
-	              "c2_for_table1 binary(32) null,"
-                "unique_key int unsigned not null,"
-                "unique key(pk_for_table1, c1_for_table1, unique_key),"
-	              "primary key(pk_for_table1, c1_for_table1),"
-                "shard key(pk_for_table1, c1_for_table1))");
+  OK_SIMPLE_STMT(Stmt, ServerNotOlderThan(Connection, 7, 3, 0) ?
+                                                             "create rowstore table t_bug36441_0123456789("
+                                                             "pk_for_table1 integer not null auto_increment,"
+                                                             "c1_for_table1 varchar(128) not null,"
+                                                             "c2_for_table1 binary(32) null,"
+                                                             "unique_key int unsigned not null,"
+                                                             "unique key(pk_for_table1, c1_for_table1, unique_key),"
+                                                             "primary key(pk_for_table1, c1_for_table1),"
+                                                             "shard key(pk_for_table1, c1_for_table1))" :
+
+                                                             "create table t_bug36441_0123456789("
+                                                             "pk_for_table1 integer not null auto_increment,"
+                                                             "c1_for_table1 varchar(128) not null,"
+                                                             "c2_for_table1 binary(32) null,"
+                                                             "unique_key int unsigned not null,"
+                                                             "unique key(pk_for_table1, c1_for_table1, unique_key),"
+                                                             "primary key(pk_for_table1, c1_for_table1),"
+                                                             "shard key(pk_for_table1, c1_for_table1))"
+               );
 
   CHECK_STMT_RC(Stmt, SQLPrimaryKeys(Stmt, NULL, SQL_NTS, NULL, SQL_NTS, "t_bug36441_0123456789", SQL_NTS));
 
@@ -727,8 +738,10 @@ ODBC_TEST(t_bug55870)
   OK_SIMPLE_STMT(Stmt, "drop table if exists bug55870r");
   OK_SIMPLE_STMT(Stmt, "drop table if exists bug55870_2");
   OK_SIMPLE_STMT(Stmt, "drop table if exists bug55870");
-  OK_SIMPLE_STMT(Stmt, "create rowstore table bug55870(a int not null primary key, "
-    "b varchar(20) not null, c varchar(100) not null, INDEX(b)) ENGINE=InnoDB");
+  OK_SIMPLE_STMT(Stmt, ServerNotOlderThan(Connection, 7, 3, 0) ? "create rowstore table bug55870(a int not null primary key, "
+                                                                 "b varchar(20) not null, c varchar(100) not null, INDEX(b)) ENGINE=InnoDB" :
+                                                               "create table bug55870(a int not null primary key, "
+                                                               "b varchar(20) not null, c varchar(100) not null, INDEX(b)) ENGINE=InnoDB");
 
   /* There should be no problems with I_S version of SQLTablePrivileges. Thus need connection
      not using I_S. SQlStatistics doesn't have I_S version, but it ma change at certain point.
@@ -834,11 +847,16 @@ ODBC_TEST(bug12824839)
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS b12824839");
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS b12824839a");
-  OK_SIMPLE_STMT(Stmt, "CREATE ROWSTORE TABLE b12824839 "
-                "(id int primary key, vc_col varchar(32), int_col int)");
-  OK_SIMPLE_STMT(Stmt, "CREATE ROWSTORE TABLE b12824839a "
-                "(id int, vc_col varchar(32), int_col int,"
-                "primary key(id,int_col))");
+  OK_SIMPLE_STMT(Stmt, ServerNotOlderThan(Connection, 7, 3, 0) ? "CREATE ROWSTORE TABLE b12824839 "
+                                                                 "(id int primary key, vc_col varchar(32), int_col int)" :
+                                                               "CREATE TABLE b12824839 "
+                                                               "(id int primary key, vc_col varchar(32), int_col int)");
+  OK_SIMPLE_STMT(Stmt, ServerNotOlderThan(Connection, 7, 3, 0) ?  "CREATE ROWSTORE TABLE b12824839a "
+                                                                 "(id int, vc_col varchar(32), int_col int,"
+                                                                 "primary key(id,int_col))" :
+                                                               "CREATE TABLE b12824839a "
+                                                               "(id int, vc_col varchar(32), int_col int,"
+                                                               "primary key(id,int_col))");
 
   CHECK_STMT_RC(Stmt, SQLColumns(Stmt, my_schema, SQL_NTS, NULL, 0, "b12824839",
                             SQL_NTS, NULL, 0));
@@ -1172,8 +1190,11 @@ ODBC_TEST(odbc119)
   SQLLEN  RowCount;
 
   OK_SIMPLE_STMT(Stmt, "drop table if exists t_odbc119");
-  OK_SIMPLE_STMT(Stmt, "create rowstore table t_odbc119(id int not null auto_increment PRIMARY KEY, "
-    "ui_p1 INT NOT NULL, iu_p2 INT NOT NULL, a varchar(100) not null, KEY `INDEX` (`a`), UNIQUE KEY `UNIQUE` (ui_p1, iu_p2, id)) ENGINE=InnoDB");
+  OK_SIMPLE_STMT(Stmt, ServerNotOlderThan(Connection, 7, 3, 0) ?
+                                                               "create rowstore table t_odbc119(id int not null auto_increment PRIMARY KEY, "
+                                                               "ui_p1 INT NOT NULL, iu_p2 INT NOT NULL, a varchar(100) not null, KEY `INDEX` (`a`), UNIQUE KEY `UNIQUE` (ui_p1, iu_p2, id)) ENGINE=InnoDB" :
+                                                               "create table t_odbc119(id int not null auto_increment PRIMARY KEY, "
+                                                               "ui_p1 INT NOT NULL, iu_p2 INT NOT NULL, a varchar(100) not null, KEY `INDEX` (`a`), UNIQUE KEY `UNIQUE` (ui_p1, iu_p2, id)) ENGINE=InnoDB");
 
   CHECK_STMT_RC(Stmt, SQLStatistics(Stmt, NULL, SQL_NTS, NULL, SQL_NTS,
     "t_odbc119", SQL_NTS,

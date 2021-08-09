@@ -30,10 +30,15 @@ int run_sql_special_columns(SQLHANDLE Stmt, const SQLSMALLINT *ExpDataType) {
     SQLSMALLINT ExpDecimalDigits[10] = {0, 0, 6, 5, 0, 0, 6, -1, -1, -1};
 
     OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_types");
-    OK_SIMPLE_STMT(Stmt, "CREATE ROWSTORE TABLE t_types (a INT UNSIGNED, b BIGINT, c DOUBLE, d DECIMAL(10, 5), "
-                         "e DATE, f DATETIME, g TIMESTAMP(6), h CHAR(11), i BINARY, j TEXT, "
-                         "aa TINYINT, ab SMALLINT, ac FLOAT, ad TIME, ae TINYTEXT, af VARBINARY(15), ag BLOB, "
-                         "PRIMARY KEY(a, b, c, d, e, f, g, h, i, j))");
+    OK_SIMPLE_STMT(Stmt, ServerNotOlderThan(Connection, 7, 3, 0) ?
+                                                                 "CREATE ROWSTORE TABLE t_types (a INT UNSIGNED, b BIGINT, c DOUBLE, d DECIMAL(10, 5), "
+                                                                 "e DATE, f DATETIME, g TIMESTAMP(6), h CHAR(11), i BINARY, j TEXT, "
+                                                                 "aa TINYINT, ab SMALLINT, ac FLOAT, ad TIME, ae TINYTEXT, af VARBINARY(15), ag BLOB, "
+                                                                 "PRIMARY KEY(a, b, c, d, e, f, g, h, i, j))" :
+                                                                 "CREATE TABLE t_types (a INT UNSIGNED, b BIGINT, c DOUBLE, d DECIMAL(10, 5), "
+                                                                 "e DATE, f DATETIME, g TIMESTAMP(6), h CHAR(11), i BINARY, j TEXT, "
+                                                                 "aa TINYINT, ab SMALLINT, ac FLOAT, ad TIME, ae TINYTEXT, af VARBINARY(15), ag BLOB, "
+                                                                 "PRIMARY KEY(a, b, c, d, e, f, g, h, i, j))");
 
     // Fetch only primary key columns.
     CHECK_STMT_RC(Stmt, SQLSpecialColumns(Stmt, SQL_BEST_ROWID, my_schema, SQL_NTS, NULL, 0,
