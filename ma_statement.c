@@ -2395,6 +2395,7 @@ SQLRETURN MADB_PrepareBind(MADB_Stmt *Stmt, int RowNumber)
   MADB_DescRecord *IrdRec, *ArdRec;
   int             i;
   void            *DataPtr= NULL;
+  SQLSMALLINT     ConciseType;
 
   for (i= 0; i < MADB_STMT_COLUMN_COUNT(Stmt); ++i)
   {
@@ -2424,7 +2425,12 @@ SQLRETURN MADB_PrepareBind(MADB_Stmt *Stmt, int RowNumber)
     /* We can't use application's buffer directly, as it has/can have different size, than C/C needs */
     Stmt->result[i].length= &Stmt->result[i].length_value;
 
-    switch(ArdRec->ConciseType) {
+    ConciseType = ArdRec->ConciseType;
+    if (ConciseType == SQL_C_DEFAULT)
+    {
+      ConciseType = MADB_GetDefaultType(IrdRec->ConciseType);
+    }
+    switch(ConciseType) {
     case SQL_C_WCHAR:
       /* In worst case for 2 bytes of UTF16 in result, we need 3 bytes of utf8.
           For ASCII  we need 2 times less(for 2 bytes of UTF16 - 1 byte UTF8,
@@ -2529,13 +2535,13 @@ SQLRETURN MADB_PrepareBind(MADB_Stmt *Stmt, int RowNumber)
       }
       /* else {we are falling through below} */
     default:
-      if (!MADB_CheckODBCType(ArdRec->ConciseType))
+      if (!MADB_CheckODBCType(ConciseType))
       {
         return MADB_SetError(&Stmt->Error, MADB_ERR_07006, NULL, 0);
       }
       Stmt->result[i].buffer_length= (unsigned long)ArdRec->OctetLength;
       Stmt->result[i].buffer=        DataPtr;
-      Stmt->result[i].buffer_type=   MADB_GetMaDBTypeAndLength(ArdRec->ConciseType,
+      Stmt->result[i].buffer_type=   MADB_GetMaDBTypeAndLength(ConciseType,
                                                             &Stmt->result[i].is_unsigned,
                                                             &Stmt->result[i].buffer_length);
       break;

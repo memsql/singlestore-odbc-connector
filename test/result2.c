@@ -1453,9 +1453,27 @@ ODBC_TEST(t_odbc214)
   return OK;
 }
 
+ODBC_TEST(t_default)
+{
+  SQLSMALLINT a;
+  SQLLEN bLen;
+  SQLCHAR b[100];
+
+  OK_SIMPLE_STMT(Stmt, "SELECT -100, 'abc'");
+  CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_DEFAULT, &a, 2, NULL));
+  CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 2, SQL_C_DEFAULT, b, 100, &bLen));
+
+  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+  is_num(a, -100);
+  IS_STR(b, "abc", bLen+1);
+
+  return OK;
+}
+
 
 MA_ODBC_TESTS my_tests[]=
 {
+  {t_default, "t_default", NORMAL, ALL_DRIVERS},
   {t_bug32420, "t_bug32420", NORMAL, ALL_DRIVERS},
   {t_bug34575, "t_bug34575", NORMAL, ALL_DRIVERS},
   {t_bug24131, "t_bug24131", CSPS_TO_FIX | SSPS_FAIL, ALL_DRIVERS},
