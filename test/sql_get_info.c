@@ -307,7 +307,7 @@ ODBC_TEST(driver_information)
 
   CHECK_CHAR(Connection, SQL_DRIVER_NAME, WindowsDM(Connection) ? (is_unicode_driver() ? "ssodbcw.dll" : "ssodbca.dll") : (is_unicode_driver() ? "libssodbcw.so" : "libssodbca.so"));
   CHECK_CHAR(Connection, SQL_DRIVER_ODBC_VER, "03.51");
-  CHECK_CHAR(Connection, SQL_DRIVER_VER, "01.00.0003");
+  CHECK_CHAR(Connection, SQL_DRIVER_VER, MARIADB_ODBC_VERSION);
   // CHECK_U_INTEGER(Connection, SQL_DRIVER_AWARE_POOLING_SUPPORTED, SQL_DRIVER_AWARE_POOLING_NOT_CAPABLE); TODO PLAT-5514
   CHECK_U_INTEGER(Connection, SQL_DYNAMIC_CURSOR_ATTRIBUTES1, SQL_CA1_NEXT |
                                                                 SQL_CA1_ABSOLUTE |

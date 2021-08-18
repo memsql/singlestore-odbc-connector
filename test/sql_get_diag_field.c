@@ -239,7 +239,7 @@ ODBC_TEST(sql_diag_record_fields)
   IS_OK(CheckChar(SQL_HANDLE_STMT, Stmt, 1, SQL_DIAG_CLASS_ORIGIN, "ISO 9075"));
   // IS_OK(CheckChar(SQL_HANDLE_STMT, Stmt, 1, SQL_DIAG_SUBCLASS_ORIGIN, "ISO 9075")); TODO PLAT-5595
 
-  sprintf(errMsg, "[ss-1.0.3][%s]You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Some wrong query' at line 1", version);
+  sprintf(errMsg, "%s[%s]You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Some wrong query' at line 1", MARIADB_ODBC_ERR_PREFIX, version);
   IS_OK(CheckChar(SQL_HANDLE_STMT, Stmt, 1, SQL_DIAG_MESSAGE_TEXT, errMsg));
   // IS_OK(CheckChar(SQL_HANDLE_STMT, Stmt, 1, SQL_DIAG_CONNECTION_NAME, "")); TODO PLAT-5597
   // IS_OK(CheckChar(SQL_HANDLE_STMT, Stmt, 1, SQL_DIAG_SERVER_NAME, (char *)my_dsn)); TODO PLAT-5597
