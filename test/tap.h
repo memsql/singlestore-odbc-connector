@@ -136,6 +136,9 @@ static SQLCHAR *my_drivername=      (SQLCHAR *)"SingleStore ODBC 1.0.4 ANSI Driv
 static SQLCHAR *my_servername=      (SQLCHAR *)"127.0.0.1";
 static SQLCHAR *add_connstr=        (SQLCHAR*)"";
 
+static unsigned int  my_port=        5506;
+char          ma_strport[12]= "PORT=5506";
+
 static SQLWCHAR *wdsn;
 static SQLWCHAR *wuid;
 static SQLWCHAR *wpwd;
@@ -150,9 +153,6 @@ static unsigned long my_options= 67108866;
 static SQLHANDLE     Env, Connection, Stmt, wConnection, wStmt;
 static SQLINTEGER    OdbcVer=        SQL_OV_ODBC3;
 static my_bool       NoSsps = 1;
-
-static unsigned int  my_port=        5506;
-char          ma_strport[12]= "PORT=5506";
 
 static int Travis= 0, TravisOnOsx= 0;
 
@@ -777,7 +777,7 @@ do {\
   long long local_exp = (exp), local_got = (got);\
   if (local_exp != local_got)\
     {\
-        fprintf(stdout, "%s(exp: %lld, got: %lld) (File: %s Line: %d)\n", message, local_exp, local_got, __FILE__, __LINE__);\
+        fprintf(stdout, "%s(exp: %lld, got: %lld) (File: %s:%d)\n", message, local_exp, local_got, __FILE__, __LINE__);\
         return FAIL;\
     }\
 } while(0)
@@ -785,14 +785,14 @@ do {\
 #define FAIL_IF_NE_STR(exp,got,message)\
   if (_stricmp((exp), (got)) != 0)\
     {\
-        fprintf(stdout, "%s(exp: %s, got: %s) (File: %s Line: %d)\n", message, exp, got, __FILE__, __LINE__);\
+        fprintf(stdout, "%s(exp: %s, got: %s) (File: %s:%d)\n", message, exp, got, __FILE__, __LINE__);\
         return FAIL;\
     }
 
 #define FAIL_IF(expr,message)\
   if (expr)\
     {\
-    fprintf(stdout, "%s (File: %s Line: %d)\n", message, __FILE__, __LINE__);\
+    fprintf(stdout, "%s (File: %s:%d)\n", message, __FILE__, __LINE__);\
     return FAIL;\
     }
 
@@ -807,7 +807,7 @@ do {\
   long long local_a= (long long)(A), local_b= (long long)(B);\
   if (local_a != local_b)\
   {\
-    diag("%s %d: %s(%lld)!=%s(%lld)", __FILE__, __LINE__, #A, local_a, #B, local_b);\
+    diag("%s:%d: %s(%lld)!=%s(%lld)", __FILE__, __LINE__, #A, local_a, #B, local_b);\
     return FAIL;\
   }\
 } while(0)
@@ -817,7 +817,7 @@ do {\
   double local_a= (double)(A), local_b= (double)(B);\
   if (local_a - local_b > 1e-7 || local_a - local_b < -1e-7)\
   {\
-    diag("%s %d: %s(%lf)!=%s(%lf)", __FILE__, __LINE__, #A, local_a, #B, local_b);\
+    diag("%s:%d: %s(%lf)!=%s(%lf)", __FILE__, __LINE__, #A, local_a, #B, local_b);\
     return FAIL;\
   }\
 } while(0)
@@ -837,7 +837,7 @@ do {\
   if (ret != (_Expected))\
   {\
     CHECK_STMT_RC(_Stmt, ret);\
-    diag("%s %d: %s returned %d, expected %s(%d)",__FILE__, __LINE__, #_Function, ret, #_Expected, _Expected);\
+    diag("%s:%d: %s returned %d, expected %s(%d)",__FILE__, __LINE__, #_Function, ret, #_Expected, _Expected);\
     return FAIL;\
   }\
 } while(0)
@@ -848,7 +848,7 @@ do {\
   if (ret != (Expected))\
   {\
     CHECK_DESC_RC(_Desc, ret);\
-    diag("%s %d: %s returned %d, expected %s(%d)",__FILE__, __LINE__, #Function, ret, #Expected, Expected);\
+    diag("%s:%d: %s returned %d, expected %s(%d)",__FILE__, __LINE__, #Function, ret, #Expected, Expected);\
     return FAIL;\
   }\
 } while(0)
@@ -1059,7 +1059,7 @@ SQLHANDLE DoConnect(SQLHANDLE Connection, BOOL DoWConnect,
     if (SQL_SUCCEEDED(rc))
     {
       /* ANSI driver file name contains a.{dll|so} */
-      unicode_driver= strstr((char*)driver_name, "a.") == NULL ? UNICODE_DRIVER : ANSI_DRIVER;
+      unicode_driver= strstr((char*)driver_name, "a.") ? ANSI_DRIVER : UNICODE_DRIVER;
     }
   }
 
@@ -1171,26 +1171,33 @@ int reset_changed_server_variables(void)
 
 int connect_and_run_tests(MA_ODBC_TESTS *tests, BOOL ProvideWConnection, BOOL NoSSPS)
 {
-    int         rc, i=1, all_tests = 0, failed=0;
-    SQLWCHAR   *buff_before_test;
-    char        comment[256];
+  int         rc, i=1, all_tests = 0, failed=0;
+  SQLWCHAR   *buff_before_test;
+  char        comment[256];
+  char        driver_name[256];
+  SQLSMALLINT driver_name_len;
 
-    if (ODBC_Connect(&Env,&Connection,&Stmt) == FAIL)
+  if (ODBC_Connect(&Env,&Connection,&Stmt) == FAIL)
+  {
+    odbc_print_error(SQL_HANDLE_DBC, Connection);
+    ODBC_Disconnect(Env,Connection,Stmt);
+    fprintf(stdout, "HALT! Could not connect to the server\n");
+    return 1;
+  }
+  if (ProvideWConnection && ODBC_ConnectW(Env, &wConnection, &wStmt) == FAIL)
     {
-        odbc_print_error(SQL_HANDLE_DBC, Connection);
-        ODBC_Disconnect(Env,Connection,Stmt);
-        fprintf(stdout, "HALT! Could not connect to the server\n");
-        return 1;
+      odbc_print_error(SQL_HANDLE_DBC, wConnection);
+      ODBC_Disconnect(Env, wConnection, wStmt);
+      fprintf(stdout, "HALT! Could not connect to the server with Unicode function\n");
+      return 1;
     }
-    if (ProvideWConnection && ODBC_ConnectW(Env, &wConnection, &wStmt) == FAIL)
-    {
-        odbc_print_error(SQL_HANDLE_DBC, wConnection);
-        ODBC_Disconnect(Env, wConnection, wStmt);
-        fprintf(stdout, "HALT! Could not connect to the server with Unicode function\n");
-        return 1;
-    }
-
-    fprintf(stdout, "1..%d\n", tests_planned);
+  if(SQLGetInfo(Connection, SQL_DRIVER_NAME, driver_name, 256, &driver_name_len))
+  {
+    odbc_print_error(SQL_HANDLE_DBC, Connection);
+    return 1;
+  }
+  fprintf(stdout, "Using driver: %s, my_drivername specified: %s\n", driver_name, my_drivername);
+  fprintf(stdout, "1..%d\n", tests_planned);
     while (tests->title)
     {
         buff_before_test= buff_pos;
@@ -1441,7 +1448,7 @@ do { \
     printHex((char*)val_a, val_len*sizeof(SQLWCHAR)); \
     printf("') != %s('", #b); \
     printHex((char*)val_b, val_len*sizeof(SQLWCHAR)); \
-    printf("') in %s on line %d", __FILE__, __LINE__); \
+    printf("') in %s:%d", __FILE__, __LINE__); \
     printf("\n"); \
     return FAIL;\
   } \
@@ -1614,6 +1621,37 @@ int GetDefaultCharType(int WType, BOOL isAnsiConnection)
         }
     }
     return WType;
+}
+
+int getDbCharSize()
+{
+  MYSQL* mysql = mysql_init(NULL);
+  MYSQL_RES *res;
+  MYSQL_ROW row;
+  char *collation;
+  int char_size = 1;
+  const char *query = "SELECT @@collation_database";
+
+  if (!mysql_real_connect(mysql, (const char *)my_servername, (const char *)my_uid, (const char *)my_pwd, NULL, my_port, NULL, 0))
+    return 0;
+
+  if (mysql_query(mysql, query))
+    return 0;
+  res = mysql_store_result(mysql);
+  if ((row = mysql_fetch_row(res)))
+    collation = row[0];
+  else
+  {
+    mysql_free_result(res);
+    return 0;
+  }
+  if (!strncmp(collation, "utf8mb4", 7))
+    char_size = 4;
+  if (!strncmp(collation, "utf8", 4))
+    char_size = 3;
+  mysql_free_result(res);
+  mysql_close(mysql);
+  return char_size;
 }
 
 /* Looks like same version of iOdbc behaves differently on os x and linux, thus for some tests we need to be able to tell there is iOdbc run */

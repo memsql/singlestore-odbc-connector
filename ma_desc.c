@@ -238,7 +238,6 @@ MADB_SetIrdRecord(MADB_Stmt *Stmt, MADB_DescRecord *Record, MYSQL_FIELD *Field)
     Record->NumPrecRadix= 0;
     break;
   }
-
   Record->ConciseType= MapMariadDbToOdbcType(Field);
   /* 
       TYPE:
@@ -273,7 +272,7 @@ MADB_SetIrdRecord(MADB_Stmt *Stmt, MADB_DescRecord *Record, MYSQL_FIELD *Field)
   FieldCs= mariadb_get_charset_by_nr(Field->charsetnr);
   Record->Length= MADB_GetDataSize(Record->ConciseType, Field->length, Record->Unsigned == SQL_TRUE,
                                    Record->Precision, Record->Scale, FieldCs!= NULL ? FieldCs->char_maxlen : 1);
-    
+
   MADB_RESET(Record->TypeName, MADB_GetTypeName(Field));
 
   switch(Field->type) {
@@ -503,8 +502,10 @@ MADB_FixIrdRecord(MADB_Stmt *Stmt, MADB_DescRecord *Record)
   mariadb_get_infov(Stmt->Connection->mariadb, MARIADB_CONNECTION_MARIADB_CHARSET_INFO, (void*)&cs);
 
   MADB_FixDisplaySize(Record, &cs);
-  MADB_FixDataSize(Record, &cs);
-    
+  if (Stmt->stmt->result.type != MYSQL_FAKE_RESULT)
+  {
+    MADB_FixDataSize(Record, &cs);
+  }
   /*Record->TypeName= strdup(MADB_GetTypeName(Fields[i]));*/
 
   switch(Record->ConciseType) {
@@ -533,7 +534,7 @@ MADB_FixIrdRecord(MADB_Stmt *Stmt, MADB_DescRecord *Record)
 
 /* {{{ MADB_FixColumnDataTypes */
 my_bool
-MADB_FixColumnDataTypes(MADB_Stmt *Stmt, MADB_ShortTypeInfo *ColTypesArr)
+MADB_FixColumnDataTypes(MADB_Stmt *Stmt, const MADB_ShortTypeInfo *ColTypesArr)
 {
   SQLSMALLINT     i;
   MADB_DescRecord *Record= NULL;

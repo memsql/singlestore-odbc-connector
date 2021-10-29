@@ -3018,7 +3018,7 @@ SQLRETURN MADB_FetchCsps(MADB_Stmt *Stmt)
  because it determines the proper function based on prepared statements mode.*/
 SQLRETURN MADB_StmtFetchColumn(MADB_Stmt* Stmt, MYSQL_BIND *bind, unsigned int column, unsigned long offset)
 {
-    return MADB_SSPS_DISABLED(Stmt) ? MADB_FetchColumnCsps(Stmt, bind, column, offset) :
+    return MADB_SSPS_DISABLED(Stmt) || (Stmt->stmt->result.type == MYSQL_FAKE_RESULT) ? MADB_FetchColumnCsps(Stmt, bind, column, offset) :
            mysql_stmt_fetch_column(Stmt->stmt, bind, column, offset);
 }
 /* }}}*/
@@ -3147,7 +3147,8 @@ SQLRETURN MADB_StmtFetch(MADB_Stmt *Stmt)
       *p= (long)Stmt->Cursor.Position;
     }
     /************************ Fetch! ********************************/
-    rc = MADB_SSPS_DISABLED(Stmt) ? MADB_FetchCsps(Stmt) : mysql_stmt_fetch(Stmt->stmt);
+    rc = MADB_SSPS_DISABLED(Stmt) && Stmt->stmt->result.type != MYSQL_FAKE_RESULT
+              ? MADB_FetchCsps(Stmt) : mysql_stmt_fetch(Stmt->stmt);
 
     *ProcessedPtr += 1;
 
@@ -4435,7 +4436,7 @@ SQLRETURN MADB_StmtTablePrivileges(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLI
 }
 /* }}} */
 
-static MADB_ShortTypeInfo SqlTablesColType[5] =
+static const MADB_ShortTypeInfo SqlTablesColType[5] =
   {{SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // TABLE_CAT
    {SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // TABLE_SCHEM
    {SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // TABLE_NAME
@@ -4586,7 +4587,7 @@ SQLRETURN MADB_StmtTables(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLINT Catalo
 }
 /* }}} */
 
-static MADB_ShortTypeInfo SqlStatsColType[13]=
+static const MADB_ShortTypeInfo SqlStatsColType[13]=
                                /*1*/    {{SQL_VARCHAR, 0, SQL_NULLABLE, 0}, {SQL_VARCHAR, 0, SQL_NULLABLE, 0}, {SQL_VARCHAR, 0, SQL_NO_NULLS, 0}, {SQL_SMALLINT, 0, SQL_NULLABLE, 0},
                                /*5*/     {SQL_VARCHAR, 0, SQL_NULLABLE, 0}, {SQL_VARCHAR, 0, SQL_NULLABLE, 0}, {SQL_SMALLINT, 0, SQL_NO_NULLS, 0}, {SQL_SMALLINT, 0, SQL_NULLABLE, 0},
                                /*9*/     {SQL_VARCHAR, 0, SQL_NULLABLE, 0}, {SQL_CHAR, 0, SQL_NULLABLE, 2}, {SQL_INTEGER, 0, SQL_NULLABLE, 0}, {SQL_INTEGER, 0, SQL_NULLABLE, 0},
@@ -4644,25 +4645,288 @@ SQLRETURN MADB_StmtStatistics(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLINT Na
 }
 /* }}} */
 
-static MADB_ShortTypeInfo SqlColumnsColType[18] =
-         {{SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // TABLE_CAT
-          {SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // TABLE_SCHEM
-          {SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // TABLE_NAME
-          {SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // COLUMN_NAME
-          {SQL_SMALLINT, 0, SQL_NO_NULLS, 0},  // DATA_TYPE
-          {SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // TYPE_NAME
-          {SQL_INTEGER,  0, SQL_NULLABLE, 0},  // COLUMN_SIZE
-          {SQL_INTEGER,  0, SQL_NULLABLE, 0},  // BUFFER_LENGTH
-          {SQL_SMALLINT, 0, SQL_NULLABLE, 0},  // DECIMAL_DIGITS
-          {SQL_SMALLINT, 0, SQL_NULLABLE, 0},  // NUM_PREC_RADIX
-          {SQL_SMALLINT, 0, SQL_NO_NULLS, 0},  // NULLABLE
-          {SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // REMARKS
-          {SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // COLUMN_DEF
-          {SQL_SMALLINT, 0, SQL_NO_NULLS, 0},  // SQL_DATA_TYPE
-          {SQL_SMALLINT, 0, SQL_NULLABLE, 0},  // SQL_DATETIME_SUB
-          {SQL_INTEGER,  0, SQL_NULLABLE, 0},  // CHAR_OCTET_LENGTH
-          {SQL_INTEGER,  0, SQL_NO_NULLS, 0},  // ORDINAL_POSITION
-          {SQL_VARCHAR,  0, SQL_NULLABLE, 0}}; // IS_NULLABLE
+#define SQL_COLUMNS_FIELD_COUNT 18
+
+static const char * SqlColumnsFieldNames[SQL_COLUMNS_FIELD_COUNT] = {
+    "TABLE_CAT",
+    "TABLE_SCHEM",
+    "TABLE_NAME",
+    "COLUMN_NAME",
+    "DATA_TYPE",
+    "TYPE_NAME",
+    "COLUMN_SIZE",
+    "BUFFER_LENGTH",
+    "DECIMAL_DIGITS",
+    "NUM_PREC_RADIX",
+    "NULLABLE",
+    "REMARKS",
+    "COLUMN_DEF",
+    "SQL_DATA_TYPE",
+    "SQL_DATETIME_SUB",
+    "CHAR_OCTET_LENGTH",
+    "ORDINAL_POSITION",
+    "IS_NULLABLE"
+};
+
+static const enum enum_field_types SqlColumnsFieldTypes[SQL_COLUMNS_FIELD_COUNT] = {
+    SQL_VARCHAR,
+    SQL_VARCHAR,
+    SQL_VARCHAR,
+    SQL_VARCHAR,
+    SQL_SMALLINT,
+    SQL_VARCHAR,
+    SQL_INTEGER,
+    SQL_INTEGER,
+    SQL_SMALLINT,
+    SQL_SMALLINT,
+    SQL_SMALLINT,
+    SQL_VARCHAR,
+    SQL_VARCHAR,
+    SQL_SMALLINT,
+    SQL_SMALLINT,
+    SQL_INTEGER,
+    SQL_INTEGER,
+    SQL_VARCHAR
+};
+
+static const MADB_ShortTypeInfo SqlColumnsColType[SQL_COLUMNS_FIELD_COUNT] = {
+    {SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // TABLE_CAT
+    {SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // TABLE_SCHEM
+    {SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // TABLE_NAME
+    {SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // COLUMN_NAME
+    {SQL_SMALLINT, 0, SQL_NO_NULLS, 0},  // DATA_TYPE
+    {SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // TYPE_NAME
+    {SQL_INTEGER,  0, SQL_NULLABLE, 0},  // COLUMN_SIZE
+    {SQL_INTEGER,  0, SQL_NULLABLE, 0},  // BUFFER_LENGTH
+    {SQL_SMALLINT, 0, SQL_NULLABLE, 0},  // DECIMAL_DIGITS
+    {SQL_SMALLINT, 0, SQL_NULLABLE, 0},  // NUM_PREC_RADIX
+    {SQL_SMALLINT, 0, SQL_NO_NULLS, 0},  // NULLABLE
+    {SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // REMARKS
+    {SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // COLUMN_DEF
+    {SQL_SMALLINT, 0, SQL_NO_NULLS, 0},  // SQL_DATA_TYPE
+    {SQL_SMALLINT, 0, SQL_NULLABLE, 0},  // SQL_DATETIME_SUB
+    {SQL_INTEGER,  0, SQL_NULLABLE, 0},  // CHAR_OCTET_LENGTH
+    {SQL_INTEGER,  0, SQL_NO_NULLS, 0},  // ORDINAL_POSITION
+    {SQL_VARCHAR,  0, SQL_NULLABLE, 0}   // IS_NULLABLE
+};
+
+short allocAndFormatInt(char **buf, int value)
+{
+    // maximum 11 chars for a 32-bit signed integer
+    if (!(*buf = malloc(12)))
+      return 1;
+    sprintf(*buf, "%d", value);
+    return 0;
+}
+
+void freeData(char ***data, int nRows, int nCols, const short *needFree)
+{
+  int i, j;
+  for (i = 0; i < nRows; i++)
+  {
+    for (j = 0; j < nCols; j++)
+    {
+      if (data[i][j] && needFree[j]) free(data[i][j]);
+    }
+    if (data[i])
+      free(data[i]);
+  }
+  free(data);
+}
+
+/* {{{ MADB_StmtColumnsNoInfoSchema */
+SQLRETURN MADB_StmtColumnsNoInfoSchema(MADB_Stmt *Stmt,
+                           char *CatalogName, SQLSMALLINT NameLength1,
+                           char *SchemaName,  SQLSMALLINT NameLength2,
+                           char *TableName,   SQLSMALLINT NameLength3,
+                           char *ColumnName,  SQLSMALLINT NameLength4)
+{
+  MYSQL_RES *tables_res, *columns_res, *show_columns_res;
+  MYSQL_ROW table_row, columns_row;
+  unsigned long *table_lengths, *columns_lengths;
+  SQLSMALLINT concise_data_type, odbc_data_type, digits;
+
+  FieldDescrList *tableFields;
+  FieldDescr *S2FieldDescr;
+
+  if (CatalogName && NameLength1 <= 0)
+    NameLength1 = strlen(CatalogName);
+  if (SchemaName && NameLength2 <= 0)
+    NameLength2 = strlen(SchemaName);
+  if (TableName && NameLength3 <= 0)
+    NameLength3 = strlen(TableName);
+  if (ColumnName && NameLength4 <= 0)
+    NameLength4 = strlen(ColumnName);
+
+  // TODO: set force_db_charset to 0 for engine versions where the correct utf8mb4 charsetnr is reported
+  int force_db_charset = single_store_get_server_version(Stmt->Connection->mariadb) >= 70500;
+
+  // get the list of matching tables
+  tables_res = S2_ShowTables(Stmt, CatalogName, NameLength1, TableName, NameLength3, TRUE);
+  if (!tables_res)
+    return Stmt->Error.ReturnValue;
+
+  int n_rows = 0, allocated_rows = 256;
+  char ***formatted_table_ptr = (char***)calloc(allocated_rows, sizeof(char**)), ***temp_ptr = NULL;
+  char **current_row_ptr;
+  MYSQL_FIELD *field;
+  SQLLEN column_char_length, column_length;
+
+  short is_alloc_fail = 0;
+  // we don't allocate memory at pos 11: TABLE_SCHEM is always NULL;
+  // at pos 17: literal "YES" or "NO" is written there
+  const short need_free[SQL_COLUMNS_FIELD_COUNT] = {1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0};
+
+  while ((table_row = mysql_fetch_row(tables_res)))
+  {
+    table_lengths = mysql_fetch_lengths(tables_res);
+
+    // for each table get the list of matching columns in the table
+    if (!(columns_res = S2_ListFields(
+      Stmt, CatalogName, NameLength1, table_row[0], table_lengths[0], ColumnName, NameLength4)))
+    {
+      free(formatted_table_ptr);
+      return Stmt->Error.ReturnValue;
+    }
+    if (!(show_columns_res = S2_ShowColumnsInTable(
+        Stmt, CatalogName, NameLength1, table_row[0], table_lengths[0], ColumnName, NameLength4)))
+    {
+      free(formatted_table_ptr);
+      mysql_free_result(columns_res);
+      return Stmt->Error.ReturnValue;
+    }
+    tableFields = ProcessShowColumns(show_columns_res);
+
+    int ordinal_number = 0;
+    // process columns to match ODBC spec
+    while ((field = mysql_fetch_field(columns_res)))
+    {
+      if (n_rows >= allocated_rows)
+      {
+        temp_ptr = realloc(formatted_table_ptr, allocated_rows = 2 * allocated_rows);
+        if (!temp_ptr)
+        {
+          FreeFieldDescrList(tableFields);
+          mysql_free_result(columns_res);
+          mysql_free_result(show_columns_res);
+          freeData(formatted_table_ptr, n_rows, SQL_COLUMNS_FIELD_COUNT, need_free);
+          return MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to allocate memory for columns data", 0);
+        }
+        formatted_table_ptr = temp_ptr;
+      }
+      current_row_ptr = formatted_table_ptr[n_rows] = (char**)calloc(SQL_COLUMNS_FIELD_COUNT, sizeof(char*));
+
+      concise_data_type = MapMariadDbToOdbcType(field);
+      if (field->charsetnr != BINARY_CHARSETNR && !Stmt->Connection->IsAnsi)
+      {
+        concise_data_type = MADB_GetWCharType(concise_data_type);
+      }
+      if (Stmt->Connection->Environment->OdbcVersion == SQL_OV_ODBC2)
+      {
+        odbc_data_type = MapToV2Type(concise_data_type);
+      }
+      else
+      {
+        odbc_data_type = concise_data_type;
+      }
+      SQLSMALLINT sql_data_type = MADB_GetTypeFromConciseType(concise_data_type);
+
+      const MADB_TypeInfo* odbc_type_info = GetTypeInfo(concise_data_type, field);
+      if (!odbc_type_info)
+      {
+        FreeFieldDescrList(tableFields);
+        mysql_free_result(columns_res);
+        mysql_free_result(show_columns_res);
+        freeData(formatted_table_ptr, n_rows, SQL_COLUMNS_FIELD_COUNT, need_free);
+        char err_msg[128];
+        sprintf(err_msg, "Failed to get type data for SQL Type %d MYSQL type %d\n", concise_data_type, field->type);
+        return MADB_SetError(&Stmt->Error, MADB_ERR_HY001, err_msg, 0);
+      }
+      S2FieldDescr = GetFieldDescr(field->name, tableFields);
+      if (S2FieldDescr)
+      {
+        ++n_rows;
+      }
+      else
+      {
+        // in this case field is filtered by column_like in `SHOW COLUMNS FROM ... LIKE <column_like>`
+        // so we should skip it indeed. mysql_list_fields doesn't apply filter for some reason
+        continue;
+      }
+      // TABLE_CAT
+      is_alloc_fail |= !(uintptr_t)(current_row_ptr[0] = strdup(NameLength1 > 0 ? CatalogName : Stmt->Connection->mariadb->db));
+      // TABLE_SCHEM
+      current_row_ptr[1] = NULL;
+      // TABLE_NAME
+      is_alloc_fail |= !(uintptr_t)(current_row_ptr[2] = strdup(field->table));
+      // COLUMN_NAME
+      is_alloc_fail |= !(uintptr_t)(current_row_ptr[3] = strdup(field->name));
+      // DATA_TYPE
+      is_alloc_fail |= allocAndFormatInt(&current_row_ptr[4], odbc_data_type);
+      // TYPE_NAME
+      is_alloc_fail |= !(uintptr_t)(current_row_ptr[5] = strdup(S2FieldDescr->FieldTypeS2));
+      // COLUMN_SIZE
+      if ((column_char_length = S2_GetColumnSize(field, odbc_type_info, S2FieldDescr->FieldTypeS2, force_db_charset, Stmt->Connection->DBCharsetnr)) != SQL_NO_TOTAL)
+        is_alloc_fail |= allocAndFormatInt(&current_row_ptr[6], column_char_length);
+      // BUFFER_LENGTH
+      if ((column_length = S2_GetCharacterOctetLength(field, odbc_type_info)) != SQL_NO_TOTAL)
+        is_alloc_fail |= allocAndFormatInt(&current_row_ptr[7], column_length);
+      // DECIMAL_DIGITS
+      if ((digits = S2_GetDecimalDigits(field)) != SQL_NO_TOTAL)
+        is_alloc_fail |= allocAndFormatInt(&current_row_ptr[8], digits);
+      // NUM_PREC_RADIX
+      if (odbc_type_info->NumPrecRadix)
+        is_alloc_fail |= allocAndFormatInt(&current_row_ptr[9], odbc_type_info->NumPrecRadix);
+      // NULLABLE
+      is_alloc_fail |= allocAndFormatInt(&current_row_ptr[10], !(field->flags & NOT_NULL_FLAG));
+      // IS_NULLABLE
+      current_row_ptr[17] = (field->flags & NOT_NULL_FLAG) ? "NO" : "YES";
+      // REMARKS
+      current_row_ptr[11] = NULL;
+      // COLUMN_DEF
+      if (S2FieldDescr->DefaultValue)
+      {
+        is_alloc_fail |= !(uintptr_t)(current_row_ptr[12] = strdup(S2FieldDescr->DefaultValue));
+      }
+      // SQL_DATA_TYPE (non-concise)
+      is_alloc_fail |= allocAndFormatInt(&current_row_ptr[13], sql_data_type);
+      // SQL_DATETIME_SUB
+      if (is_datetime_sql_type(concise_data_type))
+        is_alloc_fail |= allocAndFormatInt(&current_row_ptr[14], odbc_type_info->SqlDateTimeSub);
+      if ((is_char_sql_type(concise_data_type) || is_wchar_sql_type(concise_data_type) ||
+          is_binary_sql_type(concise_data_type)) && column_length != SQL_NO_TOTAL)
+      {
+        // CHAR_OCTET_LENGTH
+        is_alloc_fail |= allocAndFormatInt(&current_row_ptr[15], column_length);
+      }
+      // ORDINAL_POSITION
+      is_alloc_fail |= allocAndFormatInt(&current_row_ptr[16], ++ordinal_number);
+      if (is_alloc_fail)
+      {
+        FreeFieldDescrList(tableFields);
+        mysql_free_result(columns_res);
+        mysql_free_result(show_columns_res);
+        freeData(formatted_table_ptr, n_rows, SQL_COLUMNS_FIELD_COUNT, need_free);
+        return MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to allocate memory for columns data", 0);
+      }
+    }
+    FreeFieldDescrList(tableFields);
+    mysql_free_result(columns_res);
+    mysql_free_result(show_columns_res);
+  }
+  mysql_free_result(tables_res);
+  // link statement result to the processed columns
+  if (!SQL_SUCCEEDED(MADB_FakeRequest(
+    Stmt, SqlColumnsFieldNames, SqlColumnsFieldTypes, SQL_COLUMNS_FIELD_COUNT, formatted_table_ptr, n_rows)))
+  {
+    freeData(formatted_table_ptr, n_rows, SQL_COLUMNS_FIELD_COUNT, need_free);
+    return Stmt->Error.ReturnValue;
+  }
+  MADB_FixColumnDataTypes(Stmt, SqlColumnsColType);
+  freeData(formatted_table_ptr, n_rows, SQL_COLUMNS_FIELD_COUNT, need_free);
+  return SQL_SUCCESS;
+}
+/* }}} */
 
 /* {{{ MADB_StmtColumns */
 SQLRETURN MADB_StmtColumns(MADB_Stmt *Stmt,
@@ -5822,7 +6086,8 @@ struct st_ma_stmt_methods MADB_StmtMethods=
   MADB_StmtTablePrivileges,
   MADB_StmtTables,
   MADB_StmtStatistics,
-  MADB_StmtColumns,
+  // MADB_StmtColumns,  TODO: delete comment and function when MADB_StmtColumnsNoInfoSchema is tested
+  MADB_StmtColumnsNoInfoSchema,
   MADB_StmtProcedureColumns,
   MADB_StmtPrimaryKeys,
   MADB_StmtSpecialColumns,

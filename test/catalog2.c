@@ -80,25 +80,26 @@ and (some) IS_NULLABLE
 ODBC_TEST(t_bug34272)
 {
   SQLCHAR dummy[20];
-  SQLULEN col6, col18, length;
+  SQLULEN col6size, col18size;
+  SQLLEN length;
 
   OK_SIMPLE_STMT(Stmt, "drop table if exists t_bug34272");
-  OK_SIMPLE_STMT(Stmt, "create table t_bug34272 (x int unsigned)");
+  OK_SIMPLE_STMT(Stmt, "create table t_bug34272 (x int(9) unsigned)");
 
   CHECK_STMT_RC(Stmt, SQLColumns(Stmt, NULL, SQL_NTS, NULL, SQL_NTS,
     (SQLCHAR *)"t_bug34272", SQL_NTS, NULL, 0));
 
   CHECK_STMT_RC(Stmt, SQLDescribeCol(Stmt, 6, dummy, sizeof(dummy), NULL, NULL,
-    &col6, NULL, NULL));
+                                     &col6size, NULL, NULL));
   CHECK_STMT_RC(Stmt, SQLDescribeCol(Stmt, 18, dummy, sizeof(dummy), NULL, NULL,
-    &col18, NULL, NULL));
+                                     &col18size, NULL, NULL));
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
 
-  CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 6, SQL_C_CHAR, dummy, col6+1, &length));
-  is_num(length, 12);
-  IS_STR(dummy, "int unsigned", length+1);
+  CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 6, SQL_C_CHAR, dummy, col6size + 1, &length));
+  is_num(length, 15);
+  IS_STR(dummy, "int(9) unsigned", length+1);
 
-  CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 18, SQL_C_CHAR, dummy, col18+1, &length));
+  CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 18, SQL_C_CHAR, dummy, col18size + 1, &length));
   is_num(length,3);
   IS_STR(dummy, "YES", length+1);
 
@@ -342,9 +343,9 @@ ODBC_TEST(t_sqlprocedurecolumns)
      19,     8,      0,  10,  SQL_NULLABLE, "", 0,  SQL_BIGINT,   0,  0,    5,  "YES"},
 
     /*cat    schem  proc_name                  col_name     col_type         data_type  type_name */
-    {my_schema, 0,     "procedure_columns_test1", "re_param6", SQL_PARAM_INPUT, SQL_FLOAT,  "float",
+    {my_schema, 0,     "procedure_columns_test1", "re_param6", SQL_PARAM_INPUT, SQL_REAL,  "float",
     /*size buf_len  dec radix  nullable      rem def sql_data_type sub octet pos nullable*/
-      4,   4,       2,  10,     SQL_NULLABLE, "", 0,  SQL_FLOAT,     0,  0,    6,  "YES"},
+      4,   4,       2,  10,     SQL_NULLABLE, "", 0,  SQL_REAL,     0,  0,    6,  "YES"},
 
     /*cat    schem  proc_name                  col_name     col_type          data_type    type_name */
     {my_schema, 0,     "procedure_columns_test1", "re_param7", SQL_PARAM_INPUT, SQL_DOUBLE,  "double",
@@ -377,9 +378,9 @@ ODBC_TEST(t_sqlprocedurecolumns)
       ServerNotOlderThan(Connection, 7, 5, 0) ? 22 : 50,  8,       ServerNotOlderThan(Connection, 7, 5, 0) ? 6 : 31,  10,     SQL_NULLABLE, "", 0,  SQL_DOUBLE,   0,  0,    13,  "YES"},
 
     /*cat    schem  proc_name                  col_name     col_type         data_type  type_name */
-    { my_schema, 0,     "procedure_columns_test1", "re_param13", SQL_PARAM_INPUT, SQL_FLOAT,  "float",
+    { my_schema, 0,     "procedure_columns_test1", "re_param13", SQL_PARAM_INPUT, SQL_REAL,  "float",
     /*size buf_len  dec radix  nullable      rem def sql_data_type sub octet pos nullable*/
-      ServerNotOlderThan(Connection, 7, 5, 0) ? 12 : 50,   4,       ServerNotOlderThan(Connection, 7, 5, 0) ? 0 : 31,  10,     SQL_NULLABLE, "", 0,  SQL_FLOAT,     0,  0,    14,  "YES" },
+      ServerNotOlderThan(Connection, 7, 5, 0) ? 12 : 50,   4,       ServerNotOlderThan(Connection, 7, 5, 0) ? 0 : 31,  10,     SQL_NULLABLE, "", 0,  SQL_REAL,     0,  0,    14,  "YES" },
     /*----------------------------------------------------------------------------------------------------*/
     /*cat    schem  proc_name                  col_name     col_type         data_type          type_name */
     {my_schema, 0,     "procedure_columns_test2", "re_paramA", SQL_PARAM_INPUT, SQL_LONGVARBINARY, "blob",
@@ -1401,7 +1402,8 @@ ODBC_TEST(odbc231)
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, COLUMN_SIZE, SQL_C_SLONG, &ColumnSize, 0, &ColumnSizeLen));
   CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, BUFFER_LENGTH, SQL_C_ULONG, &BufferLength, 0, &BufferLengthLen));
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  is_num((unsigned)ColumnSize, ServerNotOlderThan(Connection, 7, 5, 0) ? 0x55555555 : 0x7fffffff);
+  int char_size = getDbCharSize();
+  is_num((unsigned)ColumnSize, char_size > 3 ? 1073741823 : 1431655765);
   is_num(ColumnSizeLen, sizeof(SQLINTEGER));
   diag("Longtext size: %lu(%lx) type %s %s, buffer length: %lu(%lx) type %s %s", ColumnSize, ColumnSize, OdbcTypeAsString((SQLSMALLINT)Type1, NULL),
     Unsigned1 ? "Unsigned" : "Signed", BufferLength, BufferLength, OdbcTypeAsString((SQLSMALLINT)Type2, NULL), Unsigned2 ? "Unsigned" : "Signed");

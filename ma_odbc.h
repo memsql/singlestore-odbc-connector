@@ -28,6 +28,7 @@
 # include "ma_platform_posix.h"
 #endif
 
+#include <stdint.h>
 #include <stdlib.h>
 
 #include <mysql.h>
@@ -45,7 +46,6 @@
 #include <stddef.h>
 #include <assert.h>
 #include <time.h>
-
 
 typedef struct st_ma_odbc_connection MADB_Dbc;
 typedef struct st_ma_odbc_stmt MADB_Stmt;
@@ -371,6 +371,7 @@ struct st_ma_odbc_connection
                                   We have to use same charset to recode from unicode to get same string as application sent it.
                                   For Unicode application that is the same as "Charset", or in case of ANSI on Windows - defaulst system codepage */
   char *DataBase;
+  SQLUINTEGER DBCharsetnr;
   MADB_List ListItem;
   MADB_List *Stmts;
   MADB_List *Descrs;
@@ -419,6 +420,8 @@ void            CloseClientCharset(Client_Charset *cc);
 /* Default precision of SQL_NUMERIC */
 #define MADB_DEFAULT_PRECISION 38
 #define BINARY_CHARSETNR       63
+#define UTF8_CHARSETNR         33
+#define UTF8MB4_CHARSETNR      45
 /* Inexistent param id */
 #define MADB_NOPARAM           -1
 /* Macros to guard communications with the server.
@@ -468,7 +471,9 @@ case SQL_TYPE_DATE
 #include <ma_result.h>
 #include <ma_driver.h>
 #include <ma_helper.h>
+#include <ma_type_helper.h>
 #include <ma_typeconv.h>
+#include <ma_fake_request.h>
 
 /* SQLFunction calls inside MariaDB Connector/ODBC needs to be mapped,
  * on non Windows platforms these function calls will call the driver

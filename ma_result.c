@@ -68,7 +68,7 @@ SQLRETURN MoveNext(MADB_Stmt *Stmt, unsigned long long Offset)
 
     while (Offset--)
     {
-      if (MADB_SSPS_DISABLED(Stmt) ? !SQL_SUCCEEDED(MADB_FetchCsps(Stmt)) : mysql_stmt_fetch(Stmt->stmt) == 1)
+      if (MADB_SSPS_DISABLED(Stmt) && (Stmt->stmt->result.type != MYSQL_FAKE_RESULT) ? !SQL_SUCCEEDED(MADB_FetchCsps(Stmt)) : mysql_stmt_fetch(Stmt->stmt) == 1)
       {
           result= SQL_ERROR;
           break;

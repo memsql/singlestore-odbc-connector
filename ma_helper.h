@@ -41,6 +41,7 @@ SQLLEN MADB_GetDataSize(SQLSMALLINT SqlType, SQLLEN OctetLength, BOOL Unsigned,
 int MADB_GetMaDBTypeAndLength(SQLINTEGER SqlDataType, my_bool *Unsigned, unsigned long *Length);
 //char *MADB_GetDefaultColumnValue(MADB_Stmt *Stmt, char *Schema, char *TableName, char *Column);
 SQLSMALLINT MapMariadDbToOdbcType(MYSQL_FIELD *field);
+SQLSMALLINT MapToV2Type(SQLSMALLINT type);
 size_t MADB_GetHexString(char *BinaryBuffer, size_t BinaryLength,
                           char *HexBuffer, size_t HexLength);
 
@@ -72,8 +73,49 @@ BOOL          MADB_IsIntType    (SQLSMALLINT ConciseType);
 /* For multistatement picks stmt handler pointed by stored index, and sets it as "current" stmt handler */
 void          MADB_InstallStmt  (MADB_Stmt *Stmt, MYSQL_STMT *stmt);
 
+int SetDBCharsetnr(MADB_Dbc *Connection);
+
 /* for dummy binding */
 extern my_bool DummyError;
+
+MYSQL_RES *S2_ShowTables(MADB_Stmt   *stmt,
+                           SQLCHAR     *catalog,
+                           SQLSMALLINT  catalog_length,
+                           SQLCHAR     *table,
+                           SQLSMALLINT  table_length,
+                           BOOL         wildcard);
+
+MYSQL_RES *
+S2_ListFields(MADB_Stmt   *stmt,
+                SQLCHAR     *catalog,
+                SQLSMALLINT  catalog_length,
+                SQLCHAR     *table,
+                SQLSMALLINT  table_length,
+                SQLCHAR     *column_like,
+                SQLSMALLINT  column_length);
+
+MYSQL_RES *S2_ShowColumnsInTable(MADB_Stmt  *stmt,
+                                 SQLCHAR     *catalog,
+                                 SQLSMALLINT  catalog_length,
+                                 SQLCHAR     *table,
+                                 SQLSMALLINT  table_length,
+                                 SQLCHAR     *column_like,
+                                 SQLSMALLINT  column_length);
+
+typedef struct {
+  char *FieldName;
+  char *FieldTypeS2;
+  char *DefaultValue;
+} FieldDescr;
+
+typedef struct {
+  FieldDescr *list;
+  int n_fields;
+} FieldDescrList;
+
+FieldDescrList *ProcessShowColumns(MYSQL_RES *res);
+FieldDescr *GetFieldDescr(const char *name, FieldDescrList *allFields);
+void FreeFieldDescrList(FieldDescrList *allFields);
 
 /* Stringify macros */
 #define XSTR(s) STR(s)

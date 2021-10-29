@@ -258,7 +258,13 @@ typedef struct st_mysql_perm_bind {
   unsigned long max_len;
 } MYSQL_PS_CONVERSION;
 
+typedef struct
+{
+  MA_MEM_ROOT fields_ma_alloc_root;
+} MADB_STMT_EXTENSION;
+
 extern MYSQL_PS_CONVERSION mysql_ps_fetch_functions[MYSQL_TYPE_GEOMETRY + 1];
+void convert_froma_string(MYSQL_BIND *r_param, char *buffer, size_t len);
 unsigned long ma_net_safe_read(MYSQL *mysql);
 void mysql_init_ps_subsystem(void);
 unsigned long net_field_length(unsigned char **packet);

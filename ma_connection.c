@@ -854,7 +854,7 @@ SQLRETURN MADB_DbcConnectDB(MADB_Dbc *Connection,
     }
     mysql_free_result(result);
   }
-
+  SetDBCharsetnr(Connection);
   /* Set isolation level */
   if (Connection->IsolationLevel)
     for (i=0; i < 4; i++)

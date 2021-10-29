@@ -110,6 +110,9 @@ libmariadb/RelWithDebInfo
 *.*~
 
 # ODBC connector .gitignore
+build
+.vscode
+
 cmake-build-debug/
 cmake-build-relwithdebinfo/
 CMakeFiles

@@ -17,9 +17,16 @@
    51 Franklin St., Fifth Floor, Boston, MA 02110, USA
 *************************************************************************************/
 #include <ma_odbc.h>
+#include <mysql.h>
 #include <stdint.h>
 
 #define MADB_FIELD_IS_BINARY(_field) ((_field)->charsetnr == BINARY_CHARSETNR)
+
+#define SHOW_COLUMNS_NAME_IDX 0
+#define SHOW_COLUMNS_TYPE_IDX 1
+#define SHOW_COLUMNS_DEFAULT_VALUE_IDX 4
+
+extern const MARIADB_CHARSET_INFO *mysql_find_charset_by_collation(const char *name);
 
 void CloseMultiStatements(MADB_Stmt *Stmt)
 {
@@ -189,7 +196,7 @@ int MADB_KeyTypeCount(MADB_Dbc *Connection, char *TableName, int KeyFlag)
   {
     p+= _snprintf(p, sizeof(StmtStr) - strlen(p), "`%s`.", Database);
   }
-  p+= _snprintf(p, sizeof(StmtStr) - strlen(p), "%s LIMIT 0", TableName);
+  p+= _snprintf(p, sizeof(StmtStr) - strlen(p), "`%s` LIMIT 0", TableName);
   if (MA_SQLAllocHandle(SQL_HANDLE_STMT, (SQLHANDLE)Connection, (SQLHANDLE*)&Stmt) == SQL_ERROR ||
     Stmt->Methods->ExecDirect(Stmt, (char *)StmtStr, SQL_NTS) == SQL_ERROR ||
     Stmt->Methods->Fetch(Stmt) == SQL_ERROR)
@@ -211,6 +218,43 @@ end:
     Stmt->Methods->StmtFree(Stmt, SQL_DROP);
   }
   return Count;
+}
+
+int SetDBCharsetnr(MADB_Dbc *Connection)
+{
+  MYSQL_RES *res;
+  MYSQL_ROW row;
+  char *collation;
+  const char *query = "SELECT @@collation_database";
+
+  LOCK_MARIADB(Connection);
+  if (mysql_query(Connection->mariadb, query))
+  {
+    UNLOCK_MARIADB(Connection);
+    Connection->DBCharsetnr = 0;
+    return MADB_SetNativeError(&Connection->Error, SQL_HANDLE_DBC, Connection->mariadb);
+  }
+  res = mysql_store_result(Connection->mariadb);
+  UNLOCK_MARIADB(Connection);
+  if ((row = mysql_fetch_row(res)))
+  {
+    collation = (char*)row[0];
+  }
+  else
+  {
+    mysql_free_result(res);
+    Connection->DBCharsetnr = 0;
+    return 1;
+  }
+  const MARIADB_CHARSET_INFO *cs_info = mysql_find_charset_by_collation(collation);
+  mysql_free_result(res);
+  if (!cs_info)
+  {
+    Connection->DBCharsetnr = 0;
+    return 1;
+  }
+  Connection->DBCharsetnr = cs_info->nr;
+  return 0;
 }
 
 
@@ -255,7 +299,6 @@ SQLSMALLINT MADB_GetTypeFromConciseType(SQLSMALLINT ConciseType)
 {
   switch (ConciseType)
   {
-    /* todo: support for interval. currently we map only date/time types */
   case SQL_C_DATE:
   case SQL_C_TIME:
   case SQL_C_TIMESTAMP:
@@ -293,11 +336,11 @@ char *MADB_GetTypeName(MYSQL_FIELD *Field)
   case MYSQL_TYPE_NULL:
     return "null";
   case MYSQL_TYPE_TINY:
-    return (Field->flags & NUM_FLAG) ? "tinyint" : "char";
+    return (Field->flags & NUM_FLAG) ? ((Field->flags & UNSIGNED_FLAG) ? "tinyint unsigned" : "tinyint") : "char";
   case MYSQL_TYPE_SHORT:
-    return "smallint";
+    return (Field->flags & UNSIGNED_FLAG) ? "smallint unsigned" : "smallint";
   case MYSQL_TYPE_LONG:
-    return "integer";
+    return (Field->flags & UNSIGNED_FLAG) ? "int unsigned" : "int";
   case MYSQL_TYPE_FLOAT:
     return "float";
   case MYSQL_TYPE_DOUBLE:
@@ -305,9 +348,9 @@ char *MADB_GetTypeName(MYSQL_FIELD *Field)
   case MYSQL_TYPE_TIMESTAMP:
     return "timestamp";
   case MYSQL_TYPE_LONGLONG:
-    return "bigint";
+    return (Field->flags & UNSIGNED_FLAG) ? "bigint unsigned" : "bigint";
   case MYSQL_TYPE_INT24:
-    return "mediumint";
+    return (Field->flags & UNSIGNED_FLAG) ? "mediumint unsigned" : "mediumint";
   case MYSQL_TYPE_DATE:
     return "date";
   case MYSQL_TYPE_TIME:
@@ -339,6 +382,8 @@ char *MADB_GetTypeName(MYSQL_FIELD *Field)
     return MADB_FIELD_IS_BINARY(Field) ? "binary" : "char";
   case MYSQL_TYPE_GEOMETRY:
     return "geometry";
+  case MYSQL_TYPE_JSON:
+    return "json";
   default:
     return "";
   }
@@ -459,7 +504,7 @@ size_t MADB_GetDisplaySize(MYSQL_FIELD *Field, MARIADB_CHARSET_INFO *charset)
   case MYSQL_TYPE_NULL:
     return 1;
   case MYSQL_TYPE_BIT:
-    return (Field->length == 1) ? 1 : (Field->length + 7) / 8 * 2;
+    return 16;
   case MYSQL_TYPE_TINY:
     return 4 - test(Field->flags & UNSIGNED_FLAG);
   case MYSQL_TYPE_SHORT:
@@ -529,7 +574,7 @@ size_t MADB_GetOctetLength(MYSQL_FIELD *Field, unsigned short MaxCharLen)
   case MYSQL_TYPE_NULL:
     return 1;
   case MYSQL_TYPE_BIT:
-    return (Field->length + 7) / 8;
+    return 8;
   case MYSQL_TYPE_TINY:
     return 1;
   case MYSQL_TYPE_YEAR:
@@ -639,9 +684,7 @@ SQLSMALLINT MapMariadDbToOdbcType(MYSQL_FIELD *field)
 {
   switch (field->type) {
     case MYSQL_TYPE_BIT:
-      if (field->length > 1)
-        return SQL_BINARY;
-      return SQL_BIT;
+      return SQL_BINARY;
     case MYSQL_TYPE_NULL:
       return SQL_VARCHAR;
     case MYSQL_TYPE_TINY:
@@ -680,11 +723,29 @@ SQLSMALLINT MapMariadDbToOdbcType(MYSQL_FIELD *field)
       return SQL_CHAR;
     case MYSQL_TYPE_GEOMETRY:
       return SQL_LONGVARBINARY;
+    case MYSQL_TYPE_JSON:
+      return SQL_LONGVARCHAR;
     case MYSQL_TYPE_DECIMAL:
     case MYSQL_TYPE_NEWDECIMAL:
       return SQL_DECIMAL;
     default:
       return SQL_UNKNOWN_TYPE;
+  }
+}
+
+SQLSMALLINT MapToV2Type(SQLSMALLINT type)
+{
+  /* We need to map time types */
+  switch(type)
+  {
+  case SQL_TYPE_TIMESTAMP:
+    return SQL_TIMESTAMP;
+  case SQL_TYPE_DATE:
+    return SQL_DATE;
+  case SQL_TYPE_TIME:
+    return SQL_TIME;
+  default:
+    return type;
   }
 }
 
@@ -1321,4 +1382,263 @@ void MADB_InstallStmt(MADB_Stmt *Stmt, MYSQL_STMT *stmt)
     MADB_StmtResetResultStructures(Stmt);
     MADB_DescSetIrdMetadata(Stmt, mysql_fetch_fields(FetchMetadata(Stmt)), mysql_stmt_field_count(Stmt->stmt));
   }
+}
+
+
+/**
+Get the table status for a table or tables using SHOW TABLE STATUS.
+Lengths may not be SQL_NTS.
+
+@param[in] stmt           Handle to statement
+@param[in] catalog        Catalog (database) of table, @c NULL for current
+@param[in] catalog_length Length of catalog name
+@param[in] table          Name of table
+@param[in] table_length   Length of table name
+@param[in] wildcard       Whether the table name is a wildcard
+
+@return Result of SHOW TABLES, or NULL if there is an error
+or empty result (check mysql_errno(stmt->Connection->mariadb) != 0)
+*/
+MYSQL_RES *S2_ShowTables(MADB_Stmt   *stmt,
+                          SQLCHAR     *catalog,
+                          SQLSMALLINT  catalog_length,
+                          SQLCHAR     *table,
+                          SQLSMALLINT  table_length,
+                          BOOL         wildcard)
+{
+	char tmpbuff[1024];
+  char query[1024] = "SHOW TABLES ";
+  size_t cnt = 0;
+
+	if (catalog && *catalog)
+	{
+    strcat(query, "FROM `");
+    strncat(query, catalog, catalog_length);
+    strcat(query, "` ");
+	}
+
+	/*
+	As a pattern-value argument, an empty string needs to be treated
+	literally. (It's not the same as NULL, which is the same as '%'.)
+	But it will never match anything, so bail out now.
+	*/
+	if (table && wildcard && !*table)
+		return NULL;
+
+	if (table && *table)
+	{
+		strcat(query, "LIKE '");
+		cnt = mysql_real_escape_string(stmt->Connection->mariadb, tmpbuff, (char *)table, table_length);
+    strncat(query, tmpbuff, cnt);
+		strcat(query, "'");
+	}
+
+  LOCK_MARIADB(stmt->Connection);
+
+  if (mysql_real_query(stmt->Connection->mariadb, query, strlen(query)))
+  {
+    UNLOCK_MARIADB(stmt->Connection);
+    MADB_SetError(&stmt->Error, MADB_ERR_HY001, mysql_error(stmt->Connection->mariadb), mysql_errno(stmt->Connection->mariadb));
+    return NULL;
+  }
+  UNLOCK_MARIADB(stmt->Connection);
+
+  return mysql_store_result(stmt->Connection->mariadb);
+}
+
+/**
+Get the result of SHOW COLUMNS FROM table LIKE column_like
+
+@param[in] stmt           Handle to statement
+@param[in] catalog        Catalog (database) of table, @c NULL for current
+@param[in] catalog_length Length of catalog name
+@param[in] table          Name of table
+@param[in] table_length   Length of table name
+@param[in] column_like    Column name pattern to match
+
+@return Result of SHOW TABLE STATUS, or NULL if there is an error
+or empty result (check mysql_errno(stmt->Connection->mariadb) != 0)
+*/
+MYSQL_RES *S2_ShowColumnsInTable(MADB_Stmt  *stmt,
+                                 SQLCHAR     *catalog,
+                                 SQLSMALLINT  catalog_length,
+                                 SQLCHAR     *table,
+                                 SQLSMALLINT  table_length,
+                                 SQLCHAR     *column_like,
+                                 SQLSMALLINT  column_length)
+{
+	char tmpbuff[1024];
+  char query[1024] = "SHOW COLUMNS FROM ";
+  size_t cnt = 0;
+
+	if (catalog && *catalog)
+	{
+    strcat(query, "`");
+    strncat(query, catalog, catalog_length);
+    strcat(query, "`");
+	  strcat(query, ".");
+	}
+
+  strcat(query, "`");
+  strncat(query, table, table_length);
+  strcat(query, "`");
+
+  if (column_like && *column_like && column_length)
+  {
+    strcat(query, " LIKE '");
+		cnt = mysql_real_escape_string(stmt->Connection->mariadb, tmpbuff, (char *)column_like, column_length);
+    strncat(query, tmpbuff, cnt);
+    strcat(query, "'");
+  }
+
+  LOCK_MARIADB(stmt->Connection);
+  if (mysql_real_query(stmt->Connection->mariadb, query, strlen(query)))
+  {
+    UNLOCK_MARIADB(stmt->Connection);
+    MADB_SetError(&stmt->Error, MADB_ERR_HY001, mysql_error(stmt->Connection->mariadb), mysql_errno(stmt->Connection->mariadb));
+    return NULL;
+  }
+  UNLOCK_MARIADB(stmt->Connection);
+
+  return mysql_store_result(stmt->Connection->mariadb);
+}
+
+FieldDescrList *ProcessShowColumns(MYSQL_RES *res)
+{
+  int nRows = mysql_num_rows(res);
+
+  MYSQL_ROW columnsRow;
+  FieldDescrList *fieldsResult = (FieldDescrList*)malloc(sizeof(FieldDescrList));
+  fieldsResult->list = (FieldDescr*)malloc(sizeof(FieldDescr) * nRows);
+  fieldsResult->n_fields = nRows;
+
+  int rowNum = 0;
+
+  while ((columnsRow = mysql_fetch_row(res)))
+  {
+    (fieldsResult->list)[rowNum].FieldName = strdup(columnsRow[SHOW_COLUMNS_NAME_IDX]);
+    (fieldsResult->list)[rowNum].FieldTypeS2 = strdup(columnsRow[SHOW_COLUMNS_TYPE_IDX]);
+    if (columnsRow[SHOW_COLUMNS_DEFAULT_VALUE_IDX] && *columnsRow[SHOW_COLUMNS_DEFAULT_VALUE_IDX])
+    {
+      (fieldsResult->list)[rowNum].DefaultValue = strdup(columnsRow[SHOW_COLUMNS_DEFAULT_VALUE_IDX]);
+    }
+    else
+    {
+       (fieldsResult->list)[rowNum].DefaultValue = NULL;
+    }
+    rowNum++;
+  }
+  return fieldsResult;
+}
+
+FieldDescr *GetFieldDescr(const char *name, FieldDescrList *allFields)
+{
+  int i;
+  for (i = 0; i < allFields->n_fields; ++i)
+  {
+    if (!strcmp(name, (allFields->list)[i].FieldName))
+    {
+      return allFields->list + i;
+    }
+  }
+  return NULL;
+}
+
+int GetFieldTypeShortLen(const char *name)
+{
+  int i;
+  for (i = 0; i < strlen(name); ++i)
+  {
+    if (name[i] == '(')
+    {
+      return i;
+    }
+  }
+  return 0;
+}
+
+void FreeFieldDescrList(FieldDescrList *allFields)
+{
+  int i;
+  for (i = 0; i < allFields->n_fields; ++i)
+  {
+    free(allFields->list[i].FieldName);
+    free(allFields->list[i].FieldTypeS2);
+    free(allFields->list[i].DefaultValue);
+  }
+  free(allFields->list);
+  free(allFields);
+}
+
+MYSQL_RES *
+S2_ListFields(MADB_Stmt   *stmt,
+                SQLCHAR     *catalog,
+                SQLSMALLINT  catalog_length,
+                SQLCHAR     *table,
+                SQLSMALLINT  table_length,
+                SQLCHAR     *column_like,
+                SQLSMALLINT  column_length)
+{
+  MYSQL_RES *result;
+  char buff[NAME_LEN * 2 + 64], column_buff[NAME_LEN * 2 + 64];
+  char *current_db;
+  if (stmt->Connection->mariadb->db)
+  {
+    current_db = strdup(stmt->Connection->mariadb->db);
+  }
+  else
+  {
+    current_db = NULL;
+  }
+  if (table_length <= 0 || !table)
+  {
+    return NULL;
+  }
+
+  /* If a catalog was specified, we have to change working catalog
+     to be able to use mysql_list_fields. */
+  int need_db_change = !current_db || (catalog_length > 0 && catalog && strcmp(current_db, catalog));
+  if (need_db_change)
+  {
+    strncpy(buff, (const char*)catalog, catalog_length);
+    buff[catalog_length]= '\0';
+
+    if (mysql_select_db(stmt->Connection->mariadb, buff))
+    {
+      return NULL;
+    }
+  }
+  strcpy(buff, "`");
+  strncat(buff, (const char*)table, table_length);
+  strcat(buff, "`");
+  if (column_length > 0)
+  {
+    strncpy(column_buff, (const char *) column_like, column_length);
+    column_buff[column_length] = '\0';
+    fflush(stdout);
+    result = mysql_list_fields(stmt->Connection->mariadb, buff, column_buff);
+  }
+  else
+  {
+    result = mysql_list_fields(stmt->Connection->mariadb, buff, NULL);
+  }
+  if (!result)
+  {
+    MADB_SetError(&stmt->Error, MADB_ERR_HY001, mysql_error(stmt->Connection->mariadb), mysql_errno(stmt->Connection->mariadb));
+    free(current_db);
+    return NULL;
+  }
+
+  if (current_db && need_db_change)
+  {
+    if (mysql_select_db(stmt->Connection->mariadb, current_db))
+    {
+      MADB_SetError(&stmt->Error, MADB_ERR_HY001, mysql_error(stmt->Connection->mariadb), mysql_errno(stmt->Connection->mariadb));
+      mysql_free_result(result);
+      free(current_db);
+      return NULL;
+    }
+  }
+  free(current_db);
+  return result;
 }

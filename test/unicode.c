@@ -546,8 +546,8 @@ ODBC_TEST(sqlcolattribute)
 
   CHECK_STMT_RC(hstmt1, SQLColAttributeW(hstmt1, 1, SQL_DESC_TYPE_NAME,
                                    wbuff, sizeof(wbuff), &len, NULL));
-  is_num(len, 7 * sizeof(SQLWCHAR));
-  IS_WSTR(wbuff, CW("integer"), 8);
+  is_num(len, strlen("int") * sizeof(SQLWCHAR));
+  IS_WSTR(wbuff, CW("int"), strlen("int") + 1);
 
   OK_SIMPLE_STMT(hstmt1, "DROP TABLE IF EXISTS t_colattrib");
 

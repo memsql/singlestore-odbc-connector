@@ -59,6 +59,7 @@ SET (MARIADB_ODBC_SOURCES odbc_3_api.c
                           ma_error.c
                           ma_connection.c
                           ma_helper.c
+                          ma_type_helper.c
                           ma_debug.c
                           ma_dsn.c
                           ma_driver.c
@@ -72,6 +73,7 @@ SET (MARIADB_ODBC_SOURCES odbc_3_api.c
                           ma_common.c
                           ma_legacy_helpers.c
                           ma_typeconv.c
+                          ma_fake_request.c
                           escape_sequences/ast.c
                           escape_sequences/parser.c
                           escape_sequences/lexical_analyzer.c)
@@ -262,7 +264,8 @@ IF(WIN32)
                           ma_odbc_version.h
                           ma_result.h
                           ma_legacy_helpers.h
-                          ma_typeconv.h)
+                          ma_typeconv.h
+                          ma_fake_request.h)
 
 			SET(PLATFORM_DEPENDENCIES ws2_32 Shlwapi Pathcch)
   IF (MSVC)

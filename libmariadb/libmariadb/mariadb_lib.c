@@ -115,6 +115,8 @@ extern my_bool mthd_stmt_get_param_metadata(MYSQL_STMT *stmt);
 extern my_bool mthd_stmt_get_result_metadata(MYSQL_STMT *stmt);
 extern int mthd_stmt_fetch_row(MYSQL_STMT *stmt, unsigned char **row);
 extern int mthd_stmt_fetch_to_bind(MYSQL_STMT *stmt, unsigned char *row);
+extern int mthd_stmt_fetch_row_fake(MYSQL_STMT *stmt, unsigned char ***row);
+extern int mthd_stmt_fetch_to_bind_fake(MYSQL_STMT *stmt, unsigned char **row);
 extern int mthd_stmt_read_all_rows(MYSQL_STMT *stmt);
 extern void mthd_stmt_flush_unbuffered(MYSQL_STMT *stmt);
 extern my_bool _mariadb_read_options(MYSQL *mysql, const char *dir, const char *config_file, char *group, unsigned int recursion);
@@ -4434,6 +4436,10 @@ struct st_mariadb_methods MARIADB_DEFAULT_METHODS = {
   mthd_stmt_fetch_row,
   /* store values in bind buffer */
   mthd_stmt_fetch_to_bind,
+  /* fetch one row (unbuffered) for a fake request */
+  mthd_stmt_fetch_row_fake,
+  /* store values in bind buffer for a fake request */
+  mthd_stmt_fetch_to_bind_fake,
   /* skip unbuffered stmt result */
   mthd_stmt_flush_unbuffered,
   /* set error */

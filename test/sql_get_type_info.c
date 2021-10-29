@@ -33,7 +33,7 @@ int check_stmt_correct_type_info(const MADB_TypeInfo* const ExpTypeInfo, MADB_Ty
     FAIL_IF_NE_INT(ExpTypeInfo->DataType, RecTypeInfo->DataType, "Wrong DATA_TYPE returned");
     IS(RecTypeInfo->DataType);
 
-    FAIL_IF_NE_INT(ExpTypeInfo->ColumnSize, RecTypeInfo->ColumnSize, "Wrong COLUMN_SIZE returned");
+    FAIL_IF_NE_INT(RecTypeInfo->ColumnSize, ExpTypeInfo->ColumnSize,  "Wrong COLUMN_SIZE returned");
     IS(RecTypeInfo->ColumnSize);
 
     FAIL_IF_NE_STR(ExpTypeInfo->LiteralPrefix, RecTypeInfo->LiteralPrefix, "Wrong LITERAL_PREFIX returned");
@@ -79,16 +79,15 @@ int check_stmt_correct_type_info(const MADB_TypeInfo* const ExpTypeInfo, MADB_Ty
 
     FAIL_IF_NE_INT(ExpTypeInfo->SqlDataType, RecTypeInfo->SqlDataType, "Wrong SQL_DATA_TYPE returned");
     IS(RecTypeInfo->SqlDataType == RecTypeInfo->DataType
-        || RecTypeInfo->SqlDataType == SQL_DATETIME
-        || RecTypeInfo->SqlDataType == SQL_BIT);
+        || RecTypeInfo->SqlDataType == SQL_DATETIME);
 
+    if (ExpTypeInfo->SqlDateTimeSub != RecTypeInfo->SqlDateTimeSub)
+      printf("boom");
     FAIL_IF_NE_INT(ExpTypeInfo->SqlDateTimeSub, RecTypeInfo->SqlDateTimeSub, "Wrong SQL_DATETIME_SUB returned");
-    IS(!RecTypeInfo->SqlDateTimeSub);
 
-    FAIL_IF_NE_INT(ExpTypeInfo->NumPrecRadix, RecTypeInfo->NumPrecRadix, "Wrong NUM_PREC_RADIX returned");
-    IS(RecTypeInfo->NumPrecRadix == 10);
+    FAIL_IF_NE_INT(RecTypeInfo->NumPrecRadix, ExpTypeInfo->NumPrecRadix, "Wrong NUM_PREC_RADIX returned");
 
-    FAIL_IF_NE_INT(ExpTypeInfo->IntervalPrecision, RecTypeInfo->IntervalPrecision, "Wrong INTERVAL_PRECISION returned");
+    FAIL_IF_NE_INT(RecTypeInfo->IntervalPrecision, ExpTypeInfo->IntervalPrecision, "Wrong INTERVAL_PRECISION returned");
     IS(!RecTypeInfo->IntervalPrecision);
 
     // Reset the CreateParams string
@@ -206,7 +205,7 @@ int run_sql_get_type_info(SQLHANDLE Stmt1, SQLSMALLINT DataType, MADB_TypeInfo *
     FAIL_IF_NE_INT(TYPE_INFO_FIELDS_COUNT, numResultCols, "Wrong number of result columns returned");
     while (SQL_SUCCEEDED(SQLFetch(Stmt1))) {
         if(numOfRowsFetched >= expTypeInfoCount) {
-            fprintf(stdout, "Unexpected row %s (File: %s Line: %d)\n", recTypeInfo.TypeName, __FILE__, __LINE__);
+            fprintf(stdout, "Unexpected row %s for DataType %d (File: %s:%d)\n", recTypeInfo.TypeName, DataType, __FILE__, __LINE__);
         } else if ((rc = check_stmt_correct_type_info(&ExpTypeInfo[numOfRowsFetched], &recTypeInfo, cpSize)) != OK) {
             return rc;
         }

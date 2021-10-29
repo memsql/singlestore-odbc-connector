@@ -171,14 +171,14 @@ void         MADB_CspsFreeDAE(MADB_Stmt *Stmt);
     " WHEN 'set' THEN " XSTR(SQL_VARCHAR)
 
 #define MADB_DATA_TYPE_NUMERIC \
-    "CASE DATA_TYPE WHEN 'bit' THEN " XSTR(SQL_BIT) \
+    "CASE DATA_TYPE WHEN 'bit' THEN " XSTR(SQL_BINARY) \
     " WHEN 'tinyint' THEN " XSTR(SQL_TINYINT) \
     " WHEN 'smallint' THEN " XSTR(SQL_SMALLINT) \
     " WHEN 'mediumint' THEN " XSTR(SQL_INTEGER) \
     " WHEN 'int' THEN " XSTR(SQL_INTEGER) \
     " WHEN 'bigint' THEN " XSTR(SQL_BIGINT) \
     " WHEN 'double' THEN " XSTR(SQL_DOUBLE) \
-    " WHEN 'float' THEN " XSTR(SQL_FLOAT) \
+    " WHEN 'float' THEN " XSTR(SQL_REAL) \
     " WHEN 'decimal' THEN " XSTR(SQL_DECIMAL) \
     " WHEN 'newdecimal' THEN " XSTR(SQL_DECIMAL) \
     " WHEN 'year' THEN " XSTR(SQL_SMALLINT)
@@ -426,4 +426,4 @@ void         MADB_CspsFreeDAE(MADB_Stmt *Stmt);
 
 /********** End of SQLSpecialColumns *********/
 
-#endif
+#endif  // _ma_statement_h_

@@ -43,7 +43,7 @@ typedef struct ma_charset_info_st
   unsigned int	nr; /* so far only 1 byte for charset */
   unsigned int  state;
   const char	*csname;
-  const char	*name;
+  const char	*name;  // this is collation name
   const char  *dir;
   unsigned int codepage;
   const char  *encoding;

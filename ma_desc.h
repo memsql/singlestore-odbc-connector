@@ -62,6 +62,6 @@ SQLRETURN MADB_DescGetRec(MADB_Desc *Desc,
     SQLSMALLINT *NullablePtr,
     BOOL isWChar);
 
-my_bool MADB_FixColumnDataTypes(MADB_Stmt *Stmt, MADB_ShortTypeInfo *ColTypesArr);
+my_bool MADB_FixColumnDataTypes(MADB_Stmt *Stmt, const MADB_ShortTypeInfo *ColTypesArr);
 
 #endif /* _ma_desc_h_ */

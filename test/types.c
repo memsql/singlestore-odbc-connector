@@ -589,12 +589,13 @@ ODBC_TEST(float_scale)
 
 
 /**
-  Test the BIT type, which has different behavior for BIT(1) and BIT(n > 1).
+  Test the BIT type, which in SingleStore always has 64 bits, i.e. 8 bytes
 */
 ODBC_TEST(bit)
 {
   SQLCHAR col[10];
   SQLLEN type, len;
+
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_bit");
   OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_bit (a BIT(1), b BIT(17))");
@@ -603,22 +604,18 @@ ODBC_TEST(bit)
                             (SQLCHAR *)"t_bit", SQL_NTS, NULL, 0));
 
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLFetch(Stmt));
-
   IS_STR(my_fetch_str(Stmt, col, 4), "a", 1);
-  is_num(my_fetch_int(Stmt, 5), SQL_BIT); /* DATA_TYPE */
-  is_num(my_fetch_int(Stmt, 7), 1); /* COLUMN_SIZE */
-  is_num(my_fetch_int(Stmt, 8), 1); /* BUFFER_LENGTH */
-  CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLGetData(Stmt, 16, SQL_C_LONG, &type, 0, &len));
-  is_num(len, SQL_NULL_DATA); /* CHAR_OCTET_LENGTH */
+  is_num(my_fetch_int(Stmt, 5), SQL_BINARY); /* DATA_TYPE */
+  is_num(my_fetch_int(Stmt, 7), 8); /* COLUMN_SIZE */
+  is_num(my_fetch_int(Stmt, 8), 8); /* BUFFER_LENGTH */
+  is_num(my_fetch_int(Stmt, 16), 8); /* CHAR_OCTET_LENGTH */
 
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLFetch(Stmt));
-
   IS_STR(my_fetch_str(Stmt, col, 4), "b", 1);
-  is_num(my_fetch_int(Stmt, 5), SQL_BIT); /* DATA_TYPE */
-  is_num(my_fetch_int(Stmt, 7), 1); /* COLUMN_SIZE */
-  is_num(my_fetch_int(Stmt, 8), 1); /* BUFFER_LENGTH */
-  CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLGetData(Stmt, 16, SQL_C_LONG, &type, 0, &len));
-  is_num(len, SQL_NULL_DATA); /* CHAR_OCTET_LENGTH */
+  is_num(my_fetch_int(Stmt, 5), SQL_BINARY); /* DATA_TYPE */
+  is_num(my_fetch_int(Stmt, 7), 8); /* COLUMN_SIZE */
+  is_num(my_fetch_int(Stmt, 8), 8); /* BUFFER_LENGTH */
+  is_num(my_fetch_int(Stmt, 16), 8); /* CHAR_OCTET_LENGTH */
 
   FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "expected EOF");
 
@@ -628,7 +625,7 @@ ODBC_TEST(bit)
 
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLColAttribute(Stmt, 1, SQL_DESC_TYPE, NULL, 0, NULL,
                                  &type));
-  is_num(type, SQL_BIT);
+  is_num(type, SQL_BINARY);
 
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLColAttribute(Stmt, 2, SQL_DESC_TYPE, NULL, 0, NULL,
                                  &type));

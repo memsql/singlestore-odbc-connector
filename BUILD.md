@@ -38,8 +38,8 @@ go to File->Settings->CMake and for the build target put the following in CMake 
 ```
 sudo yum -y install git cmake make gcc openssl-devel unixODBC unixODBC-devel
 git clone https://github.com/memsql/singlestore-odbc-connector.git
-mkdir build && cd build
-cmake ../singlestore-odbc-connector/ -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_SSL=OPENSSL
+mkdir -p build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_SSL=OPENSSL
 cmake --build . --config RelWithDebInfo
 sudo make install
 ```
@@ -50,8 +50,8 @@ sudo make install
 sudo apt-get update
 sudo apt-get install -y git cmake make gcc libssl-dev unixodbc-dev
 git clone https://github.com/memsql/singlestore-odbc-connector.git
-mkdir build && cd build
-cmake ../singlestore-odbc-connector/ -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_SSL=OPENSSL
+mkdir -p build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_SSL=OPENSSL
 cmake --build . --config RelWithDebInfo
 sudo make install
 ```

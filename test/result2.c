@@ -467,7 +467,7 @@ ODBC_TEST(t_bug55024)
   is_num(res, SQL_TINYINT);
 
   CHECK_STMT_RC(Stmt, SQLColAttribute(Stmt, 7, SQL_DESC_TYPE, NULL, 0, &len, &res));
-  is_num(res, SQL_BIT);
+  is_num(res, SQL_BINARY);
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
