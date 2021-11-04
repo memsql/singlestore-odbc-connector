@@ -4786,12 +4786,14 @@ SQLRETURN MADB_StmtColumnsNoInfoSchema(MADB_Stmt *Stmt,
       Stmt, CatalogName, NameLength1, table_row[0], table_lengths[0], ColumnName, NameLength4)))
     {
       free(formatted_table_ptr);
+      mysql_free_result(tables_res);
       return Stmt->Error.ReturnValue;
     }
     if (!(show_columns_res = S2_ShowColumnsInTable(
         Stmt, CatalogName, NameLength1, table_row[0], table_lengths[0], ColumnName, NameLength4)))
     {
       free(formatted_table_ptr);
+      mysql_free_result(tables_res);
       mysql_free_result(columns_res);
       return Stmt->Error.ReturnValue;
     }
@@ -4806,11 +4808,8 @@ SQLRETURN MADB_StmtColumnsNoInfoSchema(MADB_Stmt *Stmt,
         temp_ptr = realloc(formatted_table_ptr, allocated_rows = 2 * allocated_rows);
         if (!temp_ptr)
         {
-          FreeFieldDescrList(tableFields);
-          mysql_free_result(columns_res);
-          mysql_free_result(show_columns_res);
-          freeData(formatted_table_ptr, n_rows, SQL_COLUMNS_FIELD_COUNT, need_free);
-          return MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to allocate memory for columns data", 0);
+          MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to allocate memory for columns data", 0);
+          goto end_with_error;
         }
         formatted_table_ptr = temp_ptr;
       }
@@ -4834,13 +4833,10 @@ SQLRETURN MADB_StmtColumnsNoInfoSchema(MADB_Stmt *Stmt,
       const MADB_TypeInfo* odbc_type_info = GetTypeInfo(concise_data_type, field);
       if (!odbc_type_info)
       {
-        FreeFieldDescrList(tableFields);
-        mysql_free_result(columns_res);
-        mysql_free_result(show_columns_res);
-        freeData(formatted_table_ptr, n_rows, SQL_COLUMNS_FIELD_COUNT, need_free);
         char err_msg[128];
         sprintf(err_msg, "Failed to get type data for SQL Type %d MYSQL type %d\n", concise_data_type, field->type);
-        return MADB_SetError(&Stmt->Error, MADB_ERR_HY001, err_msg, 0);
+        MADB_SetError(&Stmt->Error, MADB_ERR_HY001, err_msg, 0);
+        goto end_with_error;
       }
       S2FieldDescr = GetFieldDescr(field->name, tableFields);
       if (S2FieldDescr)
@@ -4903,11 +4899,8 @@ SQLRETURN MADB_StmtColumnsNoInfoSchema(MADB_Stmt *Stmt,
       is_alloc_fail |= allocAndFormatInt(&current_row_ptr[16], ++ordinal_number);
       if (is_alloc_fail)
       {
-        FreeFieldDescrList(tableFields);
-        mysql_free_result(columns_res);
-        mysql_free_result(show_columns_res);
-        freeData(formatted_table_ptr, n_rows, SQL_COLUMNS_FIELD_COUNT, need_free);
-        return MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to allocate memory for columns data", 0);
+        MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to allocate memory for columns data", 0);
+        goto end_with_error;
       }
     }
     FreeFieldDescrList(tableFields);
@@ -4925,6 +4918,14 @@ SQLRETURN MADB_StmtColumnsNoInfoSchema(MADB_Stmt *Stmt,
   MADB_FixColumnDataTypes(Stmt, SqlColumnsColType);
   freeData(formatted_table_ptr, n_rows, SQL_COLUMNS_FIELD_COUNT, need_free);
   return SQL_SUCCESS;
+
+end_with_error:
+  FreeFieldDescrList(tableFields);
+  mysql_free_result(tables_res);
+  mysql_free_result(columns_res);
+  mysql_free_result(show_columns_res);
+  freeData(formatted_table_ptr, n_rows, SQL_COLUMNS_FIELD_COUNT, need_free);
+  return Stmt->Error.ReturnValue;
 }
 /* }}} */
 
@@ -5241,6 +5242,138 @@ SQLRETURN MADB_StmtPrimaryKeys(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLINT N
   p+= _snprintf(p, 2048 - strlen(StmtStr), " ORDER BY TABLE_SCHEMA, TABLE_NAME, ORDINAL_POSITION");
 
   return Stmt->Methods->ExecDirect(Stmt, StmtStr, SQL_NTS);
+}
+/* }}} */
+
+#define SQL_PRIMARY_KEYS_FIELD_COUNT 6
+
+static const char * SqlPrimaryKeysFieldNames[SQL_PRIMARY_KEYS_FIELD_COUNT] = {
+    "TABLE_CAT",
+    "TABLE_SCHEM",
+    "TABLE_NAME",
+    "COLUMN_NAME",
+    "KEY_SEQ",
+    "PK_NAME"
+};
+
+static const enum enum_field_types  SqlPrimaryKeysFieldTypes[SQL_PRIMARY_KEYS_FIELD_COUNT] = {
+    SQL_VARCHAR,
+    SQL_VARCHAR,
+    SQL_VARCHAR,
+    SQL_VARCHAR,
+    SQL_SMALLINT,
+    SQL_VARCHAR
+};
+
+static const MADB_ShortTypeInfo SqlPrimaryKeysColType[SQL_PRIMARY_KEYS_FIELD_COUNT] = {
+    {SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // TABLE_CAT
+    {SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // TABLE_SCHEM
+    {SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // TABLE_NAME
+    {SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // COLUMN_NAME
+    {SQL_SMALLINT, 0, SQL_NO_NULLS, 0},  // KEY_SEQ
+    {SQL_VARCHAR,  0, SQL_NO_NULLS, 0}   // PK_NAME
+};
+
+/* {{{ MADB_StmtPrimaryKeysNoInfoSchema */
+SQLRETURN MADB_StmtPrimaryKeysNoInfoSchema(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLINT NameLength1,
+                                char *SchemaName, SQLSMALLINT NameLength2, char *TableName,
+                                SQLSMALLINT NameLength3)
+{
+  MADB_CLEAR_ERROR(&Stmt->Error);
+  MYSQL_RES *tables_res, *show_keys_res;
+  MYSQL_ROW table_row, keys_row;
+  unsigned long *table_lengths, *keys_lengths;
+
+  /* TableName is mandatory */
+  if (!TableName || !NameLength3)
+  {
+    MADB_SetError(&Stmt->Error, MADB_ERR_HY009, "Tablename is required", 0);
+    return Stmt->Error.ReturnValue;
+  }
+
+  if (CatalogName && NameLength1 <= 0)
+    NameLength1 = strlen(CatalogName);
+  if (SchemaName && NameLength2 <= 0)
+    NameLength2 = strlen(SchemaName);
+  if (TableName && NameLength3 <= 0)
+    NameLength3 = strlen(TableName);
+
+  if ( !(tables_res = S2_ShowTables(Stmt, CatalogName, NameLength1, TableName, NameLength3, TRUE)) )
+    return Stmt->Error.ReturnValue;
+
+  int n_rows = 0, allocated_rows = 8;
+  char ***formatted_table_ptr = (char***)calloc(allocated_rows, sizeof(char**)), ***temp_ptr = NULL;
+  char **current_row_ptr;
+  MYSQL_FIELD *field;
+  short is_alloc_fail = 0;
+  const short need_free[SQL_PRIMARY_KEYS_FIELD_COUNT] = {1, 1, 1, 1, 1, 0};
+
+  table_row = mysql_fetch_row(tables_res);
+  table_lengths = mysql_fetch_lengths(tables_res);
+  if ( !(show_keys_res = S2_ShowKeysInTable(
+        Stmt, CatalogName, NameLength1, table_row[0], table_lengths[0])) )
+  {
+    free(formatted_table_ptr);
+    mysql_free_result(tables_res);
+    mysql_free_result(show_keys_res);
+    return Stmt->Error.ReturnValue;
+  }
+  while ( (keys_row = mysql_fetch_row(show_keys_res)) )
+  // keys_row consists of the following fields:
+  // Table Non_unique Key_name Seq_in_index Column_name Collation
+  // Cardinality Sub_part Packed Null Index_type Comment Index_comment
+  {
+    keys_lengths = mysql_fetch_lengths(show_keys_res);
+    if (strcmp(keys_row[2], "PRIMARY"))
+      continue;
+
+    if (n_rows >= allocated_rows)
+    {
+      temp_ptr = realloc(formatted_table_ptr, allocated_rows = 2 * allocated_rows);
+      if (!temp_ptr)
+      {
+        mysql_free_result(tables_res);
+        mysql_free_result(show_keys_res);
+        freeData(formatted_table_ptr, n_rows, SQL_COLUMNS_FIELD_COUNT, need_free);
+        return MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to allocate memory for columns data", 0);
+      }
+      formatted_table_ptr = temp_ptr;
+    }
+    current_row_ptr = formatted_table_ptr[n_rows] = (char**)calloc(SQL_PRIMARY_KEYS_FIELD_COUNT, sizeof(char*));
+    ++n_rows;
+     // TABLE_CAT
+    is_alloc_fail |= !(uintptr_t)(current_row_ptr[0] = strdup(NameLength1 > 0 ? CatalogName : Stmt->Connection->mariadb->db));
+    // TABLE_SCHEM
+    current_row_ptr[1] = NULL;
+    // TABLE_NAME
+    is_alloc_fail |= !(uintptr_t)(current_row_ptr[2] = strndup(keys_row[0], keys_lengths[0]));
+    // COLUMN_NAME
+    is_alloc_fail |= !(uintptr_t)(current_row_ptr[3] = strndup(keys_row[4], keys_lengths[4]));
+    // KEY_SEQ
+    is_alloc_fail |= !(uintptr_t)(current_row_ptr[4] = strndup(keys_row[3], keys_lengths[3]));
+    // PK_NAME
+    current_row_ptr[5] = "PRIMARY";
+    if (is_alloc_fail)
+    {
+      mysql_free_result(tables_res);
+      mysql_free_result(show_keys_res);
+      freeData(formatted_table_ptr, n_rows, SQL_PRIMARY_KEYS_FIELD_COUNT, need_free);
+      return MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to allocate memory for columns data", 0);
+    }
+  }
+  mysql_free_result(tables_res);
+  mysql_free_result(show_keys_res);
+
+  // link statement result to the processed columns
+  if (!SQL_SUCCEEDED(MADB_FakeRequest(
+    Stmt, SqlPrimaryKeysFieldNames, SqlPrimaryKeysFieldTypes, SQL_PRIMARY_KEYS_FIELD_COUNT, formatted_table_ptr, n_rows)))
+  {
+    freeData(formatted_table_ptr, n_rows, SQL_PRIMARY_KEYS_FIELD_COUNT, need_free);
+    return Stmt->Error.ReturnValue;
+  }
+  MADB_FixColumnDataTypes(Stmt, SqlPrimaryKeysColType);
+  freeData(formatted_table_ptr, n_rows, SQL_PRIMARY_KEYS_FIELD_COUNT, need_free);
+  return SQL_SUCCESS;
 }
 /* }}} */
 
@@ -6086,10 +6219,11 @@ struct st_ma_stmt_methods MADB_StmtMethods=
   MADB_StmtTablePrivileges,
   MADB_StmtTables,
   MADB_StmtStatistics,
-  // MADB_StmtColumns,  TODO: delete comment and function when MADB_StmtColumnsNoInfoSchema is tested
+  // MADB_StmtColumns, TODO: PLAT-5892: delete(?) comment and function when MADB_StmtColumnsNoInfoSchema is well tested
   MADB_StmtColumnsNoInfoSchema,
   MADB_StmtProcedureColumns,
-  MADB_StmtPrimaryKeys,
+  // MADB_StmtPrimaryKeys,
+  MADB_StmtPrimaryKeysNoInfoSchema,
   MADB_StmtSpecialColumns,
   MADB_StmtProcedures,
   MADB_StmtForeignKeys,

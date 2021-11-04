@@ -1456,7 +1456,7 @@ Get the result of SHOW COLUMNS FROM table LIKE column_like
 @param[in] table_length   Length of table name
 @param[in] column_like    Column name pattern to match
 
-@return Result of SHOW TABLE STATUS, or NULL if there is an error
+@return Result of SHOW COLUMNS FROM, or NULL if there is an error,
 or empty result (check mysql_errno(stmt->Connection->mariadb) != 0)
 */
 MYSQL_RES *S2_ShowColumnsInTable(MADB_Stmt  *stmt,
@@ -1569,6 +1569,54 @@ void FreeFieldDescrList(FieldDescrList *allFields)
   free(allFields->list);
   free(allFields);
 }
+
+/**
+Get the result of SHOW FIELDS FROM <catalog>.<table>
+
+@param[in] stmt           Handle to statement
+@param[in] catalog        Catalog (database) of table, @c NULL for current
+@param[in] catalog_length Length of the catalog name
+@param[in] table          Name of the table, not NULL
+@param[in] table_length   Length of table name
+
+@return Result of SHOW FIELDS FROM, or NULL if there is an error,
+or empty result (check mysql_errno(stmt->Connection->mariadb) != 0)
+*/
+MYSQL_RES *S2_ShowKeysInTable(MADB_Stmt  *stmt,
+                              SQLCHAR     *catalog,
+                              SQLSMALLINT  catalog_length,
+                              SQLCHAR     *table,
+                              SQLSMALLINT  table_length)
+{
+  MADB_DynString query;
+  MADB_InitDynamicString(&query, "SHOW KEYS FROM ", 1024, 512);
+
+	if (catalog && *catalog)
+	{
+    MADB_DynstrAppend(&query, "`");
+    MADB_DynstrAppendMem(&query, catalog, catalog_length);
+    MADB_DynstrAppend(&query, "`");
+    MADB_DynstrAppend(&query, ".");
+	}
+
+  MADB_DynstrAppend(&query, "`");
+  MADB_DynstrAppendMem(&query, table, table_length);
+  MADB_DynstrAppend(&query, "`");
+
+  LOCK_MARIADB(stmt->Connection);
+  if (mysql_real_query(stmt->Connection->mariadb, query.str, query.length))
+  {
+    MADB_DynstrFree(&query);
+    UNLOCK_MARIADB(stmt->Connection);
+    MADB_SetError(&stmt->Error, MADB_ERR_HY001, mysql_error(stmt->Connection->mariadb), mysql_errno(stmt->Connection->mariadb));
+    return NULL;
+  }
+  MADB_DynstrFree(&query);
+  UNLOCK_MARIADB(stmt->Connection);
+
+  return mysql_store_result(stmt->Connection->mariadb);
+}
+
 
 MYSQL_RES *
 S2_ListFields(MADB_Stmt   *stmt,

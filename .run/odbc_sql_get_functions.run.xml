@@ -2,7 +2,7 @@
   <configuration default="false" name="odbc_sql_get_functions" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$CMakeCurrentGenerationDir$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="singlestore_connector_odbc" TARGET_NAME="odbc_sql_get_functions" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="singlestore_connector_odbc" RUN_TARGET_NAME="odbc_sql_get_functions">
     <envs>
       <env name="ODBCINI" value="./test/odbc.ini" />
-      <env name="ODBCINSTINI" value="./test/odbcinst.ini" />
+      <env name="ODBCSYSINI" value="./test" />
     </envs>
     <method v="2">
       <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />

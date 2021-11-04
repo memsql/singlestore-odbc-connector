@@ -102,6 +102,12 @@ MYSQL_RES *S2_ShowColumnsInTable(MADB_Stmt  *stmt,
                                  SQLCHAR     *column_like,
                                  SQLSMALLINT  column_length);
 
+MYSQL_RES *S2_ShowKeysInTable(MADB_Stmt  *stmt,
+                              SQLCHAR     *catalog,
+                              SQLSMALLINT  catalog_length,
+                              SQLCHAR     *table,
+                              SQLSMALLINT  table_length);
+
 typedef struct {
   char *FieldName;
   char *FieldTypeS2;
