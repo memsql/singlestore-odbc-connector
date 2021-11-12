@@ -4805,7 +4805,7 @@ SQLRETURN MADB_StmtColumnsNoInfoSchema(MADB_Stmt *Stmt,
     {
       if (n_rows >= allocated_rows)
       {
-        temp_ptr = realloc(formatted_table_ptr, allocated_rows = 2 * allocated_rows);
+        temp_ptr = realloc(formatted_table_ptr, (allocated_rows = 2 * allocated_rows) * sizeof(char**));
         if (!temp_ptr)
         {
           MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to allocate memory for columns data", 0);
