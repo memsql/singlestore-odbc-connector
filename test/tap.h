@@ -1647,7 +1647,7 @@ int getDbCharSize()
   }
   if (!strncmp(collation, "utf8mb4", 7))
     char_size = 4;
-  if (!strncmp(collation, "utf8", 4))
+  else if (!strncmp(collation, "utf8", 4))
     char_size = 3;
   mysql_free_result(res);
   mysql_close(mysql);

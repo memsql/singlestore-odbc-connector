@@ -90,9 +90,7 @@ S2_ListFields(MADB_Stmt   *stmt,
                 SQLCHAR     *catalog,
                 SQLSMALLINT  catalog_length,
                 SQLCHAR     *table,
-                SQLSMALLINT  table_length,
-                SQLCHAR     *column_like,
-                SQLSMALLINT  column_length);
+                SQLSMALLINT  table_length);
 
 MYSQL_RES *S2_ShowColumnsInTable(MADB_Stmt  *stmt,
                                  SQLCHAR     *catalog,

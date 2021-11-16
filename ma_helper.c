@@ -1386,7 +1386,7 @@ void MADB_InstallStmt(MADB_Stmt *Stmt, MYSQL_STMT *stmt)
 
 
 /**
-Get the table status for a table or tables using SHOW TABLE STATUS.
+Get the table status for a table or tables using SHOW TABLES.
 Lengths may not be SQL_NTS.
 
 @param[in] stmt           Handle to statement
@@ -1428,7 +1428,7 @@ MYSQL_RES *S2_ShowTables(MADB_Stmt   *stmt,
 	if (table && *table)
 	{
 		strcat(query, "LIKE '");
-		cnt = mysql_real_escape_string(stmt->Connection->mariadb, tmpbuff, (char *)table, table_length);
+    cnt = mysql_real_escape_string(stmt->Connection->mariadb, tmpbuff, (char *)table, table_length);
     strncat(query, tmpbuff, cnt);
 		strcat(query, "'");
 	}
@@ -1486,7 +1486,7 @@ MYSQL_RES *S2_ShowColumnsInTable(MADB_Stmt  *stmt,
   if (column_like && *column_like && column_length)
   {
     strcat(query, " LIKE '");
-		cnt = mysql_real_escape_string(stmt->Connection->mariadb, tmpbuff, (char *)column_like, column_length);
+    cnt = mysql_real_escape_string(stmt->Connection->mariadb, tmpbuff, (char *)column_like, column_length);
     strncat(query, tmpbuff, cnt);
     strcat(query, "'");
   }
@@ -1617,76 +1617,39 @@ MYSQL_RES *S2_ShowKeysInTable(MADB_Stmt  *stmt,
   return mysql_store_result(stmt->Connection->mariadb);
 }
 
-
-MYSQL_RES *
-S2_ListFields(MADB_Stmt   *stmt,
-                SQLCHAR     *catalog,
-                SQLSMALLINT  catalog_length,
-                SQLCHAR     *table,
-                SQLSMALLINT  table_length,
-                SQLCHAR     *column_like,
-                SQLSMALLINT  column_length)
+MYSQL_RES *S2_ListFields(MADB_Stmt  *stmt,
+                              SQLCHAR     *catalog,
+                              SQLSMALLINT  catalog_length,
+                              SQLCHAR     *table,
+                              SQLSMALLINT  table_length)
 {
-  MYSQL_RES *result;
-  char buff[NAME_LEN * 2 + 64], column_buff[NAME_LEN * 2 + 64];
-  char *current_db;
-  if (stmt->Connection->mariadb->db)
-  {
-    current_db = strdup(stmt->Connection->mariadb->db);
-  }
-  else
-  {
-    current_db = NULL;
-  }
-  if (table_length <= 0 || !table)
-  {
-    return NULL;
-  }
+  MADB_DynString query;
+  MADB_InitDynamicString(&query, "SELECT * FROM ", 1024, 512);
 
-  /* If a catalog was specified, we have to change working catalog
-     to be able to use mysql_list_fields. */
-  int need_db_change = !current_db || (catalog_length > 0 && catalog && strcmp(current_db, catalog));
-  if (need_db_change)
-  {
-    strncpy(buff, (const char*)catalog, catalog_length);
-    buff[catalog_length]= '\0';
+	if (catalog && *catalog)
+	{
+    MADB_DynstrAppend(&query, "`");
+    MADB_DynstrAppendMem(&query, catalog, catalog_length);
+    MADB_DynstrAppend(&query, "`");
+    MADB_DynstrAppend(&query, ".");
+	}
 
-    if (mysql_select_db(stmt->Connection->mariadb, buff))
-    {
-      return NULL;
-    }
-  }
-  strcpy(buff, "`");
-  strncat(buff, (const char*)table, table_length);
-  strcat(buff, "`");
-  if (column_length > 0)
+  MADB_DynstrAppend(&query, "`");
+  MADB_DynstrAppendMem(&query, table, table_length);
+  MADB_DynstrAppend(&query, "`");
+
+  MADB_DynstrAppend(&query, " LIMIT 0");
+
+  LOCK_MARIADB(stmt->Connection);
+  if (mysql_real_query(stmt->Connection->mariadb, query.str, query.length))
   {
-    strncpy(column_buff, (const char *) column_like, column_length);
-    column_buff[column_length] = '\0';
-    fflush(stdout);
-    result = mysql_list_fields(stmt->Connection->mariadb, buff, column_buff);
-  }
-  else
-  {
-    result = mysql_list_fields(stmt->Connection->mariadb, buff, NULL);
-  }
-  if (!result)
-  {
+    MADB_DynstrFree(&query);
+    UNLOCK_MARIADB(stmt->Connection);
     MADB_SetError(&stmt->Error, MADB_ERR_HY001, mysql_error(stmt->Connection->mariadb), mysql_errno(stmt->Connection->mariadb));
-    free(current_db);
     return NULL;
   }
+  MADB_DynstrFree(&query);
+  UNLOCK_MARIADB(stmt->Connection);
 
-  if (current_db && need_db_change)
-  {
-    if (mysql_select_db(stmt->Connection->mariadb, current_db))
-    {
-      MADB_SetError(&stmt->Error, MADB_ERR_HY001, mysql_error(stmt->Connection->mariadb), mysql_errno(stmt->Connection->mariadb));
-      mysql_free_result(result);
-      free(current_db);
-      return NULL;
-    }
-  }
-  free(current_db);
-  return result;
+  return mysql_store_result(stmt->Connection->mariadb);
 }
