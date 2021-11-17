@@ -132,7 +132,7 @@ static SQLCHAR *my_dsn=             (SQLCHAR *)"ssodbc_test_a";
 static SQLCHAR *my_uid=             (SQLCHAR *)"root";
 static SQLCHAR *my_pwd=             (SQLCHAR *)"";
 static SQLCHAR *my_schema=          (SQLCHAR *)"odbc_test";
-static SQLCHAR *my_drivername=      (SQLCHAR *)"SingleStore ODBC 1.0.6 ANSI Driver";
+static SQLCHAR *my_drivername=      (SQLCHAR *)"SingleStore ODBC ANSI Driver";
 static SQLCHAR *my_servername=      (SQLCHAR *)"127.0.0.1";
 static SQLCHAR *add_connstr=        (SQLCHAR*)"";
 

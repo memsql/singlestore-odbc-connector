@@ -68,15 +68,15 @@ if [ ! -f $ODBCINSTINI ] ; then
   echo "TraceFile = /tmp/iodbc_trace.log" >> $ODBCINSTINI
   echo "" >> $ODBCINSTINI
   echo "[ODBC Drivers]" >> $ODBCINSTINI
-  echo "SingleStore ODBC @PRODUCT_VERSION@ Unicode Driver = Installed" >> $ODBCINSTINI
-  echo "SingleStore ODBC @PRODUCT_VERSION@ ANSI Driver = Installed" >> $ODBCINSTINI
+  echo "SingleStore ODBC Unicode Driver = Installed" >> $ODBCINSTINI
+  echo "SingleStore ODBC ANSI Driver = Installed" >> $ODBCINSTINI
   echo "" >> $ODBCINSTINI
-  echo "[SingleStore ODBC @PRODUCT_VERSION@ Unicode Driver]" >> $ODBCINSTINI
+  echo "[SingleStore ODBC Unicode Driver]" >> $ODBCINSTINI
   echo "Driver      = ${target}Library/SingleStore/SingleStore-Connector-ODBC/libssodbcw.dylib" >> $ODBCINSTINI
   echo "Description = SingleStore Connector/ODBC(Unicode) @PRODUCT_VERSION@ @PRODUCT_ARCH_BITS@bit" >> $ODBCINSTINI
   echo "Threading   = 0" >> $ODBCINSTINI
   echo "" >> $ODBCINSTINI
-  echo "[SingleStore ODBC @PRODUCT_VERSION@ ANSI Driver]" >> $ODBCINSTINI
+  echo "[SingleStore ODBC ANSI Driver]" >> $ODBCINSTINI
   echo "Driver      = ${target}Library/SingleStore/SingleStore-Connector-ODBC/libssodbca.dylib" >> $ODBCINSTINI
   echo "Description = SingleStore Connector/ODBC(ANSI) @PRODUCT_VERSION@ @PRODUCT_ARCH_BITS@bit" >> $ODBCINSTINI
   echo "Threading   = 0" >> $ODBCINSTINI
@@ -86,8 +86,8 @@ if [ ! -f $ODBCINSTINI ] ; then
   exit 0
 fi
 
-${target}Library/SingleStore/SingleStore-Connector-ODBC/bin/install_driver "${target}Library/SingleStore/SingleStore-Connector-ODBC/libssodbca.dylib" "SingleStore ODBC @PRODUCT_VERSION@ ANSI Driver" "SingleStore Connector/ODBC(ANSI) @PRODUCT_VERSION@ @PRODUCT_ARCH_BITS@bit" >> /tmp/ssodbc_postinstall.log
-${target}Library/SingleStore/SingleStore-Connector-ODBC/bin/install_driver "${target}Library/SingleStore/SingleStore-Connector-ODBC/libssodbcw.dylib" "SingleStore ODBC @PRODUCT_VERSION@ Unicode Driver" "SingleStore Connector/ODBC(Unicode) @PRODUCT_VERSION@ @PRODUCT_ARCH_BITS@bit" >> /tmp/ssodbc_postinstall.log
+${target}Library/SingleStore/SingleStore-Connector-ODBC/bin/install_driver "${target}Library/SingleStore/SingleStore-Connector-ODBC/libssodbca.dylib" "SingleStore ODBC ANSI Driver" "SingleStore Connector/ODBC(ANSI) @PRODUCT_VERSION@ @PRODUCT_ARCH_BITS@bit" >> /tmp/ssodbc_postinstall.log
+${target}Library/SingleStore/SingleStore-Connector-ODBC/bin/install_driver "${target}Library/SingleStore/SingleStore-Connector-ODBC/libssodbcw.dylib" "SingleStore ODBC Unicode Driver" "SingleStore Connector/ODBC(Unicode) @PRODUCT_VERSION@ @PRODUCT_ARCH_BITS@bit" >> /tmp/ssodbc_postinstall.log
 
 echo "Registration has been successfully finished" >> /tmp/ssodbc_postinstall.log
 
