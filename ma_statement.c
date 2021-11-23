@@ -4188,7 +4188,10 @@ SQLUSMALLINT MapColAttributeDescType(SQLUSMALLINT FieldIdentifier)
 /* {{{ MADB_StmtRowCount */
 SQLRETURN MADB_StmtParamCount(MADB_Stmt *Stmt, SQLSMALLINT *ParamCountPtr)
 {
-  *ParamCountPtr= (SQLSMALLINT)mysql_stmt_param_count(Stmt->stmt);
+  if (MADB_SSPS_DISABLED(Stmt))
+    *ParamCountPtr= (SQLSMALLINT)(Stmt->ParamCount);
+  else
+    *ParamCountPtr= (SQLSMALLINT)mysql_stmt_param_count(Stmt->stmt);
   return SQL_SUCCESS;
 }
 /* }}} */

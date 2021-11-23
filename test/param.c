@@ -49,6 +49,28 @@ ODBC_TEST(my_init_table)
   return OK;
 }
 
+ODBC_TEST(num_params)
+{
+  SQLRETURN   rc;
+  SQLSMALLINT param_count;
+
+  rc = SQLPrepare(Stmt, (SQLCHAR *)"INSERT INTO my_demo_param(id,name) VALUES(?,?)",SQL_NTS);
+  CHECK_STMT_RC(Stmt,rc);
+  SQLFreeStmt(Stmt, 0);
+
+  rc = SQLNumParams(Stmt, &param_count);
+  CHECK_STMT_RC(Stmt,rc);
+  FAIL_IF_NE_INT(param_count, 2, "SQLNumParams returns wrong result");
+
+  rc = SQLPrepare(Stmt, (SQLCHAR *)"INSERT INTO my_demo_param(id) VALUES(?)",SQL_NTS);
+  CHECK_STMT_RC(Stmt,rc);
+
+  rc = SQLNumParams(Stmt, &param_count);
+  CHECK_STMT_RC(Stmt,rc);
+  FAIL_IF_NE_INT(param_count, 1, "Wrong SQLNumParams result");
+
+  return OK;
+}
 
 ODBC_TEST(my_param_insert)
 {
@@ -1317,6 +1339,7 @@ MA_ODBC_TESTS my_tests[]=
 {
   {unbuffered_result, "unbuffered_result", NORMAL, ALL_DRIVERS},
   {my_init_table, "my_init_table", NORMAL, ALL_DRIVERS},
+  {num_params, "num_params", NORMAL, ALL_DRIVERS},
   {my_param_insert, "my_param_insert", NORMAL, ALL_DRIVERS},
   {my_param_update, "my_param_update", NORMAL, ALL_DRIVERS},
   {my_param_delete, "my_param_delete", NORMAL, ALL_DRIVERS},
