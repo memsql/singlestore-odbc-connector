@@ -2193,6 +2193,67 @@ ODBC_TEST(t_bug34429)
   return OK;
 }
 
+int checkGetDataLength(int noCache) {
+  SQLHANDLE Connection1, Stmt1;
+  SQLLEN rc;
+  SQLCHAR conn[512];
+  SQLCHAR buff[100];
+  SQLLEN len = 0;
+
+  sprintf((char *) conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s;NO_CACHE=%d",
+          my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr, noCache);
+
+  CHECK_ENV_RC(Env, SQLAllocHandle(SQL_HANDLE_DBC, Env, &Connection1));
+  CHECK_DBC_RC(Connection1,
+               SQLDriverConnect(Connection1, NULL, conn, (SQLSMALLINT) strlen((const char *) conn), NULL, 0,
+                                NULL, SQL_DRIVER_NOPROMPT));
+
+  CHECK_DBC_RC(Connection1, SQLAllocHandle(SQL_HANDLE_STMT, Connection1, &Stmt1));
+
+  OK_SIMPLE_STMT(Stmt1, "DROP TABLE IF EXISTS check_get_data_length");
+  OK_SIMPLE_STMT(Stmt1, "CREATE TABLE check_get_data_length (text VARCHAR(16))");
+  OK_SIMPLE_STMT(Stmt1, "INSERT INTO check_get_data_length VALUES ('a'), ('bb'), ('ccc')");
+  if (is_unicode_driver()) {
+    OK_SIMPLE_STMTW(Stmt1, W(L"INSERT INTO check_get_data_length VALUES ('\x03A8\x0391\x03A1\x039F')"))
+  }
+  OK_SIMPLE_STMT(Stmt1, "SELECT * FROM check_get_data_length ORDER BY text");
+
+  CHECK_STMT_RC(Stmt1, SQLFetch(Stmt1));
+  CHECK_STMT_RC(Stmt1, SQLGetData(Stmt1, 1, SQL_C_CHAR, buff, sizeof(buff), &len));
+  is_num(len, 1);
+  IS_STR(buff, "a", len);
+
+  CHECK_STMT_RC(Stmt1, SQLFetch(Stmt1));
+  CHECK_STMT_RC(Stmt1, SQLGetData(Stmt1, 1, SQL_C_CHAR, buff, sizeof(buff), &len));
+  is_num(len, 2);
+  IS_STR(buff, "bb", len);
+
+  CHECK_STMT_RC(Stmt1, SQLFetch(Stmt1));
+  CHECK_STMT_RC(Stmt1, SQLGetData(Stmt1, 1, SQL_C_CHAR, buff, sizeof(buff), &len));
+  is_num(len, 3);
+  IS_STR(buff, "ccc", len);
+
+  if (is_unicode_driver()) {
+    CHECK_STMT_RC(Stmt1, SQLFetch(Stmt1));
+    CHECK_STMT_RC(Stmt1, SQLGetData(Stmt1, 1, SQL_C_WCHAR, buff, sizeof(buff), &len));
+    is_num(len, 4*sizeof(SQLWCHAR));
+    IS_WSTR(buff, W(L"\x03A8\x0391\x03A1\x039F"), len/sizeof(SQLWCHAR)+1);
+  }
+
+  CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
+  CHECK_DBC_RC(Connection1, SQLDisconnect(Connection1));
+  CHECK_DBC_RC(Connection1, SQLFreeHandle(SQL_HANDLE_DBC, Connection1));
+
+  return OK;
+}
+
+ODBC_TEST(get_data_length)
+{
+  IS_OK(checkGetDataLength(0));
+  IS_OK(checkGetDataLength(1));
+  return OK;
+}
+
 
 MA_ODBC_TESTS my_tests[]=
 {
@@ -2226,6 +2287,7 @@ MA_ODBC_TESTS my_tests[]=
   {t_bug28617, "t_bug28617",     NORMAL, ALL_DRIVERS},
   {t_bug34429, "t_bug34429",     NORMAL, ALL_DRIVERS},
   {t_binary_collation, "t_binary_collation", CSPS_OK | SSPS_FAIL, ANSI_DRIVER},
+  {get_data_length, "get_data_length", NORMAL, ALL_DRIVERS},
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 

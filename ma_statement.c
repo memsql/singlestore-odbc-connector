@@ -3719,13 +3719,13 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
         char  *ClientValue= NULL;
         BOOL isTime;
 
-        if (!(ClientValue = (char *)MADB_CALLOC(Stmt->stmt->fields[Offset].max_length + 1)))
+        if (!(ClientValue = (char *)MADB_CALLOC(Stmt->stmt->bind[Offset].length_value + 1)))
         {
           return MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
         }
         Bind.buffer=        ClientValue;
         Bind.buffer_type=   MYSQL_TYPE_STRING;
-        Bind.buffer_length= Stmt->stmt->fields[Offset].max_length + 1;
+        Bind.buffer_length= Stmt->stmt->bind[Offset].length_value + 1;
         OK_SUCCESS_OR_TRUNCATION(Stmt, MADB_StmtFetchColumn(Stmt, &Bind, Offset, 0));
         RETURN_ERROR_OR_CONTINUE(MADB_Str2Ts(ClientValue, Bind.length_value, &tm, FALSE, &Stmt->Error, &isTime));
         MADB_FREE(ClientValue);
@@ -3761,13 +3761,13 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
         char *ClientValue= NULL;
         BOOL isTime;
 
-        if (!(ClientValue = (char *)MADB_CALLOC(Stmt->stmt->fields[Offset].max_length + 1)))
+        if (!(ClientValue = (char *)MADB_CALLOC(Stmt->stmt->bind[Offset].length_value + 1)))
         {
           return MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
         }
         Bind.buffer=        ClientValue;
         Bind.buffer_type=   MYSQL_TYPE_STRING;
-        Bind.buffer_length= Stmt->stmt->fields[Offset].max_length + 1;
+        Bind.buffer_length= Stmt->stmt->bind[Offset].length_value + 1;
         OK_SUCCESS_OR_TRUNCATION(Stmt, MADB_StmtFetchColumn(Stmt, &Bind, Offset, 0));
         RETURN_ERROR_OR_CONTINUE(MADB_Str2Ts(ClientValue, Bind.length_value, &tm, TRUE, &Stmt->Error, &isTime));
         MADB_FREE(ClientValue);
@@ -3822,23 +3822,23 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
       /* Kinda this it not 1st call for this value, and we have it nice and recoded */
       if (IrdRec->InternalBuffer == NULL/* && Stmt->Lengths[Offset] == 0*/)
       {
-        if (!(ClientValue = (char *)MADB_CALLOC(Stmt->stmt->fields[Offset].max_length + 1)))
+        if (!(ClientValue = (char *)MADB_CALLOC(Stmt->stmt->bind[Offset].length_value + 1)))
         {
           MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
           return Stmt->Error.ReturnValue;
         }
         Bind.buffer=        ClientValue;
         Bind.buffer_type=   MYSQL_TYPE_STRING;
-        Bind.buffer_length= Stmt->stmt->fields[Offset].max_length + 1;
+        Bind.buffer_length= Stmt->stmt->bind[Offset].length_value + 1;
 
         OK_SUCCESS_OR_TRUNCATION(Stmt, MADB_StmtFetchColumn(Stmt, &Bind, Offset, Stmt->CharOffset[Offset]));
 
         /* check total length: if not enough space, we need to calculate new CharOffset for next fetch */
-        if (Stmt->stmt->fields[Offset].max_length)
+        if (Stmt->stmt->bind[Offset].length_value)
         {
           size_t ReqBuffOctetLen;
           /* Size in chars */
-          CharLength= MbstrCharLen(ClientValue, Stmt->stmt->fields[Offset].max_length - Stmt->CharOffset[Offset],
+          CharLength= MbstrCharLen(ClientValue, Stmt->stmt->bind[Offset].length_value - Stmt->CharOffset[Offset],
             Stmt->Connection->Charset.cs_info);
           /* MbstrCharLen gave us length in characters. For encoding of each character we might need
              2 SQLWCHARs in case of UTF16, or 1 SQLWCHAR in case of UTF32. Probably we need calcualate better
@@ -3861,13 +3861,13 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
               }
 
               CharLength= MADB_SetString(&Stmt->Connection->Charset, IrdRec->InternalBuffer, (SQLINTEGER)ReqBuffOctetLen / sizeof(SQLWCHAR),
-                ClientValue, Stmt->stmt->fields[Offset].max_length - Stmt->CharOffset[Offset], &Stmt->Error);
+                ClientValue, Stmt->stmt->bind[Offset].length_value - Stmt->CharOffset[Offset], &Stmt->Error);
             }
             else
             {
               /* Application's buffer is big enough - writing directly there */
               CharLength= MADB_SetString(&Stmt->Connection->Charset, TargetValuePtr, (SQLINTEGER)(BufferLength / sizeof(SQLWCHAR)),
-                ClientValue, Stmt->stmt->fields[Offset].max_length - Stmt->CharOffset[Offset], &Stmt->Error);
+                ClientValue, Stmt->stmt->bind[Offset].length_value - Stmt->CharOffset[Offset], &Stmt->Error);
             }
 
             if (!SQL_SUCCEEDED(Stmt->Error.ReturnValue))
@@ -3942,7 +3942,7 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
     {
       if (!BufferLength && StrLen_or_IndPtr)
       {
-        *StrLen_or_IndPtr= Stmt->stmt->fields[Offset].max_length * 2;
+        *StrLen_or_IndPtr= Stmt->stmt->bind[Offset].length_value * 2;
         return SQL_SUCCESS_WITH_INFO;
       }
      
@@ -3978,13 +3978,13 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
         
         if (InternalUse) 
         {
-          *StrLen_or_IndPtr= MIN(*Bind.length, Stmt->stmt->fields[Offset].max_length);
+          *StrLen_or_IndPtr= *Bind.length;
         }
         else
         {
           if (!Stmt->CharOffset[Offset])
           {
-            Stmt->Lengths[Offset]= MIN(*Bind.length, Stmt->stmt->fields[Offset].max_length);
+            Stmt->Lengths[Offset]= *Bind.length;
           }
           *StrLen_or_IndPtr= Stmt->Lengths[Offset] - Stmt->CharOffset[Offset];
         }
@@ -4006,7 +4006,7 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
 
       if (!InternalUse && !Stmt->CharOffset[Offset])
       {
-        Stmt->Lengths[Offset]= MIN(*Bind.length, Stmt->stmt->fields[Offset].max_length);
+        Stmt->Lengths[Offset]= *Bind.length;
       }
       if (ZeroTerminated)
       {
@@ -4057,7 +4057,7 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
 
     MADB_CLEAR_ERROR(&Stmt->Error);
 
-    if (Bind.buffer_length < Stmt->stmt->fields[Offset].max_length)
+    if (Bind.buffer_length < Stmt->stmt->bind[Offset].length_value)
     {
       MADB_SetError(&Stmt->Error, MADB_ERR_22003, NULL, 0);
       MADB_FREE(Bind.buffer);
