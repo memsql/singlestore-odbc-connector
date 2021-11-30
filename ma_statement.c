@@ -4480,6 +4480,12 @@ SQLRETURN MADB_StmtTables(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLINT Catalo
     return Stmt->Error.ReturnValue;
   }
 
+  if (!CatalogNameLength && Stmt->Connection->mariadb->db)
+  {
+    CatalogName = Stmt->Connection->mariadb->db;
+    CatalogNameLength = strlen(CatalogName);
+  }
+
   /* SQL_ALL_CATALOGS 
      If CatalogName is SQL_ALL_CATALOGS and SchemaName and TableName are empty strings, 
      the result set contains a list of valid catalogs for the data source. 

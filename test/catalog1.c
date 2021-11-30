@@ -703,7 +703,7 @@ ODBC_TEST(t_sqltables)
   CHECK_STMT_RC(Stmt1, SQLTables(Stmt1, NULL, 0, NULL, 0, NULL, 0, NULL, 0));
 
   AllTablesCount= myrowcount(Stmt1);
-  FAIL_IF(AllTablesCount <= 3, "There should be more than 3 tables"); /* 3 tables in current db */
+  FAIL_IF(AllTablesCount != 3, "There should be 3 tables"); /* 3 tables in current db */
 
   CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
 
@@ -716,8 +716,7 @@ ODBC_TEST(t_sqltables)
     CHECK_STMT_RC(Stmt1, SQLGetData(Stmt1, 3, SQL_C_CHAR, Buffer, sizeof(Buffer), &LenInd));
     FAIL_IF(LenInd == SQL_NULL_DATA, "Table Name should not be NULL")
   }
-  /* % catalog should give the same result as NULL. May fail if any table added/dropped between calls */
-  is_num(Rows, AllTablesCount);
+  FAIL_IF(Rows <= AllTablesCount, "% catalog should give more results than NULL catalog");
 
   CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
 
