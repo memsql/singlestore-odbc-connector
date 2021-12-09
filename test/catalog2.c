@@ -96,8 +96,8 @@ ODBC_TEST(t_bug34272)
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
 
   CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 6, SQL_C_CHAR, dummy, col6size + 1, &length));
-  is_num(length, 15);
-  IS_STR(dummy, "int(9) unsigned", length+1);
+  is_num(length, 12);
+  IS_STR(dummy, "int unsigned", length+1);
 
   CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 18, SQL_C_CHAR, dummy, col18size + 1, &length));
   is_num(length,3);

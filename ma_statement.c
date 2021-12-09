@@ -4776,9 +4776,11 @@ SQLRETURN MADB_StmtColumnsNoInfoSchema(MADB_Stmt *Stmt,
   SQLLEN column_char_length, column_length;
 
   short is_alloc_fail = 0;
-  // we don't allocate memory at pos 11: TABLE_SCHEM is always NULL;
-  // at pos 17: literal "YES" or "NO" is written there
-  const short need_free[SQL_COLUMNS_FIELD_COUNT] = {1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0};
+  // we don't allocate memory at:
+  // pos 1: TABLE_SCHEM is always NULL;
+  // pos 5: MADB_TypeName returns string literal
+  // pos 17: literal "YES" or "NO" is written there
+  const short need_free[SQL_COLUMNS_FIELD_COUNT] = {1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0};
 
   while ((table_row = mysql_fetch_row(tables_res)))
   {
@@ -4863,7 +4865,18 @@ SQLRETURN MADB_StmtColumnsNoInfoSchema(MADB_Stmt *Stmt,
       // DATA_TYPE
       is_alloc_fail |= allocAndFormatInt(&current_row_ptr[4], odbc_data_type);
       // TYPE_NAME
-      is_alloc_fail |= !(uintptr_t)(current_row_ptr[5] = strdup(S2FieldDescr->FieldTypeS2));
+      // we don't just use MADB_GetTypeName because it works with MYSQL_FIELD only,
+      // which can have already lost some information about the actual database type
+      if (!strcmp(S2FieldDescr->FieldTypeS2, "geography"))
+        current_row_ptr[5] = "geography";
+      else if (!strcmp(S2FieldDescr->FieldTypeS2, "geographypoint"))
+        current_row_ptr[5] = "geographypoint";
+      else if (!strncmp(S2FieldDescr->FieldTypeS2, "enum", 4))
+        current_row_ptr[5] = "enum";
+      else if (!strncmp(S2FieldDescr->FieldTypeS2, "set", 3))
+        current_row_ptr[5] = "set";
+      else
+        current_row_ptr[5] = MADB_GetTypeName(field);
       // COLUMN_SIZE
       if ((column_char_length = S2_GetColumnSize(field, odbc_type_info, S2FieldDescr->FieldTypeS2, force_db_charset, Stmt->Connection->DBCharsetnr)) != SQL_NO_TOTAL)
         is_alloc_fail |= allocAndFormatInt(&current_row_ptr[6], column_char_length);

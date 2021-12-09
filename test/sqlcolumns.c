@@ -27,7 +27,7 @@ int run_sql_columns(SQLHANDLE Stmt, const SQLSMALLINT *ExpDataType, const SQLSMA
   SQLCHAR *ExpTableName = "t_types";
   int utf8_char_size = getDbCharSize();
 
-  char *ExpTypeName[33] = {"tinyint", "smallint", "mediumint", "int(10) unsigned", "bigint(20) unsigned", "double", "float",
+  char *ExpTypeName[33] = {"tinyint", "smallint", "mediumint", "int unsigned", "bigint unsigned", "double", "float",
                              "decimal", "date", "time", "datetime", "datetime", "timestamp", "timestamp", "year",
                              "char", "binary", "varchar", "varbinary", "longtext", "mediumtext", "text", "tinytext",
                              "longblob", "mediumblob", "blob", "tinyblob", "bit",
@@ -102,7 +102,7 @@ int run_sql_columns(SQLHANDLE Stmt, const SQLSMALLINT *ExpDataType, const SQLSMA
     ExpColName[1] = numOfRowsFetched >= 26 ? (numOfRowsFetched % 26) + 'a' : '\0';
     FAIL_IF(_stricmp(colName, ExpColName) != 0, "Wrong COLUMN_NAME returned!");
     is_num(dataType, ExpDataType[numOfRowsFetched]);
-    FAIL_IF(_strnicmp(typeName, ExpTypeName[numOfRowsFetched], strlen(ExpTypeName[numOfRowsFetched])) != 0, "Wrong TYPE_NAME returned!");
+    FAIL_IF_NE_STR(ExpTypeName[numOfRowsFetched], typeName, "Wrong TYPE_NAME returned!");
 
     if (ExpColSize[numOfRowsFetched] != SQL_NULL_DATA) {
         is_num(columnSize, ExpColSize[numOfRowsFetched]);
