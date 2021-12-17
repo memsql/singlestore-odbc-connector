@@ -145,8 +145,6 @@ jobs:
 
   build-ubuntu:
     parameters:
-      memsql_password:
-        type: string
       machine_class:
         type: string
       test_dsn:
@@ -167,7 +165,6 @@ jobs:
       WITH_SANITIZER: << parameters.with_sanitizer >>
       BUILD_TYPE: << parameters.build_type >>
       MEMSQL_IMAGE: << parameters.memsql_image >>
-      MEMSQL_PASSWORD: << parameters.memsql_password >>
       TEST_DRIVER: << parameters.test_driver >>
       TEST_DSN: << parameters.test_dsn >>
       TEST_SERVER: singlestore.test.com
@@ -180,13 +177,7 @@ jobs:
       - checkout
       - run:
           name: Setup test cluster
-          command: |
-            if [ "$MEMSQL_PASSWORD" = "" ]
-            then
-              ./scripts/ensure-test-memsql-cluster.sh
-            else
-              ./scripts/ensure-test-memsql-cluster-password.sh
-            fi
+          command: ./scripts/setup-cluster.sh
       - run:
           name: Create test database
           command: ./.circleci/create-database.sh
@@ -323,13 +314,11 @@ workflows:
   test:
     jobs:
       - build-ubuntu:
-          name: build-ubuntu-sanitizer-unicode-7.5.6-<< matrix.build_type >>
+          name: build-ubuntu-sanitizer-unicode-7.6.5-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
                 - large
-              memsql_password:
-                - password
               build_type:
                 - RelWithDebInfo
               test_dsn:
@@ -337,17 +326,15 @@ workflows:
               test_driver:
                 - SingleStore ODBC Unicode Driver
               memsql_image:
-                - memsql/cluster-in-a-box:centos-7.5.6-9e799dbf4f-3.2.11-1.11.10
+                - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
               with_sanitizer:
                 - true
       - build-ubuntu:
-          name: build-ubuntu-unicode-7.5.6-<< matrix.build_type >>
+          name: build-ubuntu-unicode-7.6.5-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
                 - large
-              memsql_password:
-                - password
               build_type:
                 - RelWithDebInfo
               test_dsn:
@@ -355,15 +342,13 @@ workflows:
               test_driver:
                 - SingleStore ODBC Unicode Driver
               memsql_image:
-                - memsql/cluster-in-a-box:centos-7.5.6-9e799dbf4f-3.2.11-1.11.10
+                - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
       - build-ubuntu:
-          name: build-ubuntu-ansi-7.5.6-<< matrix.build_type >>
+          name: build-ubuntu-ansi-7.6.5-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
                 - large
-              memsql_password:
-                - password
               build_type:
                 - RelWithDebInfo
               test_dsn:
@@ -371,7 +356,7 @@ workflows:
               test_driver:
                 - SingleStore ODBC ANSI Driver
               memsql_image:
-                - memsql/cluster-in-a-box:centos-7.5.6-9e799dbf4f-3.2.11-1.11.10
+                - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
       - build-macos:
           name: build-macos-ansi-<< matrix.build_type >>
           matrix:
@@ -430,13 +415,11 @@ workflows:
                 - master
     jobs:
       - build-ubuntu:
-          name: build-ubuntu-sanitizer-unicode-7.5.6-<< matrix.build_type >>
+          name: build-ubuntu-sanitizer-unicode-7.6.5-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
                 - large
-              memsql_password:
-                - password
               build_type:
                 - RelWithDebInfo
               test_dsn:
@@ -444,17 +427,15 @@ workflows:
               test_driver:
                 - SingleStore ODBC Unicode Driver
               memsql_image:
-                - memsql/cluster-in-a-box:centos-7.5.6-9e799dbf4f-3.2.11-1.11.10
+                - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
               with_sanitizer:
                 - true
       - build-ubuntu:
-          name: build-ubuntu-unicode-7.5.6-<< matrix.build_type >>
+          name: build-ubuntu-unicode-7.6.5-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
                 - large
-              memsql_password:
-                - password
               build_type:
                 - RelWithDebInfo
               test_dsn:
@@ -462,21 +443,33 @@ workflows:
               test_driver:
                 - SingleStore ODBC Unicode Driver
               memsql_image:
-                - memsql/cluster-in-a-box:centos-7.5.6-9e799dbf4f-3.2.11-1.11.10
+                - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
       - build-ubuntu:
-          name: build-ubuntu-ansi-7.5.6-<< matrix.build_type >>
+          name: build-ubuntu-ansi-7.6.5-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
                 - large
-              memsql_password:
-                - password
               build_type:
                 - RelWithDebInfo
               test_dsn:
                 - ssodbc_test_a
               test_driver:
                 - SingleStore ODBC ANSI Driver
+              memsql_image:
+                - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
+      - build-ubuntu:
+          name: build-ubuntu-sanitizer-unicode-7.5.6-<< matrix.build_type >>
+          matrix:
+            parameters:
+              machine_class:
+                - large
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_w
+              test_driver:
+                - SingleStore ODBC Unicode Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.5.6-9e799dbf4f-3.2.11-1.11.10
       - build-ubuntu:
@@ -485,8 +478,6 @@ workflows:
             parameters:
               machine_class:
                 - large
-              memsql_password:
-                - password
               build_type:
                 - RelWithDebInfo
               test_dsn:
@@ -501,8 +492,6 @@ workflows:
             parameters:
               machine_class:
                 - large
-              memsql_password:
-                - password
               build_type:
                 - RelWithDebInfo
               test_dsn:
@@ -512,29 +501,25 @@ workflows:
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.1.13-11ddea2a3a-3.0.0-1.9.3
       - build-ubuntu:
-          name: build-ubuntu-unicode-7.0.15-<< matrix.build_type >>
+          name: build-ubuntu-ansi-7.5.6-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
-                - medium
-              memsql_password:
-                - ""
+                - large
               build_type:
                 - RelWithDebInfo
               test_dsn:
-                - ssodbc_test_w
+                - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC Unicode Driver
+                - SingleStore ODBC ANSI Driver
               memsql_image:
-                - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
+                - memsql/cluster-in-a-box:centos-7.5.6-9e799dbf4f-3.2.11-1.11.10
       - build-ubuntu:
           name: build-ubuntu-ansi-7.3.2-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
                 - large
-              memsql_password:
-                - password
               build_type:
                 - RelWithDebInfo
               test_dsn:
@@ -549,8 +534,6 @@ workflows:
             parameters:
               machine_class:
                 - large
-              memsql_password:
-                - password
               build_type:
                 - RelWithDebInfo
               test_dsn:
@@ -559,22 +542,6 @@ workflows:
                 - SingleStore ODBC ANSI Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.1.13-11ddea2a3a-3.0.0-1.9.3
-      - build-ubuntu:
-          name: build-ubuntu-ansi-7.0.15-<< matrix.build_type >>
-          matrix:
-            parameters:
-              machine_class:
-                - medium
-              memsql_password:
-                - ""
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - ssodbc_test_a
-              test_driver:
-                - SingleStore ODBC ANSI Driver
-              memsql_image:
-                - memsql/cluster-in-a-box:centos-7.0.15-619d118712-1.9.5-1.5.0
       - build-linux-in-docker:
           name: build-debian-8-unicode-<< matrix.build_type >>
           matrix:
