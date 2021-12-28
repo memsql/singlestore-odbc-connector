@@ -19,7 +19,7 @@
 # *************************************************************************************/
 PROJECT(singlestore_connector_odbc C)
 
-cmake_minimum_required(VERSION 2.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.9)
 
 SET(MARIADB_ODBC_VERSION_MAJOR 1)
 SET(MARIADB_ODBC_VERSION_MINOR 0)

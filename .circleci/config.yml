@@ -44,8 +44,6 @@ commands:
       - run:
           name: Setup Machine
           command: |
-            git -C /usr/local/Homebrew/Library/Taps/homebrew/homebrew-core fetch --unshallow
-            git -C /usr/local/Homebrew/Library/Taps/homebrew/homebrew-cask fetch --unshallow
             brew update
             brew install openssl@1.1
             brew install curl
@@ -105,7 +103,7 @@ jobs:
       driver_type:
         type: string
     macos:
-      xcode: 11.0.0
+      xcode: 13.2.1
     environment:
       BUILD_TYPE: << parameters.build_type >>
       TEST_DSN: << parameters.test_dsn >>
@@ -262,7 +260,7 @@ jobs:
       build_type:
         type: string
     macos:
-      xcode: 11.0.0
+      xcode: 13.2.1
     environment:
       BUILD_TYPE: << parameters.build_type >>
       CONTINUOUS_INTEGRATION: true
