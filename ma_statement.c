@@ -4767,8 +4767,10 @@ SQLRETURN MADB_StmtColumnsNoInfoSchema(MADB_Stmt *Stmt,
   if (ColumnName && NameLength4 <= 0)
     NameLength4 = strlen(ColumnName);
 
-  // TODO: PLAT-5907 set force_db_charset to 0 for engine versions where the correct utf8mb4 charsetnr is reported
-  int force_db_charset = single_store_get_server_version(Stmt->Connection->mariadb) >= 70500;
+  // In SingleStore 7.5, utf8mb4 charsetnr is reported as utf8, so we set
+  // field charset to database default charset
+  unsigned long s2_version = single_store_get_server_version(Stmt->Connection->mariadb);
+  int force_db_charset = s2_version >= 70500 && s2_version < 70800;
 
   // get the list of matching tables
   tables_res = S2_ShowTables(Stmt, CatalogName, NameLength1, TableName, NameLength3, TRUE);
@@ -4857,7 +4859,7 @@ SQLRETURN MADB_StmtColumnsNoInfoSchema(MADB_Stmt *Stmt,
       else
       {
         // in this case field is filtered by column_like in `SHOW COLUMNS FROM ... LIKE <column_like>`
-        // so we should skip it indeed.
+        // so we should skip it
         continue;
       }
       // TABLE_CAT
@@ -4872,7 +4874,7 @@ SQLRETURN MADB_StmtColumnsNoInfoSchema(MADB_Stmt *Stmt,
       is_alloc_fail |= allocAndFormatInt(&current_row_ptr[4], odbc_data_type);
       // TYPE_NAME
       // we don't just use MADB_GetTypeName because it works with MYSQL_FIELD only,
-      // which can have already lost some information about the actual database type
+      // which could have already lost some information about the actual database type
       if (!strcmp(S2FieldDescr->FieldTypeS2, "geography"))
         current_row_ptr[5] = "geography";
       else if (!strcmp(S2FieldDescr->FieldTypeS2, "geographypoint"))
