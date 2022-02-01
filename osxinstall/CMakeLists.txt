@@ -114,6 +114,6 @@ ENDFOREACH()
 
 IF(NOT USE_SYSTEM_INSTALLED_LIB)
   FOREACH(CONNECTOR_DRIVER_TYPE_SHORT IN LISTS CONNECTOR_DRIVER_TYPES_SHORT)
-    ADD_DEPENDENCIES(copypkgfiles ssodbc${CONNECTOR_DRIVER_TYPE_SHORT} dialog caching_sha2_password auth_gssapi_client sha256_password mysql_clear_password client_ed25519)
+    ADD_DEPENDENCIES(copypkgfiles ssodbc${CONNECTOR_DRIVER_TYPE_SHORT} dialog caching_sha2_password auth_gssapi_client sha256_password client_ed25519)
   ENDFOREACH()
 ENDIF()

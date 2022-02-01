@@ -662,7 +662,7 @@ retry:
     }
     if (!(auth_plugin= (auth_plugin_t *) mysql_client_find_plugin(mysql,
                          auth_plugin_name, MYSQL_CLIENT_AUTHENTICATION_PLUGIN)))
-      auth_plugin= &dummy_fallback_client_plugin;
+      return 1;
 
     goto retry;
 

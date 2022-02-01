@@ -319,7 +319,7 @@ ODBC_TEST(driver_connect_simple) {
                            conn_out, sizeof(conn_out), &conn_out_len,
                            SQL_DRIVER_COMPLETE) != SQL_ERROR,
           "Should not be able to connect with incomplete parameters on Unix");
-  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "IM008"); // dialog failed
+  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "HY000"); // general error state
 #endif
 
   return OK;
@@ -416,7 +416,7 @@ ODBC_TEST(driver_connect_simple_w) {
                            conn_out, sizeof(conn_out), &conn_out_len,
                            SQL_DRIVER_COMPLETE) != SQL_ERROR,
           "Should not be able to connect with incomplete parameters on Unix");
-  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "IM008"); // dialog failed
+  CHECK_SQLSTATE_EX(hdbc, SQL_HANDLE_DBC, "HY000"); // general error state
 #endif
 
   return OK;

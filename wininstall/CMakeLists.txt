@@ -100,7 +100,7 @@ ADD_DEPENDENCIES(${MSI_PACKAGE} ODBC_WIX)
 FOREACH(CONNECTOR_DRIVER_TYPE_SHORT IN LISTS CONNECTOR_DRIVER_TYPES_SHORT)
   ADD_DEPENDENCIES(ODBC_WIX ssodbc${CONNECTOR_DRIVER_TYPE_SHORT} ssodbcs)
   IF(NOT USE_SYSTEM_INSTALLED_LIB)
-    ADD_DEPENDENCIES(ODBC_WIX ssodbc${CONNECTOR_DRIVER_TYPE_SHORT} ssodbcs dialog caching_sha2_password auth_gssapi_client sha256_password mysql_clear_password client_ed25519)
+    ADD_DEPENDENCIES(ODBC_WIX ssodbc${CONNECTOR_DRIVER_TYPE_SHORT} ssodbcs dialog caching_sha2_password auth_gssapi_client sha256_password client_ed25519)
   ENDIF()
 ENDFOREACH()
 

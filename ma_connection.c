@@ -2317,9 +2317,7 @@ SQLRETURN MADB_DriverConnect(MADB_Dbc *Dbc, SQLHWND WindowHandle, SQLCHAR *InCon
       /* For SQL_DRIVER_COMPLETE(_REQUIRED) this is not the end - will show prompt for user */
       goto error;
     }
-    /* If we got here, it means that we had unsuccessful connect attempt with SQL_DRIVER_COMPLETE(_REQUIRED) completion
-       Have to clean that error */
-    MADB_CLEAR_ERROR(&Dbc->Error);
+
     break;
 
   case SQL_DRIVER_PROMPT:
@@ -2333,7 +2331,10 @@ SQLRETURN MADB_DriverConnect(MADB_Dbc *Dbc, SQLHWND WindowHandle, SQLCHAR *InCon
   /* Without window handle we can't show a dialog */
   if (DriverCompletion != SQL_DRIVER_NOPROMPT && !WindowHandle)
   {
-    MADB_SetError(&Dbc->Error, MADB_ERR_IM008, NULL, 0);
+    /* if we already have an error set, we should keep it
+    as most likely when there is no WindowHandle, we are running non-interactively */
+    if (!Dbc->Error.NativeError)
+      MADB_SetError(&Dbc->Error, MADB_ERR_IM008, NULL, 0);
     goto error;
   }
   
