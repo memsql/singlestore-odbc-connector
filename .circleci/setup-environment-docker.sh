@@ -19,7 +19,9 @@
 
 if [[ $IMAGE_NAME == centos* ]]
 then
-  yum update
+  sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-Linux-*
+  sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-Linux-*
+  yum -y update
   yum -y install gcc-c++ make gcc openssl-devel unixODBC unixODBC-devel wget bind-utils
   wget https://github.com/Kitware/CMake/releases/download/v3.20.3/cmake-3.20.3-linux-x86_64.tar.gz
   cd /usr || exit
