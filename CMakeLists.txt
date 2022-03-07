@@ -572,7 +572,7 @@ IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
         math(EXPR DRIVERS_COUNT "${idx}+1")
 
         # Configuring ini files for testing with UnixODBC
-        SET(TEST_DRIVER "SingleStore ODBC ${DRIVER_TYPE} Driver")
+        SET(TEST_DRIVER "SingleStore ODBC ${CPACK_PACKAGE_VERSION} ${DRIVER_TYPE} Driver")
         SET(TEST_DESCRIPTION "SingleStore ODBC ${CPACK_PACKAGE_VERSION} ${DRIVER_TYPE} Connector")
 
         MESSAGE(STATUS "Configuring Test Driver: ${TEST_DRIVER}, Test DSN: ${dsn_name}_${CONNECTOR_DRIVER_TYPE_SHORT}, tcp://${TEST_UID}@${TEST_SERVER}:${TEST_PORT}/${TEST_SCHEMA} socket: ${TEST_SOCKET}")

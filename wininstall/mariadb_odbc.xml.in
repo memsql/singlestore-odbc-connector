@@ -62,13 +62,13 @@
     </Component>
     <Component Id="DriverA" Guid="@GUID_DRIVER_A@" SharedDllRefCount="yes" Directory="INSTALLFOLDER" Win64="@IS_WIN64@">
       <File Id="singlestore_odbc_a_dll" Name="ssodbca.dll" KeyPath="yes" DiskId="1" Source="$(var.binaries_dir)/ssodbca.dll">
-        <ODBCDriver Id="madb_odbc_driver_a" Name="SingleStore ODBC ANSI Driver" SetupFile="singlestore_odbc_setup" />
+        <ODBCDriver Id="madb_odbc_driver_a" Name="SingleStore ODBC @PRODUCT_VERSION@ ANSI Driver" SetupFile="singlestore_odbc_setup" />
       </File>
       <File Id="singlestore_odbc_lib" Name="ssodbca.lib" DiskId="1" Source="$(var.binaries_dir)/ssodbca.lib" />
     </Component>
     <Component Id="DriverW" Guid="@GUID_DRIVER_W@" SharedDllRefCount="yes" Directory="INSTALLFOLDER" Win64="@IS_WIN64@">
       <File Id="singlestore_odbc_w_dll" Name="ssodbcw.dll" KeyPath="yes" DiskId="1" Source="$(var.binaries_dir)/ssodbcw.dll">
-        <ODBCDriver Id="madb_odbc_driver_w" Name="SingleStore ODBC Unicode Driver" SetupFile="singlestore_odbc_setup" />
+        <ODBCDriver Id="madb_odbc_driver_w" Name="SingleStore ODBC @PRODUCT_VERSION@ Unicode Driver" SetupFile="singlestore_odbc_setup" />
       </File>
       <File Id="singlestore_w_odbc_lib" Name="ssodbcw.lib" DiskId="1" Source="$(var.binaries_dir)/ssodbcw.lib" />
     </Component>

@@ -322,7 +322,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC Unicode Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> Unicode Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
               with_sanitizer:
@@ -338,7 +338,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC Unicode Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> Unicode Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
       - build-ubuntu:
@@ -352,7 +352,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC ANSI Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> ANSI Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
       - build-macos:
@@ -364,7 +364,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               driver_name:
-                - SingleStore ODBC ANSI Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> ANSI Driver
               driver_type:
                 - ansi
       - build-windows:
@@ -376,7 +376,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC Unicode Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> Unicode Driver
               driver_type:
                 - unicode
       - build-macos:
@@ -388,7 +388,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               driver_name:
-                - SingleStore ODBC Unicode Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> Unicode Driver
               driver_type:
                 - unicode
       - build-windows:
@@ -400,7 +400,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC ANSI Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> ANSI Driver
               driver_type:
                 - ansi
   daily:
@@ -423,7 +423,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC Unicode Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> Unicode Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
               with_sanitizer:
@@ -439,7 +439,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC Unicode Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> Unicode Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
       - build-ubuntu:
@@ -453,7 +453,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC ANSI Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> ANSI Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
       - build-ubuntu:
@@ -481,7 +481,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC Unicode Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> Unicode Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
       - build-ubuntu:
@@ -495,7 +495,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC Unicode Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> Unicode Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.1.13-11ddea2a3a-3.0.0-1.9.3
       - build-ubuntu:
@@ -523,7 +523,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC ANSI Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> ANSI Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
       - build-ubuntu:
@@ -537,7 +537,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC ANSI Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> ANSI Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.1.13-11ddea2a3a-3.0.0-1.9.3
       - build-linux-in-docker:
@@ -551,7 +551,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC Unicode Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> Unicode Driver
       - build-linux-in-docker:
           requires:
             - build-debian-8-unicode-RelWithDebInfo
@@ -565,7 +565,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC ANSI Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> ANSI Driver
       - build-linux-in-docker:
           requires:
             - build-debian-8-ansi-RelWithDebInfo
@@ -579,7 +579,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC Unicode Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> Unicode Driver
       - build-linux-in-docker:
           requires:
             - build-debian-9-unicode-RelWithDebInfo
@@ -593,7 +593,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC ANSI Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> ANSI Driver
       - build-linux-in-docker:
           requires:
             - build-debian-9-ansi-RelWithDebInfo
@@ -607,7 +607,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC Unicode Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> Unicode Driver
       - build-linux-in-docker:
           requires:
             - build-debian-10-unicode-RelWithDebInfo
@@ -621,7 +621,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC ANSI Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> ANSI Driver
       - build-linux-in-docker:
           requires:
             - build-debian-10-ansi-RelWithDebInfo
@@ -635,7 +635,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC Unicode Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> Unicode Driver
       - build-linux-in-docker:
           requires:
             - build-centos-7-unicode-RelWithDebInfo
@@ -649,7 +649,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC ANSI Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> ANSI Driver
       - build-linux-in-docker:
           requires:
             - build-centos-7-ansi-RelWithDebInfo
@@ -663,7 +663,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC Unicode Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> Unicode Driver
       - build-linux-in-docker:
           requires:
             - build-centos-8-unicode-RelWithDebInfo
@@ -677,7 +677,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC ANSI Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> ANSI Driver
       - build-macos:
           requires:
             - build-centos-8-ansi-RelWithDebInfo
@@ -689,7 +689,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               driver_name:
-                - SingleStore ODBC Unicode Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> Unicode Driver
               driver_type:
                 - unicode
       - build-macos:
@@ -703,7 +703,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               driver_name:
-                - SingleStore ODBC ANSI Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> ANSI Driver
               driver_type:
                 - ansi
       - build-windows:
@@ -717,7 +717,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_w
               test_driver:
-                - SingleStore ODBC Unicode Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> Unicode Driver
               driver_type:
                 - unicode
       - build-windows:
@@ -731,7 +731,7 @@ workflows:
               test_dsn:
                 - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC ANSI Driver
+                - SingleStore ODBC << pipeline.parameters.driver-version >> ANSI Driver
               driver_type:
                 - ansi
   publish:
