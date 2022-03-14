@@ -37,13 +37,28 @@ const char *Description=      "MariaDB C/ODBC test DSN for automatic testing";
 /****************************** Helpers ****************************/
 #define RESET_DSN(dsn) MADB_DSN_Free(dsn);memset(dsn, 0, sizeof(MADB_Dsn))
 
+// keys documented as option  parameters
+// https://docs.singlestore.com/managed-service/en/developer-resources/connect-with-application-development-tools/connect-with-odbc/the-singlestore-odbc-driver.html#using-the-option-parameter
+BOOL IsOptionKey(char *key)
+{
+  return (
+    !strcmp(key, "FOUND_ROWS") ||
+    !strcmp(key, "NO_PROMPT") ||
+    !strcmp(key, "DYNAMIC_CURSOR") ||
+    !strcmp(key, "USE_MYCNF") ||
+    !strcmp(key, "NO_CACHE") ||
+    !strcmp(key, "FORWARD_CURSOR") ||
+    !strcmp(key, "AUTO_RECONNECT") ||
+    !strcmp(key, "MULTI_STATEMENTS"));
+}
+
 BOOL VerifyOptionFields(MADB_Dsn *Dsn)
 {
   int i= 0;
 
   while (DsnKeys[i].DsnKey != NULL)
   {
-    if (DsnKeys[i].Type == DSN_TYPE_OPTION && DsnKeys[i].IsAlias == 0)
+    if ((DsnKeys[i].Type == DSN_TYPE_OPTION && DsnKeys[i].IsAlias == 0) || IsOptionKey(DsnKeys[i].DsnKey))
     {
       if (*(my_bool *)((char *)Dsn + DsnKeys[i].DsnOffset) != (DSN_OPTION(Dsn, DsnKeys[i].FlagValue) != 0 ? 1 : 0))
       {

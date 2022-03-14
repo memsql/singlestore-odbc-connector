@@ -21,9 +21,9 @@
 
 #define BUFFER_LEN 256
 
-void get_conn_string(char* c) {
+void get_conn_string(char* c, char* additional_params) {
     sprintf((char *) c, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;NO_SSPS=%d;%s",
-            my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, NoSsps, add_connstr);
+            my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, NoSsps, additional_params);
 }
 
 int check_stmt_correct_type_info(const MADB_TypeInfo* const ExpTypeInfo, MADB_TypeInfo* const RecTypeInfo, SQLLEN cpSize) {
@@ -227,7 +227,7 @@ ODBC_TEST(t_sqlgettypeinfo2) {
     SQLHANDLE Stmt1;
     SQLCHAR conn[512], dynCursorConn[600]; /* dynCursorConn should be larger than conn to make sure sprintf does not corrupt memory */
 
-    get_conn_string((char *) conn);
+    get_conn_string((char *) conn, "");
     sprintf((char *) dynCursorConn, "%s;OPTION=67108898", conn);
 
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
@@ -276,7 +276,7 @@ ODBC_TEST(t_sqlgettypeinfo3) {
     SQLHANDLE Stmt1;
     SQLCHAR conn[512], dynCursorConn[600]; /* dynCursorConn should be larger than conn to make sure sprintf does not corrupt memory */
 
-    get_conn_string((char *) conn);
+    get_conn_string((char *) conn, "");
     sprintf((char *) dynCursorConn, "%s;OPTION=67108898", conn);
 
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
@@ -325,7 +325,7 @@ ODBC_TEST(t_sqlgettypeinfo_sequential) {
     SQLHANDLE Stmt1;
     SQLCHAR conn[512];
 
-    get_conn_string((char *) conn);
+    get_conn_string((char *) conn, "");
 
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
     CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
@@ -363,7 +363,7 @@ ODBC_TEST(t_sqlgettypeinfo_no_bind) {
     SQLHANDLE Stmt1;
     SQLCHAR conn[512];
 
-    get_conn_string((char *) conn);
+    get_conn_string((char *) conn, "");
 
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
     CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
@@ -402,7 +402,7 @@ ODBC_TEST(t_sqlgettypeinfo_fetchscroll) {
 
     qsort(expTypeInfo, TYPES_COUNT, sizeof(MADB_TypeInfo), compare);
 
-    get_conn_string((char *) conn);
+    get_conn_string((char *) conn, "");
     sprintf((char *) dynCursorConn, "%sOPTION=67108898", conn);
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
     CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
@@ -489,7 +489,7 @@ ODBC_TEST(t_sqlgettypeinfo_getdata) {
     MADB_TypeInfo *expTypeInfo = TypeInfoV3;
     qsort(expTypeInfo, TYPES_COUNT, sizeof(MADB_TypeInfo), compare);
 
-    get_conn_string((char *) conn);
+    get_conn_string((char *) conn, "NO_CACHE=0");
 
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
     CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
@@ -530,7 +530,7 @@ ODBC_TEST(t_sqlgettypeinfo_closecursor) {
     MADB_TypeInfo *expTypeInfo = TypeInfoV3;
     qsort(expTypeInfo, TYPES_COUNT, sizeof(MADB_TypeInfo), compare);
 
-    get_conn_string((char *) conn);
+    get_conn_string((char *) conn, "");
 
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
     CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
@@ -563,7 +563,7 @@ ODBC_TEST(t_sqlgettypeinfo_colattribute) {
     SQLLEN unsgnd;
     SQLCHAR typeName[BUFFER_LEN];
 
-    get_conn_string((char *) conn);
+    get_conn_string((char *) conn, "");
 
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
     CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
@@ -604,7 +604,7 @@ ODBC_TEST(t_sqlgettypeinfo_describecol) {
     SQLSMALLINT DecimalDigits;
     SQLSMALLINT Nullable;
 
-    get_conn_string((char *) conn);
+    get_conn_string((char *) conn, "");
 
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
     CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
@@ -647,7 +647,7 @@ ODBC_TEST(t_sqlgettypeinfo_stmtattributes) {
     INIT_TYPE_INFO(&recTypeInfo);
     qsort(expTypeInfo, TYPES_COUNT, sizeof(MADB_TypeInfo), compare);
 
-    get_conn_string((char *) conn);
+    get_conn_string((char *) conn, "");
 
     CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
     CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,

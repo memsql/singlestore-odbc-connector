@@ -778,8 +778,8 @@ ODBC_TEST(t_no_cache_multistatement)
   SQLHANDLE Connection1, Stmt1;
   SQLCHAR conn[512];
 
-  sprintf((char *) conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s;NO_CACHE=1;OPTIONS=%lu",
-          my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr, my_options);
+  sprintf((char *) conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s;OPTIONS=%lu",
+          my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr, my_options + 1048576 /*MADB_OPT_FLAG_NO_CACHE*/);
 
   CHECK_ENV_RC(Env, SQLAllocHandle(SQL_HANDLE_DBC, Env, &Connection1));
   CHECK_DBC_RC(Connection1,

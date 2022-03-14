@@ -21,7 +21,7 @@ version: 2.1
 parameters:
   driver-version:
     type: string
-    default: "1.0.7"
+    default: "1.0.8"
 
 commands:
   setup-environment-linux:

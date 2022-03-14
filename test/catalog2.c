@@ -749,7 +749,7 @@ ODBC_TEST(t_bug55870)
      Thus let's test it on NO_I_S connection too */
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc1));
 
-  sprintf((char *)noI_SconnStr, "DSN=%s;UID=%s;PWD=%s; NO_I_S=1", my_dsn, my_uid, my_pwd);
+  sprintf((char *)noI_SconnStr, "DSN=%s;UID=%s;PWD=%s; NO_I_S=1;NO_CACHE=0", my_dsn, my_uid, my_pwd);
 
   sprintf(query, "grant Insert, Select on bug55870 to %s", my_uid);
   SQLExecDirect(Stmt, query, SQL_NTS);
