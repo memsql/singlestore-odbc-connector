@@ -2426,6 +2426,25 @@ SQLRETURN MADB_DriverConnect(MADB_Dbc *Dbc, SQLHWND WindowHandle, SQLCHAR *InCon
     MADB_SetError(&Dbc->Error, MADB_ERR_HY000, "Error while parsing DSN", 0);
     goto error;
   }
+  if ((Dsn->Password != NULL) +
+      (Dsn->JWT != NULL) +
+      (Dsn->IsBrowserAuth != 0) > 1)
+  {
+    MADB_SetError(&Dbc->Error, MADB_ERR_HY000, "Only one of PASSWORD, JWT, BROWSER_SSO can be specified", 0);
+    goto error;
+  }
+  if (Dsn->JWT)
+  {
+    // we will send JWT as password
+    Dsn->Password = Dsn->JWT;
+  }
+  if (Dsn->IsBrowserAuth)
+  {
+    // TODO: implement
+    // 1. Check the keyring
+    // 2. Call auth helper if needed
+    // 3. Store credentials in the keyring
+  }
 
   /* if DSN prompt is off, adjusting DriverCompletion */
   if (Dsn->ConnectPrompt)

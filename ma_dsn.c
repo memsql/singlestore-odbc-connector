@@ -35,6 +35,8 @@
 
 MADB_DsnKey DsnKeys[]=
 {
+  /* WARNING: if you add or change paramerters with indexes before 39 (NO_SSPS),
+   make sure to update MADB_DsnMap DsnMap[] structure in odbc_dsn.c */
   {"DSN",            offsetof(MADB_Dsn, DSNName),           DSN_TYPE_STRING, 0, 0}, /* 0 */
   {"DESCRIPTION",    offsetof(MADB_Dsn, Description),       DSN_TYPE_STRING, 0, 0},
   {"DRIVER",         offsetof(MADB_Dsn, Driver),            DSN_TYPE_STRING, 0, 0},
@@ -66,7 +68,7 @@ MADB_DsnKey DsnKeys[]=
   {"SSLCIPHER",      offsetof(MADB_Dsn, SslCipher),         DSN_TYPE_STRING, 0, 0},
   {"SSLVERIFY",      offsetof(MADB_Dsn, SslVerify),         DSN_TYPE_BOOL,   0, 0},
   {"TLSPEERFP",      offsetof(MADB_Dsn, TlsPeerFp),         DSN_TYPE_STRING, 0, 0},
-  {"TLSPEERFPLIST",  offsetof(MADB_Dsn, TlsPeerFpList),     DSN_TYPE_STRING, 0, 0},
+  {"TLSPEERFPLIST",  offsetof(MADB_Dsn, TlsPeerFpList),     DSN_TYPE_STRING, 0, 0}, /* 26 */
   {"SSLCRL",         offsetof(MADB_Dsn, SslCrl),            DSN_TYPE_STRING, 0, 0},
   {"SSLCRLPATH",     offsetof(MADB_Dsn, SslCrlPath),        DSN_TYPE_STRING, 0, 0},
   {"SOCKET",         offsetof(MADB_Dsn, Socket),            DSN_TYPE_STRING, 0, 0},
@@ -82,6 +84,10 @@ MADB_DsnKey DsnKeys[]=
   {"NO_SSPS",        offsetof(MADB_Dsn, NoSsps),            DSN_TYPE_BOOL,   0, 0},
   {"NO_CACHE",       offsetof(MADB_Dsn, NoCache),           DSN_TYPE_OPTION, MADB_OPT_FLAG_NO_CACHE, 0},
   {"APP",            offsetof(MADB_Dsn, App),               DSN_TYPE_STRING, 0, 0},
+  /* SSO parameters */
+  {"BROWSER_SSO",    offsetof(MADB_Dsn, IsBrowserAuth),     DSN_TYPE_BOOL  , 0, 0},
+  {"JWT",            offsetof(MADB_Dsn, JWT),               DSN_TYPE_STRING, 0, 0},
+  {"AUTH_HELPER",    offsetof(MADB_Dsn, AuthHelperPath),    DSN_TYPE_STRING, 0, 0},
   /* Aliases. Here offset is index of aliased key */
   {"SERVERNAME",     DSNKEY_SERVER_INDEX,                   DSN_TYPE_STRING, 0, 1},
   {"USER",           DSNKEY_UID_INDEX,                      DSN_TYPE_STRING, 0, 1},
@@ -149,6 +155,7 @@ void MADB_DSN_Free(MADB_Dsn *Dsn)
   MADB_FREE(Dsn->DSNName);
   MADB_FREE(Dsn->Driver);
   MADB_FREE(Dsn->Description);
+  MADB_FREE(Dsn->App);
   MADB_FREE(Dsn->ServerName);
   MADB_FREE(Dsn->UserName);
   MADB_FREE(Dsn->Password);
@@ -168,6 +175,8 @@ void MADB_DSN_Free(MADB_Dsn *Dsn)
   MADB_FREE(Dsn->TlsPeerFp);
   MADB_FREE(Dsn->TlsPeerFpList);
   MADB_FREE(Dsn->SaveFile);
+  MADB_FREE(Dsn->JWT);
+  MADB_FREE(Dsn->AuthHelperPath);
   MADB_FREE(Dsn->ServerKey);
   MADB_FREE(Dsn->TlsKeyPwd);
   if (Dsn->FreeMe)
@@ -359,13 +368,13 @@ my_bool MADB_ReadDSN(MADB_Dsn *Dsn, const char *KeyValue, my_bool OverWrite)
   if (Value)
   {
     int  i= 1;
-    char KeyVal[1024];
+    char KeyVal[2048];
 
     while (DsnKeys[i].DsnKey)
     {
       unsigned int KeyIdx= DsnKeys[i].IsAlias ? DsnKeys[i].DsnOffset : i;
 
-      if (SQLGetPrivateProfileString(Dsn->DSNName, DsnKeys[i].DsnKey, "", KeyVal, 1024, "ODBC.INI") > 0)
+      if (SQLGetPrivateProfileString(Dsn->DSNName, DsnKeys[i].DsnKey, "", KeyVal, 2048, "ODBC.INI") > 0)
       {
         if (!MADB_DsnStoreValue(Dsn, KeyIdx, KeyVal, OverWrite))
           return FALSE;
@@ -385,13 +394,13 @@ my_bool MADB_ReadDSN(MADB_Dsn *Dsn, const char *KeyValue, my_bool OverWrite)
 my_bool MADB_DSN_Exists(const char *DsnName)
 {
   my_bool ret;
-  char buffer[1024];
+  char buffer[2048];
   char *p= "";
 
   if (!DsnName)
     return FALSE;
 
-  ret= (SQLGetPrivateProfileString(DsnName, NULL, p, buffer, 1024, "ODBC.INI") > 0);
+  ret= (SQLGetPrivateProfileString(DsnName, NULL, p, buffer, 2048, "ODBC.INI") > 0);
   return ret;
 }
 
@@ -653,7 +662,7 @@ SQLULEN MADB_DsnToString(MADB_Dsn *Dsn, char *OutString, SQLULEN OutLength)
   SQLULEN TotalLength= 0;
   char    *p=          OutString;
   char    *Value=      NULL;
-  char    TmpStr[1024]= { '\0' };
+  char    TmpStr[2048]= { '\0' };
   char    IntVal[12];
   int     CpyLength;
 
@@ -705,7 +714,7 @@ SQLULEN MADB_DsnToString(MADB_Dsn *Dsn, char *OutString, SQLULEN OutLength)
     if (Value)
     {
       my_bool isSpecial= (strchr(Value, ' ') ||  strchr(Value, ';') || strchr(Value, '@'));
-      CpyLength= _snprintf(TmpStr + TotalLength, 1024 - TotalLength, "%s%s=%s%s%s", (TotalLength) ? ";" : "",
+      CpyLength= _snprintf(TmpStr + TotalLength, 2048 - TotalLength, "%s%s=%s%s%s", (TotalLength) ? ";" : "",
                              DsnKeys[i].DsnKey, isSpecial ? "{" : "", Value, isSpecial ? "}" : "");
       TotalLength+= CpyLength;
     }

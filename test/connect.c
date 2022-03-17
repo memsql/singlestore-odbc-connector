@@ -149,7 +149,7 @@ int check_connection_string(size_t len, size_t expected_len, const SQLCHAR conn[
   // we should ignore this in order to check conn and conn_out equality.
   //
 
-  SQLCHAR sanitized_conn[1024];
+  SQLCHAR sanitized_conn[2048];
   size_t i, sanitized_len = 0;
   for (i = 0; i < len; i++) {
     if (strncmp((char*)(conn + i), "DRIVER=", 7) == 0) {
@@ -1934,6 +1934,36 @@ ODBC_TEST(driver_connect_no_cache_w) {
   return OK;
 }
 
+ODBC_TEST(driver_connect_jwt) {
+  HSTMT hdbc;
+  SQLCHAR conn[2048];
+  SQLCHAR conn_out[2048];
+
+  SQLExecDirect(Stmt, "GRANT ALL PRIVILEGES ON odbc_test.* TO 'SPCM1DAADM3DF001'@'%'", SQL_NTS);
+  SQLCHAR* user = "SPCM1DAADM3DF001";
+  SQLCHAR* jwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcHBfZGlzcGxheW5hbWUiOiJTUENNMURBQURNM0RGMDAxIiwibmFtZSI6IkpvaG4gRG9lIiwiZXhwIjoxNzE2M"
+                "jM5MDIwfQ.DWtsZ4Hqg-AWCPaEjV-Q6vfTJSbD4m7LWcngcG0lBZV53mOzBvKEcsrM2hRUOtUaNP_RbFDG9KOhsyBEz7"
+                "351ZNRQhiApjJiYdNlfG934YxHtmxyJQjQzhvW7AF3iSnLMttArWMUhZ7Y7KA2vcGkrRrYOy9UsbcJr0JPU63ehvIshq"
+                "QADKaZ08ws7jeUczYX9hB20Mg_WAVOCRVkTgT-arrS0Do7DKbzhuaz9ajcks5Zbr7zJSR8GIDYfrfMwTXVm_IARhBXCD"
+                "jvkr21qqlsbSEOwPE0eK9C_k8SKmP8zTdMAlMiuQx1Dfd9IUUjemfcfxRtHJkbR3utZUNyLf3-3Q";
+
+  CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc));
+  SQLSMALLINT conn_out_len;
+  sprintf((char*) conn, "DRIVER=%s;UID=%s;JWT=%s;SERVER=%s;PORT=%u;DB=%s;",
+          my_drivername, user, jwt, my_servername, my_port, my_schema);
+  CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
+                                      conn_out, 2048 * sizeof(SQLCHAR), &conn_out_len,
+                                      SQL_DRIVER_NOPROMPT));
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
+
+  HSTMT hstmt;
+  CHECK_DBC_RC(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt));
+  OK_SIMPLE_STMT(hstmt, "DROP TABLE IF EXISTS some_table");
+  CHECK_STMT_RC(hstmt, SQLFreeHandle(SQL_HANDLE_STMT, hstmt));
+  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+  return OK;
+}
+
 // TODO: test NamedPipe parameter and NamedPipe bit in options (has effect only on Windows)
 // TODO: test GUI prompts for Windows and Mac
 
@@ -1958,6 +1988,7 @@ MA_ODBC_TESTS my_tests[]=
   {driver_connect_forwardonly_w, "driver_connect_forwardonly_w", NORMAL, UNICODE_DRIVER},
   {driver_connect_no_cache, "driver_connect_no_cache", NORMAL, ALL_DRIVERS},
   {driver_connect_no_cache_w, "driver_connect_no_cache_w", NORMAL, UNICODE_DRIVER},
+//  {driver_connect_jwt, "driver_connect_jwt", NORMAL, ALL_DRIVERS}, TODO: PLAT-6103 enable this test
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 

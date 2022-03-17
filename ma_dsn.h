@@ -143,6 +143,10 @@ typedef struct st_madb_dsn
   my_bool InteractiveClient;
   my_bool ForceForwardOnly;
   my_bool CompatMode;
+  /* SSO parameters */
+  my_bool IsBrowserAuth;
+  char *JWT;
+  char *AuthHelperPath;
   /* --- Internal --- */
   int isPrompt;
   MADB_DsnKey *Keys;

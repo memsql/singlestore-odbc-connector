@@ -589,6 +589,35 @@ ODBC_TEST(odbc_290)
   return OK;
 }
 
+ODBC_TEST(auth_options)
+{
+  const char* pwd = "test_password";
+  const char* user = "test_user";
+  const char* descr = "Test dsn";
+  const char* host = "test_host";
+  const char* jwt = "test_jwt";
+  const char* auth_helper = "auth_helper";
+
+  char connstr4dsn[1024];
+
+  RESET_DSN(Dsn);
+  _snprintf(connstr4dsn, sizeof(connstr4dsn),
+    "DRIVER=%s;DESCRIPTION=%s;USER=%s;SERVER=%s;PASSWORD=%s;JWT=%s;AUTH_HELPER=%s;BROWSER_SSO=1",
+    my_drivername, descr, user, host, pwd, jwt, auth_helper);
+  printf("connsting is %s\n", connstr4dsn);
+  IS(MADB_ParseConnString(Dsn, connstr4dsn, SQL_NTS, ';'));
+
+  IS_STR(Dsn->Password,    pwd,   strlen(pwd) + 1);
+  IS_STR(Dsn->UserName,    user,  strlen(user) + 1);
+  IS_STR(Dsn->Description, descr, strlen(descr) + 1);
+  IS_STR(Dsn->ServerName,  host,  strlen(host) + 1);
+  IS_STR(Dsn->JWT,         jwt,   strlen(jwt) + 1);
+  IS_STR(Dsn->AuthHelperPath, auth_helper, strlen(auth_helper) + 1);
+  is_num(Dsn->IsBrowserAuth, 1);
+
+  return OK;
+}
+
 MA_ODBC_TESTS my_tests[]=
 {
   {connstring_test,       "connstring_parsing_test", NORMAL, ALL_DRIVERS},
@@ -601,6 +630,7 @@ MA_ODBC_TESTS my_tests[]=
   {odbc_228,              "odbc228_tlsversion",      NORMAL, ALL_DRIVERS},
   {odbc_284,              "odbc284_escapebrace",     NORMAL, ALL_DRIVERS},
   {odbc_290,              "odbc290_forwardonly",     NORMAL, ALL_DRIVERS},
+  {auth_options,          "auth_options",            NORMAL, ALL_DRIVERS},
   {NULL, NULL, 0, ALL_DRIVERS}
 };
 
