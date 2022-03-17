@@ -356,9 +356,19 @@ ODBC_TEST(buffers_exec_direct) {
     } else {
       CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, in_buf, 0), "HY090", 0, "Invalid string or buffer length");
     }
-
+// native error is not set properly by iODBC with Xcode 11.7 libraries
+#if !defined(__APPLE__)
     // S1090 is returned on MacOS instead of HY090, but error message is correct
     CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, in_buf, -1), iOdbc() ? "S1090" : "HY090", 0, "Invalid string or buffer length");
+#else
+    SQLCHAR SQLState[6];
+    SQLINTEGER NativeError;
+    SQLCHAR SQLMessage[SQL_MAX_MESSAGE_LENGTH];
+    SQLExecDirect(Stmt, in_buf, -1);
+    const SQLRETURN result = SQLGetDiagRec(SQL_HANDLE_STMT, Stmt, 1, SQLState, &NativeError, SQLMessage, SQL_MAX_MESSAGE_LENGTH, NULL);
+    if (!endswith(SQLMessage, "Invalid string or buffer length"))
+      return FAIL;
+#endif
 
     *in_buf = 0;
     CHECK_STMT_ERR(Stmt, SQLExecDirect(Stmt, in_buf, BUF_SIZE), "42000", 0, "Syntax error or access violation");
@@ -424,8 +434,19 @@ ODBC_TEST(buffers_exec_direct_w) {
     } else {
       CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, in_buf, 0), "HY090", 0, "Invalid string or buffer length");
     }
-
+// native error is not set properly by iODBC with Xcode 11.7 libraries
+#if !defined(__APPLE__)
+    // S1090 is returned on MacOS instead of HY090, but error message is correct
     CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, in_buf, -1), iOdbc() ? "S1090" : "HY090", 0, "Invalid string or buffer length");
+#else
+    SQLCHAR SQLState[6];
+    SQLINTEGER NativeError;
+    SQLCHAR SQLMessage[SQL_MAX_MESSAGE_LENGTH];
+    SQLExecDirect(Stmt, in_buf, -1);
+    const SQLRETURN result = SQLGetDiagRec(SQL_HANDLE_STMT, Stmt, 1, SQLState, &NativeError, SQLMessage, SQL_MAX_MESSAGE_LENGTH, NULL);
+    if (!endswith(SQLMessage, "Invalid string or buffer length"))
+      return FAIL;
+#endif
 
     *in_buf = 0;
     CHECK_STMT_ERR(Stmt, SQLExecDirectW(Stmt, in_buf, BUF_SIZE), "42000", 0, "Syntax error or access violation");

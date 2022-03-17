@@ -103,7 +103,7 @@ jobs:
       driver_type:
         type: string
     macos:
-      xcode: 13.2.1
+      xcode: 11.7.0
     environment:
       BUILD_TYPE: << parameters.build_type >>
       TEST_DSN: << parameters.test_dsn >>
@@ -260,7 +260,7 @@ jobs:
       build_type:
         type: string
     macos:
-      xcode: 13.2.1
+      xcode: 11.7.0
     environment:
       BUILD_TYPE: << parameters.build_type >>
       CONTINUOUS_INTEGRATION: true
