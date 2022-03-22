@@ -25,6 +25,8 @@
 #define MADB_CONN_OPT_AFTER         2
 #define MADB_CONN_OPT_BOTH          3
 
+#include "cJSON/cJSON.h"
+
 /* sql_mode's identifiers */
 enum enum_madb_sql_mode {MADB_NO_BACKSLASH_ESCAPES, MADB_ANSI_QUOTES };
 
@@ -51,6 +53,16 @@ struct st_ma_connection_methods
 };
 
 my_bool CheckConnection(MADB_Dbc *Dbc);
+
+typedef struct BrowserCredentials {
+  char *expiration;
+  char *token;
+  char *username;
+  char *email;
+  char *version;
+} BrowserAuthCredentials;
+BrowserAuthCredentials *BrowserAuth(MADB_Dbc *Dbc, const char *AuthHelperPath, const char* Email);
+void BrowserAuthCredentialsFree(BrowserAuthCredentials *bac);
 
 SQLRETURN MADB_DbcFree(MADB_Dbc *Connection);
 MADB_Dbc * MADB_DbcInit(MADB_Env *Env);

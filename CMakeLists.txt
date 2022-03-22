@@ -57,27 +57,28 @@ CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/ma_odbc_version.h.in
                ${CMAKE_SOURCE_DIR}/ma_odbc_version.h)
 
 SET (MARIADB_ODBC_SOURCES odbc_3_api.c
-                          ma_error.c
-                          ma_connection.c
-                          ma_helper.c
-                          ma_type_helper.c
-                          ma_debug.c
-                          ma_dsn.c
-                          ma_driver.c
-                          ma_info.c
-                          ma_environment.c
-                          ma_parse.c
-                          ma_statement.c
-                          ma_desc.c
-                          ma_string.c
-                          ma_result.c
-                          ma_common.c
-                          ma_legacy_helpers.c
-                          ma_typeconv.c
-                          ma_fake_request.c
-                          escape_sequences/ast.c
-                          escape_sequences/parser.c
-                          escape_sequences/lexical_analyzer.c)
+        ma_error.c
+        ma_connection.c
+        ma_helper.c
+        ma_type_helper.c
+        ma_debug.c
+        ma_dsn.c
+        ma_driver.c
+        ma_info.c
+        ma_environment.c
+        ma_parse.c
+        ma_statement.c
+        ma_desc.c
+        ma_string.c
+        ma_result.c
+        ma_common.c
+        ma_legacy_helpers.c
+        ma_typeconv.c
+        ma_fake_request.c
+        escape_sequences/ast.c
+        escape_sequences/parser.c
+        escape_sequences/lexical_analyzer.c
+        cJSON/cJSON.c)
 
 SET(DSN_DIALOG_FILES ${CMAKE_SOURCE_DIR}/dsn/odbc_dsn.c
                      ${CMAKE_SOURCE_DIR}/dsn/odbc_dsn.rc
