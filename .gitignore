@@ -18,6 +18,7 @@ libmariadb/mariadb_config/libmariadb.pc
 # Compiled Static libraries
 libmariadb/*.lib
 libmariadb/*.a
+libmariadb/libmariadb/*.a
 libmariadb/*.la
 libmariadb/*.lai
 libmariadb/*.lo
@@ -90,6 +91,10 @@ libmariadb/unittest/libmariadb/t_conc173
 libmariadb/unittest/libmariadb/thread
 libmariadb/unittest/libmariadb/view
 libmariadb/unittest/libmariadb/conc336
+libmariadb/unittest/libmariadb/libma_getopt.a
+libmariadb/unittest/mytap/libcctap.a
+libmariadb/unittest/libmariadb/libma_getopt.a
+libmariadb/unittest/mytap/libcctap.a
 
 #VS files/directories
 libmariadb/*.vcxproj
@@ -112,6 +117,14 @@ libmariadb/RelWithDebInfo
 # ODBC connector .gitignore
 build
 .vscode
+
+osxinstall/install_driver
+osxinstall/WELCOME.html
+osxinstall/scripts/postinstall
+osxinstall/build_package.sh
+osxinstall/distribution.plist
+osxinstall/ROOT
+osxinstall/*.pkg
 
 cmake-build-debug/
 cmake-build-relwithdebinfo/
@@ -179,6 +192,19 @@ test/odbc_tran
 test/odbc_types
 test/odbc_unicode
 test/odbc_use_result
+test/odbc_client_side
+test/odbc_connect
+test/odbc_sql_buffers
+test/odbc_sql_execute
+test/odbc_sql_get_diag_field
+test/odbc_sql_get_diag_rec
+test/odbc_sql_get_functions
+test/odbc_sql_get_info
+test/odbc_sql_get_type_info
+test/odbc_sql_procedure_columns
+test/odbc_sql_row_count
+test/odbc_sql_special_columns
+test/odbc_sqlcolumns
 test/basic
 test/blob
 test/bulk

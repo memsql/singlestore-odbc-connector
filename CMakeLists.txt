@@ -396,7 +396,7 @@ WHILE(${DRIVER_INDEX} LESS ${DRIVERS_COUNT})
     ADD_LIBRARY(${LIBRARY_NAME} SHARED ${MARIADB_ODBC_SOURCES_TYPE} maodbc${CONNECTOR_DRIVER_TYPE_SHORT}.rc)
 
     IF(APPLE)
-      SET(MAODBC_INSTALL_RPATH "${ODBC_LIB_DIR}" "@loader_path" "/usr/local/opt/libiodbc" "/usr/local/iODBC/lib" "/usr/local/opt/openssl@1.1/lib" "/usr/local/opt/libressl/lib")
+      SET(MAODBC_INSTALL_RPATH "${ODBC_LIB_DIR}" "@loader_path" "/usr/local/opt/libiodbc" "/usr/local/opt/libiodbc/lib" "/usr/local/iODBC/lib" "/usr/local/opt/openssl@1.1/lib" "/usr/local/opt/libressl/lib")
       SET_TARGET_PROPERTIES(${LIBRARY_NAME}
               PROPERTIES LINK_FLAGS "-Wl"
               INSTALL_RPATH_USE_LINK_PATH 0

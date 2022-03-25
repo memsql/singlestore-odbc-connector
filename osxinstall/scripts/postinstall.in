@@ -21,7 +21,7 @@
 
 touch /tmp/ssodbc_postinstall.log
 
-echo "Registering  SingleStore ODBC driver" > /tmp/ssodbc_postinstall.log
+echo "Registering  SingleStore ODBC driver" > /tmp/ssodbc_postinstall.log 2>&1
 
 if [ $2 ]; then
   target=$2
@@ -32,21 +32,21 @@ if [ $2 ]; then
     target="${target}/"
     ;;
   esac
-  echo "Driver installation target - $target" >> /tmp/ssodbc_postinstall.log
+  echo "Driver installation target - $target" >> /tmp/ssodbc_postinstall.log 2>&1
 fi
 
 set -a
 ODBCINSTINI="${target}Library/ODBC/odbcinst.ini"
 instinidir="$(dirname -- "$ODBCINSTINI")"
 
-echo "Using $ODBCINSTINI, dirname - ${instinidir}" >> /tmp/ssodbc_postinstall.log
+echo "Using $ODBCINSTINI, dirname - ${instinidir}" >> /tmp/ssodbc_postinstall.log 2>&1
 
 if [ ! -f $ODBCINSTINI ] ; then
-  echo "$ODBCINSTINI does not exist" >> /tmp/ssodbc_postinstall.log
+  echo "$ODBCINSTINI does not exist" >> /tmp/ssodbc_postinstall.log 2>&1
   mkdir -p "$instinidir" && touch "$ODBCINSTINI"
 
   if [ ! -f $ODBCINSTINI ] ; then
-    echo "$ODBCINSTINI still does not exist" >> /tmp/ssodbc_postinstall.log
+    echo "$ODBCINSTINI still does not exist" >> /tmp/ssodbc_postinstall.log 2>&1
     echo "$ODBCINSTINI still does not exist"
 #    mkdir -p "$instinidir"
 #    touch "$ODBCINSTINI"
@@ -55,14 +55,14 @@ if [ ! -f $ODBCINSTINI ] ; then
   chmod 664 $ODBCINSTINI
 
   if [ ! -f ${target}Library/ODBC/odbc.ini ] ; then
-    echo "${target}Library/ODBC/odbc.ini does not exist - creating it" >> /tmp/ssodbc_postinstall.log
+    echo "${target}Library/ODBC/odbc.ini does not exist - creating it" >> /tmp/ssodbc_postinstall.log 2>&1
     touch "${target}Library/ODBC/odbc.ini"
     chgrp admin ${target}Library/ODBC/odbc.ini
     chmod 664 ${target}Library/ODBC/odbc.ini
     echo "[ODBC Data Sources]" > ${target}Library/ODBC/odbc.ini
   fi
 
-  echo "Writing common options and driver entry" >> /tmp/ssodbc_postinstall.log
+  echo "Writing common options and driver entry" >> /tmp/ssodbc_postinstall.log 2>&1
   echo "[ODBC]" > $ODBCINSTINI
   echo "Trace     = no" >> $ODBCINSTINI
   echo "TraceFile = /tmp/iodbc_trace.log" >> $ODBCINSTINI
@@ -81,7 +81,7 @@ if [ ! -f $ODBCINSTINI ] ; then
   echo "Description = SingleStore Connector/ODBC(ANSI) @PRODUCT_VERSION@ @PRODUCT_ARCH_BITS@bit" >> $ODBCINSTINI
   echo "Threading   = 0" >> $ODBCINSTINI
   echo "" >> $ODBCINSTINI
-  echo "Registration has been successfully finished" >> /tmp/ssodbc_postinstall.log
+  echo "Registration has been successfully finished" >> /tmp/ssodbc_postinstall.log 2>&1
 
   exit 0
 fi
@@ -89,6 +89,6 @@ fi
 ${target}Library/SingleStore/SingleStore-Connector-ODBC/bin/install_driver "${target}Library/SingleStore/SingleStore-Connector-ODBC/libssodbca.dylib" "SingleStore ODBC ANSI Driver" "SingleStore Connector/ODBC(ANSI) @PRODUCT_VERSION@ @PRODUCT_ARCH_BITS@bit" >> /tmp/ssodbc_postinstall.log
 ${target}Library/SingleStore/SingleStore-Connector-ODBC/bin/install_driver "${target}Library/SingleStore/SingleStore-Connector-ODBC/libssodbcw.dylib" "SingleStore ODBC Unicode Driver" "SingleStore Connector/ODBC(Unicode) @PRODUCT_VERSION@ @PRODUCT_ARCH_BITS@bit" >> /tmp/ssodbc_postinstall.log
 
-echo "Registration has been successfully finished" >> /tmp/ssodbc_postinstall.log
+echo "Registration has been successfully finished" >> /tmp/ssodbc_postinstall.log 2>&1
 
 exit 0

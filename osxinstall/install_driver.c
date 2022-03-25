@@ -113,12 +113,12 @@ int main(int argc, char** argv)
 
   /* Our setup library does not have ConfigDriver. Thus there is no sense */
   /*SQLConfigDriver(NULL, ODBC_REMOVE_DRIVER, DriverName, NULL, NULL, 0, NULL);*/
-  SQLRemoveDriver(DriverName, FALSE, &UsageCount);
+  SQLRemoveDriver(DriverName, 0, &UsageCount);
   printf("Installing driver %s in %s as %s\n", DriverFileName, DriverDir, DriverName);
   _snprintf(DriverDescr, sizeof(DriverDescr), "%s%cDriver=%s%cDescription=%s%cThreading=0%c", DriverName, '\0', DriverLocation, '\0', DriverDescription, '\0', '\0');
 
 
-  if (SQLInstallDriverEx(DriverDescr, DriverDir, OutLocation, sizeof(OutLocation), NULL, ODBC_INSTALL_COMPLETE, NULL) == FALSE)
+  if (!SQLInstallDriverEx(DriverDescr, DriverDir, OutLocation, sizeof(OutLocation), NULL, ODBC_INSTALL_COMPLETE, NULL))
   {
     SQLInstallerError(1, &ErrorCode, ErrorText, (unsigned short)sizeof(ErrorText), NULL);
     printf("An error occured while registering driver: [%u] %s\n", ErrorCode, ErrorText);
