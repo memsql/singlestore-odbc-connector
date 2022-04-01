@@ -87,7 +87,7 @@ MADB_DsnKey DsnKeys[]=
   /* SSO parameters */
   {"BROWSER_SSO",    offsetof(MADB_Dsn, IsBrowserAuth),     DSN_TYPE_BOOL  , 0, 0},
   {"JWT",            offsetof(MADB_Dsn, JWT),               DSN_TYPE_STRING, 0, 0},
-  {"AUTH_HELPER",    offsetof(MADB_Dsn, AuthHelperPath),    DSN_TYPE_STRING, 0, 0},
+  {"TEST_MODE",      offsetof(MADB_Dsn, TestMode),          DSN_TYPE_INT,    0, 0}, /* Use some mock functions for testing */
   /* Aliases. Here offset is index of aliased key */
   {"SERVERNAME",     DSNKEY_SERVER_INDEX,                   DSN_TYPE_STRING, 0, 1},
   {"USER",           DSNKEY_UID_INDEX,                      DSN_TYPE_STRING, 0, 1},
@@ -176,7 +176,6 @@ void MADB_DSN_Free(MADB_Dsn *Dsn)
   MADB_FREE(Dsn->TlsPeerFpList);
   MADB_FREE(Dsn->SaveFile);
   MADB_FREE(Dsn->JWT);
-  MADB_FREE(Dsn->AuthHelperPath);
   MADB_FREE(Dsn->ServerKey);
   MADB_FREE(Dsn->TlsKeyPwd);
   if (Dsn->FreeMe)

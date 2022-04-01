@@ -135,6 +135,8 @@ static SQLCHAR *my_schema=          (SQLCHAR *)"odbc_test";
 static SQLCHAR *my_drivername=      (SQLCHAR *)"SingleStore ODBC ANSI Driver";
 static SQLCHAR *my_servername=      (SQLCHAR *)"127.0.0.1";
 static SQLCHAR *add_connstr=        (SQLCHAR*)"";
+static SQLCHAR *jwt_user=           (SQLCHAR*)"test_jwt_user";
+static SQLCHAR *jwt_password=       (SQLCHAR*)"";
 
 static unsigned int  my_port=        5506;
 char          ma_strport[12]= "PORT=5506";
@@ -343,6 +345,10 @@ void get_env_defaults()
   {
     my_pwd= (SQLCHAR*)env_val;
   }
+  if ((env_val= getenv("MEMSQL_JWT")) != NULL)
+  {
+    jwt_password= (SQLCHAR*)env_val;
+  }
   if ((env_val= getenv("TEST_SCHEMA")) != NULL)
   {
     my_schema= (SQLCHAR*)env_val;
@@ -353,6 +359,7 @@ void get_env_defaults()
     if (port > 0 && port < 0x10000)
     {
       my_port= port;
+      _snprintf(ma_strport, sizeof(ma_strport), "PORT=%u", my_port);
     }
   }
   if ((env_val= getenv("TEST_ADD_PARAM")) != NULL)
@@ -1721,5 +1728,10 @@ BOOL WindowsDM(HDBC hdbc)
 #else
 #define my_alloca(SZ) alloca((size_t) (SZ))
 #endif
+
+#define BROWSER_AUTH_FLAG_TEST_FIRST_CALL (1 << 1)
+#define BROWSER_AUTH_FLAG_TEST_SECOND_CALL (1 << 2)
+#define BROWSER_AUTH_FLAG_TEST_ENDPOINT (1 << 3)
+#define BROWSER_AUTH_FLAG_TEST_SHORT_TIMEOUT (1 << 4)
 
 #endif      /* #ifndef _tap_h_ */

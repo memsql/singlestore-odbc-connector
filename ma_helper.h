@@ -44,6 +44,7 @@ SQLSMALLINT MapMariadDbToOdbcType(MYSQL_FIELD *field);
 SQLSMALLINT MapToV2Type(SQLSMALLINT type);
 size_t MADB_GetHexString(char *BinaryBuffer, size_t BinaryLength,
                           char *HexBuffer, size_t HexLength);
+int CheckExpiration(int64_t expiration);
 
 size_t  MADB_GetDisplaySize(MYSQL_FIELD *Field, MARIADB_CHARSET_INFO *charset);
 size_t  MADB_GetOctetLength(MYSQL_FIELD *Field, unsigned short MaxCharLen);

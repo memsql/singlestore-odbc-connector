@@ -20,6 +20,10 @@
 #include "tap.h"
 #include "stdio.h"
 #include <wchar.h>
+#if !defined(_WIN32) && !defined(__APPLE__)
+#include <glib.h>
+#include <libsecret/secret.h>
+#endif
 
 ODBC_TEST(basic_connect) {
   HSTMT hdbc;
@@ -1939,18 +1943,10 @@ ODBC_TEST(driver_connect_jwt) {
   SQLCHAR conn[2048];
   SQLCHAR conn_out[2048];
 
-  SQLExecDirect(Stmt, "GRANT ALL PRIVILEGES ON odbc_test.* TO 'SPCM1DAADM3DF001'@'%'", SQL_NTS);
-  SQLCHAR* user = "SPCM1DAADM3DF001";
-  SQLCHAR* jwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcHBfZGlzcGxheW5hbWUiOiJTUENNMURBQURNM0RGMDAxIiwibmFtZSI6IkpvaG4gRG9lIiwiZXhwIjoxNzE2M"
-                "jM5MDIwfQ.DWtsZ4Hqg-AWCPaEjV-Q6vfTJSbD4m7LWcngcG0lBZV53mOzBvKEcsrM2hRUOtUaNP_RbFDG9KOhsyBEz7"
-                "351ZNRQhiApjJiYdNlfG934YxHtmxyJQjQzhvW7AF3iSnLMttArWMUhZ7Y7KA2vcGkrRrYOy9UsbcJr0JPU63ehvIshq"
-                "QADKaZ08ws7jeUczYX9hB20Mg_WAVOCRVkTgT-arrS0Do7DKbzhuaz9ajcks5Zbr7zJSR8GIDYfrfMwTXVm_IARhBXCD"
-                "jvkr21qqlsbSEOwPE0eK9C_k8SKmP8zTdMAlMiuQx1Dfd9IUUjemfcfxRtHJkbR3utZUNyLf3-3Q";
-
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc));
   SQLSMALLINT conn_out_len;
-  sprintf((char*) conn, "DRIVER=%s;UID=%s;JWT=%s;SERVER=%s;PORT=%u;DB=%s;",
-          my_drivername, user, jwt, my_servername, my_port, my_schema);
+  sprintf((char*)conn, "DRIVER=%s;UID=%s;JWT=%s;SERVER=%s;PORT=%u;DB=%s;",
+          my_drivername, jwt_user, jwt_password, my_servername, my_port, my_schema);
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, 2048 * sizeof(SQLCHAR), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
@@ -1961,6 +1957,65 @@ ODBC_TEST(driver_connect_jwt) {
   OK_SIMPLE_STMT(hstmt, "DROP TABLE IF EXISTS some_table");
   CHECK_STMT_RC(hstmt, SQLFreeHandle(SQL_HANDLE_STMT, hstmt));
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+  return OK;
+}
+
+ODBC_TEST(driver_connect_browser_sso) {
+  HSTMT hdbc;
+  SQLCHAR conn[2048];
+  SQLCHAR conn_out[2048];
+  int test_mode = BROWSER_AUTH_FLAG_TEST_FIRST_CALL;
+
+  CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc));
+  SQLSMALLINT conn_out_len;
+  sprintf((char*) conn, "DRIVER=%s;SERVER=%s;PORT=%u;DB=%s;OPTIONS=4;BROWSER_SSO=1;TEST_MODE=%d",
+          my_drivername, my_servername, my_port, my_schema, test_mode);
+
+#if !defined(__APPLE__) && !defined(_WIN32)
+  GError *err = NULL;
+  SecretService *service = secret_service_get_sync(0, NULL, &err);
+  SecretCollection *defaultCollection = secret_collection_for_alias_sync(
+    service, SECRET_COLLECTION_DEFAULT, 0 /*SecretCollectionFlags*/, NULL, &err);
+  if (err != NULL)
+  {
+    printf("Not running driver_connect_browser_sso test \
+    as gnome-keyring secret service cannot be started or no collection is available\n");
+    return OK;
+  }
+  gboolean is_locked = secret_collection_get_locked(defaultCollection);
+  if (is_locked)
+  {
+    printf("Not running driver_connect_browser_sso test as gnome-keyring secret service is locked\n");
+    return OK;
+  }
+#endif
+
+  CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
+                                      conn_out, 2048 * sizeof(SQLCHAR), &conn_out_len,
+                                      SQL_DRIVER_NOPROMPT));
+  HSTMT hstmt;
+  CHECK_DBC_RC(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt));
+  OK_SIMPLE_STMT(hstmt, "SELECT 1");
+
+  CHECK_STMT_RC(hstmt, SQLFreeHandle(SQL_HANDLE_STMT, hstmt));
+
+  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+
+  HDBC hdbc2;
+  CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc2));
+  test_mode = BROWSER_AUTH_FLAG_TEST_SECOND_CALL;
+
+  sprintf((char*) conn, "DRIVER=%s;SERVER=%s;PORT=%u;DB=%s;OPTIONS=4;BROWSER_SSO=1;TEST_MODE=%d",
+          my_drivername, my_servername, my_port, my_schema, test_mode);
+  CHECK_DBC_RC(hdbc2, SQLDriverConnect(hdbc2, NULL, conn, SQL_NTS,
+                                      conn_out, 2048 * sizeof(SQLCHAR), &conn_out_len,
+                                      SQL_DRIVER_NOPROMPT));
+  HSTMT hstmt2;
+  CHECK_DBC_RC(hdbc2, SQLAllocHandle(SQL_HANDLE_STMT, hdbc2, &hstmt2));
+  OK_SIMPLE_STMT(hstmt2, "SELECT 1");
+  CHECK_STMT_RC(hstmt2, SQLFreeHandle(SQL_HANDLE_STMT, hstmt2));
+  CHECK_DBC_RC(hdbc2, SQLDisconnect(hdbc2));
+
   return OK;
 }
 
@@ -1988,7 +2043,10 @@ MA_ODBC_TESTS my_tests[]=
   {driver_connect_forwardonly_w, "driver_connect_forwardonly_w", NORMAL, UNICODE_DRIVER},
   {driver_connect_no_cache, "driver_connect_no_cache", NORMAL, ALL_DRIVERS},
   {driver_connect_no_cache_w, "driver_connect_no_cache_w", NORMAL, UNICODE_DRIVER},
-//  {driver_connect_jwt, "driver_connect_jwt", NORMAL, ALL_DRIVERS}, TODO: PLAT-6103 enable this test
+  {driver_connect_jwt, "driver_connect_jwt", NORMAL, ALL_DRIVERS},
+#if !defined(__APPLE__)
+  {driver_connect_browser_sso, "driver_connect_browser_sso", NORMAL, ALL_DRIVERS},
+#endif
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 

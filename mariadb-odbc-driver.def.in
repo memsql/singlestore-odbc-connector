@@ -73,5 +73,5 @@ SQLStatistics@WIDECHARCALL@
 SQLTablePrivileges@WIDECHARCALL@
 SQLTables@WIDECHARCALL@
 SQLTransact
-BrowserAuthInternal
+BrowserAuth
 BrowserAuthCredentialsFree

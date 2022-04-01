@@ -23,6 +23,7 @@ then
   sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.epel.cloud|g' /etc/yum.repos.d/CentOS-Linux-*
   yum -y update
   yum -y install gcc-c++ make gcc openssl-devel unixODBC unixODBC-devel wget bind-utils
+  yum -y install libglib2.0 libsecret-1-dev
   wget https://github.com/Kitware/CMake/releases/download/v3.20.3/cmake-3.20.3-linux-x86_64.tar.gz
   cd /usr || exit
   tar --strip-components=1 -xzf /root/project/cmake-3.20.3-linux-x86_64.tar.gz
@@ -34,5 +35,5 @@ else
   apt-get install -y cmake make gcc libssl-dev dnsutils
   echo "deb http://deb.debian.org/debian buster main contrib non-free" >> /etc/apt/sources.list.d/tutu.list
   apt-get update
-  apt-get install -y unixodbc-dev=2.3.6-0.1
+  apt-get install -y unixodbc-dev=2.3.6-0.1 libglib2.0 libsecret-1-dev
 fi

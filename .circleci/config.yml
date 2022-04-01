@@ -37,6 +37,7 @@ commands:
             sudo apt-get install unixodbc odbcinst
             sudo apt-get install unixodbc-dev
             sudo apt-get install --allow-unauthenticated -y --force-yes -m unixodbc-dev odbcinst1debian2 libodbc1
+            sudo apt-get install -y libglib2.0 libsecret-1-dev
             sudo apt-get clean
   setup-environment-macos:
     description: "Setup the macos environment"
@@ -181,17 +182,13 @@ jobs:
       TEST_SERVER: singlestore.test.com
       TEST_SCHEMA: odbc_test
       TEST_UID: root
-      TEST_PORT: 5506
       CONTINUOUS_INTEGRATION: true
     steps:
       - setup-environment-linux
       - checkout
       - run:
           name: Setup test cluster
-          command: ./scripts/setup-cluster.sh
-      - run:
-          name: Create test database
-          command: ./.circleci/create-database.sh
+          command: ./.circleci/setup-cluster.sh
       - run:
           name: Build project
           command: ./.circleci/build-ubuntu.sh

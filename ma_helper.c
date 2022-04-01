@@ -1232,6 +1232,14 @@ size_t MADB_GetHexString(char *BinaryBuffer, size_t BinaryLength,
   return (HexBuffer - Start);
 }
 
+// CheckExpiration returns 1 if the token will be expired
+// in not more than 1 second
+#define EXPIRATION_OFFSET_SECONDS 1
+int CheckExpiration(int64_t expiration)
+{
+  int64_t current_time = (int64_t)time(NULL);
+  return current_time + EXPIRATION_OFFSET_SECONDS > expiration;
+}
 
 SQLRETURN MADB_DaeStmt(MADB_Stmt *Stmt, SQLUSMALLINT Operation)
 {

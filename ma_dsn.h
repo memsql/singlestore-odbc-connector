@@ -146,7 +146,7 @@ typedef struct st_madb_dsn
   /* SSO parameters */
   my_bool IsBrowserAuth;
   char *JWT;
-  char *AuthHelperPath;
+  int TestMode;
   /* --- Internal --- */
   int isPrompt;
   MADB_DsnKey *Keys;

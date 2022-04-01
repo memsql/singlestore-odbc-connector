@@ -29,17 +29,42 @@ typedef struct BrowserCredentials {
   // expiration is a numeric value representing the number of seconds from
   // 1970-01-01T00:00:00Z UTC until the expiration UTC date/time,
   // ignoring leap seconds.
-  int expiration;
+  int64_t expiration;
 } BrowserAuthCredentials;
 
-#define READ_TIMEOUT_SEC (5*60)
+#define READ_TIMEOUT_USER_SEC (5*60)
+#define READ_TIMEOUT_TEST_SEC 3
+
 #define PORTAL_SSO_ENDPOINT "https://portal.singlestore.com/engine-sso"
+#define LOCAL_TEST_ENDPOINT "http://127.0.0.1:18087"
 
-int BrowserAuthInternal(MADB_Dbc *Dbc, char *email, char *endpoint, int requestReadTimeoutSec, BrowserAuthCredentials *credentials /*out*/);
+int BrowserAuth(MADB_Dbc *Dbc, const char *email, BrowserAuthCredentials *credentials /*out*/, int testFlags);
 void BrowserAuthCredentialsFree(BrowserAuthCredentials *credentials);
-int BrowserAuth(MADB_Dbc *Dbc, char *email, BrowserAuthCredentials *credentials /*out*/)
-{
-  BrowserAuthInternal(Dbc, email, PORTAL_SSO_ENDPOINT, READ_TIMEOUT_SEC, credentials);
-}
+int parseJWTToCredentials(MADB_Dbc *Dbc, const char *token, BrowserAuthCredentials *bac /*out*/);
 
-#endif//_browser_auth_h_
+#if defined(_WIN32)
+// Win secure key storage
+// https://docs.microsoft.com/en-us/windows/win32/api/wincred/
+#include <wincred.h>
+#define SECURE_JWT_STORAGE_KEY L"SingleStore JWT storage for ODBC"
+#elif defined(__APPLE__)
+// Mac secure key storage
+#else
+// Linux secure key storage
+// https://gnome.pages.gitlab.gnome.org/libsecret/
+#include <glib.h>
+#include <libsecret/secret.h>
+#define SECURE_JWT_STORAGE_KEY "SingleStore JWT storage for ODBC"
+const SecretSchema *jwt_cache_get_schema(void);
+#define JWT_CACHE_SCHEMA jwt_cache_get_schema ()
+#endif
+
+int PutCachedCredentials(MADB_Dbc *Dbc, BrowserAuthCredentials *bac);
+int GetCachedCredentials(MADB_Dbc *Dbc, const char *username, BrowserAuthCredentials *bac /*out*/);
+
+#define BROWSER_AUTH_FLAG_TEST_FIRST_CALL (1 << 1)
+#define BROWSER_AUTH_FLAG_TEST_SECOND_CALL (1 << 2)
+#define BROWSER_AUTH_FLAG_TEST_ENDPOINT (1 << 3)
+#define BROWSER_AUTH_FLAG_TEST_SHORT_TIMEOUT (1 << 4)
+
+#endif //_browser_auth_h_

@@ -35,7 +35,7 @@ database = odbc_test_mycnf
 " | sudo tee ~/.my.cnf
 
 export PROJ_PATH=`pwd`
-mkdir tmp
+mkdir -p tmp
 .circleci/gen-ssl.sh singlestore.test.com tmp
 export SSLCERT=$PROJ_PATH/tmp
 
@@ -45,11 +45,24 @@ ls -lrt ${SSLCERT}
 DEBIAN_FRONTEND=noninteractive sudo apt-get update
 DEBIAN_FRONTEND=noninteractive sudo apt-get install --allow-unauthenticated -y --force-yes -m unixodbc-dev odbcinst1debian2 libodbc1 
 
-## build odbc connector
+## Export password and port
+if [ -n "$MEMSQL_PASSWORD" ]
+then
+  export TEST_PASSWORD=$MEMSQL_PASSWORD
+fi
+
+if [ -n "$MEMSQL_PORT" ]
+then
+  export TEST_PORT=$MEMSQL_PORT
+fi
+
 if [ "$WITH_SANITIZER" = "true" ]
 then
-  cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_SANITIZER=ON -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL
+  SANITIZER_OPTION="ON"
 else
-  cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL
+  SANITIZER_OPTION="OFF"
 fi
+
+## build odbc connector
+cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL -DWITH_SANITIZER=$SANITIZER_OPTION
 cmake --build . --config ${BUILD_TYPE}

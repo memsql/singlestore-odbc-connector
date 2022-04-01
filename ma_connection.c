@@ -2299,6 +2299,7 @@ SQLRETURN MADB_DriverConnect(MADB_Dbc *Dbc, SQLHWND WindowHandle, SQLCHAR *InCon
     MADB_SetError(&Dbc->Error, MADB_ERR_HY000, "Error while parsing DSN", 0);
     goto error;
   }
+  Dbc->Options = Dsn->Options;
   if ((Dsn->Password != NULL) +
       (Dsn->JWT != NULL) +
       (Dsn->IsBrowserAuth != 0) > 1)
@@ -2308,15 +2309,39 @@ SQLRETURN MADB_DriverConnect(MADB_Dbc *Dbc, SQLHWND WindowHandle, SQLCHAR *InCon
   }
   if (Dsn->JWT)
   {
-    // we will send JWT as password
+    // we will send JWT as the password
     Dsn->Password = Dsn->JWT;
+    Dsn->JWT = NULL;
   }
+
   if (Dsn->IsBrowserAuth)
   {
-    // TODO: implement
-    // 1. Check the keyring
-    // 2. Call auth helper if needed
-    // 3. Store credentials in the keyring
+    // 1. Try to get credentails from the OS keyring
+    BrowserAuthCredentials creds = {NULL, NULL, NULL, 0};
+    // TODO: PLAT-6175 retry connection if saved credentials didn't work
+    // it can happen because of timeout and because of engine re-configuratiion
+    if(GetCachedCredentials(Dbc, Dsn->UserName  /* UserName is e-mail in this case */, &creds))
+    {
+      goto error;
+    }
+    // 2. Call auth helper if there are no stored credentials or token has expired
+    if (!creds.token || CheckExpiration(creds.expiration))
+    {
+      if (BrowserAuth(Dbc, Dsn->UserName /* UserName is e-mail in this case */, &creds, Dsn->TestMode))
+      {
+        goto error;
+      }
+      // 3. Store credentials in the keyring
+      if(PutCachedCredentials(Dbc, &creds))
+      {
+        goto error;
+      }
+    }
+    Dsn->Password = creds.token;
+    creds.token = NULL;
+    Dsn->UserName = creds.username;
+    creds.username = NULL;
+    BrowserAuthCredentialsFree(&creds);
   }
 
   /* if DSN prompt is off, adjusting DriverCompletion */

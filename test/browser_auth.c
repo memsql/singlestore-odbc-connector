@@ -38,8 +38,15 @@
 #endif
 
 #define BUFFER_SIZE 2048
-#define TOKEN "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3QtZW1haWxAZ21haWwuY29tIiwiZGJVc2VybmFtZSI6InRlc3QtdXNlciIsImV4cCI6MTkxNjIzOTAyMn0.kQPJ2yLs8-G5bUuYBddmyKGQmaimVop2mptZ5IqtF3c"
 #define HTTP_204 "HTTP/1.1 204 No Content\r\nAccess-Control-Allow-Origin: *\r\n\r\n"
+#define TOKEN "header.ewogICJlbWFpbCI6ICJ0ZXN0LWVtYWlsQGdtYWlsLmNvbSIsCiAgInVzZXJuYW1lIjogInRlc3QtdXNlciIsCiAgImV4cCI6IDE5MTYyMzkwMjIKfQ==.signature"
+/* This token body represents the following JSON:
+{
+  "email": "test-email@gmail.com",
+  "username": "test-user",
+  "exp": 1916239022
+}
+*/
 
 void Assert(int check, char *message)
 {
@@ -169,7 +176,7 @@ int main(int argc, char **argv)
   pthread_create(&thread, NULL, handle, &serverSocket);
 #endif
 
-  res = BrowserAuthInternal(hdbc, "test-email@gmail.com", "http://127.0.0.1:18087", 10, &creds);
+  res = BrowserAuth(hdbc, "test-email@gmail.com", &creds, BROWSER_AUTH_FLAG_TEST_SHORT_TIMEOUT + BROWSER_AUTH_FLAG_TEST_ENDPOINT);
   Assert(!res, "Browser authentication failed");
 #ifdef WIN32
   WaitForSingleObject(thread, INFINITE);
@@ -186,7 +193,7 @@ int main(int argc, char **argv)
   BrowserAuthCredentialsFree(&creds);
 
   // Test that BrowserAuth fails when server is not responding
-  res = BrowserAuthInternal(hdbc, "test-email@gmail.com", "http://127.0.0.1:18087", 3, &creds);
+  res = BrowserAuth(hdbc, "test-email@gmail.com", &creds, BROWSER_AUTH_FLAG_TEST_SHORT_TIMEOUT + BROWSER_AUTH_FLAG_TEST_ENDPOINT);
   Assert(res, "Browser authentication expected to fail");
 
   SQLFreeHandle(SQL_HANDLE_DBC, hdbc);

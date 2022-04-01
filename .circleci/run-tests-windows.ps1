@@ -22,22 +22,22 @@ if (-not (Get-Command ctest -ErrorAction SilentlyContinue)) {
     New-Alias -Name ctest -Value "$Env:ProgramFiles\CMake\bin\ctest.exe"
 }
 
-New-Item -Path "HKCU:\Software\ODBC"
-New-Item -Path "HKCU:\Software\ODBC\ODBC.INI"
+New-Item -Path "HKCU:\Software\ODBC" -Force
+New-Item -Path "HKCU:\Software\ODBC\ODBC.INI" -Force
 $regPath = "HKCU:\Software\ODBC\ODBC.INI\$ENV:TEST_DSN"
-New-Item -Path $regPath
-New-ItemProperty -Path $regPath -Name "CONN_TIMEOUT" -Value "0"
-New-ItemProperty -Path $regPath -Name "DATABASE" -Value "odbc_test"
-New-ItemProperty -Path $regPath -Name "DESCRIPTION" -Value "SingleStore ODBC test"
-New-ItemProperty -Path $regPath -Name "DRIVER" -Value $ENV:TEST_DRIVER
-New-ItemProperty -Path $regPath -Name "OPTIONS" -Value "0"
-New-ItemProperty -Path $regPath -Name "PORT" -Value $ENV:MEMSQL_PORT
-New-ItemProperty -Path $regPath -Name "PWD" -Value $ENV:MEMSQL_PASSWORD
-New-ItemProperty -Path $regPath -Name "SSLVERIFY" -Value "0"
-New-ItemProperty -Path $regPath -Name "TCPIP" -Value "1"
-New-ItemProperty -Path $regPath -Name "UID" -Value $ENV:MEMSQL_USER
-New-Item -Path "HKCU:\Software\ODBC\ODBC.INI\ODBC Data Sources"
-New-ItemProperty -Path "HKCU:\Software\ODBC\ODBC.INI\ODBC Data Sources" -Name $ENV:TEST_DSN -Value $ENV:TEST_DRIVER
+New-Item -Path $regPath -Force
+Set-ItemProperty -Path $regPath -Name "CONN_TIMEOUT" -Value "0"
+Set-ItemProperty -Path $regPath -Name "DATABASE" -Value "odbc_test"
+Set-ItemProperty -Path $regPath -Name "DESCRIPTION" -Value "SingleStore ODBC test"
+Set-ItemProperty -Path $regPath -Name "DRIVER" -Value $ENV:TEST_DRIVER
+Set-ItemProperty -Path $regPath -Name "OPTIONS" -Value "0"
+Set-ItemProperty -Path $regPath -Name "PORT" -Value $ENV:MEMSQL_PORT
+Set-ItemProperty -Path $regPath -Name "PWD" -Value $ENV:MEMSQL_PASSWORD
+Set-ItemProperty -Path $regPath -Name "SSLVERIFY" -Value "0"
+Set-ItemProperty -Path $regPath -Name "TCPIP" -Value "1"
+Set-ItemProperty -Path $regPath -Name "UID" -Value $ENV:MEMSQL_USER
+New-Item -Path "HKCU:\Software\ODBC\ODBC.INI\ODBC Data Sources" -Force
+Set-ItemProperty -Path "HKCU:\Software\ODBC\ODBC.INI\ODBC Data Sources" -Name $ENV:TEST_DSN -Value $ENV:TEST_DRIVER
 
 $env:TEST_SCHEMA="odbc_test"
 $env:TEST_PORT=$ENV:MEMSQL_PORT
@@ -46,14 +46,14 @@ $env:TEST_UID=$ENV:MEMSQL_USER
 if ($env:DRIVER_TYPE -imatch "unicode")
 {
     $env:TEST_SERVER=$ENV:HOST_WINDOWS_UNICODE
-    New-ItemProperty -Path $regPath -Name "SERVER" -Value $ENV:HOST_WINDOWS_UNICODE
+    Set-ItemProperty -Path $regPath -Name "SERVER" -Value $ENV:HOST_WINDOWS_UNICODE
     Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$ENV:HOST_WINDOWS_UNICODE`ttest-memsql-server" -Force
     Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$ENV:HOST_WINDOWS_UNICODE`ttest-memsql-cluster" -Force
     Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$ENV:HOST_WINDOWS_UNICODE`tsinglestore.test.com" -Force
 
 } else {
     $env:TEST_SERVER=$ENV:HOST_WINDOWS_ANSI
-    New-ItemProperty -Path $regPath -Name "SERVER" -Value $ENV:HOST_WINDOWS_ANSI
+    Set-ItemProperty -Path $regPath -Name "SERVER" -Value $ENV:HOST_WINDOWS_ANSI
     Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$ENV:HOST_WINDOWS_ANSI`ttest-memsql-server" -Force
     Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$ENV:HOST_WINDOWS_ANSI`ttest-memsql-cluster" -Force
     Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$ENV:HOST_WINDOWS_ANSI`tsinglestore.test.com" -Force
@@ -63,4 +63,5 @@ Add-Content -Path $env:windir\my.ini -Value "`n[mysqld]`nplugin-load-add=authent
 
 cd test
 ctest -V
+cd ..
 exit $LASTEXITCODE

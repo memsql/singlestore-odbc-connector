@@ -20,10 +20,15 @@
 
 set -eo pipefail
 
-## Export password
+## Export password and port
 if [ -n "$MEMSQL_PASSWORD" ]
 then
   export TEST_PASSWORD=$MEMSQL_PASSWORD
+fi
+
+if [ -n "$MEMSQL_PORT" ]
+then
+  export TEST_PORT=$MEMSQL_PORT
 fi
 
 echo "Running tests"

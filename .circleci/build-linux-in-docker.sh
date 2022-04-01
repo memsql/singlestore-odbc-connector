@@ -36,11 +36,14 @@ database = odbc_test_mycnf
 
 export PROJ_PATH=`pwd`
 
-## build odbc connector
 if [ "$WITH_SANITIZER" = "true" ]
 then
-  cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_SANITIZER=ON -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL
+  SANITIZER_OPTION="ON"
 else
-  cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL
+  SANITIZER_OPTION="OFF"
 fi
+
+## build odbc connector
+cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL -DWITH_SANITIZER=$SANITIZER_OPTION
+
 cmake --build . --config ${BUILD_TYPE}

@@ -16,8 +16,6 @@
    or write to the Free Software Foundation, Inc.,
    51 Franklin St., Fifth Floor, Boston, MA 02110, USA
 *************************************************************************************/
-
-#include "browser_auth.h"
 #ifdef WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -28,15 +26,21 @@
 #include <errno.h>
 #include <fcntl.h>
 #endif
-#include <vendor/b64.c/b64.h>
-#include <vendor/cJSON/cJSON.h>
+
+#include "browser_auth.h"
+#include "vendor/b64.c/b64.h"
+#include "vendor/cJSON/cJSON.h"
 
 int getJsonStringField(MADB_Dbc *Dbc, cJSON *json, const char *fieldName, char **dst)
 {
   cJSON *field;
   field = cJSON_GetObjectItem(json, fieldName);
-  if (!cJSON_IsString(field) || (field->valuestring == NULL)) {
-    return MADB_SetError(&Dbc->Error, MADB_ERR_28000, "Failed to parse browser authentication result", 0);
+  if (!cJSON_IsString(field) || (field->valuestring == NULL))
+  {
+    char errorBuff[128] = "Failed to get the following field from decoded JWT: ";
+    strcat(errorBuff, fieldName);
+    MADB_SetError(&Dbc->Error, MADB_ERR_28000, errorBuff, 0);
+    return 1;
   }
   if (!(*dst = strdup(field->valuestring)))
   {
@@ -45,12 +49,16 @@ int getJsonStringField(MADB_Dbc *Dbc, cJSON *json, const char *fieldName, char *
   return 0;
 }
 
-int getJsonIntField(MADB_Dbc *Dbc, cJSON *json, const char *fieldName, int *dst)
+int getJsonIntField(MADB_Dbc *Dbc, cJSON *json, const char *fieldName, unsigned long *dst)
 {
   cJSON *field;
   field = cJSON_GetObjectItem(json, fieldName);
-  if (!cJSON_IsNumber(field)) {
-    return MADB_SetError(&Dbc->Error, MADB_ERR_28000, "Failed to parse browser authentication result", 0);
+  if (!cJSON_IsNumber(field))
+  {
+    char errorBuff[128] = "Failed to get the following field from decoded JWT: ";
+    strcat(errorBuff, fieldName);
+    MADB_SetError(&Dbc->Error, MADB_ERR_28000, errorBuff, 0);
+    return 1;
   }
   *dst = field->valueint;
   return 0;
@@ -58,7 +66,8 @@ int getJsonIntField(MADB_Dbc *Dbc, cJSON *json, const char *fieldName, int *dst)
 
 void BrowserAuthCredentialsFree(BrowserAuthCredentials *bac)
 {
-  if (bac) {
+  if (bac)
+  {
     MADB_FREE(bac->token);
     MADB_FREE(bac->username);
     MADB_FREE(bac->email);
@@ -89,7 +98,8 @@ int closeSocket(SOCKET_ s)
 #endif
 }
 
-int getOpenBrowserCommand(MADB_Dbc *Dbc, char *returnTo, char *email, char *endpoint, MADB_DynString *openBrowserCommand)
+// if endpoint is NULL PORTAL_SSO_ENDPOINT is used. Not NULL endpoint values are used for testing
+int getOpenBrowserCommand(MADB_Dbc *Dbc, char *returnTo, const char *email, const char *endpoint, MADB_DynString *openBrowserCommand)
 {
 #ifdef WIN32
   if (MADB_DynstrAppend(openBrowserCommand, "START /B rundll32 url.dll,FileProtocolHandler "))
@@ -180,47 +190,29 @@ cleanupSocket:
 int parseCredentialsFromJson(MADB_Dbc *Dbc, cJSON *json, const char *jwt, BrowserAuthCredentials *credentials)
 {
   memset(credentials, 0, sizeof(BrowserAuthCredentials));
-
+  // TODO: PLAT-6174 update json parsing
   if (getJsonStringField(Dbc, json, "email", &credentials->email) ||
-      getJsonStringField(Dbc, json, "dbUsername", &credentials->username) ||
+      getJsonStringField(Dbc, json, "username", &credentials->username) ||
       getJsonIntField(Dbc, json, "exp", &credentials->expiration))
   {
-    goto error;
+    goto end;
   }
 
   if (!(credentials->token = strdup(jwt)))
   {
     MADB_SetError(&Dbc->Error, MADB_ERR_HY000, NULL, 0);
-    goto error;
+    goto end;
   }
 
-  return 0;
-
-error:
-  BrowserAuthCredentialsFree(credentials);
+end:
   return Dbc->Error.ReturnValue;
 }
 
-// parseRequest parses HTTP request and retrieves credentials from it
-//
-// Request contains status line, zero or more header lines terminated by "\r\n" each.
-// Then one line with "\r\n" and request body.
-// <status>\r\n
-// <header>\r\n
-// ...
-// <header>\r\n
-// \r\n
-// <body>
-//
-// Body of the request should contain JWT.
-// JWT consists of three parts separated by dot "."
+// parseJWTToCredentials gets login credentials from the JWT `token`.
+// `token` of three parts separated by dot "."
 // <header>.<payload>.<verify signature>
-//
-// Second part of the JWT contains base64URL encoded JSON
-// This JSON should contain all fields of BrowserAuthCredentials
-int parseRequest(MADB_Dbc *Dbc, const char *request, BrowserAuthCredentials *credentials)
+int parseJWTToCredentials(MADB_Dbc *Dbc, const char *token, BrowserAuthCredentials *credentials /* out */)
 {
-  const char *bodyStart;
   const char *jwtPayloadStart;
   const char *jwtPayloadEnd;
   const char *base64URL;
@@ -231,21 +223,15 @@ int parseRequest(MADB_Dbc *Dbc, const char *request, BrowserAuthCredentials *cre
   cJSON *json;
   int i;
 
-  if ((bodyStart = strstr(request, "\r\n\r\n")) == NULL)
+  if ((jwtPayloadStart = strstr(token, ".")) == NULL)
   {
-    return MADB_SetError(&Dbc->Error, MADB_ERR_S1000, "Failed to parse browser authentication credentials: http request doesn't contain body", 0);
-  }
-  bodyStart += 4;
-
-  if ((jwtPayloadStart = strstr(bodyStart, ".")) == NULL)
-  {
-    return MADB_SetError(&Dbc->Error, MADB_ERR_S1000, "Failed to parse browser authentication credentials: JWT contain only header", 0);
+    return MADB_SetError(&Dbc->Error, MADB_ERR_S1000, "Failed to parse browser authentication credentials: JWT contains only header", 0);
   }
   jwtPayloadStart++;
 
   if ((jwtPayloadEnd = strstr(jwtPayloadStart, ".")) == NULL)
   {
-    return MADB_SetError(&Dbc->Error, MADB_ERR_S1000, "Failed to parse browser authentication credentials: JWT contain only header and payload", 0);
+    return MADB_SetError(&Dbc->Error, MADB_ERR_S1000, "Failed to parse browser authentication credentials: JWT contains only header and payload", 0);
   }
 
   base64URLLen = jwtPayloadEnd - jwtPayloadStart;
@@ -289,7 +275,7 @@ int parseRequest(MADB_Dbc *Dbc, const char *request, BrowserAuthCredentials *cre
     goto cleanup;
   }
 
-  if (parseCredentialsFromJson(Dbc, json, bodyStart, credentials))
+  if (parseCredentialsFromJson(Dbc, json, token, credentials))
   {
     goto cleanup;
   }
@@ -300,6 +286,36 @@ cleanup:
   cJSON_Delete(json);
 
   return Dbc->Error.ReturnValue;
+}
+
+// parseRequest parses HTTP request sent from the browser to
+// the local HTTP server started by the driver and retrieves credentials from it.
+//
+// Request contains status line, zero or more header lines terminated by "\r\n" each.
+// Then one line with "\r\n" and request body.
+// <status>\r\n
+// <header>\r\n
+// ...
+// <header>\r\n
+// \r\n
+// <body>
+//
+// Body of the request should contain JWT.
+// JWT consists of three parts separated by dot "."
+// <header>.<payload>.<verify signature>
+//
+// Second part of the JWT contains base64URL encoded JSON
+// This JSON should contain all fields of BrowserAuthCredentials
+int parseRequest(MADB_Dbc *Dbc, const char *request, BrowserAuthCredentials *credentials /*out*/)
+{
+  const char *bodyStart;
+  if ((bodyStart = strstr(request, "\r\n\r\n")) == NULL)
+  {
+    return MADB_SetError(&Dbc->Error, MADB_ERR_S1000, "Failed to parse browser authentication credentials: http request doesn't contain body", 0);
+  }
+  bodyStart += 4;
+
+  return parseJWTToCredentials(Dbc, bodyStart, credentials);
 }
 
 // tryGetFullRequestLength takes request prefix and if it contains all headers
@@ -474,8 +490,32 @@ cleanupRequest:
   return Dbc->Error.ReturnValue;
 }
 
-int BrowserAuthInternal(MADB_Dbc *Dbc, char *email, char *endpoint, int requestReadTimeoutSec, BrowserAuthCredentials *credentials)
+void makeTestCreds(BrowserAuthCredentials *credentials /*out*/)
 {
+  credentials->username = strdup("test_jwt_user");
+  credentials->email = strdup("test@singlestore.com");
+  credentials->expiration = 2514359920;
+  credentials->token = strdup(getenv("MEMSQL_JWT"));
+}
+
+// BrowserAuth opens browser to perform the auth workflow using SSO.
+// Return 0 if the credentials have been filled successfully.
+// testFlags are used to assert and control certain aspects in tests 
+int BrowserAuth(MADB_Dbc *Dbc, const char *email, BrowserAuthCredentials *credentials /*out*/, int testFlags)
+{
+  MDBUG_C_ENTER(Dbc, "BrowserAuth");
+  int requestReadTimeoutSec = testFlags & BROWSER_AUTH_FLAG_TEST_SHORT_TIMEOUT ? READ_TIMEOUT_TEST_SEC : READ_TIMEOUT_USER_SEC;
+  char* endpoint = testFlags & BROWSER_AUTH_FLAG_TEST_ENDPOINT ? LOCAL_TEST_ENDPOINT : PORTAL_SSO_ENDPOINT;
+  if (testFlags & BROWSER_AUTH_FLAG_TEST_FIRST_CALL)
+  {
+    makeTestCreds(credentials);
+    MDBUG_C_RETURN(Dbc, 0, &Dbc->Error);
+  }
+  if (testFlags & BROWSER_AUTH_FLAG_TEST_SECOND_CALL)
+  {
+    assert(0 && "BrowserAuth must not be called in the second connection with BROWSER_SSO");
+    MDBUG_C_RETURN(Dbc, 0, &Dbc->Error);
+  }
   MADB_DynString serverEndpoint;
   MADB_DynString openBrowserCommand;
   SOCKET_ serverSocket;
@@ -503,7 +543,6 @@ int BrowserAuthInternal(MADB_Dbc *Dbc, char *email, char *endpoint, int requestR
     MADB_SetError(&Dbc->Error, MADB_ERR_S1000, "Failed to open browser", 0);
     goto cleanupServer;
   }
-
   if (readRequest(Dbc, serverSocket, requestReadTimeoutSec, credentials))
   {
     goto cleanupServer;
@@ -515,6 +554,159 @@ cleanupOpenBrowserCommand:
   MADB_DynstrFree(&openBrowserCommand);
 cleanupServerEndpoint:
   MADB_DynstrFree(&serverEndpoint);
-  return Dbc->Error.ReturnValue;
+  MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
 }
 #undef BUFFER_SIZE
+
+#if !defined(_WIN32) && !defined(__APPLE__)
+// Linux secure key storage
+const SecretSchema *jwt_cache_get_schema(void)
+{
+  static const SecretSchema the_schema = {
+    SECURE_JWT_STORAGE_KEY, SECRET_SCHEMA_NONE,
+    {
+      {"email", SECRET_SCHEMA_ATTRIBUTE_STRING},
+      {"NULL", 0},
+    }
+  };
+  return &the_schema;
+}
+#endif
+
+int GetCachedCredentials(MADB_Dbc *Dbc, const char *email, BrowserAuthCredentials *bac /*out*/)
+{
+  MDBUG_C_ENTER(Dbc, "GetCachedCredentials");
+#if defined(_WIN32)
+// Win secure key storage
+  CREDENTIALW* pCredential = NULL;
+  char* password = NULL;
+  int res = CredReadW(SECURE_JWT_STORAGE_KEY, CRED_TYPE_GENERIC, 0 /*flags*/, &pCredential);
+  if (!res)
+  {
+    unsigned long lastError = GetLastError();
+    if (lastError != ERROR_NOT_FOUND)
+    {
+      MDBUG_C_PRINT(Dbc, "Got error in CredReadW. Error code is: %lu", lastError);
+      MADB_SetError(&Dbc->Error, MADB_ERR_HY000, "Failed to read JWT for login from Windows Credential Manager", 0);
+    }
+    goto endwin;
+  }
+  MDBUG_C_PRINT(Dbc, "%s SUCCESS", "CredReadW");
+  if (!(password = strndup(pCredential->CredentialBlob, pCredential->CredentialBlobSize)))
+  {
+    MADB_SetError(&Dbc->Error, MADB_ERR_HY001, NULL, 0);
+    goto endwin;
+  }
+  parseJWTToCredentials(Dbc, password, bac);
+endwin:
+  if(pCredential) CredFree(pCredential);
+  MADB_FREE(password);
+  MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
+#elif defined(__APPLE__)
+// Mac secure key storage
+// TODO: PLAT-6107 implement
+#else
+// Linux secure key storage
+  gchar *password = NULL;
+  GError *err = NULL;
+
+  SecretService * service = secret_service_get_sync (0, NULL, &err);
+  SecretCollection *defaultCollection = secret_collection_for_alias_sync(
+    service, SECRET_COLLECTION_DEFAULT, 0 /*SecretCollectionFlags*/, NULL, &err);
+  if (err != NULL)
+  {
+    // gnome-keyring secret service cannot be started or no collection is available
+    goto gerror;
+  }
+  gboolean is_locked = secret_collection_get_locked(defaultCollection);
+  // TODO: PLAT-6176 try to unlock with timeout so that secret_password_lookup_sync doesn't hang
+  if (email)
+    password = secret_password_lookup_sync(
+      JWT_CACHE_SCHEMA, NULL, &err, "email", email, NULL);
+  else
+    password = secret_password_lookup_sync(
+      JWT_CACHE_SCHEMA, NULL, &err, NULL);
+
+  if (err != NULL)
+  {
+    // password lookup error
+    goto gerror;
+  }
+  if (password)
+  {
+    parseJWTToCredentials(Dbc, (char*)password, bac);
+    secret_password_free(password);
+  }
+  MDBUG_C_RETURN(Dbc, 0, &Dbc->Error);
+gerror:
+  MADB_SetError(&Dbc->Error, MADB_ERR_HY000, err->message, 0);
+  g_error_free(err);
+  MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
+#endif
+}
+
+int PutCachedCredentials(MADB_Dbc *Dbc, BrowserAuthCredentials *bac)
+{
+  MDBUG_C_ENTER(Dbc, "PutCachedCredentials");
+#if defined(_WIN32)
+// Win secure key storage
+  CREDENTIALW* winCred = NULL;
+  wchar_t* userName = NULL;
+  if ( !(winCred = (CREDENTIALW*)malloc(sizeof(CREDENTIALW))) )
+  {
+    MADB_SetError(&Dbc->Error, MADB_ERR_HY001, NULL, 0);
+    goto endwin;
+  }
+  winCred->Flags = 0;
+  winCred->Type = CRED_TYPE_GENERIC;
+  winCred->TargetName = SECURE_JWT_STORAGE_KEY;
+  winCred->TargetAlias = NULL;
+  winCred->Comment = NULL;
+  winCred->CredentialBlobSize = strlen(bac->token);
+  winCred->CredentialBlob = bac->token;
+  winCred->Persist = CRED_PERSIST_LOCAL_MACHINE;
+  winCred->AttributeCount = 0;
+  winCred->Attributes = NULL;
+  if ( !(userName = (wchar_t*)malloc(sizeof(wchar_t) * (strlen(bac->username) + 1))) )
+  {
+    MADB_SetError(&Dbc->Error, MADB_ERR_HY001, NULL, 0);
+  }
+  swprintf(userName, strlen(bac->username) + 1, L"%hs", bac->username);
+  winCred->UserName = userName;
+
+  int res = CredWriteW(winCred, 0 /*flags*/);
+  if (!res)
+  {
+    unsigned long lastError = GetLastError();
+    MDBUG_C_PRINT(Dbc, "Got error in CredWriteW. Error code is: %lu", lastError);
+    MADB_SetError(&Dbc->Error, MADB_ERR_HY000, "Failed to write to Windows Credential Manager", 0);
+    goto endwin;
+  }
+  MDBUG_C_PRINT(Dbc, "%s SUCCESS", "CredWriteW");
+endwin:
+  MADB_FREE(userName);
+  MADB_FREE(winCred);
+  MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
+#elif defined(__APPLE__)
+// Mac secure key storage
+#else
+// Linux secure key storage
+  GError *error = NULL;
+  secret_password_store_sync(JWT_CACHE_SCHEMA, SECRET_COLLECTION_DEFAULT,
+                            SECURE_JWT_STORAGE_KEY, bac->token, NULL, &error,
+                            "email", bac->email,
+                            NULL);
+  if (error != NULL)
+  {
+    MDBUG_C_PRINT(Dbc, "%s FAILED", "secret_password_store_sync");
+    MADB_SetError(&Dbc->Error, error->code, error->message, 0);
+    g_error_free(error);
+    MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
+  }
+  else 
+  {
+    MDBUG_C_PRINT(Dbc, "%s SUCCESS", "secret_password_store_sync");
+    MDBUG_C_RETURN(Dbc, 0, &Dbc->Error);
+  }
+#endif
+}
