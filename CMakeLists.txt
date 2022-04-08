@@ -78,7 +78,7 @@ SET (MARIADB_ODBC_SOURCES odbc_3_api.c
         escape_sequences/ast.c
         escape_sequences/parser.c
         escape_sequences/lexical_analyzer.c
-        cJSON/cJSON.c)
+        plugins/browser_auth.c)
 
 SET(DSN_DIALOG_FILES ${CMAKE_SOURCE_DIR}/dsn/odbc_dsn.c
                      ${CMAKE_SOURCE_DIR}/dsn/odbc_dsn.rc
@@ -220,6 +220,9 @@ ELSE()
   INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR} "/usr/include/mariadb")
   MESSAGE(STATUS "There is no Connector/C sub-project folder, linking against libmariadb installed on the system")
 ENDIF()
+
+ADD_SUBDIRECTORY(vendor/b64.c)
+ADD_SUBDIRECTORY(vendor/cJSON)
 
 IF(WIN32)
   #ADD_OPTION(WITH_MSI "Build MSI installation package" OFF)
@@ -414,7 +417,7 @@ WHILE(${DRIVER_INDEX} LESS ${DRIVERS_COUNT})
   SET_TARGET_PROPERTIES(${LIBRARY_NAME} PROPERTIES LANGUAGE C)
   SET_TARGET_PROPERTIES(${LIBRARY_NAME} PROPERTIES C_STANDARD 90)
   MESSAGE(STATUS "All linked targets/external dependencies: ${MARIADB_CLIENT_TARGET_NAME} ${ODBC_INSTLIBS} ${PLATFORM_DEPENDENCIES}")
-  TARGET_LINK_LIBRARIES(${LIBRARY_NAME} ${MARIADB_CLIENT_TARGET_NAME} ${ODBC_INSTLIBS} ${PLATFORM_DEPENDENCIES})
+  TARGET_LINK_LIBRARIES(${LIBRARY_NAME} ${MARIADB_CLIENT_TARGET_NAME} ${ODBC_INSTLIBS} ${PLATFORM_DEPENDENCIES} b64c cjson)
 
   # Currently on Windows only
   IF(WIN32)
@@ -517,6 +520,7 @@ SET(CPACK_SOURCE_IGNORE_FILES
         Makefile$
         /autom4te.cache/
         /libmariadb/
+        /vendor/
         /_CPack_Packages/
         )
 

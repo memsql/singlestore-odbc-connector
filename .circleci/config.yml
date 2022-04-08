@@ -91,6 +91,12 @@ jobs:
           name: Run tests
           command: |
             .circleci\run-tests-windows.ps1
+      - run:
+          name: Run browser auth tests
+          command: |
+            cd ./<< parameters.build_type >>
+            ../test/<< parameters.build_type >>/odbc_browser_auth
+            cd ..
 
   build-macos:
     parameters:
@@ -140,6 +146,9 @@ jobs:
           name: Run tests
           command: |
             ./.circleci/run-tests-osx.sh
+      - run:
+          name: Run browser auth tests
+          command: ./test/odbc_browser_auth
 
   build-ubuntu:
     parameters:
@@ -185,6 +194,9 @@ jobs:
       - run:
           name: Run tests
           command: ./.circleci/run-tests-linux.sh
+      - run:
+          name: Run browser auth tests
+          command: ./test/odbc_browser_auth
 
   build-linux-in-docker:
     #    We need docker based jobs because CircleCI has only ubuntu Linux executor and we need to test our connector on Debian and CentOS too
@@ -230,6 +242,9 @@ jobs:
       - run:
           name: Run tests
           command: ./.circleci/run-tests-linux.sh
+      - run:
+          name: Run browser auth tests
+          command: ./test/odbc_browser_auth
 
   publish-windows:
     parameters:

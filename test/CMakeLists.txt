@@ -84,3 +84,6 @@ IF(NOT WIN32)
   SET_PROPERTY(TEST odbc_connstring APPEND PROPERTY
           ENVIRONMENT ODBCSYSINI=${CMAKE_BINARY_DIR}/test)
 ENDIF()
+
+ADD_EXECUTABLE(odbc_browser_auth browser_auth.c)
+TARGET_LINK_LIBRARIES(odbc_browser_auth ssodbca ${PLATFORM_DEPENDENCIES})

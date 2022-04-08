@@ -19,6 +19,7 @@
 *************************************************************************************/
 #include <keywords/keywords.hpp>
 #include <ma_odbc.h>
+
 extern const char* DefaultPluginLocation;
 
 struct st_madb_isolation MADB_IsolationLevel[] =
@@ -132,134 +133,6 @@ my_bool CheckConnection(MADB_Dbc *Dbc)
   }
   return TRUE;
 }
-
-int GetJsonField(MADB_Dbc *Dbc, cJSON *json, const char *fieldName, char **dst)
-{
-  cJSON *field;
-  field = cJSON_GetObjectItem(json, fieldName);
-  if (!cJSON_IsString(field) || (field->valuestring == NULL)) {
-    return MADB_SetError(&Dbc->Error, MADB_ERR_28000, "Failed to parse browser authentication result", 0);
-  }
-  *dst = strdup(field->valuestring);
-  return 0;
-}
-
-void BrowserAuthCredentialsFree(BrowserAuthCredentials *bac)
-{
-  if (bac) {
-    MADB_FREE(bac->expiration);
-    MADB_FREE(bac->token);
-    MADB_FREE(bac->username);
-    MADB_FREE(bac->email);
-    MADB_FREE(bac->version);
-    MADB_FREE(bac);
-  }
-}
-
-#define BUFFER_SIZE 1280
-BrowserAuthCredentials *BrowserAuth(MADB_Dbc *Dbc, const char *AuthHelperPath, const char* Email)
-{
-  BrowserAuthCredentials *bac;
-  MADB_DynString command;
-  MADB_DynString command_output;
-  cJSON *json;
-  char buffer[BUFFER_SIZE];
-
-  if (!AuthHelperPath) {
-    MADB_SetError(&Dbc->Error, MADB_ERR_28000, "No auth helper path is provided", 0);
-    goto end;
-  }
-
-  bac = (BrowserAuthCredentials *)MADB_CALLOC(sizeof(BrowserAuthCredentials));
-  if (!bac) {
-    MADB_SetError(&Dbc->Error, MADB_ERR_HY001, "Failed to allocate memory", 0);
-    goto end;
-  }
-
-  // build a command
-  if (MADB_InitDynamicString(&command, AuthHelperPath, strlen(AuthHelperPath), BUFFER_SIZE)) {
-    MADB_SetError(&Dbc->Error, MADB_ERR_HY001, "Failed to allocate memory", 0);
-    goto end;
-  }
-  if (Email)
-  {
-    if (MADB_DynstrAppend(&command, " ") || MADB_DynstrAppend(&command, Email)) {
-      MADB_SetError(&Dbc->Error, MADB_ERR_HY001, "Failed to allocate memory", 0);
-      goto end;
-    }
-  }
-
-  // execute a command and open pipe to file
-  FILE* pipe =
-#ifdef WIN32
-    _popen(command.str, "r");
-#else
-    popen(command.str, "r");
-#endif
-
-  if (!pipe) {
-    MADB_SetError(&Dbc->Error, MADB_ERR_28000, "Failed to read browser authentication result", 0);
-    goto end;
-  }
-
-  // read command output
-  if (MADB_InitDynamicString(&command_output, "", BUFFER_SIZE, BUFFER_SIZE))
-  {
-    MADB_SetError(&Dbc->Error, MADB_ERR_HY001, "Failed to allocate memory", 0);
-    goto end;
-  }
-  while (!feof(pipe)) {
-    if (fgets(buffer, BUFFER_SIZE, pipe) != NULL)
-    {
-      if (MADB_DynstrAppend(&command_output, buffer)) {
-        MADB_SetError(&Dbc->Error, MADB_ERR_HY001, "Failed to allocate memory", 0);
-        goto end;
-      }
-    }
-  }
-
-  // close pipe
-#ifdef WIN32
-  _pclose(pipe);
-#else
-  pclose(pipe);
-#endif
-
-  // parse JSON
-  json = cJSON_Parse(command_output.str);
-  if (json == NULL || !cJSON_IsObject(json)) {
-    MADB_SetError(&Dbc->Error, MADB_ERR_28000, "Failed to parse browser authentication result", 0);
-    goto end;
-  }
-  if (GetJsonField(Dbc, json, "expiration", &bac->expiration)) {
-    goto error;
-  }
-  if (GetJsonField(Dbc, json, "token", &bac->token)) {
-    goto error;
-  }
-  if (GetJsonField(Dbc, json, "username", &bac->username)) {
-    goto error;
-  }
-  if (GetJsonField(Dbc, json, "email", &bac->email)) {
-    goto error;
-  }
-  if (GetJsonField(Dbc, json, "version", &bac->version)) {
-    goto error;
-  }
-
-  goto end;
-
-error:
-  BrowserAuthCredentialsFree(&bac);
-
-end:
-  MADB_DynstrFree(&command);
-  MADB_DynstrFree(&command_output);
-  cJSON_Delete(json);
-
-  return bac;
-}
-#undef BUFFER_SIZE
 
 /* {{{ MADB_DbcSetAttr */
 SQLRETURN MADB_DbcSetAttr(MADB_Dbc *Dbc, SQLINTEGER Attribute, SQLPOINTER ValuePtr, SQLINTEGER StringLength, my_bool isWChar)
