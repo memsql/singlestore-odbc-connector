@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.0)
 
 set(PROJECT_NAME b64c)
 project(${PROJECT_NAME} LANGUAGES C)

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.0)
 
 set(PROJECT_NAME cjson)
 project(${PROJECT_NAME} LANGUAGES C)
