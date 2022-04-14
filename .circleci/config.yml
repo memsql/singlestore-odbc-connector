@@ -827,3 +827,17 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
+      - publish-linux:
+          matrix:
+            parameters:
+              os_version:
+                - debian:8
+              os_name:
+                - debian8
+              build_type:
+                - RelWithDebInfo
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
