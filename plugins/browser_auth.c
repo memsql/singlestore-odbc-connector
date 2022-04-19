@@ -334,9 +334,9 @@ long tryGetFullRequestLength(const char *request)
 }
 
 #define BUFFER_SIZE 2048
-#define HTTP_200 "HTTP/1.1 200 OK\r\n\n"
-#define HTTP_400 "HTTP/1.1 400 Bad Request\r\n\n"
-#define HTTP_500 "HTTP/1.1 500 Internal Server Error\r\n\n"
+#define HTTP_204 "HTTP/1.1 204 No Content\r\nAccess-Control-Allow-Origin: *\r\n\r\n"
+#define HTTP_400 "HTTP/1.1 400 Bad Request\r\nAccess-Control-Allow-Origin: *\r\n\r\n"
+#define HTTP_500 "HTTP/1.1 500 Internal Server Error\r\nAccess-Control-Allow-Origin: *\r\n\r\n"
 int readRequest(MADB_Dbc *Dbc, SOCKET_ serverSocket, BrowserAuthCredentials *credentials)
 {
   int size_recv;
@@ -390,7 +390,7 @@ int readRequest(MADB_Dbc *Dbc, SOCKET_ serverSocket, BrowserAuthCredentials *cre
     goto cleanupSocket;
   }
 
-  send(clientSocket, HTTP_200, sizeof(HTTP_200), 0);
+  send(clientSocket, HTTP_204, sizeof(HTTP_204), 0);
 
 cleanupSocket:
   closeSocket(clientSocket);
