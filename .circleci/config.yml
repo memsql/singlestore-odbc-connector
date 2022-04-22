@@ -556,34 +556,6 @@ workflows:
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.1.13-11ddea2a3a-3.0.0-1.9.3
       - build-linux-in-docker:
-          name: build-debian-8-unicode-<< matrix.build_type >>
-          matrix:
-            parameters:
-              os_version:
-                - debian:8
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - ssodbc_test_w
-              test_driver:
-                - SingleStore ODBC Unicode Driver
-      - build-linux-in-docker:
-          requires:
-            - build-debian-8-unicode-RelWithDebInfo
-          name: build-debian-8-ansi-<< matrix.build_type >>
-          matrix:
-            parameters:
-              os_version:
-                - debian:8
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - ssodbc_test_a
-              test_driver:
-                - SingleStore ODBC ANSI Driver
-      - build-linux-in-docker:
-          requires:
-            - build-debian-8-ansi-RelWithDebInfo
           name: build-debian-9-unicode-<< matrix.build_type >>
           matrix:
             parameters:
@@ -820,20 +792,6 @@ workflows:
                 - debian:10
               os_name:
                 - debian10
-              build_type:
-                - RelWithDebInfo
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
-      - publish-linux:
-          matrix:
-            parameters:
-              os_version:
-                - debian:8
-              os_name:
-                - debian8
               build_type:
                 - RelWithDebInfo
           filters:
