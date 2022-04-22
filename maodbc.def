@@ -106,7 +106,7 @@ SQLTablePrivilegesW;
 SQLTables;
 SQLTablesW;
 SQLTransact;
-BrowserAuth;
+BrowserAuthInternal;
 BrowserAuthCredentialsFree;
 local:
  *;

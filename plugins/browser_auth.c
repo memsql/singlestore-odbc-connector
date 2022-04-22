@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <errno.h>
+#include <fcntl.h>
 #endif
 #include <vendor/b64.c/b64.h>
 #include <vendor/cJSON/cJSON.h>
@@ -62,8 +64,6 @@ void BrowserAuthCredentialsFree(BrowserAuthCredentials *bac)
     MADB_FREE(bac->email);
   }
 }
-
-#define PORTAL_SSO_ENDPOINT "https://portal.singlestore.com/engine-sso"
 
 #ifdef WIN32
 #define SOCKET_ SOCKET
@@ -333,40 +333,119 @@ long tryGetFullRequestLength(const char *request)
   return headersLen + contentLen;
 }
 
+int makeSocketNonBlocking(SOCKET_ socket)
+{
+#ifdef WIN32
+  u_long mode = 1;  // 1 to enable non-blocking socket
+  if (ioctlsocket(socket, FIONBIO, &mode))
+  {
+    return 1;
+  }
+#else
+  int flags;
+  if ((flags = fcntl(socket, F_GETFL)) == -1)
+  {
+    return 1;
+  }
+  if (fcntl(socket, F_SETFL, flags | O_NONBLOCK) == -1)
+  {
+    return 1;
+  }
+#endif
+
+  return 0;
+}
+
+int isBlockingError()
+{
+#ifdef WIN32
+  return WSAGetLastError() == WSAEWOULDBLOCK;
+#else
+  return errno == EAGAIN || errno == EWOULDBLOCK;
+#endif
+}
+
+void sleepMicroseconds(int microseconds)
+{
+#ifdef WIN32
+  Sleep(microseconds);
+#else
+  usleep(microseconds);
+#endif
+}
+
 #define BUFFER_SIZE 2048
 #define HTTP_204 "HTTP/1.1 204 No Content\r\nAccess-Control-Allow-Origin: *\r\n\r\n"
 #define HTTP_400 "HTTP/1.1 400 Bad Request\r\nAccess-Control-Allow-Origin: *\r\n\r\n"
 #define HTTP_500 "HTTP/1.1 500 Internal Server Error\r\nAccess-Control-Allow-Origin: *\r\n\r\n"
-int readRequest(MADB_Dbc *Dbc, SOCKET_ serverSocket, BrowserAuthCredentials *credentials)
+int readRequest(MADB_Dbc *Dbc, SOCKET_ serverSocket, int requestReadTimeoutSec, BrowserAuthCredentials *credentials)
 {
   int size_recv;
   char buff[BUFFER_SIZE];
   SOCKET_ clientSocket;
   MADB_DynString request;
   long fullRequestLength = -1;
+  clock_t startTime;
+
+  startTime = clock();
 
   if (MADB_InitDynamicString(&request, "", BUFFER_SIZE, BUFFER_SIZE))
   {
     return MADB_SetError(&Dbc->Error, MADB_ERR_HY001, NULL, 0);
   }
 
-
-  if (invalidSocketCheck(clientSocket = accept(serverSocket, NULL, NULL)))
+  // Change serverSocket to be non blocking
+  // This is needed in order to don't wait for request on the accept call
+  // If request is not send, accept will return an error that can be checked using isBlockingError function
+  makeSocketNonBlocking(serverSocket);
+  while (invalidSocketCheck(clientSocket = accept(serverSocket, NULL, NULL)))
   {
-    MADB_SetError(&Dbc->Error, MADB_ERR_S1000, "Failed to accept the connection for browser authentication", 0);
-    goto cleanupRequest;
+    if (isBlockingError())
+    {
+      if ((clock() - startTime)/CLOCKS_PER_SEC > requestReadTimeoutSec)
+      {
+        MADB_SetError(&Dbc->Error, MADB_ERR_HYT00, "Browser authentication response timeout expired", 0);
+        send(clientSocket, HTTP_400, sizeof(HTTP_400), 0);
+        goto cleanupRequest;
+      }
+
+      sleepMicroseconds(10);
+    } else
+    {
+      MADB_SetError(&Dbc->Error, MADB_ERR_S1000, "Failed to accept the connection for browser authentication", 0);
+      goto cleanupRequest;
+    }
   }
 
-  do
+  // Change clientSocket to be non blocking
+  // This is needed in order to don't wait for data on the recv call
+  // If data is not, send recv will return an error that can be checked using isBlockingError function
+  makeSocketNonBlocking(clientSocket);
+  while(fullRequestLength == -1 || request.length < fullRequestLength)
   {
     memset(buff, 0 , BUFFER_SIZE);
     size_recv = recv(clientSocket, buff, BUFFER_SIZE-1, 0);
     if (size_recv < 0)
     {
-      MADB_SetError(&Dbc->Error, MADB_ERR_S1000, "Failed to read data from socket for browser authentication", 0);
-      send(clientSocket, HTTP_400, sizeof(HTTP_400), 0);
-      goto cleanupSocket;
+      if (isBlockingError())
+      {
+        if ((clock() - startTime)/CLOCKS_PER_SEC > requestReadTimeoutSec)
+        {
+          MADB_SetError(&Dbc->Error, MADB_ERR_HYT00, "Browser authentication response timeout expired", 0);
+          send(clientSocket, HTTP_400, sizeof(HTTP_400), 0);
+          goto cleanupSocket;
+        }
+
+        sleepMicroseconds(10);
+        continue;
+      } else
+      {
+        MADB_SetError(&Dbc->Error, MADB_ERR_S1000, "Failed to read data from socket for browser authentication", 0);
+        send(clientSocket, HTTP_400, sizeof(HTTP_400), 0);
+        goto cleanupSocket;
+      }
     }
+
     if (MADB_DynstrAppend(&request, buff))
     {
       MADB_SetError(&Dbc->Error, MADB_ERR_HY001, NULL, 0);
@@ -378,11 +457,7 @@ int readRequest(MADB_Dbc *Dbc, SOCKET_ serverSocket, BrowserAuthCredentials *cre
     {
       fullRequestLength = tryGetFullRequestLength(request.str);
     }
-    if (request.length >= fullRequestLength)
-    {
-        break;
-    }
-  } while(size_recv > 0);
+  }
 
   if (parseRequest(Dbc, request.str, credentials))
   {
@@ -399,7 +474,7 @@ cleanupRequest:
   return Dbc->Error.ReturnValue;
 }
 
-int BrowserAuth(MADB_Dbc *Dbc, char *email, char *endpoint, BrowserAuthCredentials *credentials)
+int BrowserAuthInternal(MADB_Dbc *Dbc, char *email, char *endpoint, int requestReadTimeoutSec, BrowserAuthCredentials *credentials)
 {
   MADB_DynString serverEndpoint;
   MADB_DynString openBrowserCommand;
@@ -431,7 +506,7 @@ int BrowserAuth(MADB_Dbc *Dbc, char *email, char *endpoint, BrowserAuthCredentia
   }
 
 
-  if (readRequest(Dbc, serverSocket, credentials))
+  if (readRequest(Dbc, serverSocket, requestReadTimeoutSec, credentials))
   {
     goto cleanupServer;
   }

@@ -160,7 +160,7 @@ int main(int argc, char **argv)
   pthread_create(&thread, NULL, handle, &serverSocket);
 #endif
 
-  res = BrowserAuth(hdbc, "test-email@gmail.com", "http://127.0.0.1:18087", &creds);
+  res = BrowserAuthInternal(hdbc, "test-email@gmail.com", "http://127.0.0.1:18087", 1, &creds);
   assert(!res && "Browser authentication failed");
 #ifdef WIN32
   WaitForSingleObject(thread, INFINITE);
@@ -175,7 +175,13 @@ int main(int argc, char **argv)
   assert(creds.expiration == 1916239022 && "Wrong exp");
 
   BrowserAuthCredentialsFree(&creds);
+
+  // Test that BrowserAuth fails when server is not responding
+  res = BrowserAuthInternal(hdbc, "test-email@gmail.com", "http://127.0.0.1:18087", 1, &creds);
+  assert(res && "Browser authentication expected to fail");
+
   SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
   SQLFreeHandle(SQL_HANDLE_ENV, henv);
+
   return 0;
 }

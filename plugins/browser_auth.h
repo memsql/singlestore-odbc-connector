@@ -31,7 +31,15 @@ typedef struct BrowserCredentials {
   // ignoring leap seconds.
   int expiration;
 } BrowserAuthCredentials;
-int BrowserAuth(MADB_Dbc *Dbc, char *email, char *endpoint, BrowserAuthCredentials *credentials /*out*/);
+
+#define READ_TIMEOUT_SEC (5*60)
+#define PORTAL_SSO_ENDPOINT "https://portal.singlestore.com/engine-sso"
+
+int BrowserAuthInternal(MADB_Dbc *Dbc, char *email, char *endpoint, int requestReadTimeoutSec, BrowserAuthCredentials *credentials /*out*/);
 void BrowserAuthCredentialsFree(BrowserAuthCredentials *credentials);
+int BrowserAuth(MADB_Dbc *Dbc, char *email, BrowserAuthCredentials *credentials /*out*/)
+{
+  BrowserAuthInternal(Dbc, email, PORTAL_SSO_ENDPOINT, READ_TIMEOUT_SEC, credentials);
+}
 
 #endif//_browser_auth_h_
