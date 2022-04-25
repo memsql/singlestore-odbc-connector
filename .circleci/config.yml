@@ -224,6 +224,7 @@ jobs:
       TEST_DSN: << parameters.test_dsn >>
       TEST_SCHEMA: odbc_test
       CONTINUOUS_INTEGRATION: true
+      TERM: xterm-256color
     steps:
       - run:
           name: Define Environment Variables
