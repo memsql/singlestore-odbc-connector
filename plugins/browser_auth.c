@@ -365,12 +365,12 @@ int isBlockingError()
 #endif
 }
 
-void sleepMicroseconds(int microseconds)
+void sleepMilliseconds(int milliseconds)
 {
 #ifdef WIN32
-  Sleep(microseconds);
+  Sleep(milliseconds);
 #else
-  usleep(microseconds);
+  usleep(milliseconds*1000);
 #endif
 }
 
@@ -385,9 +385,9 @@ int readRequest(MADB_Dbc *Dbc, SOCKET_ serverSocket, int requestReadTimeoutSec, 
   SOCKET_ clientSocket;
   MADB_DynString request;
   long fullRequestLength = -1;
-  clock_t startTime;
+  time_t startTime;
 
-  startTime = clock();
+  startTime = time(NULL);
 
   if (MADB_InitDynamicString(&request, "", BUFFER_SIZE, BUFFER_SIZE))
   {
@@ -402,14 +402,14 @@ int readRequest(MADB_Dbc *Dbc, SOCKET_ serverSocket, int requestReadTimeoutSec, 
   {
     if (isBlockingError())
     {
-      if ((clock() - startTime)/CLOCKS_PER_SEC > requestReadTimeoutSec)
+      if (time(NULL) - startTime > requestReadTimeoutSec)
       {
         MADB_SetError(&Dbc->Error, MADB_ERR_HYT00, "Browser authentication response timeout expired", 0);
         send(clientSocket, HTTP_400, sizeof(HTTP_400), 0);
         goto cleanupRequest;
       }
 
-      sleepMicroseconds(10);
+      sleepMilliseconds(10);
     } else
     {
       MADB_SetError(&Dbc->Error, MADB_ERR_S1000, "Failed to accept the connection for browser authentication", 0);
@@ -429,14 +429,14 @@ int readRequest(MADB_Dbc *Dbc, SOCKET_ serverSocket, int requestReadTimeoutSec, 
     {
       if (isBlockingError())
       {
-        if ((clock() - startTime)/CLOCKS_PER_SEC > requestReadTimeoutSec)
+        if (time(NULL) - startTime > requestReadTimeoutSec)
         {
           MADB_SetError(&Dbc->Error, MADB_ERR_HYT00, "Browser authentication response timeout expired", 0);
           send(clientSocket, HTTP_400, sizeof(HTTP_400), 0);
           goto cleanupSocket;
         }
 
-        sleepMicroseconds(10);
+        sleepMilliseconds(10);
         continue;
       } else
       {
@@ -490,7 +490,6 @@ int BrowserAuthInternal(MADB_Dbc *Dbc, char *email, char *endpoint, int requestR
     goto cleanupServerEndpoint;
   }
 
-
   if (startLocalHttpServer(Dbc, &serverSocket, &serverEndpoint))
   {
     goto cleanupOpenBrowserCommand;
@@ -504,7 +503,6 @@ int BrowserAuthInternal(MADB_Dbc *Dbc, char *email, char *endpoint, int requestR
     MADB_SetError(&Dbc->Error, MADB_ERR_S1000, "Failed to open browser", 0);
     goto cleanupServer;
   }
-
 
   if (readRequest(Dbc, serverSocket, requestReadTimeoutSec, credentials))
   {

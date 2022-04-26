@@ -84,6 +84,10 @@ jobs:
             Rename-Item "$Env:ProgramFiles\cmake-3.19.0-win64-x64" -NewName CMake
             Install-WindowsFeature Net-Framework-Core
       - run:
+          name: Download Chrome
+          command: |
+            .circleci\install-chrome.ps1
+      - run:
           name: Build project
           command: |
             .circleci\build-windows.ps1

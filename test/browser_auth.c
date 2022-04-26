@@ -41,6 +41,15 @@
 #define TOKEN "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3QtZW1haWxAZ21haWwuY29tIiwiZGJVc2VybmFtZSI6InRlc3QtdXNlciIsImV4cCI6MTkxNjIzOTAyMn0.kQPJ2yLs8-G5bUuYBddmyKGQmaimVop2mptZ5IqtF3c"
 #define HTTP_204 "HTTP/1.1 204 No Content\r\nAccess-Control-Allow-Origin: *\r\n\r\n"
 
+void Assert(int check, char *message)
+{
+  if (!check)
+  {
+    printf("%s\n", message);
+    exit(1);
+  }
+}
+
 int invalidSocketCheck(SOCKET_ s)
 {
 #ifdef WIN32
@@ -67,7 +76,7 @@ SOCKET_ startMockPortal()
 
   // Socket setup: creates an endpoint for communication, returns a descriptor
   serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-  assert(!invalidSocketCheck(serverSocket) && "Failed to create socket");
+  Assert(!invalidSocketCheck(serverSocket), "Failed to create socket");
 
   // Construct local address structure
   serverAddress.sin_family = AF_INET;
@@ -76,11 +85,11 @@ SOCKET_ startMockPortal()
 
   // Bind socket to local address
   res = bind(serverSocket, (struct sockaddr *) &serverAddress, sizeof(serverAddress));
-  assert(!res && "Failed to bind socket");
+  Assert(!res, "Failed to bind socket");
 
   // Mark socket to listen for incoming connections
   res = listen(serverSocket, 10);
-  assert(!res && "Failed to mark socket to listen for incoming connections");
+  Assert(!res, "Failed to mark socket to listen for incoming connections");
 
   return serverSocket;
 }
@@ -90,9 +99,9 @@ void sendJWT(char *url)
   char command[BUFFER_SIZE];
 
   memset(command ,0 , BUFFER_SIZE);
-  strcat(command, "curl -X POST -d '");
+  strcat(command, "curl -X POST -d \"");
   strcat(command, TOKEN);
-  strcat(command, "' ");
+  strcat(command, "\" ");
   strcat(command, url);
 
   system(command);
@@ -114,19 +123,19 @@ handle(void *serverSocketVoid)
 
   // Accept socket
   clientSocket = accept(*serverSocket, NULL, NULL);
-  assert(!invalidSocketCheck(clientSocket) && "Failed to accept the connection");
+  Assert(!invalidSocketCheck(clientSocket), "Failed to accept the connection");
 
   // Read the result
   memset(buff ,0 , BUFFER_SIZE);
-  size_recv = recv(clientSocket, buff, BUFFER_SIZE, 0);
-  assert(size_recv >= 0 && "Failed to read the response");
+  size_recv = recv(clientSocket, buff, BUFFER_SIZE-1, 0);
+  Assert(size_recv >= 0, "Failed to read the response");
 
   // Parse port from the request
   umlStart = strstr(buff, "returnTo=");
-  assert(umlStart && "Wrong request");
+  Assert(umlStart != NULL, "Wrong request");
   umlStart += strlen("returnTo=");
   umlEnd = strstr(umlStart, "&");
-  assert(umlEnd && "Wrong request");
+  Assert(umlEnd != NULL, "Wrong request");
   *umlEnd = 0;
 
   // Answer and close socket
@@ -160,8 +169,8 @@ int main(int argc, char **argv)
   pthread_create(&thread, NULL, handle, &serverSocket);
 #endif
 
-  res = BrowserAuthInternal(hdbc, "test-email@gmail.com", "http://127.0.0.1:18087", 1, &creds);
-  assert(!res && "Browser authentication failed");
+  res = BrowserAuthInternal(hdbc, "test-email@gmail.com", "http://127.0.0.1:18087", 10, &creds);
+  Assert(!res, "Browser authentication failed");
 #ifdef WIN32
   WaitForSingleObject(thread, INFINITE);
 #else
@@ -169,16 +178,16 @@ int main(int argc, char **argv)
 #endif
   closeSocket(serverSocket);
 
-  assert(!strcmp(creds.email, "test-email@gmail.com") && "Wrong email");
-  assert(!strcmp(creds.token, TOKEN) && "Wrong token");
-  assert(!strcmp(creds.username, "test-user") && "Wrong username");
-  assert(creds.expiration == 1916239022 && "Wrong exp");
+  Assert(!strcmp(creds.email, "test-email@gmail.com"), "Wrong email");
+  Assert(!strcmp(creds.token, TOKEN), "Wrong token");
+  Assert(!strcmp(creds.username, "test-user"), "Wrong username");
+  Assert(creds.expiration == 1916239022, "Wrong exp");
 
   BrowserAuthCredentialsFree(&creds);
 
   // Test that BrowserAuth fails when server is not responding
-  res = BrowserAuthInternal(hdbc, "test-email@gmail.com", "http://127.0.0.1:18087", 1, &creds);
-  assert(res && "Browser authentication expected to fail");
+  res = BrowserAuthInternal(hdbc, "test-email@gmail.com", "http://127.0.0.1:18087", 3, &creds);
+  Assert(res, "Browser authentication expected to fail");
 
   SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
   SQLFreeHandle(SQL_HANDLE_ENV, henv);
