@@ -205,6 +205,7 @@ test/odbc_sql_procedure_columns
 test/odbc_sql_row_count
 test/odbc_sql_special_columns
 test/odbc_sqlcolumns
+test/odbc_browser_auth
 test/basic
 test/blob
 test/bulk

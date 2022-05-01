@@ -40,7 +40,7 @@ typedef struct BrowserCredentials {
 
 int BrowserAuth(MADB_Dbc *Dbc, const char *email, BrowserAuthCredentials *credentials /*out*/, int testFlags);
 void BrowserAuthCredentialsFree(BrowserAuthCredentials *credentials);
-int parseJWTToCredentials(MADB_Dbc *Dbc, const char *token, BrowserAuthCredentials *bac /*out*/);
+int parseJWTToCredentials(MADB_Dbc *Dbc, const char *token, int token_len, BrowserAuthCredentials *bac /*out*/);
 
 #if defined(_WIN32)
 // Win secure key storage
@@ -49,6 +49,14 @@ int parseJWTToCredentials(MADB_Dbc *Dbc, const char *token, BrowserAuthCredentia
 #define SECURE_JWT_STORAGE_KEY L"SingleStore JWT storage for ODBC"
 #elif defined(__APPLE__)
 // Mac secure key storage
+// https://developer.apple.com/documentation/security/keychain_services/keychain_items?language=objc
+#include <Security/Security.h>
+#include <Security/SecKeyChain.h>
+#include <Security/SecKeyChainItem.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <CoreFoundation/CFBase.h>
+
+#define SECURE_JWT_STORAGE_KEY "SingleStore JWT storage for ODBC"
 #else
 // Linux secure key storage
 // https://gnome.pages.gitlab.gnome.org/libsecret/

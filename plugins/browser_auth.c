@@ -187,7 +187,7 @@ cleanupSocket:
   return Dbc->Error.ReturnValue;
 }
 
-int parseCredentialsFromJson(MADB_Dbc *Dbc, cJSON *json, const char *jwt, BrowserAuthCredentials *credentials)
+int parseCredentialsFromJson(MADB_Dbc *Dbc, cJSON *json, const char *jwt, int jwt_len, BrowserAuthCredentials *credentials)
 {
   memset(credentials, 0, sizeof(BrowserAuthCredentials));
   // TODO: PLAT-6174 update json parsing
@@ -198,7 +198,7 @@ int parseCredentialsFromJson(MADB_Dbc *Dbc, cJSON *json, const char *jwt, Browse
     goto end;
   }
 
-  if (!(credentials->token = strdup(jwt)))
+  if (!(credentials->token = strndup(jwt, jwt_len)))
   {
     MADB_SetError(&Dbc->Error, MADB_ERR_HY000, NULL, 0);
     goto end;
@@ -209,9 +209,11 @@ end:
 }
 
 // parseJWTToCredentials gets login credentials from the JWT `token`.
-// `token` of three parts separated by dot "."
+// `token` consists of three parts separated by dot "."
+// `token_len` is either the length of `token` or non-positive integer,
+// which means `token` end is indicated by a zero byte.
 // <header>.<payload>.<verify signature>
-int parseJWTToCredentials(MADB_Dbc *Dbc, const char *token, BrowserAuthCredentials *credentials /* out */)
+int parseJWTToCredentials(MADB_Dbc *Dbc, const char *token, int token_len, BrowserAuthCredentials *credentials /* out */)
 {
   const char *jwtPayloadStart;
   const char *jwtPayloadEnd;
@@ -223,13 +225,16 @@ int parseJWTToCredentials(MADB_Dbc *Dbc, const char *token, BrowserAuthCredentia
   cJSON *json;
   int i;
 
-  if ((jwtPayloadStart = strstr(token, ".")) == NULL)
+  ADJUST_LENGTH(token, token_len);
+  if (!token_len) token_len = strlen(token);
+
+  if ((jwtPayloadStart = memchr(token, '.', token_len)) == NULL)
   {
     return MADB_SetError(&Dbc->Error, MADB_ERR_S1000, "Failed to parse browser authentication credentials: JWT contains only header", 0);
   }
   jwtPayloadStart++;
 
-  if ((jwtPayloadEnd = strstr(jwtPayloadStart, ".")) == NULL)
+  if ((jwtPayloadEnd = memchr(jwtPayloadStart, '.', token_len - (jwtPayloadStart - token))) == NULL)
   {
     return MADB_SetError(&Dbc->Error, MADB_ERR_S1000, "Failed to parse browser authentication credentials: JWT contains only header and payload", 0);
   }
@@ -275,7 +280,7 @@ int parseJWTToCredentials(MADB_Dbc *Dbc, const char *token, BrowserAuthCredentia
     goto cleanup;
   }
 
-  if (parseCredentialsFromJson(Dbc, json, token, credentials))
+  if (parseCredentialsFromJson(Dbc, json, token, token_len, credentials))
   {
     goto cleanup;
   }
@@ -315,7 +320,7 @@ int parseRequest(MADB_Dbc *Dbc, const char *request, BrowserAuthCredentials *cre
   }
   bodyStart += 4;
 
-  return parseJWTToCredentials(Dbc, bodyStart, credentials);
+  return parseJWTToCredentials(Dbc, bodyStart, SQL_NTS, credentials);
 }
 
 // tryGetFullRequestLength takes request prefix and if it contains all headers
@@ -579,7 +584,6 @@ int GetCachedCredentials(MADB_Dbc *Dbc, const char *email, BrowserAuthCredential
 #if defined(_WIN32)
 // Win secure key storage
   CREDENTIALW* pCredential = NULL;
-  char* password = NULL;
   int res = CredReadW(SECURE_JWT_STORAGE_KEY, CRED_TYPE_GENERIC, 0 /*flags*/, &pCredential);
   if (!res)
   {
@@ -592,19 +596,37 @@ int GetCachedCredentials(MADB_Dbc *Dbc, const char *email, BrowserAuthCredential
     goto endwin;
   }
   MDBUG_C_PRINT(Dbc, "%s SUCCESS", "CredReadW");
-  if (!(password = strndup(pCredential->CredentialBlob, pCredential->CredentialBlobSize)))
-  {
-    MADB_SetError(&Dbc->Error, MADB_ERR_HY001, NULL, 0);
-    goto endwin;
-  }
-  parseJWTToCredentials(Dbc, password, bac);
+  parseJWTToCredentials(Dbc, pCredential->CredentialBlob, pCredential->CredentialBlobSize, bac);
 endwin:
   if(pCredential) CredFree(pCredential);
-  MADB_FREE(password);
   MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
 #elif defined(__APPLE__)
 // Mac secure key storage
-// TODO: PLAT-6107 implement
+ void *password_data = NULL;
+ uint32_t password_len;
+ char *email_str = email != NULL ? email : "";
+ OSStatus status = SecKeychainFindGenericPassword(
+  NULL /* default keychain */,
+  strlen(SECURE_JWT_STORAGE_KEY),
+  SECURE_JWT_STORAGE_KEY,
+  strlen(email_str),
+  email_str,
+  &password_len,
+  &password_data,
+  NULL);
+if (status == errSecSuccess)
+{
+  parseJWTToCredentials(Dbc, password_data, password_len, bac);
+}
+else if (status != errSecItemNotFound)
+{
+  // TODO: refactor PLAT-6194
+  char error_msg[128];
+  int error_len = snprintf(error_msg, 127, "Error reading token from Mac OS keychain: code is %d", status);
+  error_msg[MIN(127, error_len)] = '\0';
+  MADB_SetError(&Dbc->Error, MADB_ERR_HY000, error_msg, 0);
+}
+MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
 #else
 // Linux secure key storage
   gchar *password = NULL;
@@ -634,7 +656,7 @@ endwin:
   }
   if (password)
   {
-    parseJWTToCredentials(Dbc, (char*)password, bac);
+    parseJWTToCredentials(Dbc, (char*)password, SQL_NTS, bac);
     secret_password_free(password);
   }
   MDBUG_C_RETURN(Dbc, 0, &Dbc->Error);
@@ -689,6 +711,46 @@ endwin:
   MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
 #elif defined(__APPLE__)
 // Mac secure key storage
+SecKeychainItemRef item = NULL;
+OSStatus status = SecKeychainFindGenericPassword(
+  NULL /* default keychain */,
+  strlen(SECURE_JWT_STORAGE_KEY),
+  SECURE_JWT_STORAGE_KEY,
+  strlen(bac->email),
+  bac->email,
+  NULL /* unused output parameter */,
+  NULL /* unused output parameter */,
+  &item);
+
+if (status == errSecSuccess)
+{
+  status = SecKeychainItemModifyContent(item, NULL, strlen(bac->token), bac->token);
+}
+else
+{
+  status = SecKeychainAddGenericPassword(
+    NULL /* default keychain */,
+    strlen(SECURE_JWT_STORAGE_KEY),
+    SECURE_JWT_STORAGE_KEY,
+    strlen(bac->email),
+    bac->email,
+    strlen(bac->token),
+    bac->token,
+    NULL /* unused output parameter */);
+}
+if (status != errSecSuccess)
+{
+  // TODO: refactor PLAT-6194
+  char error_msg[128];
+  int error_len = snprintf(error_msg, 127, "Error writing token to Mac OS keychain: code is %d", status);
+  error_msg[MIN(127, error_len)] = '\0';
+  MADB_SetError(&Dbc->Error, MADB_ERR_HY000, error_msg, 0);
+}
+if (item)
+{
+  CFRelease(item);
+}
+MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
 #else
 // Linux secure key storage
   GError *error = NULL;

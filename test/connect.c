@@ -2044,9 +2044,7 @@ MA_ODBC_TESTS my_tests[]=
   {driver_connect_no_cache, "driver_connect_no_cache", NORMAL, ALL_DRIVERS},
   {driver_connect_no_cache_w, "driver_connect_no_cache_w", NORMAL, UNICODE_DRIVER},
   {driver_connect_jwt, "driver_connect_jwt", NORMAL, ALL_DRIVERS},
-#if !defined(__APPLE__)
   {driver_connect_browser_sso, "driver_connect_browser_sso", NORMAL, ALL_DRIVERS},
-#endif
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 

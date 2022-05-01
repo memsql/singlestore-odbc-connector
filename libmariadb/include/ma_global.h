@@ -624,7 +624,11 @@ typedef long		longlong;
 typedef longlong int64;
 #endif
 #ifndef HAVE_UINT64
+#ifdef __APPLE__
+typedef uint64_t uint64;
+#else
 typedef ulonglong uint64;
+#endif
 #endif
 
 #ifndef MIN
