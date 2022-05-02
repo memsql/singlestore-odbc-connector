@@ -61,6 +61,7 @@ int parseJWTToCredentials(MADB_Dbc *Dbc, const char *token, int token_len, Brows
 // Linux secure key storage
 // https://gnome.pages.gitlab.gnome.org/libsecret/
 #include <glib.h>
+#include <gmodule.h>
 #include <libsecret/secret.h>
 #define SECURE_JWT_STORAGE_KEY "SingleStore JWT storage for ODBC"
 const SecretSchema *jwt_cache_get_schema(void);
