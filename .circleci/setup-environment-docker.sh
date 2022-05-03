@@ -23,7 +23,8 @@ then
   sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.epel.cloud|g' /etc/yum.repos.d/CentOS-Linux-*
   yum -y update
   yum -y install gcc-c++ make gcc openssl-devel unixODBC unixODBC-devel wget bind-utils
-  yum -y install libglib2.0 libsecret-1-dev
+  yum -y install libglib2.0 libsecret-1-dev  # for CentOS 7
+  yum -y install glib2-devel libsecret-devel
   wget https://github.com/Kitware/CMake/releases/download/v3.20.3/cmake-3.20.3-linux-x86_64.tar.gz
   cd /usr || exit
   tar --strip-components=1 -xzf /root/project/cmake-3.20.3-linux-x86_64.tar.gz
