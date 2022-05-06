@@ -584,7 +584,7 @@ typedef struct UnlockGnomeKeyringArgs
   GList *objects;
   GList **unlocked;
   GError **error;
-  _Atomic int *status;
+  int *status;
 } UnlockArgs;
 
 void *unlock_func(void *args)
@@ -593,7 +593,7 @@ void *unlock_func(void *args)
   int res = secret_service_unlock_sync(unlockArgs->service, unlockArgs->objects, NULL, unlockArgs->unlocked, unlockArgs->error);
   if (*(unlockArgs->error) == NULL)
   {
-     __atomic_fetch_add(unlockArgs->status, 1, __ATOMIC_SEQ_CST);;
+    __atomic_fetch_add(unlockArgs->status, 1, __ATOMIC_SEQ_CST);;
   }
 }
 #endif
@@ -666,18 +666,18 @@ MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
     GList *collections = g_list_append(NULL , defaultCollection);
     GError *unlockErr = NULL;
     GList *unlocked = NULL;
-    _Atomic int unlockStatus = 0;
+    int unlockStatus = 0;
     UnlockArgs args = {service, collections, &unlocked, &unlockErr, &unlockStatus};
     pthread_t t;
     pthread_create(&t, NULL, &unlock_func, (void*)&args);
 
     time_t startTime = time(NULL);
-    while(!unlockStatus && time(NULL) - startTime < KEYRING_UNLOCK_TIMEOUT_SEC)
+    while(!__atomic_load_n(&unlockStatus, __ATOMIC_SEQ_CST) && time(NULL) - startTime < KEYRING_UNLOCK_TIMEOUT_SEC)
     {
       sleepMilliseconds(100);
     }
 
-    if (!unlockStatus)
+    if (!__atomic_load_n(&unlockStatus, __ATOMIC_SEQ_CST))
     {
       pthread_cancel(t);
       MADB_SetError(&Dbc->Error, MADB_ERR_HY000, "Failed to unlock the default collection within 5 minutes", 0);

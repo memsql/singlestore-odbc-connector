@@ -325,6 +325,29 @@ jobs:
       - store_artifacts:
           path: /root/project/singlestore-connector-odbc-<< pipeline.parameters.driver-version >>-<< parameters.os_name >>-amd64.tar.gz
 
+  build-only-linux:
+    parameters:
+      os_version:
+        type: string
+      os_name:
+        type: string
+      build_type:
+        type: string
+    docker:
+      - image: << parameters.os_version >>
+    environment:
+      IMAGE_NAME: << parameters.os_version >>
+      BUILD_TYPE: << parameters.build_type >>
+      CONTINUOUS_INTEGRATION: true
+    steps:
+      - checkout
+      - run:
+          name: Setup Environment
+          command: ./.circleci/setup-environment-docker.sh
+      - run:
+          name: Build project
+          command: ./.circleci/build-linux-in-docker.sh
+
 workflows:
   test:
     jobs:
@@ -420,6 +443,44 @@ workflows:
                 - SingleStore ODBC ANSI Driver
               driver_type:
                 - ansi
+  test-build-linux:
+    jobs:
+      - build-only-linux:
+          matrix:
+            parameters:
+              os_version:
+                - centos:centos7
+              os_name:
+                - centos7
+              build_type:
+                - RelWithDebInfo
+      - build-only-linux:
+          matrix:
+            parameters:
+              os_version:
+                - centos:centos8
+              os_name:
+                - centos8
+              build_type:
+                - RelWithDebInfo
+      - build-only-linux:
+          matrix:
+            parameters:
+              os_version:
+                - debian:9
+              os_name:
+                - debian9
+              build_type:
+                - RelWithDebInfo
+      - build-only-linux:
+          matrix:
+            parameters:
+              os_version:
+                - debian:10
+              os_name:
+                - debian10
+              build_type:
+                - RelWithDebInfo
   daily:
     triggers:
       - schedule:
