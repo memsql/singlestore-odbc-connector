@@ -70,6 +70,7 @@ const SecretSchema *jwt_cache_get_schema(void);
 
 int PutCachedCredentials(MADB_Dbc *Dbc, BrowserAuthCredentials *bac);
 int GetCachedCredentials(MADB_Dbc *Dbc, const char *username, BrowserAuthCredentials *bac /*out*/);
+int GetCredentialsBrowserSSO(MADB_Dbc *Dbc, MADB_Dsn *Dsn /*out*/, my_bool readCached);
 
 #define BROWSER_AUTH_FLAG_TEST_FIRST_CALL (1 << 1)
 #define BROWSER_AUTH_FLAG_TEST_SECOND_CALL (1 << 2)

@@ -509,6 +509,8 @@ void makeTestCreds(BrowserAuthCredentials *credentials /*out*/)
 int BrowserAuth(MADB_Dbc *Dbc, const char *email, BrowserAuthCredentials *credentials /*out*/, int testFlags)
 {
   MDBUG_C_ENTER(Dbc, "BrowserAuth");
+  MDBUG_C_PRINT(Dbc, "BrowserAuth is called with testFlags %d", testFlags);
+
   int requestReadTimeoutSec = testFlags & BROWSER_AUTH_FLAG_TEST_SHORT_TIMEOUT ? READ_TIMEOUT_TEST_SEC : READ_TIMEOUT_USER_SEC;
   char* endpoint = testFlags & BROWSER_AUTH_FLAG_TEST_ENDPOINT ? LOCAL_TEST_ENDPOINT : PORTAL_SSO_ENDPOINT;
   if (testFlags & BROWSER_AUTH_FLAG_TEST_FIRST_CALL)
@@ -518,7 +520,8 @@ int BrowserAuth(MADB_Dbc *Dbc, const char *email, BrowserAuthCredentials *creden
   }
   if (testFlags & BROWSER_AUTH_FLAG_TEST_SECOND_CALL)
   {
-    assert(0 && "BrowserAuth must not be called in the second connection with BROWSER_SSO");
+    printf("BrowserAuth must not be called in the second connection with BROWSER_SSO\n");
+    assert(0);
     MDBUG_C_RETURN(Dbc, 0, &Dbc->Error);
   }
   MADB_DynString serverEndpoint;
@@ -814,4 +817,36 @@ MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
     MDBUG_C_RETURN(Dbc, 0, &Dbc->Error);
   }
 #endif
+}
+
+int GetCredentialsBrowserSSO(MADB_Dbc *Dbc, MADB_Dsn *Dsn, my_bool readCached)
+{
+  MDBUG_C_ENTER(Dbc, "GetCredentialsBrowserSSO");
+  MDBUG_C_PRINT(Dbc, "Reading from keyring: %s", readCached ? "true" : "false")
+  BrowserAuthCredentials creds = {NULL, NULL, NULL, 0};
+  // 1. Try to get credentials from the OS keyring
+  int readKeyringFailed = 0;
+  if (readCached)
+  {
+    readKeyringFailed = GetCachedCredentials(Dbc, Dsn->UserName /* UserName is e-mail in this case */, &creds);
+  }
+  // 2. Call browser auth if there are no stored credentials or the token has expired
+  if (readKeyringFailed || !creds.token || CheckExpiration(creds.expiration))
+  {
+    if (BrowserAuth(Dbc, Dsn->UserName /* UserName is e-mail in this case */, &creds, Dsn->TestMode))
+    {
+      MDBUG_C_RETURN(Dbc, 1, &Dbc->Error);
+    }
+    // 3. Store credentials in the keyring
+    if(PutCachedCredentials(Dbc, &creds))
+    {
+      MDBUG_C_RETURN(Dbc, 1, &Dbc->Error);
+    }
+  }
+  Dsn->Password = creds.token;
+  creds.token = NULL;
+  Dsn->UserName = creds.username;
+  creds.username = NULL;
+  BrowserAuthCredentialsFree(&creds);
+  MDBUG_C_RETURN(Dbc, 0, &Dbc->Error);
 }

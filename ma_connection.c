@@ -804,10 +804,34 @@ SQLRETURN MADB_DbcConnectDB(MADB_Dbc *Connection,
     mysql_optionsv(Connection->mariadb, MARIADB_OPT_TLS_PASSPHRASE, (void*)Dsn->TlsKeyPwd);
   }
 
+  if (Dsn->IsBrowserAuth)
+  {
+    if (GetCredentialsBrowserSSO(Connection, Dsn, TRUE /*readCached*/))
+    {
+      goto err;
+    }
+  }
+
+  my_bool connectionTried = FALSE;
+real_connect:
   if (!mysql_real_connect(Connection->mariadb,
       Dsn->Socket ? "localhost" : Dsn->ServerName, Dsn->UserName, Dsn->Password,
         Dsn->Catalog && Dsn->Catalog[0] ? Dsn->Catalog : NULL, Dsn->Port, Dsn->Socket, client_flags))
   {
+    // in case of Browser Auth we try to get credentials from the browser
+    // without reading the keyring, and then retry connection
+    if (Dsn->IsBrowserAuth && !connectionTried)
+    {
+      connectionTried = TRUE;
+      if (GetCredentialsBrowserSSO(Connection, Dsn, FALSE /*readCached*/))
+      {
+        goto err;
+      }
+      else
+      {
+        goto real_connect;
+      }
+    }
     goto err;
   }
   
@@ -2312,36 +2336,6 @@ SQLRETURN MADB_DriverConnect(MADB_Dbc *Dbc, SQLHWND WindowHandle, SQLCHAR *InCon
     // we will send JWT as the password
     Dsn->Password = Dsn->JWT;
     Dsn->JWT = NULL;
-  }
-
-  if (Dsn->IsBrowserAuth)
-  {
-    // 1. Try to get credentails from the OS keyring
-    BrowserAuthCredentials creds = {NULL, NULL, NULL, 0};
-    // TODO: PLAT-6175 retry connection if saved credentials didn't work
-    // it can happen because of timeout and because of engine re-configuratiion
-    if(GetCachedCredentials(Dbc, Dsn->UserName  /* UserName is e-mail in this case */, &creds))
-    {
-      goto error;
-    }
-    // 2. Call auth helper if there are no stored credentials or token has expired
-    if (!creds.token || CheckExpiration(creds.expiration))
-    {
-      if (BrowserAuth(Dbc, Dsn->UserName /* UserName is e-mail in this case */, &creds, Dsn->TestMode))
-      {
-        goto error;
-      }
-      // 3. Store credentials in the keyring
-      if(PutCachedCredentials(Dbc, &creds))
-      {
-        goto error;
-      }
-    }
-    Dsn->Password = creds.token;
-    creds.token = NULL;
-    Dsn->UserName = creds.username;
-    creds.username = NULL;
-    BrowserAuthCredentialsFree(&creds);
   }
 
   /* if DSN prompt is off, adjusting DriverCompletion */
