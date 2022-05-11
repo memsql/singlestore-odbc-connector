@@ -116,6 +116,8 @@ SQLUSMALLINT MADB_supported_api[]=
 
 struct st_ma_connection_methods MADB_Dbc_Methods; /* declared at the end of file */
 
+extern Client_Charset utf8;
+#define CHARSET_PTR(isWChar, Dbc) isWChar ? (Dbc->Charset.cs_info ? &Dbc->Charset : &utf8 ): NULL
 
 my_bool CheckConnection(MADB_Dbc *Dbc)
 {
@@ -338,7 +340,7 @@ SQLRETURN MADB_DbcGetAttr(MADB_Dbc *Dbc, SQLINTEGER Attribute, SQLPOINTER ValueP
     if (!SQL_SUCCEEDED(ret) && Dbc->CatalogName)
     {
       MADB_CLEAR_ERROR(&Dbc->Error);
-      StrLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : 0, ValuePtr, BufferLength, 
+      StrLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), ValuePtr, BufferLength,
                                           Dbc->CatalogName, strlen(Dbc->CatalogName), &Dbc->Error);
       ret= SQL_SUCCESS;
     }
@@ -1001,7 +1003,6 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
                           SQLSMALLINT BufferLength, SQLSMALLINT *StringLengthPtr, my_bool isWChar)
 {
   SQLSMALLINT SLen= 0;
-  extern Client_Charset utf8;
 
   if (!InfoValuePtr && !StringLengthPtr)
     return SQL_SUCCESS;
@@ -1020,14 +1021,14 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     // SQL_ACCESSIBLE_PROCEDURES is a character string:
     // "Y" if the user can execute all procedures returned by SQLProcedures;
     // "N" if there may be procedures returned that the user cannot execute.
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL,
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc),
                                      (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), "N", SQL_NTS, &Dbc->Error);
     break;
   case SQL_ACCESSIBLE_TABLES:
     // SQL_ACCESSIBLE_TABLES is a character string:
     // "Y" if the user is guaranteed SELECT privileges to all tables returned by SQLTables;
     // "N" if there may be tables returned that the user cannot access.
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL,
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc),
                                      (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), "N", SQL_NTS, &Dbc->Error);
     break;
   case SQL_ACTIVE_ENVIRONMENTS:
@@ -1120,19 +1121,19 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     // SQL_CATALOG_NAME is a character string: "Y" if the server supports catalog names, or "N" if it does not.
     /* Todo: MyODBC Driver has a DSN configuration for disabling catalog usage:
        but it's not implemented in MAODBC */
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, 
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc),
                                      (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), "Y", SQL_NTS, &Dbc->Error);
     break;
   case SQL_CATALOG_NAME_SEPARATOR:
     // SQL_CATALOG_NAME_SEPARATOR is a character string: the character or characters that the data source defines as the separator
     // between a catalog name and the qualified name element that follows or precedes it.
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, 
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc),
                                      (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), ".", SQL_NTS, &Dbc->Error);
     break;
   case SQL_CATALOG_TERM:
     // SQL_CATALOG_TERM is a character string with the data source vendor's name for a catalog.
     /* todo: See comment for SQL_CATALOG_NAME */
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, 
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc),
                                      (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), "database", SQL_NTS, &Dbc->Error);
     break;
   case SQL_CATALOG_USAGE:
@@ -1154,14 +1155,14 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     // SQL_COLLATION_SEQ is the name of the collation sequence.
     MY_CHARSET_INFO cs;
     mariadb_get_infov(Dbc->mariadb, MARIADB_CONNECTION_MARIADB_CHARSET_INFO, (void*)&cs);
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL,
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc),
       (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
       cs.name, SQL_NTS, &Dbc->Error);
     break;
   }
   case SQL_COLUMN_ALIAS:
     // SQL_COLUMN_ALIAS is a character string: "Y" if the data source supports column aliases; otherwise, "N".
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, 
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc),
                            (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), "Y", SQL_NTS, &Dbc->Error);
     break;
   case SQL_CONCAT_NULL_BEHAVIOR:
@@ -1369,7 +1370,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
   case SQL_DATA_SOURCE_NAME:
     // SQL_DATA_SOURCE_NAME is a character string with the data source name that was used during connection
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      Dbc->Dsn ? Dbc->Dsn->DSNName : "", SQL_NTS, &Dbc->Error);
     break;
   case SQL_DATABASE_NAME:
@@ -1383,7 +1384,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
   case SQL_DBMS_NAME:
     // SQL_DBMS_NAME is a character string with the name of the DBMS product accessed by the driver.
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
                                       !Dbc->Dsn->CompatMode ? "SingleStore" : "MySQL",
                                      SQL_NTS, &Dbc->Error);
     break;
@@ -1405,7 +1406,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
       }
       else
         Version[0]= 0;
-      SLen= (SQLSMALLINT)MADB_SetString(isWChar ?  &utf8 : 0, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
+      SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
                                        Version[0] ? Version : "", SQL_NTS, &Dbc->Error);
     }
     break;
@@ -1422,7 +1423,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
   case SQL_DESCRIBE_PARAMETER:
     // SQL_DESCRIBE_PARAMETER is a character string: "Y" if parameters can be described; "N", if not.
     // TODO PLAT-5483
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "N", SQL_NTS, &Dbc->Error);
     break;
 #ifdef SQL_DRIVER_AWARE_POOLING_SUPPORTED
@@ -1444,7 +1445,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
   case SQL_DRIVER_NAME:
     // A character string with the file name of the driver used to access the data source
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL,
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc),
                                      (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
                                      MADB_DRIVER_NAME, SQL_NTS, &Dbc->Error);
     break;
@@ -1454,14 +1455,14 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
       char *OdbcVersion = "03.51";
       /* DM requests this info before Dbc->Charset initialized. Thus checking if it is, and use utf8 by default
          The other way would be to use utf8 when Dbc initialized */
-      SLen= (SQLSMALLINT)MADB_SetString(isWChar ? (Dbc->Charset.cs_info ? &Dbc->Charset : &utf8 ): NULL,
+      SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc),
                                      (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
                                      OdbcVersion, SQL_NTS, &Dbc->Error);
     }
     break;
   case SQL_DRIVER_VER:
      // A character string with the version of the driver and optionally, a description of the driver
-     SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL,
+     SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc),
                                      (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
                                      MARIADB_ODBC_VERSION, SQL_NTS, &Dbc->Error);
     break;
@@ -1571,7 +1572,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
   case SQL_EXPRESSIONS_IN_ORDERBY:
     // SQL_EXPRESSIONS_IN_ORDERBY is a character string: "Y" if the data source supports expressions in the ORDER BY list; "N" if it does not.
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "Y", SQL_NTS, &Dbc->Error);
     break;
   case SQL_FILE_USAGE:
@@ -1668,7 +1669,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     // SQL_IDENTIFIER_QUOTE_CHAR is the character string that is used as the starting and ending delimiter of a quoted (delimited) identifier in SQL statements.
     // TODO DB-46842
     // If this is ever changed please update MADB_DynStrAppendQuoted() and ProcessIdentifierString()
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),"`", SQL_NTS, &Dbc->Error);
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),"`", SQL_NTS, &Dbc->Error);
     break;
   case SQL_INDEX_KEYWORDS:
     // SQL_INDEX_KEYWORDS enumerates keywords in the CREATE INDEX statement that are supported by the driver.
@@ -1713,7 +1714,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
   case SQL_INTEGRITY:
     // SQL_INTEGRITY is a character string: "Y" if the data source supports the Integrity Enhancement Facility; "N" if it does not.
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "N", SQL_NTS, &Dbc->Error);
     break;
   case SQL_KEYSET_CURSOR_ATTRIBUTES1:
@@ -1730,14 +1731,14 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     // SQL_KEYWORDS is a character string that contains a comma-separated list of all data source-specific keywords.
     // This list does not contain keywords specific to ODBC or keywords used by both the data source and ODBC.
     // This list represents all the reserved keywords; interoperable applications should not use these words in object names.
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
                                         SINGLESTORE_KEYWORDS, SQL_NTS, &Dbc->Error);
     break;
   case SQL_LIKE_ESCAPE_CLAUSE:
     // SQL_LIKE_ESCAPE_CLAUSE is a character string: "Y" if the data source supports an escape character for the percent character (%)
     // and underscore character (_) in a LIKE predicate and the driver supports the ODBC syntax for defining a LIKE predicate escape character.
     // "N" otherwise.
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "Y", SQL_NTS, &Dbc->Error);
     break;
   case SQL_MAX_ASYNC_CONCURRENT_STATEMENTS:
@@ -1819,7 +1820,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     // SQL_MAX_ROW_SIZE_INCLUDES_LONG is a character string: "Y" if the maximum row size returned for the SQL_MAX_ROW_SIZE information type
     // includes the length of all SQL_LONGVARCHAR and SQL_LONGVARBINARY columns in the row; "N" otherwise.
   case SQL_MAX_ROW_SIZE_INCLUDES_LONG:
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "N", SQL_NTS, &Dbc->Error);
     break;
   case SQL_MAX_SCHEMA_NAME_LEN:
@@ -1848,21 +1849,21 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
   case SQL_MULT_RESULT_SETS:
     // SQL_MULT_RESULT_SETS is a character string: "Y" if the data source supports multiple result sets, "N" if it does not.
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "Y", SQL_NTS, &Dbc->Error);
     break;
   case SQL_MULTIPLE_ACTIVE_TXN:
     // SQL_MULTIPLE_ACTIVE_TXN 	is a character string: "Y" if the driver supports more than one active transaction at the same time,
     // "N" if only one transaction can be active at any time.
     // TODO PLAT-5414
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "Y", SQL_NTS, &Dbc->Error);
     break;
   case SQL_NEED_LONG_DATA_LEN:
     // SQL_NEED_LONG_DATA_LEN is a character string: "Y" if the data source needs the length of a long data value
     // (the data type is SQL_LONGVARCHAR, SQL_LONGVARBINARY, or a long data source-specific data type)
     // before that value is sent to the data source, "N" if it does not.
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "N", SQL_NTS, &Dbc->Error);
     break;
   case SQL_NON_NULLABLE_COLUMNS:
@@ -1902,7 +1903,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
   case SQL_ODBC_VER:
     break;
   case SQL_OUTER_JOINS:
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, 
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc),
                                      (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), "Y", SQL_NTS, &Dbc->Error);
     break;
   case SQL_OJ_CAPABILITIES:
@@ -1919,7 +1920,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
   case SQL_ORDER_BY_COLUMNS_IN_SELECT:
     // SQL_ORDER_BY_COLUMNS_IN_SELECT is a character string: "Y" if the columns in the ORDER BY clause must be in the select list; otherwise, "N".
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "N", SQL_NTS, &Dbc->Error);
     break;
   case SQL_PARAM_ARRAY_ROW_COUNTS:
@@ -1937,12 +1938,12 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
   case SQL_PROCEDURE_TERM:
     // SQL_PROCEDURE_TERM is a character string with the data source vendor's name for a procedure.
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "procedure", SQL_NTS, &Dbc->Error);
     break;
   case SQL_PROCEDURES:
     // SQL_PROCEDURES is a character string: "Y" if the data source supports procedures and the driver supports the ODBC procedure invocation syntax; "N" otherwise.
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "Y", SQL_NTS, &Dbc->Error);
     break;
   case SQL_QUOTED_IDENTIFIER_CASE:
@@ -1953,14 +1954,14 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     // SQL_ROW_UPDATES is "Y" if a keyset-driven or mixed cursor maintains row versions or values for all fetched rows
     // and therefore can detect any updates that were made to a row by any user since the row was last fetched.
     // This driver doesn't support keyset-driven or mixed cursor, so we are returning "N".
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr,
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr,
                                       BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "N", SQL_NTS, &Dbc->Error);
     break;
   case SQL_SCHEMA_TERM:
     // SQL_SCHEMA_TERM is a character string with the data source vendor's name for a schema.
     // TODO PLAT-5484
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr,
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr,
                                       BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "", SQL_NTS, &Dbc->Error);
     break;
@@ -1988,7 +1989,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
   case SQL_SEARCH_PATTERN_ESCAPE:
     // SQL_SEARCH_PATTERN_ESCAPE specifies what the driver supports as an escape character that allows the use of the
     // pattern match metacharacters underscore (_) and percent sign (%) as valid characters in search patterns.
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr,
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr,
                                       BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "\\", SQL_NTS, &Dbc->Error);
     break;
@@ -2000,7 +2001,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     {
       mariadb_get_infov(Dbc->mariadb, MARIADB_CONNECTION_HOST, (void*)&Host);
     }
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr,
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr,
       BUFFER_CHAR_LEN(BufferLength, isWChar),
       Host, SQL_NTS, &Dbc->Error);
     break;
@@ -2009,7 +2010,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     // SQL_SPECIAL_CHARACTERS A character string that contains all special characters
     // (that is, all characters except a through z, A through Z, 0 through 9, and underscore)
     // that can be used in an identifier name, such as a table name, column name, or index name, on the data source.
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr,
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr,
                                       BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "\"\\/!@#$%^&*()-=+<>|:;,.%?", SQL_NTS, &Dbc->Error);
     break;
@@ -2176,7 +2177,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     break;
   case SQL_TABLE_TERM:
     // SQL_TABLE_TERM is a character string with the data source vendor's name for a table.
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr,
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr,
                                       BUFFER_CHAR_LEN(BufferLength, isWChar), 
                                      "table", SQL_NTS, &Dbc->Error);
     break;
@@ -2233,7 +2234,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
     {
       mariadb_get_infov(Dbc->mariadb, MARIADB_CONNECTION_USER, (void *)&User);
     }
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr,
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr,
                                      BUFFER_CHAR_LEN(BufferLength, isWChar), 
                                       User, SQL_NTS, &Dbc->Error);
     break;
@@ -2241,13 +2242,13 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
   case SQL_XOPEN_CLI_YEAR:
     // SQL_XOPEN_CLI_YEAR is a character string that indicates the year of publication
     // of the Open Group specification with which the version of the ODBC Driver Manager fully complies.
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr,
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr,
                                      BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "1992", SQL_NTS, &Dbc->Error);
     break;
   case SQL_DATA_SOURCE_READ_ONLY:
     // SQL_DATA_SOURCE_READ_ONLY is a character string "Y" if the data source is set to READ ONLY mode, "N" if it is otherwise.
-    SLen= (SQLSMALLINT)MADB_SetString(isWChar ? &Dbc->Charset : NULL, (void *)InfoValuePtr,
+    SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc), (void *)InfoValuePtr,
                                      BUFFER_CHAR_LEN(BufferLength, isWChar),
                                      "N", SQL_NTS, &Dbc->Error);
     break;
