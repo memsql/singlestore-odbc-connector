@@ -35,7 +35,8 @@ typedef struct BrowserCredentials {
 #define READ_TIMEOUT_USER_SEC (5*60)
 #define READ_TIMEOUT_TEST_SEC 10
 
-#define PORTAL_SSO_ENDPOINT "https://portal.singlestore.com/engine-sso"
+// #define PORTAL_SSO_ENDPOINT "https://portal.singlestore.com/engine-sso"
+#define PORTAL_SSO_ENDPOINT "https://portal-staging.dev.helios.singlestore.com/engine-sso"
 #define LOCAL_TEST_ENDPOINT "http://127.0.0.1:18087"
 
 int BrowserAuth(MADB_Dbc *Dbc, const char *email, BrowserAuthCredentials *credentials /*out*/, int testFlags);
@@ -70,7 +71,7 @@ const SecretSchema *jwt_cache_get_schema(void);
 
 int PutCachedCredentials(MADB_Dbc *Dbc, BrowserAuthCredentials *bac);
 int GetCachedCredentials(MADB_Dbc *Dbc, const char *username, BrowserAuthCredentials *bac /*out*/);
-int GetCredentialsBrowserSSO(MADB_Dbc *Dbc, MADB_Dsn *Dsn /*out*/, my_bool readCached);
+int GetCredentialsBrowserSSO(MADB_Dbc *Dbc, MADB_Dsn *Dsn /*out*/, const char* email, my_bool readCached);
 
 #define BROWSER_AUTH_FLAG_TEST_FIRST_CALL (1 << 1)
 #define BROWSER_AUTH_FLAG_TEST_SECOND_CALL (1 << 2)

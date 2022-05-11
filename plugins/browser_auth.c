@@ -31,15 +31,18 @@
 #include "vendor/b64.c/b64.h"
 #include "vendor/cJSON/cJSON.h"
 
-int getJsonStringField(MADB_Dbc *Dbc, cJSON *json, const char *fieldName, char **dst)
+int getJsonStringField(MADB_Dbc *Dbc, cJSON *json, const char *fieldName, char **dst, my_bool required)
 {
   cJSON *field;
   field = cJSON_GetObjectItem(json, fieldName);
   if (!cJSON_IsString(field) || (field->valuestring == NULL))
   {
-    char errorBuff[128] = "Failed to get the following field from decoded JWT: ";
-    strcat(errorBuff, fieldName);
-    MADB_SetError(&Dbc->Error, MADB_ERR_28000, errorBuff, 0);
+    if (required)
+    {
+      char errorBuff[128] = "Failed to get the following string field from decoded JWT: ";
+      strcat(errorBuff, fieldName);
+      MADB_SetError(&Dbc->Error, MADB_ERR_28000, errorBuff, 0);
+    }
     return 1;
   }
   if (!(*dst = strdup(field->valuestring)))
@@ -55,7 +58,7 @@ int getJsonIntField(MADB_Dbc *Dbc, cJSON *json, const char *fieldName, unsigned 
   field = cJSON_GetObjectItem(json, fieldName);
   if (!cJSON_IsNumber(field))
   {
-    char errorBuff[128] = "Failed to get the following field from decoded JWT: ";
+    char errorBuff[128] = "Failed to get the following int field from decoded JWT: ";
     strcat(errorBuff, fieldName);
     MADB_SetError(&Dbc->Error, MADB_ERR_28000, errorBuff, 0);
     return 1;
@@ -190,10 +193,11 @@ cleanupSocket:
 int parseCredentialsFromJson(MADB_Dbc *Dbc, cJSON *json, const char *jwt, int jwt_len, BrowserAuthCredentials *credentials)
 {
   memset(credentials, 0, sizeof(BrowserAuthCredentials));
-  // TODO: PLAT-6174 update json parsing
-  if (getJsonStringField(Dbc, json, "email", &credentials->email) ||
-      getJsonStringField(Dbc, json, "username", &credentials->username) ||
-      getJsonIntField(Dbc, json, "exp", &credentials->expiration))
+  if (getJsonStringField(Dbc, json, "email", &credentials->email, TRUE) ||
+      getJsonIntField(Dbc, json, "exp", &credentials->expiration) ||
+     (getJsonStringField(Dbc, json, "username", &credentials->username, FALSE) &&
+      getJsonStringField(Dbc, json, "sub", &credentials->username, TRUE))
+      )
   {
     goto end;
   }
@@ -482,7 +486,18 @@ int readRequest(MADB_Dbc *Dbc, SOCKET_ serverSocket, int requestReadTimeoutSec, 
 
   if (parseRequest(Dbc, request.str, credentials))
   {
-    send(clientSocket, HTTP_400, sizeof(HTTP_400), 0);
+    MADB_DynString response;
+    if (MADB_InitDynamicString(&response, HTTP_400, SQL_MAX_MESSAGE_LENGTH, SQL_MAX_MESSAGE_LENGTH) ||
+      MADB_DynstrAppend(&response, Dbc->Error.SqlErrorMsg))
+    {
+      send(clientSocket, HTTP_400, strlen(HTTP_400), 0);
+    }
+    else
+    {
+      send(clientSocket, response.str, response.length, 0);
+    }
+
+    MADB_DynstrFree(&response);
     goto cleanupSocket;
   }
 
@@ -819,21 +834,21 @@ MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
 #endif
 }
 
-int GetCredentialsBrowserSSO(MADB_Dbc *Dbc, MADB_Dsn *Dsn, my_bool readCached)
+int GetCredentialsBrowserSSO(MADB_Dbc *Dbc, MADB_Dsn *Dsn, const char *email, my_bool readCached)
 {
   MDBUG_C_ENTER(Dbc, "GetCredentialsBrowserSSO");
-  MDBUG_C_PRINT(Dbc, "Reading from keyring: %s", readCached ? "true" : "false")
+  MDBUG_C_PRINT(Dbc, "Reading from keyring: %s, email: %s", readCached ? "true" : "false", email ? email : "")
   BrowserAuthCredentials creds = {NULL, NULL, NULL, 0};
   // 1. Try to get credentials from the OS keyring
   int readKeyringFailed = 0;
   if (readCached)
   {
-    readKeyringFailed = GetCachedCredentials(Dbc, Dsn->UserName /* UserName is e-mail in this case */, &creds);
+    readKeyringFailed = GetCachedCredentials(Dbc, email /* UserName is e-mail in this case */, &creds);
   }
   // 2. Call browser auth if there are no stored credentials or the token has expired
   if (readKeyringFailed || !creds.token || CheckExpiration(creds.expiration))
   {
-    if (BrowserAuth(Dbc, Dsn->UserName /* UserName is e-mail in this case */, &creds, Dsn->TestMode))
+    if (BrowserAuth(Dbc, email, &creds, Dsn->TestMode))
     {
       MDBUG_C_RETURN(Dbc, 1, &Dbc->Error);
     }

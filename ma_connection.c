@@ -806,11 +806,12 @@ SQLRETURN MADB_DbcConnectDB(MADB_Dbc *Connection,
     mysql_optionsv(Connection->mariadb, MARIADB_OPT_TLS_PASSPHRASE, (void*)Dsn->TlsKeyPwd);
   }
 
+  char *emailForSSO = Dsn->UserName;
   if (Dsn->IsBrowserAuth)
   {
-    if (GetCredentialsBrowserSSO(Connection, Dsn, TRUE /*readCached*/))
+    if (GetCredentialsBrowserSSO(Connection, Dsn, emailForSSO, TRUE /*readCached*/))
     {
-      goto err;
+      goto end;
     }
   }
 
@@ -825,16 +826,16 @@ real_connect:
     if (Dsn->IsBrowserAuth && !connectionTried)
     {
       connectionTried = TRUE;
-      if (GetCredentialsBrowserSSO(Connection, Dsn, FALSE /*readCached*/))
+      if (GetCredentialsBrowserSSO(Connection, Dsn, emailForSSO, FALSE /*readCached*/))
       {
-        goto err;
+        goto end;
       }
       else
       {
         goto real_connect;
       }
     }
-    goto err;
+    goto mysql_native_err;
   }
   
   /* I guess it is better not to do that at all. Besides SQL_ATTR_PACKET_SIZE is actually not for max packet size */
@@ -842,24 +843,24 @@ real_connect:
   {
     /*_snprintf(StmtStr, 128, "SET GLOBAL max_allowed_packet=%ld", Connection-> PacketSize);
     if (mysql_query(Connection->mariadb, StmtStr))
-      goto err;*/
+      goto mysql_native_err;*/
   }
 
   /* set default catalog */
   if (Connection->CatalogName && Connection->CatalogName[0])
   {
     if (mysql_select_db(Connection->mariadb, Connection->CatalogName))
-      goto err;
+      goto mysql_native_err;
   }
 
   /* Turn sql_auto_is_null behavior off.
      For more details see: http://bugs.mysql.com/bug.php?id=47005 */
   if (mysql_query(Connection->mariadb, "SET SESSION SQL_AUTO_IS_NULL=0"))
-    goto err;
+    goto mysql_native_err;
 
   /* set autocommit behavior */
   if (mysql_autocommit(Connection->mariadb, (my_bool)Connection->AutoCommit))
-    goto err;
+    goto mysql_native_err;
 
   if (!Dsn->CompatMode) {
     MYSQL_RES *result;
@@ -891,14 +892,14 @@ real_connect:
         _snprintf(StmtStr, 128, "SET SESSION TRANSACTION ISOLATION LEVEL %s",
                     MADB_IsolationLevel[i].StrIsolation);
         if (mysql_query(Connection->mariadb, StmtStr))
-          goto err;
+          goto mysql_native_err;
         break;
       }
     }
 
   goto end;
 
-err:
+mysql_native_err:
   MADB_SetNativeError(&Connection->Error, SQL_HANDLE_DBC, Connection->mariadb);
       
 end:
