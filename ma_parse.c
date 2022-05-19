@@ -227,7 +227,6 @@ void MADB_DeleteSubqueries(MADB_QUERY * Query)
   for (i= 0; i < Query->SubQuery.elements; ++i)
   {
     MADB_GetDynamic(&Query->SubQuery, (char *)&SubQuery, i);
-    MADB_DeleteDynamic(&SubQuery.ParamPos);
   }
   MADB_DeleteDynamic(&Query->SubQuery);
 }
@@ -238,9 +237,18 @@ void MADB_AddSubQuery(MADB_QUERY * Query, char * SubQueryText, enum enum_madb_qu
 
   SubQuery.QueryText= SubQueryText;
   SubQuery.QueryType= QueryType;
-  MADB_InitDynamicArray(&SubQuery.ParamPos, sizeof(unsigned int), 20, 20);
 
   MADB_InsertDynamic(&Query->SubQuery, (char*)&SubQuery);
+}
+
+void MADB_ChangeSubQueryType(MADB_QUERY * Query, enum enum_madb_query_type QueryType, unsigned int idx)
+{
+  SINGLE_QUERY SubQuery;
+  MADB_GetDynamic(&Query->SubQuery, &SubQuery, idx);
+
+  SubQuery.QueryType= QueryType;
+
+  MADB_SetDynamic(&Query->SubQuery, (char*)&SubQuery, idx);
 }
 
 
@@ -320,7 +328,7 @@ unsigned int MADB_FindToken(MADB_QUERY *Query, char *Compare)
 }
 
 
-static char * ParseCursorName(MADB_QUERY *Query, unsigned int *Offset)
+char * MADB_ParseCursorName(MADB_QUERY *Query, unsigned int *Offset)
 {
   unsigned int i, TokenCount= Query->Tokens.elements;
 
@@ -331,57 +339,13 @@ static char * ParseCursorName(MADB_QUERY *Query, unsigned int *Offset)
   for (i=0; i < TokenCount - 3; i++)
   {
     if (MADB_CompareToken(Query, i, "WHERE", 5, Offset) &&
-      MADB_CompareToken(Query, i+1, "CURRENT", 7, 0) &&
-      MADB_CompareToken(Query, i+2, "OF", 2, 0))
+        MADB_CompareToken(Query, i+1, "CURRENT", 7, 0) &&
+        MADB_CompareToken(Query, i+2, "OF", 2, 0))
     {
       return MADB_Token(Query, i + 3);
     }
   }
   return NULL;
-}
-
-
-static char * PoorManCursorName(MADB_QUERY *Query, unsigned int *Offset)
-{
-  MADB_QUERY EndPiece;
-  char      *Res;
-
-  memset(&EndPiece, 0, sizeof(MADB_QUERY));
-
-  /* We do poor man on long queries only, thus there is no need to check length */
-  EndPiece.RefinedText= ltrim(Query->RefinedText + Query->RefinedLength - MADB_MAX_CURSOR_NAME - 32/* "WHERE CURRENT OF" + spaces */);
-  EndPiece.RefinedLength= strlen(EndPiece.RefinedText);
-
-  /* As we did poor man parsing, we don't have full information about the query. Thus, parsing only this part at the end of the query -
-     we need tockens, to check if we have WHERE CURRENT OF in usual way */
-  if (ParseQuery(&EndPiece))
-  {
-    return NULL;
-  }
-
-  /* Now looking for cursor name in usual way */
-  Res= ParseCursorName(&EndPiece, Offset);
-
-  /* Incrementing Offset with the offset of our part of the query */
-  if (Res != NULL)
-  {
-    *Offset= (unsigned int)(*Offset + EndPiece.RefinedText - Query->RefinedText);
-  }
-
-  MADB_DeleteQuery(&EndPiece);
-
-  return Res;
-}
-
-
-char * MADB_ParseCursorName(MADB_QUERY *Query, unsigned int *Offset)
-{
-  if (Query->PoorManParsing)
-  {
-    return PoorManCursorName(Query, Offset);
-  }
-
-  return ParseCursorName(Query, Offset);
 }
 
 
@@ -501,25 +465,18 @@ char* FixIsoFormat(char * StmtString, size_t *Length)
 #define SAVE_TOKEN(PTR2SAVE) do { Offset= (unsigned int)(PTR2SAVE - Query->RefinedText);\
 MADB_InsertDynamic(&Query->Tokens, (char*)&Offset); } while(0)
 
-static BOOL ShouldWeTryPoorManParsing(MADB_QUERY *Query)
-{
-  return (Query->RefinedLength > QUERY_LEN_FOR_POOR_MAN_PARSING) && (strchr(Query->RefinedText, ';')) == NULL && (strchr(Query->RefinedText, '?') == NULL);
-}
-
 int ParseQuery(MADB_QUERY *Query)
 {
   char        *p= Query->RefinedText, Quote;
   BOOL         ReadingToken= FALSE;
   unsigned int Offset, StmtTokensCount= 0;
   size_t       Length= Query->RefinedLength;
-  char        *end= p + Length, *CurQuery= NULL, *LastSemicolon= NULL;
+  char        *end= p + Length, *CurQuery= NULL;
   enum enum_madb_query_type StmtType;
 
   MADB_InitDynamicArray(&Query->Tokens, (unsigned int)sizeof(unsigned int), (unsigned int)MAX(Length/32, 20), (unsigned int)MAX(Length/20, 40));
   MADB_InitDynamicArray(&Query->SubQuery, (unsigned int)sizeof(SINGLE_QUERY), (unsigned int)MAX(Length/64, 20), (unsigned int)MAX(Length/64, 40));
   MADB_InitDynamicArray(&Query->ParamPositions, sizeof(long), 0 /*init_alloc*/, 1 /*alloc_increment*/);
-
-  Query->PoorManParsing= ShouldWeTryPoorManParsing(Query);
 
   while (p < end)
   {
@@ -549,13 +506,19 @@ int ParseQuery(MADB_QUERY *Query)
         MADB_AddSubQuery(Query, CurQuery, StmtType);
 
         /* If we on first statement, setting QueryType*/
-        if (Query->Tokens.elements == 2)
+        if (Query->SubQuery.elements == 1)
         {
           Query->QueryType= StmtType;
-          if (Query->PoorManParsing)
-          {
-            return 0;
-          }
+        }
+      } else if (StmtType == MADB_QUERY_SELECT &&
+        MADB_Token(Query, Query->Tokens.elements - 2) + 4 < end &&
+        MADB_CompareToken(Query, Query->Tokens.elements - 1, "INTO", 4, NULL))
+      {
+        StmtType = MADB_QUERY_SELECT_INTO;
+        MADB_ChangeSubQueryType(Query, MADB_QUERY_SELECT_INTO, Query->SubQuery.elements-1);
+        if (Query->SubQuery.elements == 1)
+        {
+          Query->QueryType= StmtType;
         }
       }
       switch (*p)

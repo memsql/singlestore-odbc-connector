@@ -412,11 +412,15 @@ ODBC_TEST(t_max_rows)
   SQLSMALLINT cc;
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_max_rows");
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_max_rows_rowstore");
 
   rc = SQLTransact(NULL,Connection,SQL_COMMIT);
   CHECK_DBC_RC(Connection,rc);
 
-  OK_SIMPLE_STMT(Stmt,"create table t_max_rows(id int)");
+  OK_SIMPLE_STMT(Stmt, "create table t_max_rows(id int)");
+  OK_SIMPLE_STMT(Stmt,ServerNotOlderThan(Connection, 7, 3, 0) ?
+                                                               "create rowstore table t_max_rows_rowstore(id int)":
+                                                               "create table t_max_rows_rowstore(id int)");
 
   rc = SQLTransact(NULL,Connection,SQL_COMMIT);
   CHECK_DBC_RC(Connection,rc);
@@ -435,6 +439,9 @@ ODBC_TEST(t_max_rows)
   }
 
   SQLFreeStmt(Stmt,SQL_RESET_PARAMS);
+  SQLFreeStmt(Stmt,SQL_CLOSE);
+
+  OK_SIMPLE_STMT(Stmt, "insert into t_max_rows_rowstore select * from t_max_rows");
   SQLFreeStmt(Stmt,SQL_CLOSE);
 
   rc = SQLTransact(NULL,Connection,SQL_COMMIT);
@@ -491,6 +498,44 @@ ODBC_TEST(t_max_rows)
 
   IS( 3 == myrowcount(Stmt));
 
+  SQLFreeStmt(Stmt,SQL_CLOSE);
+
+  // UPDATE/INSERT/DELETE statements
+  OK_SIMPLE_STMT(Stmt,"update t_max_rows set id = 1 where id=1");
+  SQLFreeStmt(Stmt,SQL_CLOSE);
+  OK_SIMPLE_STMT(Stmt,"delete from t_max_rows where id = 1");
+  SQLFreeStmt(Stmt,SQL_CLOSE);
+  OK_SIMPLE_STMT(Stmt,"insert into t_max_rows values (1)");
+  SQLFreeStmt(Stmt,SQL_CLOSE);
+
+  // Corner cases with SELECT statement
+  OK_SIMPLE_STMT(Stmt,"select * from t_max_rows limit 1");
+  IS( 1 == myrowcount(Stmt));
+  SQLFreeStmt(Stmt,SQL_CLOSE);
+  OK_SIMPLE_STMT(Stmt,"select * from t_max_rows limit 5");
+  IS( 3 == myrowcount(Stmt));
+  SQLFreeStmt(Stmt,SQL_CLOSE);
+  OK_SIMPLE_STMT(Stmt,"select * from t_max_rows_rowstore for update");
+  IS( 3 == myrowcount(Stmt));
+  SQLFreeStmt(Stmt,SQL_CLOSE);
+  // TODO these queries fail for columnstore table DB-55352
+  OK_SIMPLE_STMT(Stmt,"select * from t_max_rows_rowstore limit 2 for update");
+  IS( 2 == myrowcount(Stmt));
+  SQLFreeStmt(Stmt,SQL_CLOSE);
+  OK_SIMPLE_STMT(Stmt,"select * from t_max_rows_rowstore limit 5 for update");
+  IS( 3 == myrowcount(Stmt));
+  SQLFreeStmt(Stmt,SQL_CLOSE);
+  OK_SIMPLE_STMT(Stmt,"select id into @t_max_rows_id from t_max_rows limit 1");
+  SQLFreeStmt(Stmt,SQL_CLOSE);
+  OK_SIMPLE_STMT(Stmt,"select id from t_max_rows into outfile '/dev/null'");
+  SQLFreeStmt(Stmt,SQL_CLOSE);
+
+  // multistatements
+  // TODO PLAT-6212 SQL_ATTR_MAX_ROWS is ignored for multistatements
+  OK_SIMPLE_STMT(Stmt,"select * from t_max_rows; select * from t_max_rows;");
+  IS( 10 == myrowcount(Stmt));
+  CHECK_STMT_RC(Stmt, SQLMoreResults(Stmt));
+  IS( 10 == myrowcount(Stmt));
   SQLFreeStmt(Stmt,SQL_CLOSE);
 
   rc = SQLSetStmtAttr(Stmt,SQL_ATTR_MAX_ROWS,(SQLPOINTER)0,0);

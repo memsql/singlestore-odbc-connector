@@ -695,29 +695,26 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
     MADB_DynstrFree(&StmtStr);
   }
 
-  if (Stmt->Options.MaxRows)
+  if (Stmt->Options.MaxRows && Stmt->Query.QueryType == MADB_QUERY_SELECT)
   {
-    /* TODO: LIMIT is not always the last clause. And not applicable to each query type.
-       Thus we need to check query type and last tokens, and possibly put limit before them */
-    if (MADB_SSPS_DISABLED(Stmt))
-    {
-        // TODO: even though this is a rare use-case, consider optimizing it.
-        unsigned long len = strlen(STMT_STRING(Stmt));
-        char *tmp = MADB_CALLOC(len + 40);
-        _snprintf(tmp, len + 40, "%s LIMIT %zd", STMT_STRING(Stmt), Stmt->Options.MaxRows);
+    unsigned long tmpLen = strlen(Stmt->Query.RefinedText) + 60;
+    char *tmp = MADB_CALLOC(tmpLen);
+    unsigned int updateForOffset;
 
-        MADB_DeleteQuery(&Stmt->Query);
-        Stmt->Query.RefinedText = tmp;
-        Stmt->Query.RefinedLength = strlen(Stmt->Query.RefinedText);
-        Stmt->Query.allocated = Stmt->Query.RefinedText;
-        MADB_ParseQuery(&Stmt->Query);
+    if (MADB_CompareToken(&Stmt->Query, Stmt->Query.Tokens.elements-1, "UPDATE", 6, NULL) &&
+        MADB_CompareToken(&Stmt->Query, Stmt->Query.Tokens.elements-2, "FOR", 3, &updateForOffset))
+    {
+      _snprintf(tmp, tmpLen, "SELECT * FROM (%.*s) LIMIT %zd FOR UPDATE", updateForOffset, Stmt->Query.RefinedText, Stmt->Options.MaxRows);
     } else
     {
-        char *p;
-        STMT_STRING(Stmt)= realloc((char *)STMT_STRING(Stmt), strlen(STMT_STRING(Stmt)) + 40);
-        p= STMT_STRING(Stmt) + strlen(STMT_STRING(Stmt));
-        _snprintf(p, 40, " LIMIT %zd", Stmt->Options.MaxRows);
+      _snprintf(tmp, tmpLen, "SELECT * FROM (%s) LIMIT %zd", Stmt->Query.RefinedText, Stmt->Options.MaxRows);
     }
+    
+    MADB_DeleteQuery(&Stmt->Query);
+    Stmt->Query.RefinedText = tmp;
+    Stmt->Query.RefinedLength = strlen(Stmt->Query.RefinedText);
+    Stmt->Query.allocated = Stmt->Query.RefinedText;
+    MADB_ParseQuery(&Stmt->Query);
   }
 
   if (!Stmt->Query.ReturnsResult && !Stmt->Query.HasParameters &&
