@@ -35,8 +35,7 @@ typedef struct BrowserCredentials {
 #define READ_TIMEOUT_USER_SEC (5*60)
 #define READ_TIMEOUT_TEST_SEC 10
 
-// #define PORTAL_SSO_ENDPOINT "https://portal.singlestore.com/engine-sso"
-#define PORTAL_SSO_ENDPOINT "https://portal-staging.dev.helios.singlestore.com/engine-sso"
+#define PORTAL_SSO_ENDPOINT "https://portal.singlestore.com/engine-sso"
 #define LOCAL_TEST_ENDPOINT "http://127.0.0.1:18087"
 
 int BrowserAuth(MADB_Dbc *Dbc, const char *email, BrowserAuthCredentials *credentials /*out*/, int testFlags);

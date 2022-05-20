@@ -182,14 +182,10 @@ ELSE()
   MESSAGE(STATUS "Configuring to build without SSL support")
 ENDIF()
 
-IF(UNIX)
-  IF(APPLE)
-    # TODO
-  ELSE(APPLE)
-    INCLUDE_DIRECTORIES("/usr/include/libsecret-1" "/usr/include/glib-2.0" "/usr/lib/x86_64-linux-gnu/glib-2.0/include" "/usr/lib64/glib-2.0/include")
-    SET(GLIB_LIBRARIES glib-2.0 secret-1)
-  ENDIF(APPLE)
-ENDIF(UNIX)
+IF(UNIX AND NOT APPLE)
+  INCLUDE_DIRECTORIES("/usr/include/libsecret-1" "/usr/include/glib-2.0" "/usr/lib/x86_64-linux-gnu/glib-2.0/include" "/usr/lib64/glib-2.0/include")
+  SET(GLIB_LIBRARIES glib-2.0 secret-1)
+ENDIF()
 
 IF(APPLE)
   SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
