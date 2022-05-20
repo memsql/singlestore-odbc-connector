@@ -104,17 +104,17 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     LTEXT           "Please specify a server name and port",IDC_STATIC,9,7,130,10,0,WS_EX_TRANSPARENT
     LTEXT           "Server Name:",lblServerName,15,21,49,11,0,WS_EX_TRANSPARENT | WS_EX_RIGHT
-    LTEXT           "Please specify a user name and password to connect to SingleStore",IDC_STATIC,9,54,207,8,0,WS_EX_TRANSPARENT
-    LTEXT           "Please specify a database to use",IDC_STATIC,9,105,207,8,0,WS_EX_TRANSPARENT
-    LTEXT           "User name:",IDC_STATIC,26,70,38,8,0,WS_EX_TRANSPARENT | WS_EX_RIGHT
-    LTEXT           "Password:",IDC_STATIC,30,88,34,8,0,WS_EX_TRANSPARENT | WS_EX_RIGHT
-    LTEXT           "Database:",IDC_STATIC,20,121,34,8,0,WS_EX_TRANSPARENT | WS_EX_RIGHT
     EDITTEXT        txtServerName,71,18,141,14,ES_AUTOHSCROLL
-    EDITTEXT        txtPort,71,34,40,14,ES_AUTOHSCROLL
     LTEXT           "Port:",lblPort,15,35,49,11,0,WS_EX_TRANSPARENT | WS_EX_RIGHT
+    EDITTEXT        txtPort,71,34,40,14,ES_AUTOHSCROLL
+    LTEXT           "Please specify a user name and password to connect to SingleStore",IDC_STATIC,9,54,287,8,0,WS_EX_TRANSPARENT
+    LTEXT           "User name:",IDC_STATIC,26,70,38,8,0,WS_EX_TRANSPARENT | WS_EX_RIGHT
     EDITTEXT        txtUserName,71,68,141,14,ES_AUTOHSCROLL
+    LTEXT           "Password:",IDC_STATIC,30,88,34,8,0,WS_EX_TRANSPARENT | WS_EX_RIGHT
     EDITTEXT        txtPassword,71,86,142,14,ES_PASSWORD | ES_AUTOHSCROLL
     PUSHBUTTON      "&Test DSN",pbTestDSN,223,86,50,14
+    LTEXT           "Please specify a database to use",IDC_STATIC,9,105,207,8,0,WS_EX_TRANSPARENT
+    LTEXT           "Database:",IDC_STATIC,20,121,34,8,0,WS_EX_TRANSPARENT | WS_EX_RIGHT
     COMBOBOX        cbDatabase,71,119,93,80,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "< Previous",PB_PREV,50,149,50,14
     PUSHBUTTON      "Next >",PB_NEXT,104,149,50,14
@@ -132,8 +132,9 @@ BEGIN
     CONTROL         "Enable automatic reconnect",ckReconnect,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,79,107,10,WS_EX_TRANSPARENT
     CONTROL         "Don't prompt when connecting",ckConnectPrompt,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,95,113,10,WS_EX_TRANSPARENT
 
-    COMBOBOX        cbCharset,113,110,160,80,CBS_DROPDOWN | CBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Connection Character Set:",IDC_STATIC,7,113,96,8,0,WS_EX_TRANSPARENT
+    COMBOBOX        cbCharset,113,110,160,80,CBS_DROPDOWN | CBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Use Single Sign-On Auth instead of password",cbBrowserSSO,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,129,220,8,WS_EX_TRANSPARENT
 
     PUSHBUTTON      "Cancel",IDCANCEL,178,149,50,14
     PUSHBUTTON      "Next >",PB_NEXT,104,149,50,14
