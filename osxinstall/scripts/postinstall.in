@@ -48,8 +48,6 @@ if [ ! -f $ODBCINSTINI ] ; then
   if [ ! -f $ODBCINSTINI ] ; then
     echo "$ODBCINSTINI still does not exist" >> /tmp/ssodbc_postinstall.log 2>&1
     echo "$ODBCINSTINI still does not exist"
-#    mkdir -p "$instinidir"
-#    touch "$ODBCINSTINI"
     exit 1
   fi
   chmod 664 $ODBCINSTINI
@@ -81,14 +79,27 @@ if [ ! -f $ODBCINSTINI ] ; then
   echo "Description = SingleStore Connector/ODBC(ANSI) @PRODUCT_VERSION@ @PRODUCT_ARCH_BITS@bit" >> $ODBCINSTINI
   echo "Threading   = 0" >> $ODBCINSTINI
   echo "" >> $ODBCINSTINI
-  echo "Registration has been successfully finished" >> /tmp/ssodbc_postinstall.log 2>&1
+  echo "Manual registration has been successfull" >> /tmp/ssodbc_postinstall.log 2>&1
 
   exit 0
 fi
 
-${target}Library/SingleStore/SingleStore-Connector-ODBC/bin/install_driver "${target}Library/SingleStore/SingleStore-Connector-ODBC/libssodbca.dylib" "SingleStore ODBC ANSI Driver" "SingleStore Connector/ODBC(ANSI) @PRODUCT_VERSION@ @PRODUCT_ARCH_BITS@bit" >> /tmp/ssodbc_postinstall.log
-${target}Library/SingleStore/SingleStore-Connector-ODBC/bin/install_driver "${target}Library/SingleStore/SingleStore-Connector-ODBC/libssodbcw.dylib" "SingleStore ODBC Unicode Driver" "SingleStore Connector/ODBC(Unicode) @PRODUCT_VERSION@ @PRODUCT_ARCH_BITS@bit" >> /tmp/ssodbc_postinstall.log
+echo "Running installation binary..." >> /tmp/ssodbc_postinstall.log
 
-echo "Registration has been successfully finished" >> /tmp/ssodbc_postinstall.log 2>&1
+${target}Library/SingleStore/SingleStore-Connector-ODBC/bin/install_driver \
+ "${target}Library/SingleStore/SingleStore-Connector-ODBC/libssodbca.dylib" "SingleStore ODBC ANSI Driver" \
+"SingleStore Connector/ODBC(ANSI) @PRODUCT_VERSION@ @PRODUCT_ARCH_BITS@bit" >> /tmp/ssodbc_postinstall.log 2>&1
+install_failed_a=$?
 
-exit 0
+${target}Library/SingleStore/SingleStore-Connector-ODBC/bin/install_driver \
+"${target}Library/SingleStore/SingleStore-Connector-ODBC/libssodbcw.dylib" "SingleStore ODBC Unicode Driver" \
+"SingleStore Connector/ODBC(Unicode) @PRODUCT_VERSION@ @PRODUCT_ARCH_BITS@bit" >> /tmp/ssodbc_postinstall.log 2>&1
+install_failed_w=$?
+
+if [ $install_failed_a -ne 0 ] || [ $install_failed_w -ne 0 ]; then
+  echo "install_driver command failed" >> /tmp/ssodbc_postinstall.log
+  exit 1
+else
+  echo "Registration successfully finished" >> /tmp/ssodbc_postinstall.log
+  exit 0
+fi

@@ -142,6 +142,8 @@ mariadb-odbc-driver-asc.def
 maodbcw.rc
 maodbca.rc
 
+vendor/cJSON/libcjson.a
+
 *.vcxproj
 *.vcxproj.*
 *.sln
