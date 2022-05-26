@@ -30,6 +30,7 @@ commands:
       - run:
           name: Setup Machine
           command: |
+            echo Updating
             sudo apt update
             sudo apt install -y curl
             sudo apt-get update
