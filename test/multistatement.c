@@ -105,12 +105,16 @@ ODBC_TEST(test_params)
 ODBC_TEST(test_params_last_count_smaller)
 {
   int       i, j, k;
+  SQLSMALLINT paramCount;
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t1; CREATE TABLE t1(a int, b int)");
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t2; CREATE TABLE t2(a int)");
 
   CHECK_STMT_RC(Stmt, SQLPrepare(Stmt, (SQLCHAR*)"INSERT INTO t1 VALUES (?,?); INSERT INTO t2 VALUES (?)", SQL_NTS));
+
+  CHECK_STMT_RC(Stmt, SQLNumParams(Stmt, &paramCount));
+  is_num(paramCount, 3);
 
   CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 10, 0, &i, 0, NULL));
 
@@ -667,6 +671,21 @@ ODBC_TEST(multistatement_ddl)
   return OK;
 }
 
+ODBC_TEST(emulated_cleanup)
+{
+  OK_SIMPLE_STMT(Stmt, "CREATE TABLE emulated_cleanup(a INT)");
+  OK_SIMPLE_STMT(Stmt, "INSERT INTO emulated_cleanup VALUES (1); INSERT INTO emulated_cleanup VALUES (2);");
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+  CHECK_DBC_RC(Connection, SQLEndTran(SQL_HANDLE_DBC, Connection, SQL_COMMIT));
+
+  OK_SIMPLE_STMT(Stmt, "INSERT INTO emulated_cleanup VALUES (3); INSERT INTO emulated_cleanup VALUES (4);");
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_DROP));
+  Stmt = NULL;
+  CHECK_DBC_RC(Connection, SQLEndTran(SQL_HANDLE_DBC, Connection, SQL_COMMIT));
+
+  return OK;
+}
+
 
 MA_ODBC_TESTS my_tests[]=
 {
@@ -688,6 +707,7 @@ MA_ODBC_TESTS my_tests[]=
   {t_odbc169, "t_odbc169", NORMAL, ALL_DRIVERS},
   {t_odbc219, "t_odbc219", NORMAL, ALL_DRIVERS},
   {multistatement_ddl, "multistatement_ddl", NORMAL, ALL_DRIVERS},
+  {emulated_cleanup, "emulated_cleanup", NORMAL, ALL_DRIVERS},
   {NULL, NULL}
 };
 

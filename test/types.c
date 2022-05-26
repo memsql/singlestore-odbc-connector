@@ -1279,7 +1279,6 @@ ODBC_TEST(t_odbc158)
   return OK;
 }
 
-
 MA_ODBC_TESTS my_tests[]=
 {
   {t_longlong1,        "t_longlong1",       NORMAL, ALL_DRIVERS},
