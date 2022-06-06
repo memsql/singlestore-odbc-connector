@@ -602,7 +602,7 @@ ODBC_TEST(auth_options)
 
   RESET_DSN(Dsn);
   _snprintf(connstr4dsn, sizeof(connstr4dsn),
-    "DRIVER=%s;DESCRIPTION=%s;USER=%s;SERVER=%s;PASSWORD=%s;JWT=%s;TEST_MODE=%d;BROWSER_SSO=1",
+    "DRIVER=%s;DESCRIPTION=%s;USER=%s;SERVER=%s;PASSWORD=%s;JWT=%s;TEST_MODE=%d;BROWSER_SSO=1;NO_KEYRING_SSO=1",
     my_drivername, descr, user, host, pwd, jwt, test_mode);
   printf("connsting is %s\n", connstr4dsn);
   IS(MADB_ParseConnString(Dsn, connstr4dsn, SQL_NTS, ';'));
@@ -614,6 +614,7 @@ ODBC_TEST(auth_options)
   IS_STR(Dsn->JWT,         jwt,   strlen(jwt) + 1);
   is_num(Dsn->TestMode, test_mode);
   is_num(Dsn->IsBrowserAuth, 1);
+  is_num(Dsn->HasNoKeyring, 1);
 
   return OK;
 }

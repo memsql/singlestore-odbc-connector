@@ -145,6 +145,7 @@ typedef struct st_madb_dsn
   my_bool CompatMode;
   /* SSO parameters */
   my_bool IsBrowserAuth;
+  my_bool HasNoKeyring;
   char *JWT;
   int TestMode;
   /* --- Internal --- */
