@@ -1971,23 +1971,9 @@ ODBC_TEST(driver_connect_browser_sso) {
   sprintf((char*) conn, "DRIVER=%s;SERVER=%s;PORT=%u;DB=%s;OPTIONS=4;BROWSER_SSO=1;TEST_MODE=%d",
           my_drivername, my_servername, my_port, my_schema, test_mode);
 
+// SSO tests on Linux run without keyring
 #if !defined(__APPLE__) && !defined(_WIN32)
-  GError *err = NULL;
-  SecretService *service = secret_service_get_sync(0, NULL, &err);
-  SecretCollection *defaultCollection = secret_collection_for_alias_sync(
-    service, SECRET_COLLECTION_DEFAULT, 0 /*SecretCollectionFlags*/, NULL, &err);
-  if (err != NULL)
-  {
-    printf("Not running driver_connect_browser_sso test \
-    as gnome-keyring secret service cannot be started or no collection is available\n");
-    return OK;
-  }
-  gboolean is_locked = secret_collection_get_locked(defaultCollection);
-  if (is_locked)
-  {
-    printf("Not running driver_connect_browser_sso test as gnome-keyring secret service is locked\n");
-    return OK;
-  }
+  strcat((char*) conn, ";NO_KEYRING_SSO=1");
 #endif
 
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
@@ -2001,6 +1987,7 @@ ODBC_TEST(driver_connect_browser_sso) {
 
   CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
 
+#if defined(__APPLE__) || defined(_WIN32)
   HDBC hdbc2;
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc2));
   test_mode = BROWSER_AUTH_FLAG_TEST_SECOND_CALL;
@@ -2015,6 +2002,7 @@ ODBC_TEST(driver_connect_browser_sso) {
   OK_SIMPLE_STMT(hstmt2, "SELECT 1");
   CHECK_STMT_RC(hstmt2, SQLFreeHandle(SQL_HANDLE_STMT, hstmt2));
   CHECK_DBC_RC(hdbc2, SQLDisconnect(hdbc2));
+#endif
 
   return OK;
 }
