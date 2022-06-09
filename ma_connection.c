@@ -590,9 +590,7 @@ SQLRETURN MADB_DbcConnectDB(MADB_Dbc *Connection,
   if (!Connection || !Dsn)
     return SQL_ERROR;
 
-
   char *emailForSSO = Dsn->UserName;
-  my_bool connectionTried = FALSE;
   if (Dsn->IsBrowserAuth)
   {
     if (GetCredentialsBrowserSSO(Connection, Dsn, emailForSSO, TRUE /*readCached*/))
@@ -600,7 +598,9 @@ SQLRETURN MADB_DbcConnectDB(MADB_Dbc *Connection,
       goto end;
     }
   }
-
+  // connectionTried indicates if mysql_real_connect has already been called, i.e.
+  // if we already issued a connection request to the server
+  my_bool connectionTried = FALSE;
 real_connect:
   MADB_CLEAR_ERROR(&Connection->Error);
 
