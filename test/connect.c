@@ -1973,7 +1973,7 @@ ODBC_TEST(driver_connect_browser_sso) {
 
 // SSO tests on Linux run without keyring
 #if !defined(__APPLE__) && !defined(_WIN32)
-  strcat((char*) conn, ";NO_KEYRING_SSO=1");
+  strcat((char*) conn, ";IGNORE_KEYRING_SSO=1");
 #endif
 
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,

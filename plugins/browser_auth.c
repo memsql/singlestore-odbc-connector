@@ -837,7 +837,7 @@ int GetCredentialsBrowserSSO(MADB_Dbc *Dbc, MADB_Dsn *Dsn, const char *email, my
   BrowserAuthCredentials creds = {NULL, NULL, NULL, 0};
   // 1. Try to get credentials from the OS keyring
   int readKeyringFailed = 0;
-  if (readCached && !Dsn->HasNoKeyring)
+  if (readCached && !Dsn->IgnoreKeyring)
   {
     readKeyringFailed = GetCachedCredentials(Dbc, email /* UserName is e-mail in this case */, &creds);
   }
@@ -849,7 +849,7 @@ int GetCredentialsBrowserSSO(MADB_Dbc *Dbc, MADB_Dsn *Dsn, const char *email, my
       MDBUG_C_RETURN(Dbc, SQL_ERROR, &Dbc->Error);
     }
     // 3. Store credentials in the keyring
-    if (!Dsn->HasNoKeyring && PutCachedCredentials(Dbc, &creds))
+    if (!Dsn->IgnoreKeyring && PutCachedCredentials(Dbc, &creds))
     {
       MDBUG_C_RETURN(Dbc, SQL_ERROR, &Dbc->Error);
     }
