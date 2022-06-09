@@ -590,6 +590,18 @@ SQLRETURN MADB_DbcConnectDB(MADB_Dbc *Connection,
   if (!Connection || !Dsn)
     return SQL_ERROR;
 
+  char *emailForSSO = Dsn->UserName;
+  if (Dsn->IsBrowserAuth)
+  {
+    if (GetCredentialsBrowserSSO(Connection, Dsn, emailForSSO, TRUE /*readCached*/))
+    {
+      goto end;
+    }
+  }
+  // connectionTried indicates if mysql_real_connect has already been called, i.e.
+  // if we already issued a connection request to the server
+  my_bool connectionTried = FALSE;
+real_connect:
   MADB_CLEAR_ERROR(&Connection->Error);
 
   if (Connection->mariadb == NULL)
@@ -806,23 +818,12 @@ SQLRETURN MADB_DbcConnectDB(MADB_Dbc *Connection,
     mysql_optionsv(Connection->mariadb, MARIADB_OPT_TLS_PASSPHRASE, (void*)Dsn->TlsKeyPwd);
   }
 
-  char *emailForSSO = Dsn->UserName;
-  if (Dsn->IsBrowserAuth)
-  {
-    if (GetCredentialsBrowserSSO(Connection, Dsn, emailForSSO, TRUE /*readCached*/))
-    {
-      goto end;
-    }
-  }
-
-  my_bool connectionTried = FALSE;
-real_connect:
   if (!mysql_real_connect(Connection->mariadb,
       Dsn->Socket ? "localhost" : Dsn->ServerName, Dsn->UserName, Dsn->Password,
         Dsn->Catalog && Dsn->Catalog[0] ? Dsn->Catalog : NULL, Dsn->Port, Dsn->Socket, client_flags))
   {
     // in case of Browser Auth we try to get credentials from the browser
-    // without reading the keyring, and then retry connection
+    // without reading the keyring
     if (Dsn->IsBrowserAuth && !connectionTried)
     {
       connectionTried = TRUE;
@@ -830,6 +831,7 @@ real_connect:
       {
         goto end;
       }
+      // if we get credentials successfully, we retry connection
       else
       {
         goto real_connect;
@@ -901,7 +903,7 @@ real_connect:
 
 mysql_native_err:
   MADB_SetNativeError(&Connection->Error, SQL_HANDLE_DBC, Connection->mariadb);
-      
+
 end:
   if (Connection->Error.ReturnValue == SQL_ERROR && Connection->mariadb)
   {
@@ -2374,7 +2376,7 @@ SQLRETURN MADB_DriverConnect(MADB_Dbc *Dbc, SQLHWND WindowHandle, SQLCHAR *InCon
   {
     /* if we already have an error set, we should keep it
     as most likely when there is no WindowHandle, we are running non-interactively */
-    if (!Dbc->Error.NativeError)
+    if (Dbc->Error.ReturnValue == SQL_SUCCESS)
       MADB_SetError(&Dbc->Error, MADB_ERR_IM008, NULL, 0);
     goto error;
   }

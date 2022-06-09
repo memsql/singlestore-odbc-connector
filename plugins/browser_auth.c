@@ -531,7 +531,7 @@ int BrowserAuth(MADB_Dbc *Dbc, const char *email, BrowserAuthCredentials *creden
   if (testFlags & BROWSER_AUTH_FLAG_TEST_FIRST_CALL)
   {
     makeTestCreds(credentials);
-    MDBUG_C_RETURN(Dbc, 0, &Dbc->Error);
+    MDBUG_C_RETURN(Dbc, SQL_SUCCESS, &Dbc->Error);
   }
   if (testFlags & BROWSER_AUTH_FLAG_TEST_SECOND_CALL)
   {
@@ -588,7 +588,6 @@ const SecretSchema *jwt_cache_get_schema(void)
   static const SecretSchema the_schema = {
     SECURE_JWT_STORAGE_KEY, SECRET_SCHEMA_NONE,
     {
-      {"email", SECRET_SCHEMA_ATTRIBUTE_STRING},
       {"NULL", 0},
     }
   };
@@ -642,7 +641,9 @@ endwin:
 // Mac secure key storage
  void *password_data = NULL;
  uint32_t password_len;
- char *email_str = email != NULL ? email : "";
+ // char *email_str = email != NULL ? email : "";
+ // We don't use email for now as we don't support multiple users
+ char *email_str = "";
  OSStatus status = SecKeychainFindGenericPassword(
   NULL /* default keychain */,
   strlen(SECURE_JWT_STORAGE_KEY),
@@ -703,12 +704,7 @@ MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
     }
   }
   MDBUG_C_PRINT(Dbc, "%s", "Calling secret_password_lookup_sync");
-  if (email)
-    password = secret_password_lookup_sync(
-      JWT_CACHE_SCHEMA, NULL, &err, "email", email, NULL);
-  else
-    password = secret_password_lookup_sync(
-      JWT_CACHE_SCHEMA, NULL, &err, NULL);
+  password = secret_password_lookup_sync(JWT_CACHE_SCHEMA, NULL, &err, NULL);
 
   if (err != NULL)
   {
@@ -772,13 +768,14 @@ endwin:
   MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
 #elif defined(__APPLE__)
 // Mac secure key storage
+ char *email_str = "";
 SecKeychainItemRef item = NULL;
 OSStatus status = SecKeychainFindGenericPassword(
   NULL /* default keychain */,
   strlen(SECURE_JWT_STORAGE_KEY),
   SECURE_JWT_STORAGE_KEY,
-  strlen(bac->email),
-  bac->email,
+  strlen(email_str),
+  email_str,
   NULL /* unused output parameter */,
   NULL /* unused output parameter */,
   &item);
@@ -793,8 +790,8 @@ else
     NULL /* default keychain */,
     strlen(SECURE_JWT_STORAGE_KEY),
     SECURE_JWT_STORAGE_KEY,
-    strlen(bac->email),
-    bac->email,
+    strlen(email_str),
+    email_str,
     strlen(bac->token),
     bac->token,
     NULL /* unused output parameter */);
@@ -817,19 +814,18 @@ MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
   GError *error = NULL;
   secret_password_store_sync(JWT_CACHE_SCHEMA, SECRET_COLLECTION_DEFAULT,
                             SECURE_JWT_STORAGE_KEY, bac->token, NULL, &error,
-                            "email", bac->email,
                             NULL);
   if (error != NULL)
   {
     MDBUG_C_PRINT(Dbc, "%s FAILED", "secret_password_store_sync");
-    MADB_SetError(&Dbc->Error, error->code, error->message, 0);
+    MADB_SetError(&Dbc->Error, MADB_ERR_HY000, error->message, 0);
     g_error_free(error);
     MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
   }
   else 
   {
     MDBUG_C_PRINT(Dbc, "%s SUCCESS", "secret_password_store_sync");
-    MDBUG_C_RETURN(Dbc, 0, &Dbc->Error);
+    MDBUG_C_RETURN(Dbc, SQL_SUCCESS, &Dbc->Error);
   }
 #endif
 }
@@ -841,7 +837,7 @@ int GetCredentialsBrowserSSO(MADB_Dbc *Dbc, MADB_Dsn *Dsn, const char *email, my
   BrowserAuthCredentials creds = {NULL, NULL, NULL, 0};
   // 1. Try to get credentials from the OS keyring
   int readKeyringFailed = 0;
-  if (readCached)
+  if (readCached && !Dsn->IgnoreKeyring)
   {
     readKeyringFailed = GetCachedCredentials(Dbc, email /* UserName is e-mail in this case */, &creds);
   }
@@ -850,18 +846,22 @@ int GetCredentialsBrowserSSO(MADB_Dbc *Dbc, MADB_Dsn *Dsn, const char *email, my
   {
     if (BrowserAuth(Dbc, email, &creds, Dsn->TestMode))
     {
-      MDBUG_C_RETURN(Dbc, 1, &Dbc->Error);
+      MDBUG_C_RETURN(Dbc, SQL_ERROR, &Dbc->Error);
     }
     // 3. Store credentials in the keyring
-    if(PutCachedCredentials(Dbc, &creds))
+    if (!Dsn->IgnoreKeyring && PutCachedCredentials(Dbc, &creds))
     {
-      MDBUG_C_RETURN(Dbc, 1, &Dbc->Error);
+      MDBUG_C_RETURN(Dbc, SQL_ERROR, &Dbc->Error);
     }
+  }
+  if (Dsn->UserName && strcmp(Dsn->UserName, creds.email))
+  {
+    MDBUG_C_PRINT(Dbc, "Data source email %s doesn't match login e-mail %s", Dsn->UserName, creds.email);
   }
   Dsn->Password = creds.token;
   creds.token = NULL;
   Dsn->UserName = creds.username;
   creds.username = NULL;
   BrowserAuthCredentialsFree(&creds);
-  MDBUG_C_RETURN(Dbc, 0, &Dbc->Error);
+  MDBUG_C_RETURN(Dbc, SQL_SUCCESS, &Dbc->Error);
 }

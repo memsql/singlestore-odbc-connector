@@ -46,7 +46,7 @@ int parseJWTToCredentials(MADB_Dbc *Dbc, const char *token, int token_len, Brows
 // Win secure key storage
 // https://docs.microsoft.com/en-us/windows/win32/api/wincred/
 #include <wincred.h>
-#define SECURE_JWT_STORAGE_KEY L"SingleStore JWT storage for ODBC"
+#define SECURE_JWT_STORAGE_KEY L"SingleStore ODBC Driver JWT storage"
 #elif defined(__APPLE__)
 // Mac secure key storage
 // https://developer.apple.com/documentation/security/keychain_services/keychain_items?language=objc
@@ -56,14 +56,14 @@ int parseJWTToCredentials(MADB_Dbc *Dbc, const char *token, int token_len, Brows
 #include <CoreFoundation/CoreFoundation.h>
 #include <CoreFoundation/CFBase.h>
 
-#define SECURE_JWT_STORAGE_KEY "SingleStore JWT storage for ODBC"
+#define SECURE_JWT_STORAGE_KEY "SingleStore ODBC Driver JWT storage"
 #else
 // Linux secure key storage
 // https://gnome.pages.gitlab.gnome.org/libsecret/
 #include <glib.h>
 #include <gmodule.h>
 #include <libsecret/secret.h>
-#define SECURE_JWT_STORAGE_KEY "SingleStore JWT storage for ODBC"
+#define SECURE_JWT_STORAGE_KEY "SingleStore ODBC Driver JWT storage"
 const SecretSchema *jwt_cache_get_schema(void);
 #define JWT_CACHE_SCHEMA jwt_cache_get_schema ()
 #endif
