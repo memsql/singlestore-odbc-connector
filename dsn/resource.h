@@ -104,6 +104,7 @@
 #define pbCrlBrowse                     1214
 #define cbInteractive                   1220
 #define ckNoSSPS                        1221
+#define cbBrowserSSO                    1222
 
 // Next default values for new objects
 // 
