@@ -395,54 +395,55 @@ workflows:
                 - SingleStore ODBC ANSI Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
-      - build-macos:
-          name: build-macos-ansi-<< matrix.build_type >>
-          matrix:
-            parameters:
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - ssodbc_test_a
-              driver_name:
-                - SingleStore ODBC ANSI Driver
-              driver_type:
-                - ansi
-      - build-windows:
-          name: build-windows-unicode-<< matrix.build_type >>
-          matrix:
-            parameters:
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - ssodbc_test_w
-              test_driver:
-                - SingleStore ODBC Unicode Driver
-              driver_type:
-                - unicode
-      - build-macos:
-          name: build-macos-unicode-<< matrix.build_type >>
-          matrix:
-            parameters:
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - ssodbc_test_w
-              driver_name:
-                - SingleStore ODBC Unicode Driver
-              driver_type:
-                - unicode
-      - build-windows:
-          name: build-windows-ansi-<< matrix.build_type >>
-          matrix:
-            parameters:
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - ssodbc_test_a
-              test_driver:
-                - SingleStore ODBC ANSI Driver
-              driver_type:
-                - ansi
+  # TODO: PLAT-6109 enable these jobs        
+  #     - build-macos:
+  #         name: build-macos-ansi-<< matrix.build_type >>
+  #         matrix:
+  #           parameters:
+  #             build_type:
+  #               - RelWithDebInfo
+  #             test_dsn:
+  #               - ssodbc_test_a
+  #             driver_name:
+  #               - SingleStore ODBC ANSI Driver
+  #             driver_type:
+  #               - ansi
+  #     - build-windows:
+  #         name: build-windows-unicode-<< matrix.build_type >>
+  #         matrix:
+  #           parameters:
+  #             build_type:
+  #               - RelWithDebInfo
+  #             test_dsn:
+  #               - ssodbc_test_w
+  #             test_driver:
+  #               - SingleStore ODBC Unicode Driver
+  #             driver_type:
+  #               - unicode
+  #     - build-macos:
+  #         name: build-macos-unicode-<< matrix.build_type >>
+  #         matrix:
+  #           parameters:
+  #             build_type:
+  #               - RelWithDebInfo
+  #             test_dsn:
+  #               - ssodbc_test_w
+  #             driver_name:
+  #               - SingleStore ODBC Unicode Driver
+  #             driver_type:
+  #               - unicode
+  #     - build-windows:
+  #         name: build-windows-ansi-<< matrix.build_type >>
+  #         matrix:
+  #           parameters:
+  #             build_type:
+  #               - RelWithDebInfo
+  #             test_dsn:
+  #               - ssodbc_test_a
+  #             test_driver:
+  #               - SingleStore ODBC ANSI Driver
+  #             driver_type:
+  #               - ansi
   test-build-linux:
     jobs:
       - build-only-linux:
@@ -484,7 +485,9 @@ workflows:
   daily:
     triggers:
       - schedule:
-          cron: "0 0 * * *"
+          # cron: "0 0 * * *"
+          # TODO: PLAT-6109 enable daily whan we integrate tests with S2MS
+          cron: "0 0 31 2 *"
           filters:
             branches:
               only:
