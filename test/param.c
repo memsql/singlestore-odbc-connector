@@ -1351,7 +1351,10 @@ MA_ODBC_TESTS my_tests[]=
   {paramarray_select, "paramarray_select", NORMAL, ALL_DRIVERS},
   {t_bug49029, "t_bug49029", NORMAL, ALL_DRIVERS},
   {t_bug56804, "t_bug56804", NORMAL, ALL_DRIVERS},
+// TODO: PLAT-6326
+#ifndef IS_ON_S2MS
   {t_bug59772, "t_bug59772", NORMAL, ALL_DRIVERS},
+#endif
   {insert_fetched_null, "insert_fetched_null", NORMAL, ALL_DRIVERS},
   {odbc45, "odbc-45-binding2bit", NORMAL, ALL_DRIVERS},
   {odbc151, "odbc-151-buffer_length", NORMAL, ALL_DRIVERS},

@@ -1283,7 +1283,10 @@ MA_ODBC_TESTS my_tests[]=
 {
   {t_longlong1,        "t_longlong1",       NORMAL, ALL_DRIVERS},
   {t_decimal,          "t_decimal",         NORMAL, ALL_DRIVERS},
+// TODO: PLAT-6326
+#ifndef IS_ON_S2MS
   {t_bigint,           "t_bigint",          NORMAL, ALL_DRIVERS},
+#endif
   {t_enumset,          "t_enumset",         NORMAL, ALL_DRIVERS},
   {t_bug16917,         "t_bug16917",        NORMAL, ALL_DRIVERS},
   {t_bug16235,         "t_bug16235",        NORMAL, ALL_DRIVERS},

@@ -51,8 +51,8 @@ commands:
             brew install libiodbc
             brew install mysql-client
             brew install cmake
-            brew cleanup
             brew install bind
+            brew cleanup
 
 orbs:
   win: circleci/windows@2.4.0
@@ -89,6 +89,12 @@ jobs:
           command: |
             .circleci\install-chrome.ps1
       - run:
+          name: Start S2MS cluster
+          no_output_timeout: 30m
+          command: |
+            pip install singlestoredb
+            python .circleci\setup_s2ms_cluster.py start odbc_test
+      - run:
           name: Build project
           command: |
             .circleci\build-windows.ps1
@@ -102,6 +108,10 @@ jobs:
             cd ./<< parameters.build_type >>
             ../test/<< parameters.build_type >>/odbc_browser_auth
             cd ..
+      - run:
+          name: Terminate S2MS cluster
+          when: always
+          command: python ./.circleci/setup_s2ms_cluster.py terminate
 
   build-macos:
     parameters:
@@ -123,26 +133,23 @@ jobs:
       TEST_SCHEMA: odbc_test
       CONTINUOUS_INTEGRATION: true
     steps:
+      - checkout
+      - run:
+          name: Start S2MS cluster
+          no_output_timeout: 30m
+          command: |
+            sudo pip3 install singlestoredb
+            python3 ./.circleci/setup_s2ms_cluster.py start odbc_test
       - run:
           name: Define Environment Variables
           command: |
+            echo 'export TEST_SERVER=$(echo "$(cat WORKSPACE_ENDPOINT_FILE)")' >> $BASH_ENV
             echo 'export TEST_DRIVER=$DRIVER_NAME' >> $BASH_ENV
             echo 'export TEST_UID=$MEMSQL_USER' >> $BASH_ENV
             echo 'export TEST_PORT=$MEMSQL_PORT' >> $BASH_ENV
             echo 'export TEST_PASSWORD=$MEMSQL_PASSWORD' >> $BASH_ENV
             source $BASH_ENV
-      - run:
-          name: Define Host Variable
-          command: |
-            if [ "$DRIVER_TYPE" = "unicode" ]
-            then
-              echo 'export TEST_SERVER=$HOST_MAC_UNICODE' >> $BASH_ENV
-            else
-              echo 'export TEST_SERVER=$HOST_MAC_ANSI' >> $BASH_ENV
-            fi
-            source $BASH_ENV
       - setup-environment-macos
-      - checkout
       - run:
           name: Build project
           command: |
@@ -154,6 +161,12 @@ jobs:
       - run:
           name: Run browser auth tests
           command: ./test/odbc_browser_auth
+      - run:
+          name: Terminate S2MS cluster
+          when: always
+          command: |
+            sudo pip3 install singlestoredb
+            python3 ./.circleci/setup_s2ms_cluster.py terminate
 
   build-ubuntu:
     parameters:
@@ -226,18 +239,24 @@ jobs:
       CONTINUOUS_INTEGRATION: true
       TERM: xterm-256color
     steps:
-      - run:
-          name: Define Environment Variables
-          command: |
-            echo 'export TEST_SERVER=$MEMSQL_HOST' >> $BASH_ENV
-            echo 'export TEST_UID=$MEMSQL_USER' >> $BASH_ENV
-            echo 'export TEST_PORT=$MEMSQL_PORT' >> $BASH_ENV
-            echo 'export TEST_PASSWORD=$MEMSQL_PASSWORD' >> $BASH_ENV
-            source $BASH_ENV
       - checkout
       - run:
           name: Setup Environment
           command: ./.circleci/setup-environment-docker.sh
+      - run:
+          name: Start S2MS cluster
+          no_output_timeout: 30m
+          command: |
+            pip3 install singlestoredb
+            python3 ./.circleci/setup_s2ms_cluster.py start odbc_test
+      - run:
+          name: Define Environment Variables
+          command: |
+            echo 'export TEST_SERVER=$(echo "$(cat WORKSPACE_ENDPOINT_FILE)")' >> $BASH_ENV
+            echo 'export TEST_UID=$MEMSQL_USER' >> $BASH_ENV
+            echo 'export TEST_PORT=$MEMSQL_PORT' >> $BASH_ENV
+            echo 'export TEST_PASSWORD=$MEMSQL_PASSWORD' >> $BASH_ENV
+            source $BASH_ENV
       - run:
           name: Build project
           command: ./.circleci/build-linux-in-docker.sh
@@ -247,6 +266,11 @@ jobs:
       - run:
           name: Run browser auth tests
           command: ./test/odbc_browser_auth
+      - run:
+          name: Terminate S2MS cluster
+          when: always
+          command: python3 ./.circleci/setup_s2ms_cluster.py terminate
+
 
   publish-windows:
     parameters:
@@ -395,55 +419,54 @@ workflows:
                 - SingleStore ODBC ANSI Driver
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
-  # TODO: PLAT-6109 enable these jobs        
-  #     - build-macos:
-  #         name: build-macos-ansi-<< matrix.build_type >>
-  #         matrix:
-  #           parameters:
-  #             build_type:
-  #               - RelWithDebInfo
-  #             test_dsn:
-  #               - ssodbc_test_a
-  #             driver_name:
-  #               - SingleStore ODBC ANSI Driver
-  #             driver_type:
-  #               - ansi
-  #     - build-windows:
-  #         name: build-windows-unicode-<< matrix.build_type >>
-  #         matrix:
-  #           parameters:
-  #             build_type:
-  #               - RelWithDebInfo
-  #             test_dsn:
-  #               - ssodbc_test_w
-  #             test_driver:
-  #               - SingleStore ODBC Unicode Driver
-  #             driver_type:
-  #               - unicode
-  #     - build-macos:
-  #         name: build-macos-unicode-<< matrix.build_type >>
-  #         matrix:
-  #           parameters:
-  #             build_type:
-  #               - RelWithDebInfo
-  #             test_dsn:
-  #               - ssodbc_test_w
-  #             driver_name:
-  #               - SingleStore ODBC Unicode Driver
-  #             driver_type:
-  #               - unicode
-  #     - build-windows:
-  #         name: build-windows-ansi-<< matrix.build_type >>
-  #         matrix:
-  #           parameters:
-  #             build_type:
-  #               - RelWithDebInfo
-  #             test_dsn:
-  #               - ssodbc_test_a
-  #             test_driver:
-  #               - SingleStore ODBC ANSI Driver
-  #             driver_type:
-  #               - ansi
+      - build-macos:
+          name: build-macos-ansi-<< matrix.build_type >>
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_a
+              driver_name:
+                - SingleStore ODBC ANSI Driver
+              driver_type:
+                - ansi
+      - build-windows:
+          name: build-windows-unicode-<< matrix.build_type >>
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_w
+              test_driver:
+                - SingleStore ODBC Unicode Driver
+              driver_type:
+                - unicode
+      - build-macos:
+          name: build-macos-unicode-<< matrix.build_type >>
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_w
+              driver_name:
+                - SingleStore ODBC Unicode Driver
+              driver_type:
+                - unicode
+      - build-windows:
+          name: build-windows-ansi-<< matrix.build_type >>
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_a
+              test_driver:
+                - SingleStore ODBC ANSI Driver
+              driver_type:
+                - ansi
   test-build-linux:
     jobs:
       - build-only-linux:
@@ -485,9 +508,7 @@ workflows:
   daily:
     triggers:
       - schedule:
-          # cron: "0 0 * * *"
-          # TODO: PLAT-6109 enable daily whan we integrate tests with S2MS
-          cron: "0 0 31 2 *"
+          cron: "0 0 * * *"
           filters:
             branches:
               only:
@@ -606,8 +627,6 @@ workflows:
               test_driver:
                 - SingleStore ODBC Unicode Driver
       - build-linux-in-docker:
-          requires:
-            - build-debian-9-unicode-RelWithDebInfo
           name: build-debian-9-ansi-<< matrix.build_type >>
           matrix:
             parameters:
@@ -620,8 +639,6 @@ workflows:
               test_driver:
                 - SingleStore ODBC ANSI Driver
       - build-linux-in-docker:
-          requires:
-            - build-debian-9-ansi-RelWithDebInfo
           name: build-debian-10-unicode-<< matrix.build_type >>
           matrix:
             parameters:
@@ -634,8 +651,6 @@ workflows:
               test_driver:
                 - SingleStore ODBC Unicode Driver
       - build-linux-in-docker:
-          requires:
-            - build-debian-10-unicode-RelWithDebInfo
           name: build-debian-10-ansi-<< matrix.build_type >>
           matrix:
             parameters:
@@ -648,8 +663,6 @@ workflows:
               test_driver:
                 - SingleStore ODBC ANSI Driver
       - build-linux-in-docker:
-          requires:
-            - build-debian-10-ansi-RelWithDebInfo
           name: build-centos-7-unicode-<< matrix.build_type >>
           matrix:
             parameters:
@@ -662,8 +675,6 @@ workflows:
               test_driver:
                 - SingleStore ODBC Unicode Driver
       - build-linux-in-docker:
-          requires:
-            - build-centos-7-unicode-RelWithDebInfo
           name: build-centos-7-ansi-<< matrix.build_type >>
           matrix:
             parameters:
@@ -676,8 +687,6 @@ workflows:
               test_driver:
                 - SingleStore ODBC ANSI Driver
       - build-linux-in-docker:
-          requires:
-            - build-centos-7-ansi-RelWithDebInfo
           name: build-centos-8-unicode-<< matrix.build_type >>
           matrix:
             parameters:
@@ -690,8 +699,6 @@ workflows:
               test_driver:
                 - SingleStore ODBC Unicode Driver
       - build-linux-in-docker:
-          requires:
-            - build-centos-8-unicode-RelWithDebInfo
           name: build-centos-8-ansi-<< matrix.build_type >>
           matrix:
             parameters:
@@ -704,8 +711,6 @@ workflows:
               test_driver:
                 - SingleStore ODBC ANSI Driver
       - build-macos:
-          requires:
-            - build-centos-8-ansi-RelWithDebInfo
           name: build-macos-unicode-<< matrix.build_type >>
           matrix:
             parameters:
@@ -718,8 +723,6 @@ workflows:
               driver_type:
                 - unicode
       - build-macos:
-          requires:
-            - build-macos-unicode-RelWithDebInfo
           name: build-macos-ansi-<< matrix.build_type >>
           matrix:
             parameters:
@@ -732,8 +735,6 @@ workflows:
               driver_type:
                 - ansi
       - build-windows:
-          requires:
-            - build-macos-ansi-RelWithDebInfo
           name: build-windows-unicode-<< matrix.build_type >>
           matrix:
             parameters:
@@ -746,8 +747,6 @@ workflows:
               driver_type:
                 - unicode
       - build-windows:
-          requires:
-            - build-windows-unicode-RelWithDebInfo
           name: build-windows-ansi-<< matrix.build_type >>
           matrix:
             parameters:

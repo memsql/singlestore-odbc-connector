@@ -234,5 +234,9 @@ test/types
 test/unicode
 test/use_result
 
+# Files with S2MS workspace information
+*/WORKSPACE_GROUP_ID_FILE
+*/WORKSPACE_ENDPOINT_FILE
+
 # Keep empty directories:
 # Keep empty directories: >> .gitignore/.git*

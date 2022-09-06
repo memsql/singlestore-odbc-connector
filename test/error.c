@@ -804,7 +804,10 @@ MA_ODBC_TESTS my_tests[]=
   {t_odbc2_error, "t_odbc2_error", ALL_DRIVERS},
   {t_diagrec, "t_diagrec", ALL_DRIVERS},
   {t_warning, "t_warning", ALL_DRIVERS},
-  {t_bug3456, "t_bug3456_fails_due_to_conc_bug", ALL_DRIVERS},
+// TODO: PLAT-6326
+#ifndef IS_ON_S2MS
+      {t_bug3456, "t_bug3456_fails_due_to_conc_bug", ALL_DRIVERS},
+#endif
   {t_bug16224, "t_bug16224", ALL_DRIVERS},
   {bind_invalidcol, "bind_invalidcol", ALL_DRIVERS},
   {bind_notenoughparam1, "bind_notenoughparam1", ALL_DRIVERS},

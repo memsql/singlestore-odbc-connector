@@ -1046,7 +1046,10 @@ MA_ODBC_TESTS my_tests[]=
   {t_mul_pkdel, "t_mul_pkdel", NORMAL, ALL_DRIVERS},
   {t_bulk_insert_indicator, "t_bulk_insert_indicator", NORMAL, ALL_DRIVERS},
   {t_bulk_insert_rows, "t_bulk_insert_rows", NORMAL, ALL_DRIVERS},
+// TODO: PLAT-6326
+#ifndef IS_ON_S2MS
   {t_odbc90, "odbc90_insert_with_ts_col", NORMAL, ALL_DRIVERS},
+#endif
   {t_bulk_delete, "t_bulk_delete", NORMAL, ALL_DRIVERS},
   {t_odbc149, "odbc149_ts_col_insert" , NORMAL, ALL_DRIVERS},
   {bulk_insert_all_datatypes, "bulk_insert_all_datatypes" , NORMAL, ALL_DRIVERS},

@@ -1246,7 +1246,10 @@ MA_ODBC_TESTS my_tests[]=
   {t_bug67340, "t_bug67340", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
   {t_bug67702, "t_bug67702", NORMAL, ALL_DRIVERS},
   {t_odbc57, "odbc-57-query_in_parenthesis", NORMAL, ALL_DRIVERS},
+// TODO: PLAT-6326
+#ifndef IS_ON_S2MS
   {t_odbc141, "odbc-141-load_data_infile", NORMAL, ALL_DRIVERS},
+#endif
   {NULL, NULL}
 };
 

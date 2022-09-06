@@ -278,7 +278,10 @@ MA_ODBC_TESTS my_tests[] =
     {t_sqlrowcnt_select, "t_sqlrowcnt_select", NORMAL, ALL_DRIVERS},
     {t_sqlrowcnt_select_nocache, "t_sqlrowcnt_select_nocache", NORMAL, ALL_DRIVERS},
     {t_sqlrowcnt_update, "t_sqlrowcnt_update", NORMAL, ALL_DRIVERS},
+// TODO: PLAT-6326
+#ifndef IS_ON_S2MS
     {t_sqlrowcnt_insert, "t_sqlrowcnt_insert", NORMAL, ALL_DRIVERS},
+#endif
     {t_sqlrowcnt_insert_no_client_found_rows, "t_sqlrowcnt_insert_no_client_found_rows", NORMAL, ALL_DRIVERS},
     {t_sqlrowcnt_delete, "t_sqlrowcnt_delete", NORMAL, ALL_DRIVERS},
     {t_sqlrowcnt_bulk_operation, "t_sqlrowcnt_bulk_operation", NORMAL, ALL_DRIVERS},

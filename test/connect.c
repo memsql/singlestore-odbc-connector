@@ -2012,27 +2012,30 @@ ODBC_TEST(driver_connect_browser_sso) {
 
 MA_ODBC_TESTS my_tests[]=
 {
+// TODO: PLAT-6326
+#ifndef IS_ON_S2MS
   {basic_connect, "basic_connect",     NORMAL, ALL_DRIVERS},
   {basic_connect_w, "basic_connect_w",     NORMAL, UNICODE_DRIVER},
+  {driver_connect_ssl, "driver_connect_ssl",     NORMAL, ALL_DRIVERS},
+  {driver_connect_ssl_w, "driver_connect_ssl_w",     NORMAL, UNICODE_DRIVER},
+  {driver_connect_options, "driver_connect_options", NORMAL, ALL_DRIVERS},
+  {driver_connect_options_w, "driver_connect_options_w", NORMAL, UNICODE_DRIVER},
+  {driver_connect_jwt, "driver_connect_jwt", NORMAL, ALL_DRIVERS},
+  {driver_connect_browser_sso, "driver_connect_browser_sso", NORMAL, ALL_DRIVERS},
+#endif
   {driver_connect_simple, "driver_connect_simple",     NORMAL, ALL_DRIVERS},
   {driver_connect_simple_w, "driver_connect_simple_w",     NORMAL, UNICODE_DRIVER},
   {driver_connect_trace, "driver_connect_trace", TO_FIX, ALL_DRIVERS},
   {driver_connect_unsupported, "driver_connect_unsupported",     TO_FIX, ALL_DRIVERS},
   {driver_connect_savefile, "driver_connect_savefile",     TO_FIX, ALL_DRIVERS},
-  {driver_connect_ssl, "driver_connect_ssl",     NORMAL, ALL_DRIVERS},
-  {driver_connect_ssl_w, "driver_connect_ssl_w",     NORMAL, UNICODE_DRIVER},
   {driver_connect_initstmt, "driver_connect_initstmt", NORMAL, ALL_DRIVERS},
   {driver_connect_initstmt_w, "driver_connect_initstmt_w", NORMAL, UNICODE_DRIVER},
   {driver_connect_timeout, "driver_connect_timeout", NORMAL, ALL_DRIVERS},
   {driver_connect_timeout_w, "driver_connect_timeout_w", NORMAL, UNICODE_DRIVER},
-  {driver_connect_options, "driver_connect_options", NORMAL, ALL_DRIVERS},
-  {driver_connect_options_w, "driver_connect_options_w", NORMAL, UNICODE_DRIVER},
   {driver_connect_forwardonly, "driver_connect_forwardonly", NORMAL, ALL_DRIVERS},
   {driver_connect_forwardonly_w, "driver_connect_forwardonly_w", NORMAL, UNICODE_DRIVER},
   {driver_connect_no_cache, "driver_connect_no_cache", NORMAL, ALL_DRIVERS},
   {driver_connect_no_cache_w, "driver_connect_no_cache_w", NORMAL, UNICODE_DRIVER},
-  {driver_connect_jwt, "driver_connect_jwt", NORMAL, ALL_DRIVERS},
-  {driver_connect_browser_sso, "driver_connect_browser_sso", NORMAL, ALL_DRIVERS},
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 

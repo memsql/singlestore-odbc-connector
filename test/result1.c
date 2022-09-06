@@ -2319,7 +2319,9 @@ MA_ODBC_TESTS my_tests[]=
   {t_convert_type, "t_convert_type",     NORMAL, ALL_DRIVERS},
   {t_desc_col, "t_desc_col",     NORMAL, ANSI_DRIVER},
   {t_convert, "t_convert",     NORMAL, ALL_DRIVERS},
+#ifndef IS_ON_S2MS
   {t_max_rows, "t_max_rows",     NORMAL, ALL_DRIVERS},
+#endif
   {t_multistep, "t_multistep",     NORMAL, ALL_DRIVERS},
   {t_zerolength, "t_zerolength",     NORMAL, ALL_DRIVERS},
   {t_cache_bug, "t_cache_bug",     NORMAL, ALL_DRIVERS},

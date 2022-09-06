@@ -43,22 +43,13 @@ $env:TEST_SCHEMA="odbc_test"
 $env:TEST_PORT=$ENV:MEMSQL_PORT
 $env:TEST_PASSWORD=$ENV:MEMSQL_PASSWORD
 $env:TEST_UID=$ENV:MEMSQL_USER
-if ($env:DRIVER_TYPE -imatch "unicode")
-{
-    $env:TEST_SERVER=$ENV:HOST_WINDOWS_UNICODE
-    Set-ItemProperty -Path $regPath -Name "SERVER" -Value $ENV:HOST_WINDOWS_UNICODE
-    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$ENV:HOST_WINDOWS_UNICODE`ttest-memsql-server" -Force
-    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$ENV:HOST_WINDOWS_UNICODE`ttest-memsql-cluster" -Force
-    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$ENV:HOST_WINDOWS_UNICODE`tsinglestore.test.com" -Force
+$env:TEST_SERVER=$(cat WORKSPACE_ENDPOINT_FILE)
 
-} else {
-    $env:TEST_SERVER=$ENV:HOST_WINDOWS_ANSI
-    Set-ItemProperty -Path $regPath -Name "SERVER" -Value $ENV:HOST_WINDOWS_ANSI
-    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$ENV:HOST_WINDOWS_ANSI`ttest-memsql-server" -Force
-    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$ENV:HOST_WINDOWS_ANSI`ttest-memsql-cluster" -Force
-    Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$ENV:HOST_WINDOWS_ANSI`tsinglestore.test.com" -Force
+Set-ItemProperty -Path $regPath -Name "SERVER" -Value $ENV:TEST_SERVER
+Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$ENV:TEST_SERVER`ttest-memsql-server" -Force
+Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$ENV:TEST_SERVER`ttest-memsql-cluster" -Force
+Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n$ENV:TEST_SERVER`tsinglestore.test.com" -Force
 
-}
 Add-Content -Path $env:windir\my.ini -Value "`n[mysqld]`nplugin-load-add=authentication_pam.so`n[client]`nprotocol = TCP`n[odbc]`ndatabase = odbc_test_mycnf" -Force
 
 cd test

@@ -1424,7 +1424,10 @@ MA_ODBC_TESTS my_tests[]=
   {t_bug34272, "t_bug34272", NORMAL, ALL_DRIVERS},
   {t_bug36441, "t_bug36441", NORMAL, ALL_DRIVERS},
   {t_bug53235, "t_bug53235", NORMAL, ALL_DRIVERS},
+// TODO: PLAT-6326
+#ifndef IS_ON_S2MS
   {t_bug50195, "t_bug50195", NORMAL, ALL_DRIVERS},
+#endif
   {t_sqlprocedurecolumns, "t_sqlprocedurecolumns", NORMAL, ANSI_DRIVER},
   {t_bug57182, "t_bug57182", NORMAL, ALL_DRIVERS},
   {t_bug55870, "t_bug55870", NORMAL, ALL_DRIVERS},

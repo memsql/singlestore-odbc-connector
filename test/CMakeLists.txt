@@ -1,3 +1,7 @@
+IF (IS_ON_S2MS)
+  ADD_COMPILE_DEFINITIONS(IS_ON_S2MS)
+ENDIF()
+
 IF (DIRECT_LINK_TESTS)
   MESSAGE(STATUS "Configuring tests for direct linking against the connector")
 ELSE()
@@ -58,7 +62,8 @@ FOREACH (ODBC_TEST ${ODBC_TESTS})
   IF (NOT ${ODBC_TEST} STREQUAL "interactive" OR USE_INTERACTIVE_TESTS)
     ADD_TEST(odbc_${ODBC_TEST} ${EXECUTABLE_OUTPUT_PATH}/odbc_${ODBC_TEST})
     SET_TESTS_PROPERTIES(odbc_${ODBC_TEST} PROPERTIES TIMEOUT 240)
-    IF (${ODBC_TEST} STREQUAL "connect")
+    # TODO: PLAT-6326 Some tests become slower after we started running them on S2MS
+    IF (${ODBC_TEST} STREQUAL "connect" OR ${ODBC_TEST} STREQUAL "bulk" OR ${ODBC_TEST} STREQUAL "basic")
       SET_TESTS_PROPERTIES(odbc_${ODBC_TEST} PROPERTIES TIMEOUT 480)
     ENDIF()
     IF(NOT WIN32)

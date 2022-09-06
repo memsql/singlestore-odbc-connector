@@ -491,7 +491,7 @@ ODBC_TEST(data_source_information)
   CHECK_CHAR(Connection, SQL_TABLE_TERM, "table");
   CHECK_U_SMALL_INT(Connection, SQL_TXN_CAPABLE, SQL_TC_DDL_COMMIT);
   CHECK_U_INTEGER(Connection, SQL_TXN_ISOLATION_OPTION, SQL_TXN_READ_COMMITTED);
-  CHECK_CHAR(Connection, SQL_USER_NAME, "root");
+  CHECK_CHAR(Connection, SQL_USER_NAME, my_uid);
 
   SQLFreeHandle(SQL_HANDLE_DBC, Hdbc);
   return OK;

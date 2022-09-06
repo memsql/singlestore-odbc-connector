@@ -822,7 +822,10 @@ MA_ODBC_TESTS my_tests[]=
   { sqlgetinfo, "sqlgetinfo", NORMAL , ALL_DRIVERS},
   { t_stmt_attr_status, "t_stmt_attr_status", NORMAL , ALL_DRIVERS},
   { t_msdev_bug, "t_msdev_bug", NORMAL , ANSI_DRIVER},
+// TODO: PLAT-6326
+#ifndef IS_ON_S2MS
   { t_bug14639, "t_bug14639", NORMAL , ALL_DRIVERS},
+#endif
   { t_bug31055, "t_bug31055", NORMAL , ALL_DRIVERS},
   { t_bug3780, "t_bug3780", NORMAL , ALL_DRIVERS},
   { t_bug16653, "t_bug16653", NORMAL , ALL_DRIVERS},

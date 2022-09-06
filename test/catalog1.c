@@ -1379,7 +1379,10 @@ MA_ODBC_TESTS my_tests[]=
   {bug15713, "bug15713", NORMAL, ALL_DRIVERS},
   {t_bug28316, "t_bug28316", NORMAL, ALL_DRIVERS},
   {bug8860, "bug8860", NORMAL, ALL_DRIVERS},
+// TODO: PLAT-6326
+#ifndef IS_ON_S2MS
   {t_bug26934, "t_bug26934", NORMAL, ALL_DRIVERS},
+#endif
   {t_bug29888, "t_bug29888", NORMAL, ALL_DRIVERS},
   {t_bug14407, "t_bug14407", NORMAL, ALL_DRIVERS},
   {t_bug32864, "t_bug32864", NORMAL, ALL_DRIVERS},

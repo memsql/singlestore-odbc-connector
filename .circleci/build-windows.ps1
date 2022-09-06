@@ -40,7 +40,7 @@ refreshenv
 # TODO: PLAT-6167 find actual $env:WIX dynamically
 if (-not (Test-Path env:WIX)) { $env:WIX = "C:\Program Files (x86)\WiX Toolset v3.11\" }
 
-Invoke-Executable -ScriptBlock { cmake -DCMAKE_BUILD_TYPE=$ENV:BUILD_TYPE -DCONC_WITH_UNIT_TESTS=Off -DCONC_WITH_MSI=OFF -DWITH_SSL=SCHANNEL -DCMAKE_INSTALL_PREFIX="C:/Program Files/SingleStore/SingleStore ODBC Driver 64-bit" . } -ErrorAction Stop
+Invoke-Executable -ScriptBlock { cmake -DCMAKE_BUILD_TYPE=$ENV:BUILD_TYPE -DCONC_WITH_UNIT_TESTS=Off -DCONC_WITH_MSI=OFF -DWITH_SSL=SCHANNEL -DCMAKE_INSTALL_PREFIX="C:/Program Files/SingleStore/SingleStore ODBC Driver 64-bit" -DIS_ON_S2MS=1 . } -ErrorAction Stop
 Invoke-Executable -ScriptBlock { cmake --build . --config $ENV:BUILD_TYPE --parallel 2 } -ErrorAction Stop
 
 $msifile = Get-ChildItem "wininstall\singlestore-connector-odbc*.msi" | Select-Object -First 1

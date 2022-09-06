@@ -1719,7 +1719,10 @@ MA_ODBC_TESTS my_tests[]=
   {t_bug28820,     "t_bug28820",     NORMAL, ALL_DRIVERS},
   {t_bug31959,     "t_bug31959",     NORMAL, ALL_DRIVERS},
   {t_bug41256,     "t_bug41256",     NORMAL, ALL_DRIVERS},
+// TODO: PLAT-6326
+#ifndef IS_ON_S2MS
   {t_bug48603,     "t_bug48603",     NORMAL, ALL_DRIVERS},
+#endif
   {t_bug45378,     "t_bug45378",     NORMAL, ALL_DRIVERS},
   {t_mysqld_stmt_reset, "tmysqld_stmt_reset bug", NORMAL, ALL_DRIVERS},
   {t_odbc32,      "odbc32_SQL_ATTR_PACKET_SIZE_option", NORMAL, ALL_DRIVERS},
