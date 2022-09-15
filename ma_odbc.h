@@ -341,7 +341,6 @@ typedef struct st_ma_odbc_environment {
   CRITICAL_SECTION cs;
   MADB_List *Dbcs;
   SQLUINTEGER Trace;
-  SQLWCHAR *TraceFile;
   SQLINTEGER OdbcVersion;
   SQLINTEGER OutputNTS;
 } MADB_Env;
@@ -393,7 +392,6 @@ struct st_ma_odbc_connection
   SQLUINTEGER PacketSize;
   HWND QuietMode;
   SQLUINTEGER Trace;
-  char *TraceFile;
   SQLINTEGER TxnIsolation;
   SQLINTEGER CursorCount;
   char ServerCapabilities;

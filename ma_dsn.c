@@ -58,7 +58,6 @@ MADB_DsnKey DsnKeys[]=
   {"AUTO_RECONNECT", offsetof(MADB_Dsn, Reconnect),         DSN_TYPE_OPTION, MADB_OPT_FLAG_AUTO_RECONNECT,0},
   {"NO_PROMPT",      offsetof(MADB_Dsn, ConnectPrompt),     DSN_TYPE_OPTION, MADB_OPT_FLAG_NO_PROMPT,0},
   {"CHARSET",        offsetof(MADB_Dsn, CharacterSet),      DSN_TYPE_COMBO,  0, 0},
-  {"TRACE",          offsetof(MADB_Dsn, TraceFile),         DSN_TYPE_STRING, 0, 0},
   {"PLUGIN_DIR",     offsetof(MADB_Dsn, ConnCPluginsDir),   DSN_TYPE_STRING, 0, 0},
   /* SSL */
   {"SSLKEY",         offsetof(MADB_Dsn, SslKey),            DSN_TYPE_STRING, 0, 0},
@@ -163,7 +162,6 @@ void MADB_DSN_Free(MADB_Dsn *Dsn)
   MADB_FREE(Dsn->Catalog);
   MADB_FREE(Dsn->CharacterSet);
   MADB_FREE(Dsn->InitCommand);
-  MADB_FREE(Dsn->TraceFile);
   MADB_FREE(Dsn->Socket);
   MADB_FREE(Dsn->ConnCPluginsDir);
   MADB_FREE(Dsn->SslKey);

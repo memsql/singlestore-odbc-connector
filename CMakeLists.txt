@@ -246,8 +246,8 @@ IF(WITH_SIGNCODE)
   MARK_AS_ADVANCED(SIGN_OPTIONS)
 ENDIF()
 
-#Debug log is controlled by conenction option solely
-ADD_DEFINITIONS(-DMAODBC_DEBUG)
+# Uncomment definition below to enable logging for functions without Dbc handle
+# ADD_DEFINITIONS(-DMA_ODBC_DEBUG_ALL)
 
 INCLUDE(${CMAKE_SOURCE_DIR}/cmake/SearchLibrary.cmake)
 INCLUDE(${CMAKE_SOURCE_DIR}/cmake/SetValueMacro.cmake)

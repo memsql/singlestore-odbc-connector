@@ -113,7 +113,6 @@ typedef struct st_madb_dsn
   unsigned int Options;
   char *CharacterSet;
   char *InitCommand;
-  char *TraceFile;
   unsigned int ConnectionTimeout;
   my_bool Reconnect;
   my_bool MultiStatements;

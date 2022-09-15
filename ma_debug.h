@@ -19,19 +19,6 @@
 #ifndef _ma_debug_h_
 #define _ma_debug_h_
 
-#ifndef MAODBC_DEBUG
-
-void ma_debug_print(my_bool ident, char *format, ...);
-
-#define MDBUG_C_IS_ON(C) (0)
-#define MDBUG_C_ENTER(C,A) {}
-#define MDBUG_C_RETURN(C,A,E) return (A)
-#define MDBUG_C_PRINT(C, format, args) {}
-#define MDBUG_C_VOID_RETURN(C) {}
-#define MDBUG_C_DUMP(C,A,B) {}
-
-#else
-
 #define MA_DEBUG_FLAG 4
 
 #ifndef WIN32
@@ -86,7 +73,6 @@ void ma_debug_print_error(MADB_Error *err);
   if (MDBUG_C_IS_ON(C))\
   ma_debug_print(1, #A ":\t%" #B, A);
 
-#endif /* MAODBC_DEBUG */
 
 /* These macros will be used to force debug output 
    for functions without a DBC handle */
