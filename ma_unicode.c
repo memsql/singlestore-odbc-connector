@@ -16,7 +16,6 @@
   or write to the Free Software Foundation, Inc.,
   51 Franklin St., Fifth Floor, Boston, MA 02110, USA
 *************************************************************************************/
-#undef MA_ODBC_DEBUG_ALL
 
 #include <ma_odbc.h>
 #include <ma_parse.h>
