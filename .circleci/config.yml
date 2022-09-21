@@ -505,10 +505,10 @@ workflows:
                 - debian10
               build_type:
                 - RelWithDebInfo
-  daily:
+  weekly:
     triggers:
       - schedule:
-          cron: "0 0 * * *"
+          cron: "0 0 * * 1"
           filters:
             branches:
               only:
