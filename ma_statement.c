@@ -54,6 +54,10 @@ SQLRETURN MADB_StmtInit(MADB_Dbc *Connection, SQLHANDLE *pHStmt)
   Stmt->Options.CursorType= SQL_CURSOR_FORWARD_ONLY;
   Stmt->Options.UseBookmarks= SQL_UB_OFF;
   Stmt->Options.MetadataId= Connection->MetadataId;
+  // TODODO: read this from Dbc
+  Stmt->Options.CombineInserts= TRUE;
+  Stmt->MultiInsertQuery.NumQueries = 0;
+  Stmt->MultiInsertQuery.InsertFinished = FALSE;
 
   Stmt->Apd= Stmt->IApd;
   Stmt->Ard= Stmt->IArd;
@@ -235,6 +239,13 @@ SQLRETURN MADB_StmtFree(MADB_Stmt *Stmt, SQLUSMALLINT Option)
   case SQL_CLOSE:
     if (Stmt->stmt)
     {
+      if (Stmt->Options.CombineInserts)
+      {
+        pthread_mutex_lock(&Stmt->LOCK_MultiInsertQuery);
+        Stmt->MultiInsertQuery.InsertFinished = TRUE;
+        pthread_mutex_unlock(&Stmt->LOCK_MultiInsertQuery);
+        pthread_join(Stmt->MultiInsertExecutor, NULL);
+      }
       if (Stmt->Ird)
         MADB_DescFree(Stmt->Ird, TRUE);
       if (Stmt->State > MADB_SS_PREPARED && !QUERY_IS_MULTISTMT(Stmt->Query))
@@ -622,6 +633,11 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
     && MADB_FindToken(&Stmt->Query, "RETURNING"))
   {
     Stmt->Query.ReturnsResult= '\1';
+  }
+
+  if (Stmt->Query.QueryType == MADB_QUERY_INSERT && !Stmt->Query.ReturnsResult)
+  {
+    pthread_create(&Stmt->MultiInsertExecutor, NULL, MultiInsertExec, (void*)Stmt);
   }
 
   if (QUERY_IS_MULTISTMT(Stmt->Query) && NO_CACHE(Stmt))
@@ -1750,13 +1766,22 @@ static CspsControlFlowResult CspsInitStatementParams(   MADB_Stmt* const Stmt,
     return CCFR_OK;
 }
 
+static int CspsSkipResultsMultiQuery(MADB_Stmt* const Stmt)
+{
+  while (mysql_more_results(Stmt->Connection->mariadb))
+  {
+    mysql_next_result(Stmt->Connection->mariadb);
+    MYSQL_RES* res = mysql_use_result(Stmt->Connection->mariadb);
+    mysql_free_result(res);
+  }
+}
+
 static int CspsRunStatementQuery(   MADB_Stmt* const Stmt,
                                     const MADB_DynString* const query,
                                     unsigned* const ErrorCount,
                                     const unsigned ParamOffset)
 {
     SQLRETURN ret= SQL_SUCCESS;
-
     // if we have SELECT query and several sets of parameters then we need to clear the result
     // returned for previous set of parameters
     if (mysql_field_count(Stmt->Connection->mariadb) > 0)
@@ -1783,6 +1808,9 @@ static int CspsRunStatementQuery(   MADB_Stmt* const Stmt,
 
     return ret;
 }
+
+
+
 
 static void CspsReceiveStatementResults(MADB_Stmt* const Stmt, const SQLRETURN ret)
 {
@@ -1904,6 +1932,7 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
           // In APD, Header.ArraySize specifies the number of values in each parameter.
           // Obviously, it is expected to equal 1, but if not, bound params are expected to be the arrays of values.
           // Therefore, for each item in the array we construct a separate SQL query and send it to the engine.
+          struct timeval now;
           for (j = 0; j < Stmt->Apd->Header.ArraySize; ++j)
           {
               MADB_DynString final_query;
@@ -1925,7 +1954,40 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
                   break;
               }
 
-              ret = CspsRunStatementQuery(Stmt, &final_query, &ErrorCount, ParamOffset);
+              if (Stmt->Options.CombineInserts)
+              // TODODO: update time las added
+              {
+                pthread_mutex_lock(&Stmt->LOCK_MultiInsertQuery);
+                Stmt->MultiInsertQuery.InsertFinished = FALSE;
+                gettimeofday(&now, NULL);
+
+                if (Stmt->MultiInsertQuery.NumQueries == 0)
+                {
+                  MADB_InitDynamicString(&(Stmt->MultiInsertQuery.Text), final_query.str, 0, 10240);
+                  Stmt->MultiInsertQuery.NumQueries = 1;
+                  Stmt->MultiInsertQuery.TimeLastAdded = now;
+                }
+                else
+                {
+                  MADB_DynstrAppend(&(Stmt->MultiInsertQuery.Text), ";");
+                  MADB_DynstrAppend(&(Stmt->MultiInsertQuery.Text), final_query.str);
+                  Stmt->MultiInsertQuery.NumQueries++;
+                  Stmt->MultiInsertQuery.TimeLastAdded = now;
+                }
+                if (Stmt->MultiInsertQuery.NumQueries >= MAX_NUM_QUERIES || Stmt->MultiInsertQuery.Text.length > MAX_QUERY_TEXT_LEN)
+                {
+                  ret = CspsRunStatementQuery(Stmt, &Stmt->MultiInsertQuery.Text, &ErrorCount, ParamOffset);
+                  CspsSkipResultsMultiQuery(Stmt);
+                  printf("Inserted %d\n", Stmt->MultiInsertQuery.NumQueries);
+                  MADB_DynstrFree(&Stmt->MultiInsertQuery.Text);
+                  Stmt->MultiInsertQuery.NumQueries = 0;
+                }
+                pthread_mutex_unlock(&Stmt->LOCK_MultiInsertQuery);
+              }
+              else
+              {
+                ret = CspsRunStatementQuery(Stmt, &final_query, &ErrorCount, ParamOffset);
+              }
 
               if (Stmt->Ipd->Header.ArrayStatusPtr)
               {
@@ -6236,6 +6298,35 @@ SQLRETURN MADB_StmtFetchScroll(MADB_Stmt *Stmt, SQLSMALLINT FetchOrientation,
     ret= SQL_SUCCESS;
   }
   return ret;
+}
+
+void* MultiInsertExec(void *input)
+{
+  MADB_Stmt* stmt = (MADB_Stmt*)input;
+  struct timeval now;
+
+  while(1)
+  {
+    sleep(1);
+    gettimeofday(&now, NULL);
+    pthread_mutex_lock(&stmt->LOCK_MultiInsertQuery);
+    if ((time_diff_ms(stmt->MultiInsertQuery.TimeLastAdded, now) > MAX_QUERY_WAIT_MS) && (stmt->MultiInsertQuery.NumQueries > 0))
+    {
+      CspsRunStatementQuery(stmt, &stmt->MultiInsertQuery.Text, &stmt->MultiInsertQuery.ErrorCount, 0);
+      CspsSkipResultsMultiQuery(stmt);
+      printf("Inserted %d!\n", stmt->MultiInsertQuery.NumQueries);
+
+      MADB_DynstrFree(&stmt->MultiInsertQuery.Text);
+      stmt->MultiInsertQuery.NumQueries = 0;
+    }
+    if (stmt->MultiInsertQuery.InsertFinished)
+    {
+      pthread_mutex_unlock(&stmt->LOCK_MultiInsertQuery);
+      return;
+    }
+    pthread_mutex_unlock(&stmt->LOCK_MultiInsertQuery);
+    printf("Sleeping...\n");
+  }
 }
 
 struct st_ma_stmt_methods MADB_StmtMethods=

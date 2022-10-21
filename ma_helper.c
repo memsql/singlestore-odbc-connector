@@ -1661,3 +1661,8 @@ MYSQL_RES *S2_ListFields(MADB_Stmt  *stmt,
 
   return mysql_store_result(stmt->Connection->mariadb);
 }
+
+inline long time_diff_ms(struct timeval x , struct timeval y)
+{
+    return y.tv_sec * 1000 + y.tv_usec / 1000 - x.tv_sec * 1000 - x.tv_usec / 1000;
+}

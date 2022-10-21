@@ -50,6 +50,8 @@ size_t  MADB_GetDisplaySize(MYSQL_FIELD *Field, MARIADB_CHARSET_INFO *charset);
 size_t  MADB_GetOctetLength(MYSQL_FIELD *Field, unsigned short MaxCharLen);
 char *  MADB_GetTypeName(MYSQL_FIELD *Field);
 
+inline long time_diff_ms(struct timeval x , struct timeval y);
+
 char *  ltrim(char *Str);
 char *  trim(char *Str);
 

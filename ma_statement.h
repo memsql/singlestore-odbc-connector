@@ -112,6 +112,8 @@ void         MADB_CspsFreeResult(MADB_Stmt *Stmt, MYSQL_RES** CspsRes, MYSQL_STM
 void         MADB_CspsCopyResult(MADB_Stmt *Stmt, MYSQL_RES* CspsRes, MYSQL_STMT* stmt);
 void         MADB_CspsFreeDAE(MADB_Stmt *Stmt);
 
+static void* MultiInsertExec(void *input);
+
 #define MADB_MAX_CURSOR_NAME 64 * 3 + 1
 #define MADB_CHECK_STMT_HANDLE(a,b)\
   if (!(a) || !(a)->b)\

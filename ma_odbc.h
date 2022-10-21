@@ -46,6 +46,7 @@
 #include <stddef.h>
 #include <assert.h>
 #include <time.h>
+#include <pthread.h>
 
 typedef struct st_ma_odbc_connection MADB_Dbc;
 typedef struct st_ma_odbc_stmt MADB_Stmt;
@@ -240,6 +241,7 @@ typedef struct
   SQLSMALLINT BookmarkType;
   SQLULEN	MetadataId;
   SQLULEN SimulateCursor;
+  my_bool CombineInserts;
 } MADB_StmtOptions;
 
 /* TODO: To check is it 0 or 1 based? not quite clear from its usage */
@@ -280,6 +282,20 @@ typedef struct
 #include <ma_parse.h>
 
 #define STMT_STRING(STMT) (STMT)->Query.Original
+
+// 1MB is the size of the single (multi)statemnt
+#define MAX_QUERY_TEXT_LEN 1048576
+#define MAX_NUM_QUERIES 10000
+#define MAX_QUERY_WAIT_MS 100
+
+
+typedef struct {
+  MADB_DynString Text;
+  int NumQueries;
+  int ErrorCount;
+  struct timeval TimeLastAdded;
+  my_bool InsertFinished;
+} CombinedQuery;
 
 struct st_ma_odbc_stmt
 {
@@ -334,6 +350,10 @@ struct st_ma_odbc_stmt
   MADB_Desc *IArd;
   MADB_Desc *IIrd;
   MADB_Desc *IIpd;
+  /* Internal insert queries batching */
+  CombinedQuery MultiInsertQuery;
+  pthread_mutex_t LOCK_MultiInsertQuery;
+  pthread_t MultiInsertExecutor;
 };
 
 typedef struct st_ma_odbc_environment {
