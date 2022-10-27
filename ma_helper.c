@@ -34,7 +34,7 @@ void CloseMultiStatements(MADB_Stmt *Stmt)
 
   for (i=0; i < STMT_COUNT(Stmt->Query); ++i)
   {
-    MADB_CspsFreeResult(Stmt, &Stmt->CspsMultiStmtResult[i], Stmt->MultiStmts[i]);
+    MADB_CspsFreeResult(Stmt, &Stmt->CspsMultiStmtResult[i], Stmt->MultiStmts[i], TRUE);
     MDBUG_C_PRINT(Stmt->Connection, "-->closing %0x", Stmt->MultiStmts[i]);
     if (Stmt->MultiStmts[i] != NULL)
     {

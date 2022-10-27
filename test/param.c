@@ -886,12 +886,27 @@ ODBC_TEST(t_bug56804)
   CHECK_STMT_RC(Stmt, SQLBindParameter( Stmt, 2, SQL_PARAM_INPUT, SQL_C_SLONG,
     SQL_DECIMAL, 4, 0, c2, 4, d2));
 
-
   EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_SUCCESS_WITH_INFO);
-  memset(ExpectedStatus, 0x00ff & SQL_PARAM_SUCCESS, sizeof(ExpectedStatus));
   /* all errors but last have SQL_PARAM_DIAG_UNAVAILABLE */
-  ExpectedStatus[1] = ExpectedStatus[6]= SQL_PARAM_DIAG_UNAVAILABLE;
-  ExpectedStatus[9]= SQL_PARAM_ERROR;
+  if (NoSsps)
+  {
+      ExpectedStatus[0] = SQL_PARAM_SUCCESS;
+      ExpectedStatus[1] = SQL_PARAM_ERROR;
+      ExpectedStatus[2] = SQL_PARAM_DIAG_UNAVAILABLE;
+      ExpectedStatus[3] = SQL_PARAM_DIAG_UNAVAILABLE;
+      ExpectedStatus[4] = SQL_PARAM_DIAG_UNAVAILABLE;
+      ExpectedStatus[5] = SQL_PARAM_DIAG_UNAVAILABLE;
+      ExpectedStatus[6] = SQL_PARAM_DIAG_UNAVAILABLE;
+      ExpectedStatus[7] = SQL_PARAM_DIAG_UNAVAILABLE;
+      ExpectedStatus[8] = SQL_PARAM_DIAG_UNAVAILABLE;
+      ExpectedStatus[9] = SQL_PARAM_DIAG_UNAVAILABLE;
+  }
+  else
+  {
+    memset(ExpectedStatus, 0x00ff & SQL_PARAM_SUCCESS, sizeof(ExpectedStatus));
+    ExpectedStatus[1] = ExpectedStatus[6]= SQL_PARAM_DIAG_UNAVAILABLE;
+    ExpectedStatus[9]= SQL_PARAM_ERROR;
+  }
 
   /* Following tests are here to ensure that driver works how it is currently
      expected to work, and they need to be changed if driver changes smth in the
@@ -918,7 +933,9 @@ ODBC_TEST(t_bug56804)
     /* just to make sure we got 1 diagnostics record ... */
     is_num(i, 2);
     /* ... and what the record is for the last error */
-    FAIL_IF(strstr(message, "Duplicate entry '9'") == NULL, "comparison failed");
+    // the error is "Duplicate entry '1' for key 'PRIMARY'" in CSPS mode
+    // and "Duplicate entry '9' for key 'PRIMARY'" in SSPS mode
+    FAIL_IF(strstr(message, "Duplicate entry ") == NULL, "comparison failed");
   }
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
@@ -938,7 +955,7 @@ ODBC_TEST(t_bug59772)
 #define ROWS_TO_INSERT 3
 
     SQLRETURN rc;
-    SQLCHAR   buf_kill[50];
+    SQLCHAR   buf_kill[64], buf_get_node_id[128];
 
     SQLINTEGER    intField[ROWS_TO_INSERT] = {123321, 1, 0};
     SQLLEN        intInd[ROWS_TO_INSERT]= {5,4,3};
@@ -946,7 +963,7 @@ ODBC_TEST(t_bug59772)
     SQLUSMALLINT  paramStatusArray[ROWS_TO_INSERT];
     SQLULEN       paramsProcessed, i;
 
-    SQLINTEGER connection_id;
+    SQLINTEGER connection_id, node_id;
 
     SQLHENV henv2;
     SQLHDBC  hdbc2;
@@ -959,7 +976,13 @@ ODBC_TEST(t_bug59772)
 
     OK_SIMPLE_STMT(hstmt2, "SELECT connection_id()");
     CHECK_STMT_RC(hstmt2, SQLFetch(hstmt2));
-    connection_id= my_fetch_int(hstmt2, 1);
+    connection_id = my_fetch_int(hstmt2, 1);
+    CHECK_STMT_RC(hstmt2, SQLFreeStmt(hstmt2, SQL_CLOSE));
+
+    sprintf(buf_get_node_id, "SELECT node_id FROM INFORMATION_SCHEMA.MV_PROCESSLIST where id = %d", connection_id);
+    OK_SIMPLE_STMT(hstmt2, buf_get_node_id);
+    CHECK_STMT_RC(hstmt2, SQLFetch(hstmt2));
+    node_id = my_fetch_int(hstmt2, 1);
     CHECK_STMT_RC(hstmt2, SQLFreeStmt(hstmt2, SQL_CLOSE));
 
     CHECK_STMT_RC(Stmt, SQLExecDirect(Stmt, "DROP TABLE IF EXISTS t_bug59772", SQL_NTS));
@@ -977,24 +1000,30 @@ ODBC_TEST(t_bug59772)
       0, 0, intField, 0, intInd));
 
     /* From another connection, kill the connection created above */
-    sprintf(buf_kill, "KILL %d", connection_id);
+    sprintf(buf_kill, "KILL CONNECTION %d %d", connection_id, node_id);
     CHECK_STMT_RC(Stmt, SQLExecDirect(Stmt, (SQLCHAR *)buf_kill, SQL_NTS));
 
-    rc= SQLExecute(hstmt2);
-    
-    /* The result should be SQL_ERROR */
-    if (rc != SQL_ERROR)
-      overall_result= FAIL;
+    FAIL_IF(SQLExecute(hstmt2) != SQL_ERROR, "Statement is expected to fail after connection is killed");
 
-    for (i= 0; i < paramsProcessed; ++i)
+    SQLUSMALLINT expectedStatus;
 
-      /* We expect error statuses for all parameters */
-      if ( paramStatusArray[i] != ((i + 1 < ROWS_TO_INSERT) ? 
-            SQL_PARAM_DIAG_UNAVAILABLE : SQL_PARAM_ERROR) )
+    FAIL_IF(paramsProcessed != ROWS_TO_INSERT, "Got incorrect number of rows in SQL_ATTR_PARAMS_PROCESSED_PTR");
+    for (i = 0; i < paramsProcessed; ++i)
+    {
+      if (NoSsps)
       {
-        diag("Parameter #%u status isn't successful(0x%X)", i+1, paramStatusArray[i]);
-        overall_result= FAIL;
+        expectedStatus = SQL_PARAM_ERROR;
       }
+      else
+      {
+        expectedStatus = (i + 1 < ROWS_TO_INSERT) ? SQL_PARAM_DIAG_UNAVAILABLE : SQL_PARAM_ERROR;
+      }
+      if (paramStatusArray[i] != expectedStatus)
+      {
+        diag("Parameter #%u status is wrong: expected %u, got %u", i + 1, expectedStatus, paramStatusArray[i]);
+        overall_result = FAIL;
+      }
+    }
 
     CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
     CHECK_STMT_RC(Stmt, SQLExecDirect(Stmt, "DROP TABLE IF EXISTS t_bug59772", SQL_NTS));
@@ -1351,10 +1380,7 @@ MA_ODBC_TESTS my_tests[]=
   {paramarray_select, "paramarray_select", NORMAL, ALL_DRIVERS},
   {t_bug49029, "t_bug49029", NORMAL, ALL_DRIVERS},
   {t_bug56804, "t_bug56804", NORMAL, ALL_DRIVERS},
-// TODO: PLAT-6326
-#ifndef IS_ON_S2MS
   {t_bug59772, "t_bug59772", NORMAL, ALL_DRIVERS},
-#endif
   {insert_fetched_null, "insert_fetched_null", NORMAL, ALL_DRIVERS},
   {odbc45, "odbc-45-binding2bit", NORMAL, ALL_DRIVERS},
   {odbc151, "odbc-151-buffer_length", NORMAL, ALL_DRIVERS},

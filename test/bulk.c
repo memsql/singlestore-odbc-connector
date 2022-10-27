@@ -449,7 +449,7 @@ ODBC_TEST(t_odbc90)
   sprintf((char *)conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s",
           my_drivername, my_servername, my_uid, "XXXXXXXX", my_schema, ma_strport, add_connstr);
   diag("Starting new connection: %s", conn);
-  sprintf((char*)conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s;",
+  sprintf((char*)conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s;DATABASE=%s;%s;%s;OPTION=67108864",
           my_drivername, my_servername, my_uid, my_pwd, my_schema, ma_strport, add_connstr);
   CHECK_ENV_RC(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
   CHECK_ENV_RC(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
@@ -1048,7 +1048,7 @@ MA_ODBC_TESTS my_tests[]=
   {t_bulk_insert_rows, "t_bulk_insert_rows", NORMAL, ALL_DRIVERS},
 // TODO: PLAT-6326
 #ifndef IS_ON_S2MS
-  {t_odbc90, "odbc90_insert_with_ts_col", NORMAL, ALL_DRIVERS},
+   {t_odbc90, "odbc90_insert_with_ts_col", NORMAL, ALL_DRIVERS},
 #endif
   {t_bulk_delete, "t_bulk_delete", NORMAL, ALL_DRIVERS},
   {t_odbc149, "odbc149_ts_col_insert" , NORMAL, ALL_DRIVERS},
