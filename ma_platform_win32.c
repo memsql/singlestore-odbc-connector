@@ -177,7 +177,6 @@ int MADB_ConvertAnsi2Unicode(Client_Charset *cc, const char *AnsiString, SQLLEN 
 {
   SQLLEN    RequiredLength;
   SQLWCHAR *Tmp= UnicodeString;
-  int       rc= 0;
 
   if (LengthIndicator)
     *LengthIndicator= 0;
@@ -195,39 +194,63 @@ int MADB_ConvertAnsi2Unicode(Client_Charset *cc, const char *AnsiString, SQLLEN 
   if (AnsiLength == SQL_NTS || AnsiLength == -1)
     IsNull= 1;
 
-  /* calculate required length */
-  RequiredLength= MultiByteToWideChar(cc->CodePage, 0, AnsiString, IsNull ? -1 : (int)AnsiLength, NULL, 0);
-
-  /* Set LengthIndicator */
-  if (LengthIndicator)
-    *LengthIndicator= RequiredLength - IsNull;
   if (!UnicodeLength)
-    return 0;
-
-  if (RequiredLength > UnicodeLength)
-    Tmp= (SQLWCHAR *)malloc(RequiredLength * sizeof(SQLWCHAR));
-  
-  RequiredLength= MultiByteToWideChar(cc->CodePage, 0, AnsiString, IsNull ? -1 : (int)AnsiLength, Tmp, (int)RequiredLength);
-  if (RequiredLength < 1)
   {
-    if (Error)
-      MADB_SetError(Error, MADB_ERR_HY000, "Ansi to Unicode conversion error occurred", GetLastError());
-    rc= 1;
-    goto end;
+    // Return buffer is empty
+    // Get WideChar length if needed and return
+    if (LengthIndicator) {
+      RequiredLength= MultiByteToWideChar(cc->CodePage, 0, AnsiString, IsNull ? -1 : (int)AnsiLength, NULL, 0);
+      if (RequiredLength < 1)
+      {
+        if (Error)
+          MADB_SetError(Error, MADB_ERR_HY000, "Ansi to Unicode conversion error occurred", GetLastError());
+        return 1;
+      }
+
+      // Set LengthIndicator
+      *LengthIndicator= RequiredLength - IsNull;
+    }
+    return 0;
   }
 
-  /* Truncation */
-  if (Tmp != UnicodeString)
-  {
+  RequiredLength= MultiByteToWideChar(cc->CodePage, 0, AnsiString, IsNull ? -1 : (int)AnsiLength, Tmp, (int)UnicodeLength);
+  if (RequiredLength < 1 && GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+    // Buffer is too small
+
+    RequiredLength= MultiByteToWideChar(cc->CodePage, 0, AnsiString, IsNull ? -1 : (int)AnsiLength, NULL, 0);
+
+    // Set LengthIndicator
+    if (LengthIndicator)
+      *LengthIndicator= RequiredLength - IsNull;
+
+    Tmp= (SQLWCHAR *)malloc(RequiredLength * sizeof(SQLWCHAR));
+
+    RequiredLength= MultiByteToWideChar(cc->CodePage, 0, AnsiString, IsNull ? -1 : (int)AnsiLength, Tmp, (int)RequiredLength);
+    if (RequiredLength < 1)
+    {
+      if (Error)
+        MADB_SetError(Error, MADB_ERR_HY000, "Ansi to Unicode conversion error occurred", GetLastError());
+      free(Tmp);
+      return 1;
+    }
+
     wcsncpy(UnicodeString, L"", 1);
     wcsncat(UnicodeString, Tmp, UnicodeLength- 1);
+    free(Tmp);
     if (Error)
       MADB_SetError(Error, MADB_ERR_01004, NULL, 0);
+  } else if (RequiredLength < 1)
+  {
+    // Conversion error occurred
+    if (Error)
+      MADB_SetError(Error, MADB_ERR_HY000, "Ansi to Unicode conversion error occurred", GetLastError());
+    return 1;
+  } else {
+    // Successfully converted string
+    // Set LengthIndicator
+    if (LengthIndicator)
+      *LengthIndicator= RequiredLength - IsNull;
   }
-end:
-  if (Tmp != UnicodeString)
-    free(Tmp);
-  return rc;
 }
 
 /* Returns required length for result string with(if dest and dest length are provided)

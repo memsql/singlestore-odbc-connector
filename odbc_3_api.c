@@ -825,7 +825,6 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT StatementHandle,
     SQLLEN *StrLen_or_IndPtr)
 {
   MADB_Stmt *Stmt= (MADB_Stmt*)StatementHandle;
-  unsigned int i;
   MADB_DescRecord *IrdRec;
 
   if (StatementHandle== SQL_NULL_HSTMT)
@@ -856,19 +855,17 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT StatementHandle,
     return MADB_SetError(&Stmt->Error, MADB_ERR_HY090, NULL, 0);
   }
 
-  /* reset offsets for other columns. Doing that here since "internal" calls should not do that */
-  for (i=0; i < mysql_stmt_field_count(Stmt->stmt); i++)
+  /* reset offsets for column. Doing that here since "internal" calls should not do that */
+  if (Stmt->LastSQLGetDataColumn != Col_or_Param_Num)
   {
-    if (i != Col_or_Param_Num - 1)
+    IrdRec= MADB_DescGetInternalRecord(Stmt->Ird, Col_or_Param_Num - 1, MADB_DESC_READ);
+    if (IrdRec)
     {
-      IrdRec= MADB_DescGetInternalRecord(Stmt->Ird, i, MADB_DESC_READ);
-      if (IrdRec)
-      {
-        MADB_FREE(IrdRec->InternalBuffer);
-      }
-      Stmt->CharOffset[i]= 0;
+      MADB_FREE(IrdRec->InternalBuffer);
     }
+    Stmt->CharOffset[Col_or_Param_Num - 1]= 0;
   }
+  Stmt->LastSQLGetDataColumn= Col_or_Param_Num;
 
   return Stmt->Methods->GetData(StatementHandle, Col_or_Param_Num, TargetType, TargetValuePtr, BufferLength, StrLen_or_IndPtr, FALSE);
 }

@@ -316,6 +316,7 @@ struct st_ma_odbc_stmt
   MYSQL_BIND                *result;
   MYSQL_BIND                *params;
   int                       PutParam;
+  int                       LastSQLGetDataColumn;
   my_bool                   RebindParams;
   my_bool                   bind_done;
   long long                 AffectedRows;
