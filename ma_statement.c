@@ -166,7 +166,7 @@ void ResetMetadata(MYSQL_RES** metadata, MYSQL_RES* new_metadata)
 
 /* {{{ MADB_CspsFreeResult
  Frees the result set that was allocated by mysql_store_result for the client-side prepared statements mode. */
-void MADB_CspsFreeResult(MADB_Stmt *Stmt, MYSQL_RES** CspsResult, MYSQL_STMT *stmt, my_bool ScrollMoreResults)
+void MADB_CspsFreeResult(MADB_Stmt *Stmt, MYSQL_RES** CspsResult, MYSQL_STMT *stmt, my_bool FreeStmtResults)
 {
     if (MADB_SSPS_DISABLED(Stmt))
     {
@@ -182,7 +182,7 @@ void MADB_CspsFreeResult(MADB_Stmt *Stmt, MYSQL_RES** CspsResult, MYSQL_STMT *st
                 stmt->field_count = 0;
                 stmt->fields = NULL;
 
-                if (ScrollMoreResults)
+                if (FreeStmtResults)
                 {
                     while(mysql_more_results(stmt->mysql))
                     {
@@ -1856,6 +1856,12 @@ static void CspsReceiveStatementResultsMulti(MADB_Stmt* const Stmt, unsigned int
 
   for (j = 0; j < Stmt->Apd->Header.ArraySize; ++j)
   {
+      status = (j == 0) ? 0 : mysql_next_result(Stmt->stmt->mysql);
+      if (status > 0 || !SQL_SUCCEEDED(ret))
+      {
+          MADB_SetNativeError(&Stmt->Error, SQL_HANDLE_DBC, Stmt->stmt->mysql);
+          ++*ErrorCount;
+      }
       CspsReceiveStatementResults(Stmt, ret);
       if (Stmt->Ipd->Header.ArrayStatusPtr)
       {
@@ -1880,12 +1886,6 @@ static void CspsReceiveStatementResultsMulti(MADB_Stmt* const Stmt, unsigned int
                       SQL_SUCCEEDED(ret)  ? SQL_PARAM_SUCCESS : SQL_PARAM_ERROR;
               }
           }
-      }
-      status = mysql_next_result(Stmt->stmt->mysql);
-      if (status > 0 || !SQL_SUCCEEDED(ret))
-      {
-          MADB_SetNativeError(&Stmt->Error, SQL_HANDLE_DBC, Stmt->stmt->mysql);
-          ++*ErrorCount;
       }
   }
 }
