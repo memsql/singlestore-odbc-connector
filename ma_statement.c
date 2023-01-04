@@ -166,7 +166,7 @@ void ResetMetadata(MYSQL_RES** metadata, MYSQL_RES* new_metadata)
 
 /* {{{ MADB_CspsFreeResult
  Frees the result set that was allocated by mysql_store_result for the client-side prepared statements mode. */
-void MADB_CspsFreeResult(MADB_Stmt *Stmt, MYSQL_RES** CspsResult, MYSQL_STMT *stmt)
+void MADB_CspsFreeResult(MADB_Stmt *Stmt, MYSQL_RES** CspsResult, MYSQL_STMT *stmt, my_bool FreeStmtResults)
 {
     if (MADB_SSPS_DISABLED(Stmt))
     {
@@ -182,9 +182,12 @@ void MADB_CspsFreeResult(MADB_Stmt *Stmt, MYSQL_RES** CspsResult, MYSQL_STMT *st
                 stmt->field_count = 0;
                 stmt->fields = NULL;
 
-                while(mysql_more_results(stmt->mysql))
+                if (FreeStmtResults)
                 {
-                    mysql_next_result(stmt->mysql);
+                    while(mysql_more_results(stmt->mysql))
+                    {
+                        mysql_next_result(stmt->mysql);
+                    }
                 }
             }
 
@@ -239,7 +242,7 @@ SQLRETURN MADB_StmtFree(MADB_Stmt *Stmt, SQLUSMALLINT Option)
         MADB_DescFree(Stmt->Ird, TRUE);
       if (Stmt->State > MADB_SS_PREPARED && !QUERY_IS_MULTISTMT(Stmt->Query))
       {
-        MADB_CspsFreeResult(Stmt, &Stmt->CspsResult, Stmt->stmt);
+        MADB_CspsFreeResult(Stmt, &Stmt->CspsResult, Stmt->stmt, TRUE);
         MDBUG_C_PRINT(Stmt->Connection, "mysql_stmt_free_result(%0x)", Stmt->stmt);
         mysql_stmt_free_result(Stmt->stmt);
         LOCK_MARIADB(Stmt->Connection);
@@ -255,7 +258,7 @@ SQLRETURN MADB_StmtFree(MADB_Stmt *Stmt, SQLUSMALLINT Option)
         {
           if (Stmt->MultiStmts[i] != NULL)
           {
-            MADB_CspsFreeResult(Stmt, &Stmt->CspsMultiStmtResult[i], Stmt->MultiStmts[i]);
+            MADB_CspsFreeResult(Stmt, &Stmt->CspsMultiStmtResult[i], Stmt->MultiStmts[i], TRUE);
             MDBUG_C_PRINT(Stmt->Connection, "-->resetting %0x(%u)", Stmt->MultiStmts[i], i);
             mysql_stmt_reset(Stmt->MultiStmts[i]);
           }
@@ -369,7 +372,7 @@ SQLRETURN MADB_StmtFree(MADB_Stmt *Stmt, SQLUSMALLINT Option)
            to avoid inconsistency(MultiStmtCount > 0 and MultiStmts is NULL */
         if (Stmt->MultiStmts!= NULL && Stmt->MultiStmts[i] != NULL)
         {
-          MADB_CspsFreeResult(Stmt, &Stmt->CspsMultiStmtResult[i], Stmt->MultiStmts[i]);
+          MADB_CspsFreeResult(Stmt, &Stmt->CspsMultiStmtResult[i], Stmt->MultiStmts[i], TRUE);
           MDBUG_C_PRINT(Stmt->Connection, "mysql_stmt_free_result(%0x)", Stmt->MultiStmts[i]);
           mysql_stmt_free_result(Stmt->MultiStmts[i]);
           MDBUG_C_PRINT(Stmt->Connection, "-->closing %0x(%u)", Stmt->MultiStmts[i], i);
@@ -382,7 +385,7 @@ SQLRETURN MADB_StmtFree(MADB_Stmt *Stmt, SQLUSMALLINT Option)
     }
     else if (Stmt->stmt != NULL)
     {
-      MADB_CspsFreeResult(Stmt, &Stmt->CspsResult, Stmt->stmt);
+      MADB_CspsFreeResult(Stmt, &Stmt->CspsResult, Stmt->stmt, TRUE);
       MDBUG_C_PRINT(Stmt->Connection, "-->closing %0x", Stmt->stmt);
       MADB_STMT_CLOSE_STMT(Stmt);
     }
@@ -468,7 +471,7 @@ void MADB_StmtReset(MADB_Stmt *Stmt)
   {
     if (Stmt->State > MADB_SS_PREPARED)
     {
-      MADB_CspsFreeResult(Stmt, &Stmt->CspsResult, Stmt->stmt);
+      MADB_CspsFreeResult(Stmt, &Stmt->CspsResult, Stmt->stmt, TRUE);
       MDBUG_C_PRINT(Stmt->Connection, "mysql_stmt_free_result(%0x)", Stmt->stmt);
       mysql_stmt_free_result(Stmt->stmt);
     }
@@ -1789,7 +1792,7 @@ static void CspsReceiveStatementResults(MADB_Stmt* const Stmt, const SQLRETURN r
     // Free the previous result if there was any.
     // In case of a multistatement it's correct to pass CspsResult and stmt because they are pointing to the proper
     // multistatement result and multistatement, respectively.
-    MADB_CspsFreeResult(Stmt, &Stmt->CspsResult, Stmt->stmt);
+    MADB_CspsFreeResult(Stmt, &Stmt->CspsResult, Stmt->stmt, FALSE);
 
     // If a query returns result, fetch the full result set.
     if (mysql_field_count(Stmt->stmt->mysql) > 0)
@@ -1843,6 +1846,48 @@ static void CspsReceiveStatementResults(MADB_Stmt* const Stmt, const SQLRETURN r
             Stmt->AffectedRows += mysql_stmt_affected_rows(Stmt->stmt);
         }
     }
+}
+
+static void CspsReceiveStatementResultsMulti(MADB_Stmt* const Stmt, unsigned int* const ErrorCount, SQLRETURN ret)
+{
+  int status = 0;
+  int j;
+  my_bool was_error_before = FALSE;
+
+  for (j = 0; j < Stmt->Apd->Header.ArraySize; ++j)
+  {
+      status = (j == 0) ? 0 : mysql_next_result(Stmt->stmt->mysql);
+      if (status > 0 || !SQL_SUCCEEDED(ret))
+      {
+          MADB_SetNativeError(&Stmt->Error, SQL_HANDLE_DBC, Stmt->stmt->mysql);
+          ++*ErrorCount;
+      }
+      CspsReceiveStatementResults(Stmt, ret);
+      if (Stmt->Ipd->Header.ArrayStatusPtr)
+      {
+          // Update the Ipd status only if the corresponding Apd parameter shouldn't be ignored.
+          // If it should be ignored, the Ipd status should be set by now.
+          if (!Stmt->Apd->Header.ArrayStatusPtr ||
+                  Stmt->Apd->Header.ArrayStatusPtr[j] != SQL_PARAM_IGNORE)
+          {
+              if (status > 0)
+              {
+                  Stmt->Ipd->Header.ArrayStatusPtr[j] = SQL_PARAM_ERROR;
+                  was_error_before = TRUE;
+              }
+              // SingleStore doesn't execute subsequent queries after an error occurred
+              else if (was_error_before)
+              {
+                  Stmt->Ipd->Header.ArrayStatusPtr[j] = SQL_PARAM_DIAG_UNAVAILABLE;
+              }
+              else
+              {
+                  Stmt->Ipd->Header.ArrayStatusPtr[j] =
+                      SQL_SUCCEEDED(ret)  ? SQL_PARAM_SUCCESS : SQL_PARAM_ERROR;
+              }
+          }
+      }
+  }
 }
 
 /* {{{ MADB_StmtExecute */
@@ -1901,10 +1946,13 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
               continue; /* bad statement - skip it */
           }
 
-          // In APD, Header.ArraySize specifies the number of values in each parameter.
-          // Obviously, it is expected to equal 1, but if not, bound params are expected to be the arrays of values.
-          // Therefore, for each item in the array we construct a separate SQL query and send it to the engine.
-          for (j = 0; j < Stmt->Apd->Header.ArraySize; ++j)
+          MADB_DynString all_params_query;
+          MADB_InitDynamicString(&all_params_query, "", 1024, 1024);
+
+          int numQueries = Stmt->ParamCount > 0 ? Stmt->Apd->Header.ArraySize : 1;
+          // TODO: combineQueries can be true when Stmt->Query.ReturnsResult is true as well, needs testing
+          my_bool combineQueries = numQueries > 1 && !(Stmt->Query.ReturnsResult) && DSN_OPTION(Stmt->Connection, MADB_OPT_FLAG_MULTI_STATEMENTS);
+          for (j = 0; j < numQueries; ++j)
           {
               MADB_DynString final_query;
               MADB_InitDynamicString(&final_query, "", 1024, 1024);
@@ -1919,35 +1967,50 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
                   continue;
               case CCFR_ERROR:
                   MADB_DynstrFree(&final_query);
+                  MADB_DynstrFree(&all_params_query);
                   goto end;
               default:
                   assert(0);
                   break;
               }
-
-              ret = CspsRunStatementQuery(Stmt, &final_query, &ErrorCount, ParamOffset);
-
-              if (Stmt->Ipd->Header.ArrayStatusPtr)
+              if (!combineQueries)
               {
-                  // Update the Ipd status only if the corresponding Apd parameter shouldn't be ignored.
-                  // If it should be ignored, the Ipd status should be set by now.
-                  if (!Stmt->Apd->Header.ArrayStatusPtr ||
-                          Stmt->Apd->Header.ArrayStatusPtr[j] != SQL_PARAM_IGNORE)
+                  ret = CspsRunStatementQuery(Stmt, &final_query, &ErrorCount, ParamOffset);
+
+                  if (Stmt->Ipd->Header.ArrayStatusPtr)
                   {
-                      Stmt->Ipd->Header.ArrayStatusPtr[j] =
-                              SQL_SUCCEEDED(ret) ?
-                                      SQL_PARAM_SUCCESS :
-                                      (j == Stmt->Apd->Header.ArraySize - 1) ?
-                                              SQL_PARAM_ERROR :
-                                              SQL_PARAM_DIAG_UNAVAILABLE;
+                      // Update the Ipd status only if the corresponding Apd parameter shouldn't be ignored.
+                      // If it should be ignored, the Ipd status should be set by now.
+                      if (!Stmt->Apd->Header.ArrayStatusPtr ||
+                              Stmt->Apd->Header.ArrayStatusPtr[j] != SQL_PARAM_IGNORE)
+                      {
+                          Stmt->Ipd->Header.ArrayStatusPtr[j] =
+                                  SQL_SUCCEEDED(ret) ?
+                                          SQL_PARAM_SUCCESS :
+                                          (j == Stmt->Apd->Header.ArraySize - 1) ?
+                                                  SQL_PARAM_ERROR :
+                                                  SQL_PARAM_DIAG_UNAVAILABLE;
+                      }
                   }
               }
-
+              else
+              {
+                MADB_DynstrAppend(&all_params_query, final_query.str);
+                MADB_DynstrAppend(&all_params_query, ";");
+              }
               MADB_DynstrFree(&final_query);
           }
-
-          CspsReceiveStatementResults(Stmt, ret);
-
+          if (!combineQueries)
+          {
+              CspsReceiveStatementResults(Stmt, ret);
+          }
+          else
+          {
+              MDBUG_C_PRINT(Stmt->Connection, "Running statement with %d queries", numQueries);
+              ret = CspsRunStatementQuery(Stmt, &all_params_query, &ErrorCount, ParamOffset);
+              CspsReceiveStatementResultsMulti(Stmt, &ErrorCount, ret);
+          }
+          MADB_DynstrFree(&all_params_query);
           // Move forward to the next subquery in the multistatement.
           if (QUERY_IS_MULTISTMT(Stmt->Query))
           {
