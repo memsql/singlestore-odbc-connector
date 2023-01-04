@@ -845,6 +845,59 @@ ODBC_TEST(t_bug49029)
   return OK;
 }
 
+/*
+  multi statement query with array param
+*/
+ODBC_TEST(t_multi_statement_multi_param)
+{
+#define PARAMSET_SIZE		10
+
+  SQLINTEGER	len 	= 1;
+  int i;
+
+  SQLINTEGER	b1[PARAMSET_SIZE]=      {14, 14, 14, 14, 14, 14, 14, 14, 14, 14};
+  SQLINTEGER	c1[PARAMSET_SIZE]=      {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+  SQLINTEGER	c2[PARAMSET_SIZE]=      {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+  SQLLEN      d1[PARAMSET_SIZE]=      {4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
+  SQLLEN      d2[PARAMSET_SIZE]=      {4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
+  SQLUSMALLINT status[PARAMSET_SIZE]= {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  SQLUSMALLINT ExpectedStatus[PARAMSET_SIZE];
+
+  SQLLEN	    paramset_size	= PARAMSET_SIZE;
+
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS multi_param_1");
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS multi_param_2");
+
+  OK_SIMPLE_STMT(Stmt, "create table multi_param_1 (c1 bigint primary key, c2 int)");
+  OK_SIMPLE_STMT(Stmt, "create table multi_param_2 (b1 int)");
+
+  CHECK_STMT_RC(Stmt, SQLPrepare(Stmt, (SQLCHAR *)"insert into multi_param_1 values (?, ?); insert into multi_param_2 values (?)", SQL_NTS));
+
+  CHECK_STMT_RC(Stmt, SQLSetStmtAttr( Stmt, SQL_ATTR_PARAMSET_SIZE,
+    (SQLPOINTER)paramset_size, SQL_IS_UINTEGER ));
+
+  CHECK_STMT_RC(Stmt, SQLSetStmtAttr( Stmt, SQL_ATTR_PARAM_STATUS_PTR,
+    status, SQL_IS_POINTER ));
+
+  CHECK_STMT_RC(Stmt, SQLBindParameter( Stmt, 1, SQL_PARAM_INPUT, SQL_C_SLONG,
+    SQL_DECIMAL, 4, 0, c1, 4, d1));
+
+  CHECK_STMT_RC(Stmt, SQLBindParameter( Stmt, 2, SQL_PARAM_INPUT, SQL_C_SLONG,
+    SQL_DECIMAL, 4, 0, c2, 4, d2));
+
+  CHECK_STMT_RC(Stmt, SQLBindParameter( Stmt, 3, SQL_PARAM_INPUT, SQL_C_SLONG,
+    SQL_DECIMAL, 4, 0, b1, 4, d2));
+
+  EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_SUCCESS);
+
+  // OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS multi_param_1");
+  // OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS multi_param_2");
+
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+
+  return OK;
+#undef PARAMSET_SIZE
+}
 
 /*
   Bug #56804 - Server with sql mode NO_BACKSLASHES_ESCAPE obviously
@@ -856,7 +909,6 @@ ODBC_TEST(t_bug56804)
 
   SQLINTEGER	len 	= 1;
   int i;
-  BOOL SolidOperation= TRUE;
 
   SQLINTEGER	c1[PARAMSET_SIZE]=      {0, 1, 2, 3, 4, 5, 1, 7, 8, 9};
   SQLINTEGER	c2[PARAMSET_SIZE]=      {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
@@ -1378,6 +1430,7 @@ MA_ODBC_TESTS my_tests[]=
   {paramarray_by_column, "paramarray_by_column", NORMAL, ALL_DRIVERS},
   {paramarray_ignore_paramset, "paramarray_ignore_paramset", NORMAL, ALL_DRIVERS},
   {paramarray_select, "paramarray_select", NORMAL, ALL_DRIVERS},
+  {t_multi_statement_multi_param, "t_multi_statement_multi_param", NORMAL, ALL_DRIVERS},
   {t_bug49029, "t_bug49029", NORMAL, ALL_DRIVERS},
   {t_bug56804, "t_bug56804", NORMAL, ALL_DRIVERS},
   {t_bug59772, "t_bug59772", NORMAL, ALL_DRIVERS},

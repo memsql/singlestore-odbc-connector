@@ -1946,9 +1946,6 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
               continue; /* bad statement - skip it */
           }
 
-          // In APD, Header.ArraySize specifies the number of values in each parameter.
-          // Obviously, it is expected to equal 1, but if not, bound params are expected to be the arrays of values.
-          // Therefore, for each item in the array we construct a separate SQL query and send it to the engine.
           MADB_DynString all_params_query;
           MADB_InitDynamicString(&all_params_query, "", 1024, 1024);
 
