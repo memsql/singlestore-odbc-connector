@@ -46,7 +46,7 @@ Create a template file similar to the following,
 with a name like SingleStore_odbc_driver_template.ini.
 
 ```
-[SingleStore ODBC Driver]
+[SingleStore ODBC ANSI|Unicode Driver]
 Description = SingleStore ODBC Driver
 Driver = <your path>/libssodbc[a|w].so
 ```
@@ -65,7 +65,7 @@ with a name like SingleStore_odbc_data_source_template.ini.
 ```
 [SingleStore-server]
 Description=SingleStore server
-Driver=SingleStore ODBC Driver
+Driver=SingleStore ODBC ANSI|Unicode Driver
 SERVER=<your server>
 USER=<your user>
 PASSWORD=<your password>
