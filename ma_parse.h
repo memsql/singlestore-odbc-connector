@@ -82,6 +82,7 @@ int  MADB_ParseQuery(MADB_QUERY *Query);
 #define QUERY_DOESNT_RETURN_RESULT(query_type) ((query_type) < MADB_QUERY_SELECT)
 
 char *       MADB_ParseCursorName(MADB_QUERY *Query, unsigned int *Offset);
+char *       MADB_Token(MADB_QUERY *Query, unsigned int Idx);
 unsigned int MADB_FindToken(MADB_QUERY *Query, char *Compare);
 my_bool      MADB_CompareToken(MADB_QUERY *Query, unsigned int Idx, char *Compare, size_t Length, unsigned int *Offset);
 

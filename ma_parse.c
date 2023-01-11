@@ -313,7 +313,6 @@ my_bool MADB_CompareToken(MADB_QUERY *Query, unsigned int Idx, char *Compare, si
   return FALSE;
 }
 
-/* Not used atm, but may be useful */
 unsigned int MADB_FindToken(MADB_QUERY *Query, char *Compare)
 {
   unsigned int i, TokenCount= Query->Tokens.elements;

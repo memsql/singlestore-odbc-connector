@@ -1949,10 +1949,29 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
           MADB_DynString all_params_query;
           MADB_InitDynamicString(&all_params_query, "", 1024, 1024);
 
-          int numQueries = Stmt->ParamCount > 0 ? Stmt->Apd->Header.ArraySize : 1;
+          MADB_DynString combined_insert_query;
+          MADB_InitDynamicString(&combined_insert_query, "", 1024, 1024);
+
+          int numParamRows = Stmt->ParamCount > 0 ? Stmt->Apd->Header.ArraySize : 1;
+          // We want to send queries of the form INSERT INTO <tbl_name> [<columns_list>] VALUES (?,...)
+          // as one query with a list of VALUES tuples, e.g. INSERT INTO t VALUES (1, 'i'), (2, 'j'), (3, 'k')
+          // TODO: allow ON DUPLICATE KEY UPDATE
+          // TODO: allow QUERY_IS_MULTISTMT == true
+          my_bool rewriteInsert = numParamRows > 1 && Stmt->Query.QueryType == MADB_QUERY_INSERT && \
+            MADB_FindToken(&Stmt->Query, "VALUES") && \
+            !MADB_FindToken(&Stmt->Query, "RETURNING") && \
+            MADB_FindToken(&Stmt->Query, "VALUES") < MADB_FindToken(&Stmt->Query, "?") && \
+            !MADB_FindToken(&Stmt->Query, "ON DUPLICATE KEY UPDATE") && \
+            !QUERY_IS_MULTISTMT(Stmt->Query);
+
+          // when combineQueries is true and rewriteInsert is false, a query of the form
+          // INSERT INTO <tbl_name> [<columns_list>] VALUES (?,...) will be sent as a multi-statement of the form
+          // INSERT INTO t VALUES (1, 'i'); INSERT INTO t VALUES (2, 'j'); INSERT INTO t VALUES (3, 'k')
           // TODO: combineQueries can be true when Stmt->Query.ReturnsResult is true as well, needs testing
-          my_bool combineQueries = numQueries > 1 && !(Stmt->Query.ReturnsResult) && DSN_OPTION(Stmt->Connection, MADB_OPT_FLAG_MULTI_STATEMENTS);
-          for (j = 0; j < numQueries; ++j)
+          my_bool combineQueries = numParamRows > 1 && !(Stmt->Query.ReturnsResult) && DSN_OPTION(Stmt->Connection, MADB_OPT_FLAG_MULTI_STATEMENTS);
+          unsigned int valuesOffest = MADB_FindToken(&Stmt->Query, "VALUES") + 6 /* strlen(VALUES) */;
+          if (rewriteInsert) MADB_DynstrAppendMem(&combined_insert_query, MADB_Token(&Stmt->Query, 0), valuesOffest);
+          for (j = 0; j < numParamRows; ++j)
           {
               MADB_DynString final_query;
               MADB_InitDynamicString(&final_query, "", 1024, 1024);
@@ -1968,12 +1987,13 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
               case CCFR_ERROR:
                   MADB_DynstrFree(&final_query);
                   MADB_DynstrFree(&all_params_query);
+                  MADB_DynstrFree(&combined_insert_query);
                   goto end;
               default:
                   assert(0);
                   break;
               }
-              if (!combineQueries)
+              if (!combineQueries && !rewriteInsert)
               {
                   ret = CspsRunStatementQuery(Stmt, &final_query, &ErrorCount, ParamOffset);
 
@@ -1995,22 +2015,52 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
               }
               else
               {
-                MADB_DynstrAppend(&all_params_query, final_query.str);
-                MADB_DynstrAppend(&all_params_query, ";");
+                if (rewriteInsert && final_query.length > 0)
+                {
+                    if (j > 0) MADB_DynstrAppend(&combined_insert_query, ",");
+                    MADB_DynstrAppend(&combined_insert_query, final_query.str + valuesOffest);
+                }
+                else if (combineQueries)
+                {
+                    MADB_DynstrAppend(&all_params_query, final_query.str);
+                    MADB_DynstrAppend(&all_params_query, ";");
+                }
               }
               MADB_DynstrFree(&final_query);
           }
-          if (!combineQueries)
+          if (rewriteInsert)
           {
+              MDBUG_C_PRINT(Stmt->Connection, "Running INSERT statement with %d rows", numParamRows);
+              ret = CspsRunStatementQuery(Stmt, &combined_insert_query, &ErrorCount, ParamOffset);
               CspsReceiveStatementResults(Stmt, ret);
+              if (Stmt->Ipd->Header.ArrayStatusPtr)
+              {
+                  for (j = 0; j < numParamRows; ++j)
+                  {
+                      if (!Stmt->Apd->Header.ArrayStatusPtr || Stmt->Apd->Header.ArrayStatusPtr[j] != SQL_PARAM_IGNORE)
+                      {
+                          Stmt->Ipd->Header.ArrayStatusPtr[j] = SQL_SUCCEEDED(ret) ? SQL_PARAM_SUCCESS : SQL_PARAM_ERROR;
+                      }
+                  }
+              }
+              if (ret == SQL_ERROR)
+              {
+                ErrorCount = numParamRows;
+              }
           }
-          else
+          else if (combineQueries)
           {
-              MDBUG_C_PRINT(Stmt->Connection, "Running statement with %d queries", numQueries);
+              MDBUG_C_PRINT(Stmt->Connection, "Running combined query with %d entries", numParamRows);
               ret = CspsRunStatementQuery(Stmt, &all_params_query, &ErrorCount, ParamOffset);
               CspsReceiveStatementResultsMulti(Stmt, &ErrorCount, ret);
           }
+          else
+          {
+              CspsReceiveStatementResults(Stmt, ret);
+          }
           MADB_DynstrFree(&all_params_query);
+          MADB_DynstrFree(&combined_insert_query);
+
           // Move forward to the next subquery in the multistatement.
           if (QUERY_IS_MULTISTMT(Stmt->Query))
           {

@@ -846,6 +846,66 @@ ODBC_TEST(t_bug49029)
 }
 
 /*
+  INSERT queries of various shape to test insert rewrite mechanisms
+*/
+ODBC_TEST(t_insert_rewrites)
+{
+#define PARAMSET_SIZE 5
+  int i, ret;
+
+  SQLINTEGER	c1[PARAMSET_SIZE] = {0, 1, 2, 3, 4};
+  SQLLEN      d1[PARAMSET_SIZE] = {4, 4, 4, 4, 4};
+  SQLINTEGER	c2[PARAMSET_SIZE] = {9, 8, 7, 6, 5};
+  SQLLEN      d2[PARAMSET_SIZE] = {4, 4, 4, 4, 4};
+
+  SQLLEN	    paramset_size	= PARAMSET_SIZE;
+
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_insert_rewrites");
+  OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_insert_rewrites (c1 BIGINT PRIMARY KEY, c2 INT)");
+
+  int overall_result = OK;
+  SQLCHAR *queries_to_test[5] = {
+    "insert into t_insert_rewrites values (?, ?)",
+    "insert into t_insert_rewrites (c1, c2) values (?, ?)",
+    "insert into t_insert_rewrites (c1, c2) values (?, ?) on duplicate key update c2 = -c2",
+    "insert into t_insert_rewrites select * from t_insert_rewrites; insert into t_insert_rewrites values (?, ?)",
+    "replace into t_insert_rewrites (c1, c2) values (?, ?)",
+  };
+
+  for (i = 0; i < 5; ++i)
+  {
+    CHECK_STMT_RC(Stmt, SQLPrepare(Stmt, queries_to_test[i], SQL_NTS));
+    CHECK_STMT_RC(Stmt, SQLSetStmtAttr(Stmt, SQL_ATTR_PARAMSET_SIZE,
+      (SQLPOINTER)paramset_size, SQL_IS_UINTEGER ));
+
+    CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_SLONG,
+      SQL_DECIMAL, 4, 0, c1, 4, d1));
+    CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 2, SQL_PARAM_INPUT, SQL_C_SLONG,
+      SQL_DECIMAL, 4, 0, c2, 4, d2));
+    ret = SQLExecute(Stmt);
+    if (ret != SQL_SUCCESS) {
+      diag("Query failed: %s", queries_to_test[i]);
+      odbc_print_error(SQL_HANDLE_STMT, Stmt);
+      overall_result = FAIL;
+    }
+
+    OK_SIMPLE_STMT(Stmt, "SELECT COUNT(*) FROM t_insert_rewrites");
+    CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+    is_num(my_fetch_int(Stmt, 1), PARAMSET_SIZE);
+    CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+
+    OK_SIMPLE_STMT(Stmt, "TRUNCATE TABLE t_insert_rewrites");
+  }
+
+  // OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_insert_rewrites");
+
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+
+  return overall_result;
+#undef PARAMSET_SIZE
+}
+
+/*
   multi statement query with array param
 */
 ODBC_TEST(t_multi_statement_multi_param)
@@ -890,8 +950,8 @@ ODBC_TEST(t_multi_statement_multi_param)
 
   EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_SUCCESS);
 
-  // OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS multi_param_1");
-  // OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS multi_param_2");
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS multi_param_1");
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS multi_param_2");
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
@@ -938,22 +998,25 @@ ODBC_TEST(t_bug56804)
   CHECK_STMT_RC(Stmt, SQLBindParameter( Stmt, 2, SQL_PARAM_INPUT, SQL_C_SLONG,
     SQL_DECIMAL, 4, 0, c2, 4, d2));
 
-  EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_SUCCESS_WITH_INFO);
-  /* all errors but last have SQL_PARAM_DIAG_UNAVAILABLE */
   if (NoSsps)
   {
-      ExpectedStatus[0] = SQL_PARAM_SUCCESS;
-      ExpectedStatus[1] = SQL_PARAM_ERROR;
-      ExpectedStatus[2] = SQL_PARAM_DIAG_UNAVAILABLE;
-      ExpectedStatus[3] = SQL_PARAM_DIAG_UNAVAILABLE;
-      ExpectedStatus[4] = SQL_PARAM_DIAG_UNAVAILABLE;
-      ExpectedStatus[5] = SQL_PARAM_DIAG_UNAVAILABLE;
-      ExpectedStatus[6] = SQL_PARAM_DIAG_UNAVAILABLE;
-      ExpectedStatus[7] = SQL_PARAM_DIAG_UNAVAILABLE;
-      ExpectedStatus[8] = SQL_PARAM_DIAG_UNAVAILABLE;
-      ExpectedStatus[9] = SQL_PARAM_DIAG_UNAVAILABLE;
+    EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_ERROR);
   }
   else
+  {
+    EXPECT_STMT(Stmt, SQLExecute(Stmt), SQL_SUCCESS_WITH_INFO);
+  }
+
+  if (NoSsps)
+  {
+    int i;
+    for (i = 0; i < PARAMSET_SIZE; i++)
+    {
+      ExpectedStatus[i] = SQL_PARAM_ERROR;
+    }
+  }
+  else
+  /* all errors but last have SQL_PARAM_DIAG_UNAVAILABLE */
   {
     memset(ExpectedStatus, 0x00ff & SQL_PARAM_SUCCESS, sizeof(ExpectedStatus));
     ExpectedStatus[1] = ExpectedStatus[6]= SQL_PARAM_DIAG_UNAVAILABLE;
@@ -1430,6 +1493,7 @@ MA_ODBC_TESTS my_tests[]=
   {paramarray_by_column, "paramarray_by_column", NORMAL, ALL_DRIVERS},
   {paramarray_ignore_paramset, "paramarray_ignore_paramset", NORMAL, ALL_DRIVERS},
   {paramarray_select, "paramarray_select", NORMAL, ALL_DRIVERS},
+  {t_insert_rewrites, "t_insert_rewrites", NORMAL, ALL_DRIVERS},
   {t_multi_statement_multi_param, "t_multi_statement_multi_param", NORMAL, ALL_DRIVERS},
   {t_bug49029, "t_bug49029", NORMAL, ALL_DRIVERS},
   {t_bug56804, "t_bug56804", NORMAL, ALL_DRIVERS},
