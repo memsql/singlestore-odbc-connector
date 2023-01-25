@@ -30,12 +30,17 @@ def cmd_start(workspace_manager):
     with open(WORKSPACE_ENDPOINT_FILE, "w") as f:
         f.write(workspace.endpoint)
 
+    conn = workspace.connect(user='admin', port=3306, password=SQL_USER_PASSWORD)
+    cursor = conn.cursor()
+    cursor.execute("SET GLOBAL data_conversion_compatibility_level = '6.0'")
+    cursor.close()
+
     if db_name is not None:
-        conn = workspace.connect(user='admin', port=3306, password=SQL_USER_PASSWORD)
         cursor = conn.cursor()
         cursor.execute("CREATE DATABASE " + db_name)
         cursor.close()
-        conn.close()
+    
+    conn.close()
 
 
 def cmd_terminate(workspace_manager):

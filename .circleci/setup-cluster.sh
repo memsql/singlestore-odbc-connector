@@ -115,6 +115,7 @@ echo "Done!"
 
 echo "Preparing database and jwt user..."
 mysql -h 127.0.0.1 -u root -P $S2_MASTER_PORT -p"${MEMSQL_PASSWORD}" -e "CREATE DATABASE IF NOT EXISTS odbc_test"
+mysql -h 127.0.0.1 -u root -P $S2_MASTER_PORT -p"${MEMSQL_PASSWORD}" -e "SET GLOBAL data_conversion_compatibility_level = '6.0'"
 mysql -h 127.0.0.1 -u root -P $S2_MASTER_PORT -p"${MEMSQL_PASSWORD}" -e "CREATE USER 'test_jwt_user' IDENTIFIED WITH authentication_jwt"
 mysql -h 127.0.0.1 -u root -P $S2_MASTER_PORT -p"${MEMSQL_PASSWORD}" -e "GRANT ALL PRIVILEGES ON odbc_test.* TO 'test_jwt_user'@'%'"
 echo "Done!"
