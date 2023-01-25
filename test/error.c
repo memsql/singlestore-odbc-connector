@@ -761,8 +761,8 @@ ODBC_TEST(t_odbc43)
 ODBC_TEST(t_odbc226)
 {
   /* The testcase relies on the fact, that default connection provided to tests, allows multistatement */
-  EXPECT_STMT(Stmt, SQLExecDirect( Stmt, "drop temporary table if exists test.odbc226;"
-    "create temporary table test.odbc226 as select 1 from nonexistend_table.field", SQL_NTS), SQL_SUCCESS);
+  EXPECT_STMT(Stmt, SQLExecDirect( Stmt, "drop temporary table if exists odbc226;"
+    "create temporary table odbc226 as select 1 from nonexistend_table.field", SQL_NTS), SQL_SUCCESS);
   
   EXPECT_STMT(Stmt, SQLMoreResults(Stmt), SQL_ERROR);
   odbc_print_error(SQL_HANDLE_STMT, Stmt);

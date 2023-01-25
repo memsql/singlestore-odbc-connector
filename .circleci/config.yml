@@ -49,6 +49,7 @@ commands:
             brew install openssl@1.1
             brew install curl
             brew install libiodbc
+            brew link libiodbc --force
             brew install mysql-client
             brew install cmake
             brew install bind
