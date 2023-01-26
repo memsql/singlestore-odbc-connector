@@ -107,6 +107,17 @@ SOCKET_ startMockPortal()
   return serverSocket;
 }
 
+void sendOptionsRequest(char *url, const char *response_token)
+{
+  char command[BUFFER_SIZE];
+
+  memset(command ,0 , BUFFER_SIZE);
+  strcat(command, "curl -X OPTIONS ");
+  strcat(command, url);
+
+  system(command);
+}
+
 void sendJWT(char *url, const char *response_token)
 {
   char command[BUFFER_SIZE];
@@ -160,6 +171,9 @@ handle(void *handleArgs)
   // Answer and close socket
   send(clientSocket, HTTP_204, sizeof(HTTP_204), 0);
   closeSocket(clientSocket);
+
+  // OPTIONS to the driver
+  sendOptionsRequest(umlStart, args->token);
 
   // JWT to the driver
   sendJWT(umlStart, args->token);
