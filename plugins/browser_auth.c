@@ -399,10 +399,20 @@ void sleepMilliseconds(int milliseconds)
 #endif
 }
 
+my_bool isOptionsRequest(char *request)
+{
+  return strncmp("OPTIONS", request, 7) == 0;
+}
+
 #define BUFFER_SIZE 2048
 #define HTTP_204 "HTTP/1.1 204 No Content\r\nAccess-Control-Allow-Origin: *\r\n\r\n"
+#define HTTP_204_ALLOW "HTTP/1.1 204 No Content\r\nAccess-Control-Allow-Origin: *\r\nAllow: POST\r\n\r\n"
 #define HTTP_400 "HTTP/1.1 400 Bad Request\r\nAccess-Control-Allow-Origin: *\r\n\r\n"
 #define HTTP_500 "HTTP/1.1 500 Internal Server Error\r\nAccess-Control-Allow-Origin: *\r\n\r\n"
+// readRequest reads the HTTP request from socket and sends a response
+// On the OPTIONS request it returns SQL_SUCCESS_WITH_INFO
+// On the appropriate POST request it returns SQL_SUCCESS
+// If an error occured it sets the error in the MADB_Dbc object and returns SQL_ERROR
 int readRequest(MADB_Dbc *Dbc, SOCKET_ serverSocket, int requestReadTimeoutSec, BrowserAuthCredentials *credentials)
 {
   int size_recv;
@@ -482,6 +492,14 @@ int readRequest(MADB_Dbc *Dbc, SOCKET_ serverSocket, int requestReadTimeoutSec, 
     {
       fullRequestLength = tryGetFullRequestLength(request.str);
     }
+  }
+
+  if (isOptionsRequest(request.str))
+  {
+    send(clientSocket, HTTP_204_ALLOW, sizeof(HTTP_204_ALLOW), 0);
+    closeSocket(clientSocket);
+    MADB_DynstrFree(&request);
+    return SQL_SUCCESS_WITH_INFO;
   }
 
   if (parseRequest(Dbc, request.str, credentials))
@@ -566,7 +584,8 @@ int BrowserAuth(MADB_Dbc *Dbc, const char *email, BrowserAuthCredentials *creden
     MADB_SetError(&Dbc->Error, MADB_ERR_S1000, "Failed to open browser", 0);
     goto cleanupServer;
   }
-  if (readRequest(Dbc, serverSocket, requestReadTimeoutSec, credentials))
+  while (readRequest(Dbc, serverSocket, requestReadTimeoutSec, credentials) == SQL_SUCCESS_WITH_INFO) { }
+  if (Dbc->Error.ReturnValue)
   {
     goto cleanupServer;
   }
