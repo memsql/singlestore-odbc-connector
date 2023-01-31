@@ -24,12 +24,70 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <errno.h>
-#include <fcntl.h>
 #endif
 
 #include "browser_auth.h"
 #include "vendor/b64.c/b64.h"
 #include "vendor/cJSON/cJSON.h"
+
+#if defined(_WIN32)
+#elif defined(__APPLE__)
+#else
+#include <fcntl.h>
+#include <dlfcn.h>
+
+struct libglib_functions LibglibFunctions;
+struct libsecret_functions LibsecretFunctions;
+void *LibglibHandle;
+void *LibsecretHandle;
+
+void initLibSecretFunctions()
+{
+  void *LibsecretHandle = dlopen("libsecret-1.so", RTLD_LAZY);
+  *(void**)(&LibsecretFunctions.secret_collection_for_alias_sync) = dlsym(LibsecretHandle, "secret_collection_for_alias_sync");
+  *(void**)(&LibsecretFunctions.secret_collection_get_locked) = dlsym(LibsecretHandle, "secret_collection_get_locked");
+  *(void**)(&LibsecretFunctions.secret_password_free) = dlsym(LibsecretHandle, "secret_password_free");
+  *(void**)(&LibsecretFunctions.secret_password_lookup_sync) = dlsym(LibsecretHandle, "secret_password_lookup_sync");
+  *(void**)(&LibsecretFunctions.secret_password_store_sync) = dlsym(LibsecretHandle, "secret_password_store_sync");
+  *(void**)(&LibsecretFunctions.secret_service_get_sync) = dlsym(LibsecretHandle, "secret_service_get_sync");
+  *(void**)(&LibsecretFunctions.secret_service_unlock_sync) = dlsym(LibsecretHandle, "secret_service_unlock_sync");
+}
+
+void initLibglibFunctions()
+{
+  void *LibglibHandle = dlopen("libglib-2.0.so", RTLD_LAZY);
+  *(void**)(&LibglibFunctions.g_error_free) = dlsym(LibglibHandle, "g_error_free");
+  *(void**)(&LibglibFunctions.g_list_append) = dlsym(LibglibHandle, "g_list_append");
+}
+
+void releaseLibsecretFunctions()
+{
+  if (LibsecretHandle)
+  {
+    dlclose(LibsecretHandle);
+    LibsecretHandle = NULL;
+  }
+  LibsecretFunctions.secret_collection_for_alias_sync = NULL;
+  LibsecretFunctions.secret_collection_get_locked = NULL;
+  LibsecretFunctions.secret_password_free = NULL;
+  LibsecretFunctions.secret_password_lookup_sync = NULL;
+  LibsecretFunctions.secret_password_store_sync = NULL;
+  LibsecretFunctions.secret_service_get_sync = NULL;
+  LibsecretFunctions.secret_service_unlock_sync = NULL;
+}
+
+void releaseLibglibFunctions()
+{
+  if (LibglibHandle)
+  {
+    dlclose(LibglibHandle);
+    LibglibHandle = NULL;
+  }
+  LibglibFunctions.g_error_free = NULL;
+  LibglibFunctions.g_list_append = NULL;
+}
+#endif
+
 
 int getJsonStringField(MADB_Dbc *Dbc, cJSON *json, const char *fieldName, char **dst, my_bool required)
 {
@@ -626,7 +684,7 @@ typedef struct UnlockGnomeKeyringArgs
 void *unlock_func(void *args)
 {
   UnlockArgs* unlockArgs = (UnlockArgs*)args;
-  int res = secret_service_unlock_sync(unlockArgs->service, unlockArgs->objects, NULL, unlockArgs->unlocked, unlockArgs->error);
+  int res = LibsecretFunctions.secret_service_unlock_sync(unlockArgs->service, unlockArgs->objects, NULL, unlockArgs->unlocked, unlockArgs->error);
   if (*(unlockArgs->error) == NULL)
   {
     __atomic_fetch_add(unlockArgs->status, 1, __ATOMIC_SEQ_CST);;
@@ -687,21 +745,23 @@ else if (status != errSecItemNotFound)
 MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
 #else
 // Linux secure key storage
+  initLibglibFunctions();
+  initLibSecretFunctions();
   gchar *password = NULL;
   GError *err = NULL;
 
-  SecretService *service = secret_service_get_sync(0, NULL, &err);
-  SecretCollection *defaultCollection = secret_collection_for_alias_sync(
+  SecretService *service = LibsecretFunctions.secret_service_get_sync(0, NULL, &err);
+  SecretCollection *defaultCollection = LibsecretFunctions.secret_collection_for_alias_sync(
     service, SECRET_COLLECTION_DEFAULT, 0 /*SecretCollectionFlags*/, NULL, &err);
   if (err != NULL)
   {
     // gnome-keyring secret service cannot be started or no collection is available
     goto gerror;
   }
-  if (secret_collection_get_locked(defaultCollection))
+  if (LibsecretFunctions.secret_collection_get_locked(defaultCollection))
   {
     MDBUG_C_PRINT(Dbc, "%s", "Gnome secret service is locked, trying to unlock it...");
-    GList *collections = g_list_append(NULL , defaultCollection);
+    GList *collections = LibglibFunctions.g_list_append(NULL , defaultCollection);
     GError *unlockErr = NULL;
     GList *unlocked = NULL;
     int unlockStatus = 0;
@@ -723,7 +783,7 @@ MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
     }
   }
   MDBUG_C_PRINT(Dbc, "%s", "Calling secret_password_lookup_sync");
-  password = secret_password_lookup_sync(JWT_CACHE_SCHEMA, NULL, &err, NULL);
+  password = LibsecretFunctions.secret_password_lookup_sync(JWT_CACHE_SCHEMA, NULL, &err, NULL);
 
   if (err != NULL)
   {
@@ -733,12 +793,12 @@ MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
   if (password)
   {
     parseJWTToCredentials(Dbc, (char*)password, SQL_NTS, bac);
-    secret_password_free(password);
+    LibsecretFunctions.secret_password_free(password);
   }
   MDBUG_C_RETURN(Dbc, 0, &Dbc->Error);
 gerror:
   MADB_SetError(&Dbc->Error, MADB_ERR_HY000, err->message, 0);
-  g_error_free(err);
+  LibglibFunctions.g_error_free(err);
   MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
 #endif
 }
@@ -830,20 +890,27 @@ if (item)
 MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
 #else
 // Linux secure key storage
+  initLibglibFunctions();
+  initLibSecretFunctions();
+
   GError *error = NULL;
-  secret_password_store_sync(JWT_CACHE_SCHEMA, SECRET_COLLECTION_DEFAULT,
+  LibsecretFunctions.secret_password_store_sync(JWT_CACHE_SCHEMA, SECRET_COLLECTION_DEFAULT,
                             SECURE_JWT_STORAGE_KEY, bac->token, NULL, &error,
                             NULL);
   if (error != NULL)
   {
     MDBUG_C_PRINT(Dbc, "%s FAILED", "secret_password_store_sync");
     MADB_SetError(&Dbc->Error, MADB_ERR_HY000, error->message, 0);
-    g_error_free(error);
+    LibglibFunctions.g_error_free(error);
+    releaseLibglibFunctions();
+    releaseLibsecretFunctions(); 
     MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
   }
   else 
   {
     MDBUG_C_PRINT(Dbc, "%s SUCCESS", "secret_password_store_sync");
+    releaseLibglibFunctions();
+    releaseLibsecretFunctions(); 
     MDBUG_C_RETURN(Dbc, SQL_SUCCESS, &Dbc->Error);
   }
 #endif
