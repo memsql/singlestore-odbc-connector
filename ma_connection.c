@@ -581,6 +581,8 @@ SQLRETURN MADB_DbcEndTran(MADB_Dbc *Dbc, SQLSMALLINT CompletionType)
 SQLRETURN MADB_DbcConnectDB(MADB_Dbc *Connection,
     MADB_Dsn *Dsn)
 {
+  printf("AAAAA\n");
+  fflush(stdout);
   char StmtStr[128];
   unsigned ReportDataTruncation= 1;
   unsigned int i;
@@ -593,10 +595,17 @@ SQLRETURN MADB_DbcConnectDB(MADB_Dbc *Connection,
   char *emailForSSO = Dsn->UserName;
   if (Dsn->IsBrowserAuth)
   {
+    printf("AAAAAB\n");
+    fflush(stdout);
+
     if (GetCredentialsBrowserSSO(Connection, Dsn, emailForSSO, TRUE /*readCached*/))
     {
+      printf("AAAAAB\n");
+      fflush(stdout);
       goto end;
     }
+    printf("AAAAAB\n");
+    fflush(stdout);
   }
   // connectionTried indicates if mysql_real_connect has already been called, i.e.
   // if we already issued a connection request to the server

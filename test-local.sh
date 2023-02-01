@@ -10,5 +10,5 @@ cd build/test
 export ODBCINI="$PWD/odbc.ini"
 export ODBCSYSINI=$PWD
 
-ctest -R odbc_connect # optionally append -R <test to run> to run specific tests
+ctest -R odbc_connect --output-on-failure # optionally append -R <test to run> to run specific tests
 # gdb ./<test to run> can be used to debug a specific test, e.g. gdb ./odbc_connect

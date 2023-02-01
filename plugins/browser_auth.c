@@ -41,23 +41,77 @@ struct libsecret_functions LibsecretFunctions;
 void *LibglibHandle;
 void *LibsecretHandle;
 
-void initLibSecretFunctions()
+int initLibSecretFunctions(MADB_Error  *Error)
 {
-  void *LibsecretHandle = dlopen("libsecret-1.so", RTLD_LAZY);
+  char *error;
+
+  LibsecretHandle = dlopen("libsecret-1.so", RTLD_LAZY);
+  if (!LibsecretHandle)
+  {
+    return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
+  }
+
   *(void**)(&LibsecretFunctions.secret_collection_for_alias_sync) = dlsym(LibsecretHandle, "secret_collection_for_alias_sync");
+  if ((error = dlerror()) != NULL) 
+  {
+    return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
+  }
   *(void**)(&LibsecretFunctions.secret_collection_get_locked) = dlsym(LibsecretHandle, "secret_collection_get_locked");
+  if ((error = dlerror()) != NULL) 
+  {
+    return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
+  }
   *(void**)(&LibsecretFunctions.secret_password_free) = dlsym(LibsecretHandle, "secret_password_free");
+  if ((error = dlerror()) != NULL) 
+  {
+    return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
+  }
   *(void**)(&LibsecretFunctions.secret_password_lookup_sync) = dlsym(LibsecretHandle, "secret_password_lookup_sync");
+  if ((error = dlerror()) != NULL) 
+  {
+    return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
+  }
   *(void**)(&LibsecretFunctions.secret_password_store_sync) = dlsym(LibsecretHandle, "secret_password_store_sync");
+  if ((error = dlerror()) != NULL) 
+  {
+    return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
+  }
   *(void**)(&LibsecretFunctions.secret_service_get_sync) = dlsym(LibsecretHandle, "secret_service_get_sync");
+  if ((error = dlerror()) != NULL) 
+  {
+    return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
+  }
   *(void**)(&LibsecretFunctions.secret_service_unlock_sync) = dlsym(LibsecretHandle, "secret_service_unlock_sync");
+  if ((error = dlerror()) != NULL) 
+  {
+    return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
+  }
+
+  return 0;
 }
 
-void initLibglibFunctions()
+int initLibglibFunctions(MADB_Error  *Error)
 {
-  void *LibglibHandle = dlopen("libglib-2.0.so", RTLD_LAZY);
+  char *error;
+
+  LibglibHandle = dlopen("libglib-2.0.so", RTLD_LAZY);
+  if (!LibglibHandle)
+  {
+    return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
+  }
+
   *(void**)(&LibglibFunctions.g_error_free) = dlsym(LibglibHandle, "g_error_free");
+  if ((error = dlerror()) != NULL) 
+  {
+    return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
+  }
   *(void**)(&LibglibFunctions.g_list_append) = dlsym(LibglibHandle, "g_list_append");
+  if ((error = dlerror()) != NULL) 
+  {
+    return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
+  }
+
+  return 0;
 }
 
 void releaseLibsecretFunctions()
@@ -588,10 +642,14 @@ cleanupRequest:
 
 void makeTestCreds(BrowserAuthCredentials *credentials /*out*/)
 {
+  printf("%p \n", credentials);
+  fflush(stdout);
   credentials->username = strdup("test_jwt_user");
   credentials->email = strdup("test@singlestore.com");
   credentials->expiration = 2514359920;
   credentials->token = strdup(getenv("MEMSQL_JWT"));
+  printf("QQQQ\n");
+  fflush(stdout);
 }
 
 // BrowserAuth opens browser to perform the auth workflow using SSO.
@@ -599,6 +657,8 @@ void makeTestCreds(BrowserAuthCredentials *credentials /*out*/)
 // testFlags are used to assert and control certain aspects in tests 
 int BrowserAuth(MADB_Dbc *Dbc, const char *email, BrowserAuthCredentials *credentials /*out*/, int testFlags)
 {
+  printf("qAA\n");
+  fflush(stdout);
   MDBUG_C_ENTER(Dbc, "BrowserAuth");
   MDBUG_C_PRINT(Dbc, "BrowserAuth is called with testFlags %d", testFlags);
 
@@ -606,15 +666,23 @@ int BrowserAuth(MADB_Dbc *Dbc, const char *email, BrowserAuthCredentials *creden
   char* endpoint = testFlags & BROWSER_AUTH_FLAG_TEST_ENDPOINT ? LOCAL_TEST_ENDPOINT : PORTAL_SSO_ENDPOINT;
   if (testFlags & BROWSER_AUTH_FLAG_TEST_FIRST_CALL)
   {
+    printf("qqAA\n");
+    fflush(stdout);
     makeTestCreds(credentials);
+    printf("qqAA1\n");
+    fflush(stdout);
     MDBUG_C_RETURN(Dbc, SQL_SUCCESS, &Dbc->Error);
   }
+  printf("qAA\n");
+  fflush(stdout);
   if (testFlags & BROWSER_AUTH_FLAG_TEST_SECOND_CALL)
   {
     printf("BrowserAuth must not be called in the second connection with BROWSER_SSO\n");
     assert(0);
     MDBUG_C_RETURN(Dbc, 0, &Dbc->Error);
   }
+  printf("qAA\n");
+  fflush(stdout);
   MADB_DynString serverEndpoint;
   MADB_DynString openBrowserCommand;
   SOCKET_ serverSocket;
@@ -629,6 +697,8 @@ int BrowserAuth(MADB_Dbc *Dbc, const char *email, BrowserAuthCredentials *creden
     goto cleanupServerEndpoint;
   }
 
+  printf("qAA\n");
+  fflush(stdout);
   if (startLocalHttpServer(Dbc, &serverSocket, &serverEndpoint))
   {
     goto cleanupOpenBrowserCommand;
@@ -637,6 +707,8 @@ int BrowserAuth(MADB_Dbc *Dbc, const char *email, BrowserAuthCredentials *creden
   {
     goto cleanupServer;
   }
+  printf("qAA\n");
+  fflush(stdout);
   if (system(openBrowserCommand.str))
   {
     MADB_SetError(&Dbc->Error, MADB_ERR_S1000, "Failed to open browser", 0);
@@ -647,6 +719,8 @@ int BrowserAuth(MADB_Dbc *Dbc, const char *email, BrowserAuthCredentials *creden
   {
     goto cleanupServer;
   }
+  printf("qAA\n");
+  fflush(stdout);
 
 cleanupServer:
   closeSocket(serverSocket);
@@ -694,6 +768,8 @@ void *unlock_func(void *args)
 
 int GetCachedCredentials(MADB_Dbc *Dbc, const char *email, BrowserAuthCredentials *bac /*out*/)
 {
+  printf("AAAAAAAAA\n");
+  fflush(stdout);
   MDBUG_C_ENTER(Dbc, "GetCachedCredentials");
 #if defined(_WIN32)
 // Win secure key storage
@@ -745,8 +821,12 @@ else if (status != errSecItemNotFound)
 MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
 #else
 // Linux secure key storage
-  initLibglibFunctions();
-  initLibSecretFunctions();
+  if (initLibglibFunctions(&Dbc->Error) || initLibSecretFunctions(&Dbc->Error)) 
+  {
+    releaseLibsecretFunctions();
+    releaseLibglibFunctions();
+    MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
+  }
   gchar *password = NULL;
   GError *err = NULL;
 
@@ -779,6 +859,8 @@ MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
     {
       pthread_cancel(t);
       MADB_SetError(&Dbc->Error, MADB_ERR_HY000, "Failed to unlock the default collection within 5 minutes", 0);
+      releaseLibsecretFunctions();
+      releaseLibglibFunctions();
       MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
     }
   }
@@ -795,16 +877,23 @@ MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
     parseJWTToCredentials(Dbc, (char*)password, SQL_NTS, bac);
     LibsecretFunctions.secret_password_free(password);
   }
+  releaseLibsecretFunctions();
+  releaseLibglibFunctions();
   MDBUG_C_RETURN(Dbc, 0, &Dbc->Error);
 gerror:
   MADB_SetError(&Dbc->Error, MADB_ERR_HY000, err->message, 0);
   LibglibFunctions.g_error_free(err);
+  releaseLibsecretFunctions();
+  releaseLibglibFunctions();
   MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
 #endif
 }
 
 int PutCachedCredentials(MADB_Dbc *Dbc, BrowserAuthCredentials *bac)
 {
+  printf("AAAAAAAAA\n");
+  fflush(stdout);
+
   MDBUG_C_ENTER(Dbc, "PutCachedCredentials");
 #if defined(_WIN32)
 // Win secure key storage
@@ -890,15 +979,29 @@ if (item)
 MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
 #else
 // Linux secure key storage
-  initLibglibFunctions();
-  initLibSecretFunctions();
+  printf("Start\n");
+  fflush(stdout);
+  if (initLibglibFunctions(&Dbc->Error) || initLibSecretFunctions(&Dbc->Error))
+  {
+    printf("ERROR\n");
+    fflush(stdout);
+    releaseLibsecretFunctions();
+    releaseLibglibFunctions();
+    MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
+  }
 
   GError *error = NULL;
+  printf("QQQQQQ %p", LibsecretFunctions.secret_password_store_sync);
+  fflush(stdout);
   LibsecretFunctions.secret_password_store_sync(JWT_CACHE_SCHEMA, SECRET_COLLECTION_DEFAULT,
                             SECURE_JWT_STORAGE_KEY, bac->token, NULL, &error,
                             NULL);
+  exit(1);
   if (error != NULL)
   {
+    printf("!!!!!\n");
+    fflush(stdout);
+    exit(1);
     MDBUG_C_PRINT(Dbc, "%s FAILED", "secret_password_store_sync");
     MADB_SetError(&Dbc->Error, MADB_ERR_HY000, error->message, 0);
     LibglibFunctions.g_error_free(error);
@@ -908,6 +1011,9 @@ MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
   }
   else 
   {
+    printf("!!!?!\n");
+    fflush(stdout);
+    exit(1);
     MDBUG_C_PRINT(Dbc, "%s SUCCESS", "secret_password_store_sync");
     releaseLibglibFunctions();
     releaseLibsecretFunctions(); 
@@ -918,6 +1024,9 @@ MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
 
 int GetCredentialsBrowserSSO(MADB_Dbc *Dbc, MADB_Dsn *Dsn, const char *email, my_bool readCached)
 {
+  printf("CAAAAB\n");
+  fflush(stdout);
+
   MDBUG_C_ENTER(Dbc, "GetCredentialsBrowserSSO");
   MDBUG_C_PRINT(Dbc, "Reading from keyring: %s, email: %s", readCached ? "true" : "false", email ? email : "")
   BrowserAuthCredentials creds = {NULL, NULL, NULL, 0};
@@ -925,20 +1034,34 @@ int GetCredentialsBrowserSSO(MADB_Dbc *Dbc, MADB_Dsn *Dsn, const char *email, my
   int readKeyringFailed = 0;
   if (readCached && !Dsn->IgnoreKeyring)
   {
+    printf("1CAAAAB\n");
+    fflush(stdout);
+
     readKeyringFailed = GetCachedCredentials(Dbc, email /* UserName is e-mail in this case */, &creds);
+    printf("CCCCCCCCCCCCCCCCCCCCCCCCCCCC %d %s\n", readKeyringFailed, creds.token);
+    fflush(stdout);
   }
   // 2. Call browser auth if there are no stored credentials or the token has expired
   if (readKeyringFailed || !creds.token || CheckExpiration(creds.expiration))
   {
+    printf("1CAAAAB\n");
+    fflush(stdout);
+
     if (BrowserAuth(Dbc, email, &creds, Dsn->TestMode))
     {
       MDBUG_C_RETURN(Dbc, SQL_ERROR, &Dbc->Error);
     }
+    printf("2CAAAAB\n");
+    fflush(stdout);
+
     // 3. Store credentials in the keyring
     if (!Dsn->IgnoreKeyring && PutCachedCredentials(Dbc, &creds))
     {
       MDBUG_C_RETURN(Dbc, SQL_ERROR, &Dbc->Error);
     }
+    printf("1CAAAAB\n");
+    fflush(stdout);
+
   }
   if (Dsn->UserName && strcmp(Dsn->UserName, creds.email))
   {
