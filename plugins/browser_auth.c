@@ -38,107 +38,100 @@
 
 struct libglib_functions LibglibFunctions;
 struct libsecret_functions LibsecretFunctions;
-void *LibglibHandle;
-void *LibsecretHandle;
 
 int initLibSecretFunctions(MADB_Error  *Error)
 {
-  char *error;
+  void *LibsecretHandle;
 
-  LibsecretHandle = dlopen("libsecret-1.so", RTLD_LAZY);
+  if (LibsecretFunctions.secret_collection_for_alias_sync && 
+  LibsecretFunctions.secret_collection_get_locked &&
+  LibsecretFunctions.secret_password_free &&
+  LibsecretFunctions.secret_password_lookup_sync &&
+  LibsecretFunctions.secret_password_store_sync &&
+  LibsecretFunctions.secret_service_get_sync &&
+  LibsecretFunctions.secret_service_unlock_sync) 
+  {
+    return 0;
+  }
+
+  LibsecretHandle = dlopen("libsecret-1.so.0", RTLD_LAZY | RTLD_NODELETE);
   if (!LibsecretHandle)
   {
     return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
   }
 
   *(void**)(&LibsecretFunctions.secret_collection_for_alias_sync) = dlsym(LibsecretHandle, "secret_collection_for_alias_sync");
-  if ((error = dlerror()) != NULL) 
+  if (!LibsecretFunctions.secret_collection_for_alias_sync) 
   {
     return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
   }
   *(void**)(&LibsecretFunctions.secret_collection_get_locked) = dlsym(LibsecretHandle, "secret_collection_get_locked");
-  if ((error = dlerror()) != NULL) 
+  if (!LibsecretFunctions.secret_collection_get_locked) 
   {
     return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
   }
   *(void**)(&LibsecretFunctions.secret_password_free) = dlsym(LibsecretHandle, "secret_password_free");
-  if ((error = dlerror()) != NULL) 
+  if (!LibsecretFunctions.secret_password_free) 
   {
     return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
   }
   *(void**)(&LibsecretFunctions.secret_password_lookup_sync) = dlsym(LibsecretHandle, "secret_password_lookup_sync");
-  if ((error = dlerror()) != NULL) 
+  if (!LibsecretFunctions.secret_password_lookup_sync) 
   {
     return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
   }
   *(void**)(&LibsecretFunctions.secret_password_store_sync) = dlsym(LibsecretHandle, "secret_password_store_sync");
-  if ((error = dlerror()) != NULL) 
+  if (!LibsecretFunctions.secret_password_store_sync) 
   {
     return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
   }
   *(void**)(&LibsecretFunctions.secret_service_get_sync) = dlsym(LibsecretHandle, "secret_service_get_sync");
-  if ((error = dlerror()) != NULL) 
+  if (!LibsecretFunctions.secret_service_get_sync) 
   {
     return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
   }
   *(void**)(&LibsecretFunctions.secret_service_unlock_sync) = dlsym(LibsecretHandle, "secret_service_unlock_sync");
-  if ((error = dlerror()) != NULL) 
+  if (!LibsecretFunctions.secret_service_unlock_sync) 
   {
     return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
   }
+  printf("BBBBBBE\n");
+  fflush(stdout);
+
+  dlclose(LibsecretHandle);
 
   return 0;
 }
 
 int initLibglibFunctions(MADB_Error  *Error)
 {
-  char *error;
+  void *LibglibHandle;
 
-  LibglibHandle = dlopen("libglib-2.0.so", RTLD_LAZY);
+  if (LibglibFunctions.g_error_free && LibglibFunctions.g_list_append) 
+  {
+    return 0;
+  }
+
+  LibglibHandle = dlopen("libglib-2.0.so", RTLD_LAZY | RTLD_NODELETE);
   if (!LibglibHandle)
   {
     return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
   }
 
   *(void**)(&LibglibFunctions.g_error_free) = dlsym(LibglibHandle, "g_error_free");
-  if ((error = dlerror()) != NULL) 
+  if (!LibglibFunctions.g_error_free) 
   {
     return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
   }
   *(void**)(&LibglibFunctions.g_list_append) = dlsym(LibglibHandle, "g_list_append");
-  if ((error = dlerror()) != NULL) 
+  if (!LibglibFunctions.g_list_append) 
   {
     return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
   }
 
+  dlclose(LibglibHandle);
+
   return 0;
-}
-
-void releaseLibsecretFunctions()
-{
-  if (LibsecretHandle)
-  {
-    dlclose(LibsecretHandle);
-    LibsecretHandle = NULL;
-  }
-  LibsecretFunctions.secret_collection_for_alias_sync = NULL;
-  LibsecretFunctions.secret_collection_get_locked = NULL;
-  LibsecretFunctions.secret_password_free = NULL;
-  LibsecretFunctions.secret_password_lookup_sync = NULL;
-  LibsecretFunctions.secret_password_store_sync = NULL;
-  LibsecretFunctions.secret_service_get_sync = NULL;
-  LibsecretFunctions.secret_service_unlock_sync = NULL;
-}
-
-void releaseLibglibFunctions()
-{
-  if (LibglibHandle)
-  {
-    dlclose(LibglibHandle);
-    LibglibHandle = NULL;
-  }
-  LibglibFunctions.g_error_free = NULL;
-  LibglibFunctions.g_list_append = NULL;
 }
 #endif
 
@@ -823,14 +816,16 @@ MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
 // Linux secure key storage
   if (initLibglibFunctions(&Dbc->Error) || initLibSecretFunctions(&Dbc->Error)) 
   {
-    releaseLibsecretFunctions();
-    releaseLibglibFunctions();
     MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
   }
+  printf("CC!!\n");
+  fflush(stdout);
   gchar *password = NULL;
   GError *err = NULL;
 
   SecretService *service = LibsecretFunctions.secret_service_get_sync(0, NULL, &err);
+  printf("CC1!!\n");
+  fflush(stdout);
   SecretCollection *defaultCollection = LibsecretFunctions.secret_collection_for_alias_sync(
     service, SECRET_COLLECTION_DEFAULT, 0 /*SecretCollectionFlags*/, NULL, &err);
   if (err != NULL)
@@ -859,8 +854,6 @@ MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
     {
       pthread_cancel(t);
       MADB_SetError(&Dbc->Error, MADB_ERR_HY000, "Failed to unlock the default collection within 5 minutes", 0);
-      releaseLibsecretFunctions();
-      releaseLibglibFunctions();
       MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
     }
   }
@@ -877,14 +870,10 @@ MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
     parseJWTToCredentials(Dbc, (char*)password, SQL_NTS, bac);
     LibsecretFunctions.secret_password_free(password);
   }
-  releaseLibsecretFunctions();
-  releaseLibglibFunctions();
   MDBUG_C_RETURN(Dbc, 0, &Dbc->Error);
 gerror:
   MADB_SetError(&Dbc->Error, MADB_ERR_HY000, err->message, 0);
   LibglibFunctions.g_error_free(err);
-  releaseLibsecretFunctions();
-  releaseLibglibFunctions();
   MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
 #endif
 }
@@ -985,18 +974,17 @@ MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
   {
     printf("ERROR\n");
     fflush(stdout);
-    releaseLibsecretFunctions();
-    releaseLibglibFunctions();
     MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
   }
 
   GError *error = NULL;
   printf("QQQQQQ %p", LibsecretFunctions.secret_password_store_sync);
   fflush(stdout);
-  LibsecretFunctions.secret_password_store_sync(JWT_CACHE_SCHEMA, SECRET_COLLECTION_DEFAULT,
-                            SECURE_JWT_STORAGE_KEY, bac->token, NULL, &error,
+  // exit(1);
+
+  LibsecretFunctions.secret_password_store_sync(jwt_cache_get_schema, "default",
+                            "SingleStore ODBC Driver JWT storage", "asdasdasdasd", NULL, &error,
                             NULL);
-  exit(1);
   if (error != NULL)
   {
     printf("!!!!!\n");
@@ -1005,8 +993,6 @@ MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
     MDBUG_C_PRINT(Dbc, "%s FAILED", "secret_password_store_sync");
     MADB_SetError(&Dbc->Error, MADB_ERR_HY000, error->message, 0);
     LibglibFunctions.g_error_free(error);
-    releaseLibglibFunctions();
-    releaseLibsecretFunctions(); 
     MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
   }
   else 
@@ -1015,8 +1001,6 @@ MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
     fflush(stdout);
     exit(1);
     MDBUG_C_PRINT(Dbc, "%s SUCCESS", "secret_password_store_sync");
-    releaseLibglibFunctions();
-    releaseLibsecretFunctions(); 
     MDBUG_C_RETURN(Dbc, SQL_SUCCESS, &Dbc->Error);
   }
 #endif
