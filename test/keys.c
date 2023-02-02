@@ -104,6 +104,12 @@ ODBC_TEST(my_no_keys)
   return OK;
 }
 
+ODBC_TEST(primary_keys_information_schema)
+{
+  CHECK_STMT_RC(Stmt, SQLPrimaryKeys(Stmt, "odbc_test", 18, "", 0, "t", 1));
+  return OK;
+}
+
 ODBC_TEST(foreign_keys_error)
 {
     FAIL_IF(SQLForeignKeys(Stmt,
@@ -141,6 +147,7 @@ MA_ODBC_TESTS my_tests[]=
 {
   {my_no_keys, "my_no_keys", NORMAL, ALL_DRIVERS},
   {foreign_keys_error, "foreign_keys_error", NORMAL, ALL_DRIVERS},
+  {primary_keys_information_schema, "primary_keys_information_schema", NORMAL, ALL_DRIVERS},
   {NULL, NULL}
 };
 

@@ -1443,6 +1443,8 @@ MYSQL_RES *S2_ShowTables(MADB_Stmt   *stmt,
 
   LOCK_MARIADB(stmt->Connection);
 
+  printf("AA %s\n", query);
+
   if (mysql_real_query(stmt->Connection->mariadb, query, strlen(query)))
   {
     UNLOCK_MARIADB(stmt->Connection);
@@ -1596,9 +1598,13 @@ MYSQL_RES *S2_ShowKeysInTable(MADB_Stmt  *stmt,
                               SQLCHAR     *table,
                               SQLSMALLINT  table_length)
 {
+  printf("BBBB1");
+  fflush(stdout);
   MADB_DynString query;
   MADB_InitDynamicString(&query, "SHOW KEYS FROM ", 1024, 512);
 
+  printf("BBBB1");
+  fflush(stdout);
 	if (catalog && *catalog)
 	{
     MADB_DynstrAppend(&query, "`");
@@ -1607,10 +1613,14 @@ MYSQL_RES *S2_ShowKeysInTable(MADB_Stmt  *stmt,
     MADB_DynstrAppend(&query, ".");
 	}
 
+  printf("BBBB1");
+  fflush(stdout);
   MADB_DynstrAppend(&query, "`");
   MADB_DynstrAppendMem(&query, table, table_length);
   MADB_DynstrAppend(&query, "`");
 
+  printf("BBBB1");
+  fflush(stdout);
   LOCK_MARIADB(stmt->Connection);
   if (mysql_real_query(stmt->Connection->mariadb, query.str, query.length))
   {
@@ -1619,9 +1629,13 @@ MYSQL_RES *S2_ShowKeysInTable(MADB_Stmt  *stmt,
     MADB_SetError(&stmt->Error, MADB_ERR_HY001, mysql_error(stmt->Connection->mariadb), mysql_errno(stmt->Connection->mariadb));
     return NULL;
   }
+  printf("BBBB1");
+  fflush(stdout);
   MADB_DynstrFree(&query);
   UNLOCK_MARIADB(stmt->Connection);
 
+  printf("BBBB1");
+  fflush(stdout);
   return mysql_store_result(stmt->Connection->mariadb);
 }
 
