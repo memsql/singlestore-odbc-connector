@@ -791,6 +791,7 @@ MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
   {
     MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
   }
+
   gchar *password = NULL;
   GError *err = NULL;
 
@@ -849,7 +850,6 @@ gerror:
 
 int PutCachedCredentials(MADB_Dbc *Dbc, BrowserAuthCredentials *bac)
 {
-
   MDBUG_C_ENTER(Dbc, "PutCachedCredentials");
 #if defined(_WIN32)
 // Win secure key storage
@@ -941,10 +941,9 @@ MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
   }
 
   GError *error = NULL;
-
-  LibsecretFunctions.secret_password_store_sync(jwt_cache_get_schema, "default",
-                            "SingleStore ODBC Driver JWT storage", "asdasdasdasd", NULL, &error,
-                            NULL);
+  LibsecretFunctions.secret_password_store_sync(JWT_CACHE_SCHEMA, SECRET_COLLECTION_DEFAULT,
+                                                SECURE_JWT_STORAGE_KEY, bac->token, NULL, &error,
+                                                NULL);
   if (error != NULL)
   {
     MDBUG_C_PRINT(Dbc, "%s FAILED", "secret_password_store_sync");
@@ -978,7 +977,6 @@ int GetCredentialsBrowserSSO(MADB_Dbc *Dbc, MADB_Dsn *Dsn, const char *email, my
     {
       MDBUG_C_RETURN(Dbc, SQL_ERROR, &Dbc->Error);
     }
-
     // 3. Store credentials in the keyring
     if (!Dsn->IgnoreKeyring && PutCachedCredentials(Dbc, &creds))
     {
