@@ -24,18 +24,15 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <dlfcn.h>
 #endif
 
 #include "browser_auth.h"
 #include "vendor/b64.c/b64.h"
 #include "vendor/cJSON/cJSON.h"
 
-#if defined(_WIN32)
-#elif defined(__APPLE__)
-#else
-#include <fcntl.h>
-#include <dlfcn.h>
-
+#if !defined(_WIN32) && !defined(__APPLE__)
 struct libglib_functions LibglibFunctions;
 struct libsecret_functions LibsecretFunctions;
 
@@ -95,8 +92,6 @@ int initLibSecretFunctions(MADB_Error  *Error)
   {
     return MADB_SetError(Error, MADB_ERR_S1000, dlerror(), 0);
   }
-  printf("BBBBBBE\n");
-  fflush(stdout);
 
   dlclose(LibsecretHandle);
 
@@ -635,14 +630,10 @@ cleanupRequest:
 
 void makeTestCreds(BrowserAuthCredentials *credentials /*out*/)
 {
-  printf("%p \n", credentials);
-  fflush(stdout);
   credentials->username = strdup("test_jwt_user");
   credentials->email = strdup("test@singlestore.com");
   credentials->expiration = 2514359920;
   credentials->token = strdup(getenv("MEMSQL_JWT"));
-  printf("QQQQ\n");
-  fflush(stdout);
 }
 
 // BrowserAuth opens browser to perform the auth workflow using SSO.
@@ -650,8 +641,6 @@ void makeTestCreds(BrowserAuthCredentials *credentials /*out*/)
 // testFlags are used to assert and control certain aspects in tests 
 int BrowserAuth(MADB_Dbc *Dbc, const char *email, BrowserAuthCredentials *credentials /*out*/, int testFlags)
 {
-  printf("qAA\n");
-  fflush(stdout);
   MDBUG_C_ENTER(Dbc, "BrowserAuth");
   MDBUG_C_PRINT(Dbc, "BrowserAuth is called with testFlags %d", testFlags);
 
@@ -659,23 +648,15 @@ int BrowserAuth(MADB_Dbc *Dbc, const char *email, BrowserAuthCredentials *creden
   char* endpoint = testFlags & BROWSER_AUTH_FLAG_TEST_ENDPOINT ? LOCAL_TEST_ENDPOINT : PORTAL_SSO_ENDPOINT;
   if (testFlags & BROWSER_AUTH_FLAG_TEST_FIRST_CALL)
   {
-    printf("qqAA\n");
-    fflush(stdout);
     makeTestCreds(credentials);
-    printf("qqAA1\n");
-    fflush(stdout);
     MDBUG_C_RETURN(Dbc, SQL_SUCCESS, &Dbc->Error);
   }
-  printf("qAA\n");
-  fflush(stdout);
   if (testFlags & BROWSER_AUTH_FLAG_TEST_SECOND_CALL)
   {
     printf("BrowserAuth must not be called in the second connection with BROWSER_SSO\n");
     assert(0);
     MDBUG_C_RETURN(Dbc, 0, &Dbc->Error);
   }
-  printf("qAA\n");
-  fflush(stdout);
   MADB_DynString serverEndpoint;
   MADB_DynString openBrowserCommand;
   SOCKET_ serverSocket;
@@ -690,8 +671,6 @@ int BrowserAuth(MADB_Dbc *Dbc, const char *email, BrowserAuthCredentials *creden
     goto cleanupServerEndpoint;
   }
 
-  printf("qAA\n");
-  fflush(stdout);
   if (startLocalHttpServer(Dbc, &serverSocket, &serverEndpoint))
   {
     goto cleanupOpenBrowserCommand;
@@ -700,8 +679,6 @@ int BrowserAuth(MADB_Dbc *Dbc, const char *email, BrowserAuthCredentials *creden
   {
     goto cleanupServer;
   }
-  printf("qAA\n");
-  fflush(stdout);
   if (system(openBrowserCommand.str))
   {
     MADB_SetError(&Dbc->Error, MADB_ERR_S1000, "Failed to open browser", 0);
@@ -712,8 +689,6 @@ int BrowserAuth(MADB_Dbc *Dbc, const char *email, BrowserAuthCredentials *creden
   {
     goto cleanupServer;
   }
-  printf("qAA\n");
-  fflush(stdout);
 
 cleanupServer:
   closeSocket(serverSocket);
@@ -761,8 +736,6 @@ void *unlock_func(void *args)
 
 int GetCachedCredentials(MADB_Dbc *Dbc, const char *email, BrowserAuthCredentials *bac /*out*/)
 {
-  printf("AAAAAAAAA\n");
-  fflush(stdout);
   MDBUG_C_ENTER(Dbc, "GetCachedCredentials");
 #if defined(_WIN32)
 // Win secure key storage
@@ -818,14 +791,10 @@ MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
   {
     MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
   }
-  printf("CC!!\n");
-  fflush(stdout);
   gchar *password = NULL;
   GError *err = NULL;
 
   SecretService *service = LibsecretFunctions.secret_service_get_sync(0, NULL, &err);
-  printf("CC1!!\n");
-  fflush(stdout);
   SecretCollection *defaultCollection = LibsecretFunctions.secret_collection_for_alias_sync(
     service, SECRET_COLLECTION_DEFAULT, 0 /*SecretCollectionFlags*/, NULL, &err);
   if (err != NULL)
@@ -880,8 +849,6 @@ gerror:
 
 int PutCachedCredentials(MADB_Dbc *Dbc, BrowserAuthCredentials *bac)
 {
-  printf("AAAAAAAAA\n");
-  fflush(stdout);
 
   MDBUG_C_ENTER(Dbc, "PutCachedCredentials");
 #if defined(_WIN32)
@@ -968,28 +935,18 @@ if (item)
 MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
 #else
 // Linux secure key storage
-  printf("Start\n");
-  fflush(stdout);
   if (initLibglibFunctions(&Dbc->Error) || initLibSecretFunctions(&Dbc->Error))
   {
-    printf("ERROR\n");
-    fflush(stdout);
     MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
   }
 
   GError *error = NULL;
-  printf("QQQQQQ %p", LibsecretFunctions.secret_password_store_sync);
-  fflush(stdout);
-  // exit(1);
 
   LibsecretFunctions.secret_password_store_sync(jwt_cache_get_schema, "default",
                             "SingleStore ODBC Driver JWT storage", "asdasdasdasd", NULL, &error,
                             NULL);
   if (error != NULL)
   {
-    printf("!!!!!\n");
-    fflush(stdout);
-    exit(1);
     MDBUG_C_PRINT(Dbc, "%s FAILED", "secret_password_store_sync");
     MADB_SetError(&Dbc->Error, MADB_ERR_HY000, error->message, 0);
     LibglibFunctions.g_error_free(error);
@@ -997,9 +954,6 @@ MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
   }
   else 
   {
-    printf("!!!?!\n");
-    fflush(stdout);
-    exit(1);
     MDBUG_C_PRINT(Dbc, "%s SUCCESS", "secret_password_store_sync");
     MDBUG_C_RETURN(Dbc, SQL_SUCCESS, &Dbc->Error);
   }
@@ -1008,9 +962,6 @@ MDBUG_C_RETURN(Dbc, Dbc->Error.ReturnValue, &Dbc->Error);
 
 int GetCredentialsBrowserSSO(MADB_Dbc *Dbc, MADB_Dsn *Dsn, const char *email, my_bool readCached)
 {
-  printf("CAAAAB\n");
-  fflush(stdout);
-
   MDBUG_C_ENTER(Dbc, "GetCredentialsBrowserSSO");
   MDBUG_C_PRINT(Dbc, "Reading from keyring: %s, email: %s", readCached ? "true" : "false", email ? email : "")
   BrowserAuthCredentials creds = {NULL, NULL, NULL, 0};
@@ -1018,34 +969,21 @@ int GetCredentialsBrowserSSO(MADB_Dbc *Dbc, MADB_Dsn *Dsn, const char *email, my
   int readKeyringFailed = 0;
   if (readCached && !Dsn->IgnoreKeyring)
   {
-    printf("1CAAAAB\n");
-    fflush(stdout);
-
     readKeyringFailed = GetCachedCredentials(Dbc, email /* UserName is e-mail in this case */, &creds);
-    printf("CCCCCCCCCCCCCCCCCCCCCCCCCCCC %d %s\n", readKeyringFailed, creds.token);
-    fflush(stdout);
   }
   // 2. Call browser auth if there are no stored credentials or the token has expired
   if (readKeyringFailed || !creds.token || CheckExpiration(creds.expiration))
   {
-    printf("1CAAAAB\n");
-    fflush(stdout);
-
     if (BrowserAuth(Dbc, email, &creds, Dsn->TestMode))
     {
       MDBUG_C_RETURN(Dbc, SQL_ERROR, &Dbc->Error);
     }
-    printf("2CAAAAB\n");
-    fflush(stdout);
 
     // 3. Store credentials in the keyring
     if (!Dsn->IgnoreKeyring && PutCachedCredentials(Dbc, &creds))
     {
       MDBUG_C_RETURN(Dbc, SQL_ERROR, &Dbc->Error);
     }
-    printf("1CAAAAB\n");
-    fflush(stdout);
-
   }
   if (Dsn->UserName && strcmp(Dsn->UserName, creds.email))
   {

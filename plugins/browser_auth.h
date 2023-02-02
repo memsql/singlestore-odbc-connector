@@ -69,32 +69,32 @@ const SecretSchema *jwt_cache_get_schema(void);
 
 struct libsecret_functions 
 {
-SecretCollection *  (*secret_collection_for_alias_sync)           (SecretService *service,
-                                                                const gchar *alias,
-                                                                SecretCollectionFlags flags,
-                                                                GCancellable *cancellable,
-                                                                GError **error);
-gint                 (*secret_service_unlock_sync)                   (SecretService *service,
-                                                                   GList *objects,
-                                                                   GCancellable *cancellable,
-                                                                   GList **unlocked,
-                                                                   GError **error);
-SecretService *      (*secret_service_get_sync)                      (SecretServiceFlags flags,
-                                                                   GCancellable *cancellable,
-                                                                   GError **error);
-gboolean            (*secret_collection_get_locked)               (SecretCollection *self);
-gchar *      (*secret_password_lookup_sync)               (const SecretSchema *schema,
-                                                        GCancellable *cancellable,
-                                                        GError **error,
-                                                        ...) G_GNUC_NULL_TERMINATED;
-void         (*secret_password_free)                      (gchar *password);
-gboolean     (*secret_password_store_sync)                (const SecretSchema *schema,
-                                                        const gchar *collection,
-                                                        const gchar *label,
-                                                        const gchar *password,
-                                                        GCancellable *cancellable,
-                                                        GError **error,
-                                                        ...) G_GNUC_NULL_TERMINATED;
+SecretCollection* (*secret_collection_for_alias_sync) (SecretService *service,
+                                                      const gchar *alias,
+                                                      SecretCollectionFlags flags,
+                                                      GCancellable *cancellable,
+                                                      GError **error);
+gint (*secret_service_unlock_sync) (SecretService *service,
+                                    GList *objects,
+                                    GCancellable *cancellable,
+                                    GList **unlocked,
+                                    GError **error);
+SecretService* (*secret_service_get_sync) (SecretServiceFlags flags,
+                                           GCancellable *cancellable,
+                                           GError **error);
+gboolean (*secret_collection_get_locked) (SecretCollection *self);
+gchar* (*secret_password_lookup_sync)(const SecretSchema *schema,
+                                      GCancellable *cancellable,
+                                      GError **error,
+                                      ...) G_GNUC_NULL_TERMINATED;
+void (*secret_password_free) (gchar *password);
+gboolean (*secret_password_store_sync) (const SecretSchema *schema,
+                                        const gchar *collection,
+                                        const gchar *label,
+                                        const gchar *password,
+                                        GCancellable *cancellable,
+                                        GError **error,
+                                        ...) G_GNUC_NULL_TERMINATED;
 };
 
 struct libglib_functions 
