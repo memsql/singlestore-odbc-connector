@@ -104,9 +104,21 @@ ODBC_TEST(my_no_keys)
   return OK;
 }
 
+ODBC_TEST(primary_keys_unexisting_table)
+{
+  CHECK_STMT_RC(Stmt, SQLPrimaryKeys(Stmt, my_schema, strlen(my_schema), "", 0, "unexisting_table1233", 20));
+  FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "eof expected");
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+
+  return OK;
+}
+
 ODBC_TEST(primary_keys_information_schema)
 {
-  CHECK_STMT_RC(Stmt, SQLPrimaryKeys(Stmt, "odbc_test", 18, "", 0, "t", 1));
+  CHECK_STMT_RC(Stmt, SQLPrimaryKeys(Stmt, "information_schema", strlen("information_schema"), "", 0, "schemata", 8));
+  FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "eof expected");
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+
   return OK;
 }
 
@@ -147,6 +159,7 @@ MA_ODBC_TESTS my_tests[]=
 {
   {my_no_keys, "my_no_keys", NORMAL, ALL_DRIVERS},
   {foreign_keys_error, "foreign_keys_error", NORMAL, ALL_DRIVERS},
+  {primary_keys_unexisting_table, "primary_keys_unexisting_table", NORMAL, ALL_DRIVERS},
   {primary_keys_information_schema, "primary_keys_information_schema", NORMAL, ALL_DRIVERS},
   {NULL, NULL}
 };
