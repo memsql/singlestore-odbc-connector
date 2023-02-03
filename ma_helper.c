@@ -1438,7 +1438,7 @@ MYSQL_RES *S2_ShowTables(MADB_Stmt   *stmt,
 	{
 		strcat(query, "LIKE '");
     cnt = mysql_real_escape_string(stmt->Connection->mariadb, tmpbuff, (char *)table, table_length);
-    if (catalog && *catalog && strncasecmp(catalog, "information_schema",  catalog_length) == 0) 
+    if (catalog && *catalog && strncasecmp(catalog, "information_schema", catalog_length) == 0) 
     {
       for (i = 0; i < cnt; i++)
       {
