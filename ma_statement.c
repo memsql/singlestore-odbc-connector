@@ -5431,8 +5431,6 @@ SQLRETURN MADB_StmtPrimaryKeysNoInfoSchema(MADB_Stmt *Stmt, char *CatalogName, S
                                 char *SchemaName, SQLSMALLINT NameLength2, char *TableName,
                                 SQLSMALLINT NameLength3)
 {
-  printf("AAA1\n");
-  fflush(stdout);
   MADB_CLEAR_ERROR(&Stmt->Error);
   MYSQL_RES *tables_res, *show_keys_res;
   MYSQL_ROW table_row, keys_row;
@@ -5445,8 +5443,6 @@ SQLRETURN MADB_StmtPrimaryKeysNoInfoSchema(MADB_Stmt *Stmt, char *CatalogName, S
     return Stmt->Error.ReturnValue;
   }
 
-  printf("AAA1\n");
-  fflush(stdout);
   if (CatalogName && NameLength1 <= 0)
     NameLength1 = strlen(CatalogName);
   if (SchemaName && NameLength2 <= 0)
@@ -5463,8 +5459,6 @@ SQLRETURN MADB_StmtPrimaryKeysNoInfoSchema(MADB_Stmt *Stmt, char *CatalogName, S
   MYSQL_FIELD *field;
   short is_alloc_fail = 0;
   const short need_free[SQL_PRIMARY_KEYS_FIELD_COUNT] = {1, 1, 1, 1, 1, 0};
-  printf("AAA1\n");
-  fflush(stdout);
 
   table_row = mysql_fetch_row(tables_res);
   table_lengths = mysql_fetch_lengths(tables_res);
@@ -5474,17 +5468,11 @@ SQLRETURN MADB_StmtPrimaryKeysNoInfoSchema(MADB_Stmt *Stmt, char *CatalogName, S
       if ( !(show_keys_res = S2_ShowKeysInTable(
         Stmt, CatalogName, NameLength1, table_row[0], table_lengths[0])) )
     {
-      printf("Iteration\n");
-      fflush(stdout);
       free(formatted_table_ptr);
       mysql_free_result(tables_res);
       mysql_free_result(show_keys_res);
       return Stmt->Error.ReturnValue;
     }
-    printf("Finish\n");
-    fflush(stdout);
-    printf("AAA1\n");
-    fflush(stdout);
     while ( (keys_row = mysql_fetch_row(show_keys_res)) )
     // keys_row consists of the following fields:
     // Table Non_unique Key_name Seq_in_index Column_name Collation
@@ -5535,8 +5523,6 @@ SQLRETURN MADB_StmtPrimaryKeysNoInfoSchema(MADB_Stmt *Stmt, char *CatalogName, S
   mysql_free_result(tables_res);
   
   // link statement result to the processed columns
-  printf("AAA1\n");
-  fflush(stdout);
   if (!SQL_SUCCEEDED(MADB_FakeRequest(
     Stmt, SqlPrimaryKeysFieldNames, SqlPrimaryKeysFieldTypes, SQL_PRIMARY_KEYS_FIELD_COUNT, formatted_table_ptr, n_rows)))
   {
