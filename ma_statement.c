@@ -5462,60 +5462,66 @@ SQLRETURN MADB_StmtPrimaryKeysNoInfoSchema(MADB_Stmt *Stmt, char *CatalogName, S
 
   table_row = mysql_fetch_row(tables_res);
   table_lengths = mysql_fetch_lengths(tables_res);
-  if ( !(show_keys_res = S2_ShowKeysInTable(
-        Stmt, CatalogName, NameLength1, table_row[0], table_lengths[0])) )
-  {
-    free(formatted_table_ptr);
-    mysql_free_result(tables_res);
-    mysql_free_result(show_keys_res);
-    return Stmt->Error.ReturnValue;
-  }
-  while ( (keys_row = mysql_fetch_row(show_keys_res)) )
-  // keys_row consists of the following fields:
-  // Table Non_unique Key_name Seq_in_index Column_name Collation
-  // Cardinality Sub_part Packed Null Index_type Comment Index_comment
-  {
-    keys_lengths = mysql_fetch_lengths(show_keys_res);
-    if (strcmp(keys_row[2], "PRIMARY"))
-      continue;
 
-    if (n_rows >= allocated_rows)
+  if (table_row)
+  {
+      if ( !(show_keys_res = S2_ShowKeysInTable(
+        Stmt, CatalogName, NameLength1, table_row[0], table_lengths[0])) )
     {
-      temp_ptr = realloc(formatted_table_ptr, allocated_rows = 2 * allocated_rows);
-      if (!temp_ptr)
+      free(formatted_table_ptr);
+      mysql_free_result(tables_res);
+      mysql_free_result(show_keys_res);
+      return Stmt->Error.ReturnValue;
+    }
+    while ( (keys_row = mysql_fetch_row(show_keys_res)) )
+    // keys_row consists of the following fields:
+    // Table Non_unique Key_name Seq_in_index Column_name Collation
+    // Cardinality Sub_part Packed Null Index_type Comment Index_comment
+    {
+      keys_lengths = mysql_fetch_lengths(show_keys_res);
+      if (strcmp(keys_row[2], "PRIMARY"))
+        continue;
+
+      if (n_rows >= allocated_rows)
+      {
+        temp_ptr = realloc(formatted_table_ptr, allocated_rows = 2 * allocated_rows);
+        if (!temp_ptr)
+        {
+          mysql_free_result(tables_res);
+          mysql_free_result(show_keys_res);
+          freeData(formatted_table_ptr, n_rows, SQL_COLUMNS_FIELD_COUNT, need_free);
+          return MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to allocate memory for columns data", 0);
+        }
+        formatted_table_ptr = temp_ptr;
+      }
+      current_row_ptr = formatted_table_ptr[n_rows] = (char**)calloc(SQL_PRIMARY_KEYS_FIELD_COUNT, sizeof(char*));
+      ++n_rows;
+       // TABLE_CAT
+      is_alloc_fail |= !(uintptr_t)(current_row_ptr[0] = strdup(NameLength1 > 0 ? CatalogName : Stmt->Connection->mariadb->db));
+      // TABLE_SCHEM
+      current_row_ptr[1] = NULL;
+      // TABLE_NAME
+      is_alloc_fail |= !(uintptr_t)(current_row_ptr[2] = strndup(keys_row[0], keys_lengths[0]));
+      // COLUMN_NAME
+      is_alloc_fail |= !(uintptr_t)(current_row_ptr[3] = strndup(keys_row[4], keys_lengths[4]));
+      // KEY_SEQ
+      is_alloc_fail |= !(uintptr_t)(current_row_ptr[4] = strndup(keys_row[3], keys_lengths[3]));
+      // PK_NAME
+      current_row_ptr[5] = "PRIMARY";
+      if (is_alloc_fail)
       {
         mysql_free_result(tables_res);
         mysql_free_result(show_keys_res);
-        freeData(formatted_table_ptr, n_rows, SQL_COLUMNS_FIELD_COUNT, need_free);
+        freeData(formatted_table_ptr, n_rows, SQL_PRIMARY_KEYS_FIELD_COUNT, need_free);
         return MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to allocate memory for columns data", 0);
       }
-      formatted_table_ptr = temp_ptr;
     }
-    current_row_ptr = formatted_table_ptr[n_rows] = (char**)calloc(SQL_PRIMARY_KEYS_FIELD_COUNT, sizeof(char*));
-    ++n_rows;
-     // TABLE_CAT
-    is_alloc_fail |= !(uintptr_t)(current_row_ptr[0] = strdup(NameLength1 > 0 ? CatalogName : Stmt->Connection->mariadb->db));
-    // TABLE_SCHEM
-    current_row_ptr[1] = NULL;
-    // TABLE_NAME
-    is_alloc_fail |= !(uintptr_t)(current_row_ptr[2] = strndup(keys_row[0], keys_lengths[0]));
-    // COLUMN_NAME
-    is_alloc_fail |= !(uintptr_t)(current_row_ptr[3] = strndup(keys_row[4], keys_lengths[4]));
-    // KEY_SEQ
-    is_alloc_fail |= !(uintptr_t)(current_row_ptr[4] = strndup(keys_row[3], keys_lengths[3]));
-    // PK_NAME
-    current_row_ptr[5] = "PRIMARY";
-    if (is_alloc_fail)
-    {
-      mysql_free_result(tables_res);
-      mysql_free_result(show_keys_res);
-      freeData(formatted_table_ptr, n_rows, SQL_PRIMARY_KEYS_FIELD_COUNT, need_free);
-      return MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to allocate memory for columns data", 0);
-    }
+  
+    mysql_free_result(show_keys_res);
   }
-  mysql_free_result(tables_res);
-  mysql_free_result(show_keys_res);
 
+  mysql_free_result(tables_res);
+  
   // link statement result to the processed columns
   if (!SQL_SUCCEEDED(MADB_FakeRequest(
     Stmt, SqlPrimaryKeysFieldNames, SqlPrimaryKeysFieldTypes, SQL_PRIMARY_KEYS_FIELD_COUNT, formatted_table_ptr, n_rows)))
