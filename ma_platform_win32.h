@@ -45,6 +45,7 @@
 #define strtok_r(A,B,C) strtok((A),(B))
 #endif
 #define strcasecmp(A,B) _stricmp((A),(B))
+#define strncasecmp(A,B,C) _strnicmp((A),(B),(C))
 
 #ifdef MAODBC_UNICODEDRIVER
     #define MADB_DRIVER_NAME "ssodbcw.dll"
