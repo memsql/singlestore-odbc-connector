@@ -214,8 +214,8 @@ jobs:
           command: ./test/odbc_browser_auth
 
   build-linux-in-docker:
-    #    We need docker based jobs because CircleCI has only ubuntu Linux executor and we need to test our connector on Debian and CentOS too
-    #    This job use a `$MEMSQL_HOST` variable which point to `mac-ansi` host. Because of that we can't run this job and `macos-ansi` job simultaneously
+    # We need docker based jobs because CircleCI has only ubuntu Linux executor
+    # and we need to test our connector on Debian and CentOS too
     parameters:
       os_version:
         type: string
@@ -271,7 +271,6 @@ jobs:
           name: Terminate S2MS cluster
           when: always
           command: python3 ./.circleci/setup_s2ms_cluster.py terminate
-
 
   publish-windows:
     parameters:
@@ -377,7 +376,7 @@ workflows:
   test:
     jobs:
       - build-ubuntu:
-          name: build-ubuntu-sanitizer-unicode-7.6.5-<< matrix.build_type >>
+          name: build-ubuntu-sanitizer-unicode-7.8.19-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
@@ -389,11 +388,11 @@ workflows:
               test_driver:
                 - SingleStore ODBC Unicode Driver
               memsql_image:
-                - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
+                - memsql/cluster-in-a-box:alma-7.8.19-4263b2d130-4.0.10-1.14.2
               with_sanitizer:
                 - true
       - build-ubuntu:
-          name: build-ubuntu-unicode-7.6.5-<< matrix.build_type >>
+          name: build-ubuntu-unicode-7.8.19-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
@@ -405,9 +404,9 @@ workflows:
               test_driver:
                 - SingleStore ODBC Unicode Driver
               memsql_image:
-                - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
+                - memsql/cluster-in-a-box:alma-7.8.19-4263b2d130-4.0.10-1.14.2
       - build-ubuntu:
-          name: build-ubuntu-ansi-7.6.5-<< matrix.build_type >>
+          name: build-ubuntu-ansi-7.8.19-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
@@ -419,7 +418,7 @@ workflows:
               test_driver:
                 - SingleStore ODBC ANSI Driver
               memsql_image:
-                - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
+                - memsql/cluster-in-a-box:alma-7.8.19-4263b2d130-4.0.10-1.14.2
       - build-macos:
           name: build-macos-ansi-<< matrix.build_type >>
           matrix:
@@ -516,7 +515,7 @@ workflows:
                 - master
     jobs:
       - build-ubuntu:
-          name: build-ubuntu-sanitizer-unicode-7.6.5-<< matrix.build_type >>
+          name: build-ubuntu-sanitizer-unicode-7.8.19-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
@@ -528,11 +527,11 @@ workflows:
               test_driver:
                 - SingleStore ODBC Unicode Driver
               memsql_image:
-                - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
+                - memsql/cluster-in-a-box:alma-7.8.19-4263b2d130-4.0.10-1.14.2
               with_sanitizer:
                 - true
       - build-ubuntu:
-          name: build-ubuntu-unicode-7.6.5-<< matrix.build_type >>
+          name: build-ubuntu-unicode-7.8.19-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
@@ -544,9 +543,9 @@ workflows:
               test_driver:
                 - SingleStore ODBC Unicode Driver
               memsql_image:
-                - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
+                - memsql/cluster-in-a-box:alma-7.8.19-4263b2d130-4.0.10-1.14.2
       - build-ubuntu:
-          name: build-ubuntu-ansi-7.6.5-<< matrix.build_type >>
+          name: build-ubuntu-ansi-7.8.19-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
@@ -558,7 +557,7 @@ workflows:
               test_driver:
                 - SingleStore ODBC ANSI Driver
               memsql_image:
-                - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
+                - memsql/cluster-in-a-box:alma-7.8.19-4263b2d130-4.0.10-1.14.2
       - build-ubuntu:
           name: build-ubuntu-sanitizer-unicode-7.5.6-<< matrix.build_type >>
           matrix:
@@ -574,7 +573,7 @@ workflows:
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.5.6-9e799dbf4f-3.2.11-1.11.10
       - build-ubuntu:
-          name: build-ubuntu-unicode-7.3.2-<< matrix.build_type >>
+          name: build-ubuntu-unicode-7.6.5-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
@@ -586,7 +585,7 @@ workflows:
               test_driver:
                 - SingleStore ODBC Unicode Driver
               memsql_image:
-                - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
+                - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
       - build-ubuntu:
           name: build-ubuntu-ansi-7.5.6-<< matrix.build_type >>
           matrix:
@@ -602,7 +601,7 @@ workflows:
               memsql_image:
                 - memsql/cluster-in-a-box:centos-7.5.6-9e799dbf4f-3.2.11-1.11.10
       - build-ubuntu:
-          name: build-ubuntu-ansi-7.3.2-<< matrix.build_type >>
+          name: build-ubuntu-ansi-7.6.5-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
@@ -614,7 +613,7 @@ workflows:
               test_driver:
                 - SingleStore ODBC ANSI Driver
               memsql_image:
-                - memsql/cluster-in-a-box:centos-7.3.2-a364d4b31f-3.0.0-1.9.3
+                - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
       - build-linux-in-docker:
           name: build-debian-9-unicode-<< matrix.build_type >>
           matrix:
