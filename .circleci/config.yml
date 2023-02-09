@@ -69,12 +69,15 @@ jobs:
         type: string
       driver_type:
         type: string
+      arch_bits:
+        type: integer
     executor: win/default
     environment:
       BUILD_TYPE: << parameters.build_type >>
       TEST_DRIVER: << parameters.test_driver >>
       TEST_DSN: << parameters.test_dsn >>
       DRIVER_TYPE: << parameters.driver_type >>
+      ARCH_BITS: << parameters.arch_bits >>
     steps:
       - checkout
       - run:
@@ -276,9 +279,12 @@ jobs:
     parameters:
       build_type:
         type: string
+      arch_bits:
+        type: integer
     executor: win/default
     environment:
       BUILD_TYPE: << parameters.build_type >>
+      ARCH_BITS: << parameters.arch_bits >>
     steps:
       - checkout
       - run:
@@ -294,7 +300,7 @@ jobs:
           command: |
             .circleci\build-windows.ps1
       - store_artifacts:
-          path: C:\Users\circleci\project\wininstall\singlestore-connector-odbc-<< pipeline.parameters.driver-version >>-win64.msi
+          path: C:\Users\circleci\project\wininstall\singlestore-connector-odbc-<< pipeline.parameters.driver-version >>-win<< parameters.arch_bits >>.msi
 
   publish-macos:
     parameters:
@@ -443,6 +449,8 @@ workflows:
                 - SingleStore ODBC Unicode Driver
               driver_type:
                 - unicode
+              arch_bits:
+                - 64
       - build-macos:
           name: build-macos-unicode-<< matrix.build_type >>
           matrix:
@@ -467,6 +475,8 @@ workflows:
                 - SingleStore ODBC ANSI Driver
               driver_type:
                 - ansi
+              arch_bits:
+                - 64
   test-build-linux:
     jobs:
       - build-only-linux:
@@ -746,6 +756,8 @@ workflows:
                 - SingleStore ODBC Unicode Driver
               driver_type:
                 - unicode
+              arch_bits:
+                - 64
       - build-windows:
           name: build-windows-ansi-<< matrix.build_type >>
           matrix:
@@ -758,6 +770,36 @@ workflows:
                 - SingleStore ODBC ANSI Driver
               driver_type:
                 - ansi
+              arch_bits:
+                - 64
+      - build-windows:
+          name: build-windows-unicode-<< matrix.build_type >>
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_w
+              test_driver:
+                - SingleStore ODBC Unicode Driver
+              driver_type:
+                - unicode
+              arch_bits:
+                - 32
+      - build-windows:
+          name: build-windows-ansi-<< matrix.build_type >>
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_a
+              test_driver:
+                - SingleStore ODBC ANSI Driver
+              driver_type:
+                - ansi
+              arch_bits:
+                - 32
   publish:
     jobs:
       - publish-windows:
@@ -765,6 +807,20 @@ workflows:
             parameters:
               build_type:
                 - RelWithDebInfo
+              arch_bits:
+                - 32
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - publish-windows:
+          matrix:
+            parameters:
+              build_type:
+                - RelWithDebInfo
+              arch_bits:
+                - 64
           filters:
             tags:
               only: /^v.*/

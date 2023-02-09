@@ -214,7 +214,7 @@ int CheckChar(SQLHANDLE Hdbc, SQLUSMALLINT InfoType, char *CorrectValue) {
   return OK;
 }
 
-int GetVersion(const char *query, char *buff) {
+int GetVersionFromQueryResult(const char *query, char *buff) {
   char internal_buff[1024];
   int major, minor, patch;
 
@@ -264,7 +264,7 @@ do {\
 
 #define GET_VERSION(query, buff)\
 do {\
-  if (GetVersion(query, buff) != OK)\
+  if (GetVersionFromQueryResult(query, buff) != OK)\
   {\
     return FAIL;\
   }\
