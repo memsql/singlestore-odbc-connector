@@ -20,7 +20,8 @@ def cmd_start(workspace_manager):
         name=w_group_name,
         region=AWS_EU_CENTRAL_REGION,
         firewall_ranges=["0.0.0.0/0"],
-        admin_password=SQL_USER_PASSWORD
+        admin_password=SQL_USER_PASSWORD,
+        expires_at="1h30m"
     )
     with open(WORKSPACE_GROUP_ID_FILE, "w") as f:
         f.write(workspace_group.id)
