@@ -382,7 +382,7 @@ workflows:
   test:
     jobs:
       - build-ubuntu:
-          name: build-ubuntu-sanitizer-unicode-7.8.19-<< matrix.build_type >>
+          name: build-ubuntu-sanitizer-unicode-8.0.15-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
@@ -394,11 +394,11 @@ workflows:
               test_driver:
                 - SingleStore ODBC Unicode Driver
               memsql_image:
-                - memsql/cluster-in-a-box:alma-7.8.19-4263b2d130-4.0.10-1.14.2
+                - singlestore/cluster-in-a-box:alma-8.0.15-0b9b66384f-4.0.11-1.15.2
               with_sanitizer:
                 - true
       - build-ubuntu:
-          name: build-ubuntu-unicode-7.8.19-<< matrix.build_type >>
+          name: build-ubuntu-unicode-8.0.15-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
@@ -410,9 +410,9 @@ workflows:
               test_driver:
                 - SingleStore ODBC Unicode Driver
               memsql_image:
-                - memsql/cluster-in-a-box:alma-7.8.19-4263b2d130-4.0.10-1.14.2
+                - singlestore/cluster-in-a-box:alma-8.0.15-0b9b66384f-4.0.11-1.15.2
       - build-ubuntu:
-          name: build-ubuntu-ansi-7.8.19-<< matrix.build_type >>
+          name: build-ubuntu-ansi-8.0.15-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
@@ -424,7 +424,7 @@ workflows:
               test_driver:
                 - SingleStore ODBC ANSI Driver
               memsql_image:
-                - memsql/cluster-in-a-box:alma-7.8.19-4263b2d130-4.0.10-1.14.2
+                - singlestore/cluster-in-a-box:alma-8.0.15-0b9b66384f-4.0.11-1.15.2
       - build-macos:
           name: build-macos-ansi-<< matrix.build_type >>
           matrix:
@@ -525,6 +525,78 @@ workflows:
                 - master
     jobs:
       - build-ubuntu:
+          name: build-ubuntu-sanitizer-unicode-8.0.15-<< matrix.build_type >>
+          matrix:
+            parameters:
+              machine_class:
+                - large
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_w
+              test_driver:
+                - SingleStore ODBC Unicode Driver
+              memsql_image:
+                - singlestore/cluster-in-a-box:alma-8.0.15-0b9b66384f-4.0.11-1.15.2
+              with_sanitizer:
+                - true
+      - build-ubuntu:
+          name: build-ubuntu-unicode-8.0.15-<< matrix.build_type >>
+          matrix:
+            parameters:
+              machine_class:
+                - large
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_w
+              test_driver:
+                - SingleStore ODBC Unicode Driver
+              memsql_image:
+                - singlestore/cluster-in-a-box:alma-8.0.15-0b9b66384f-4.0.11-1.15.2
+      - build-ubuntu:
+          name: build-ubuntu-ansi-8.0.15-<< matrix.build_type >>
+          matrix:
+            parameters:
+              machine_class:
+                - large
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_a
+              test_driver:
+                - SingleStore ODBC ANSI Driver
+              memsql_image:
+                - singlestore/cluster-in-a-box:alma-8.0.15-0b9b66384f-4.0.11-1.15.2
+      - build-ubuntu:
+          name: build-ubuntu-unicode-7.5.12-<< matrix.build_type >>
+          matrix:
+            parameters:
+              machine_class:
+                - large
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_w
+              test_driver:
+                - SingleStore ODBC Unicode Driver
+              memsql_image:
+                - singlestore/cluster-in-a-box:centos-7.5.12-3112a491c2-4.0.0-1.12.5
+      - build-ubuntu:
+          name: build-ubuntu-unicode-7.6.14-<< matrix.build_type >>
+          matrix:
+            parameters:
+              machine_class:
+                - large
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_w
+              test_driver:
+                - SingleStore ODBC Unicode Driver
+              memsql_image:
+                - singlestore/cluster-in-a-box:alma-7.6.14-6f67cb4355-4.0.4-1.13.6
+      - build-ubuntu:
           name: build-ubuntu-sanitizer-unicode-7.8.19-<< matrix.build_type >>
           matrix:
             parameters:
@@ -537,11 +609,9 @@ workflows:
               test_driver:
                 - SingleStore ODBC Unicode Driver
               memsql_image:
-                - memsql/cluster-in-a-box:alma-7.8.19-4263b2d130-4.0.10-1.14.2
-              with_sanitizer:
-                - true
+                - singlestore/cluster-in-a-box:alma-7.8.19-4263b2d130-4.0.10-1.14.4
       - build-ubuntu:
-          name: build-ubuntu-unicode-7.8.19-<< matrix.build_type >>
+          name: build-ubuntu-ansi-7.5.12-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
@@ -549,11 +619,25 @@ workflows:
               build_type:
                 - RelWithDebInfo
               test_dsn:
-                - ssodbc_test_w
+                - ssodbc_test_a
               test_driver:
-                - SingleStore ODBC Unicode Driver
+                - SingleStore ODBC ANSI Driver
               memsql_image:
-                - memsql/cluster-in-a-box:alma-7.8.19-4263b2d130-4.0.10-1.14.2
+                - singlestore/cluster-in-a-box:centos-7.5.12-3112a491c2-4.0.0-1.12.5
+      - build-ubuntu:
+          name: build-ubuntu-ansi-7.6.14-<< matrix.build_type >>
+          matrix:
+            parameters:
+              machine_class:
+                - large
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_a
+              test_driver:
+                - SingleStore ODBC ANSI Driver
+              memsql_image:
+                - singlestore/cluster-in-a-box:centos-7.5.12-3112a491c2-4.0.0-1.12.5
       - build-ubuntu:
           name: build-ubuntu-ansi-7.8.19-<< matrix.build_type >>
           matrix:
@@ -567,63 +651,7 @@ workflows:
               test_driver:
                 - SingleStore ODBC ANSI Driver
               memsql_image:
-                - memsql/cluster-in-a-box:alma-7.8.19-4263b2d130-4.0.10-1.14.2
-      - build-ubuntu:
-          name: build-ubuntu-sanitizer-unicode-7.5.6-<< matrix.build_type >>
-          matrix:
-            parameters:
-              machine_class:
-                - large
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - ssodbc_test_w
-              test_driver:
-                - SingleStore ODBC Unicode Driver
-              memsql_image:
-                - memsql/cluster-in-a-box:centos-7.5.6-9e799dbf4f-3.2.11-1.11.10
-      - build-ubuntu:
-          name: build-ubuntu-unicode-7.6.5-<< matrix.build_type >>
-          matrix:
-            parameters:
-              machine_class:
-                - large
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - ssodbc_test_w
-              test_driver:
-                - SingleStore ODBC Unicode Driver
-              memsql_image:
-                - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
-      - build-ubuntu:
-          name: build-ubuntu-ansi-7.5.6-<< matrix.build_type >>
-          matrix:
-            parameters:
-              machine_class:
-                - large
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - ssodbc_test_a
-              test_driver:
-                - SingleStore ODBC ANSI Driver
-              memsql_image:
-                - memsql/cluster-in-a-box:centos-7.5.6-9e799dbf4f-3.2.11-1.11.10
-      - build-ubuntu:
-          name: build-ubuntu-ansi-7.6.5-<< matrix.build_type >>
-          matrix:
-            parameters:
-              machine_class:
-                - large
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - ssodbc_test_a
-              test_driver:
-                - SingleStore ODBC ANSI Driver
-              memsql_image:
-                - memsql/cluster-in-a-box:centos-7.6.5-018454f4e3-4.0.1-1.13.0
+                - singlestore/cluster-in-a-box:alma-7.8.19-4263b2d130-4.0.10-1.14.4
       - build-linux-in-docker:
           name: build-debian-9-unicode-<< matrix.build_type >>
           matrix:
