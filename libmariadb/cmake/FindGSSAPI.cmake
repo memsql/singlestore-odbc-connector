@@ -108,3 +108,7 @@ else(GSSAPI_LIBS AND GSSAPI_FLAVOR)
   endif(KRB5_CONFIG)
 
 endif(GSSAPI_LIBS AND GSSAPI_FLAVOR)
+
+# we set GSSAPI_FOUND because we install gssapi headers on the systems where
+# we build the driver
+set(GSSAPI_FOUND TRUE)

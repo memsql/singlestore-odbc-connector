@@ -48,9 +48,10 @@ else
   apt-get install -y cmake make gcc libssl-dev dnsutils
   echo "deb http://deb.debian.org/debian buster main contrib non-free" >> /etc/apt/sources.list.d/tutu.list
   apt-get update
-  apt-get install -y unixodbc-dev=2.3.6-0.1 'libglib2.0-0' libglib2.0-dev libsecret-1-dev xdg-utils w3m curl
+  apt-get install -y unixodbc-dev 'libglib2.0-0' libglib2.0-dev libsecret-1-dev xdg-utils w3m curl
   # install python and pip
   apt-get install -y python3 python3-pip
+  apt-get install -y libkrb5-dev
 fi
 
 echo 'export BROWSER=$(which w3m)' >> $BASH_ENV

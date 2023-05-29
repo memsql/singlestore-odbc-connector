@@ -37,7 +37,7 @@ commands:
             sudo apt-get install unixodbc odbcinst
             sudo apt-get install unixodbc-dev
             sudo apt-get install --allow-unauthenticated -y --force-yes -m unixodbc-dev odbcinst1debian2 libodbc1
-            sudo apt-get install -y libglib2.0 libsecret-1-dev
+            sudo apt-get install -y libglib2.0 libsecret-1-dev libkrb5-dev
             sudo apt-get clean
   setup-environment-macos:
     description: "Setup the macos environment"
@@ -348,9 +348,11 @@ jobs:
           command: |
             cd /root/project
             mkdir singlestore-connector-odbc-<< pipeline.parameters.driver-version >>-<< parameters.os_name >>-amd64
+            mkdir singlestore-connector-odbc-<< pipeline.parameters.driver-version >>-<< parameters.os_name >>-amd64/plugins
             cp linuxinstall/README.md singlestore-connector-odbc-<< pipeline.parameters.driver-version >>-<< parameters.os_name >>-amd64
             cp libssodbca.so singlestore-connector-odbc-<< pipeline.parameters.driver-version >>-<< parameters.os_name >>-amd64
             cp libssodbcw.so singlestore-connector-odbc-<< pipeline.parameters.driver-version >>-<< parameters.os_name >>-amd64
+            cp libmariadb/auth_gssapi_client.so singlestore-connector-odbc-<< pipeline.parameters.driver-version >>-<< parameters.os_name >>-amd64/plugins
             tar -zcvf singlestore-connector-odbc-<< pipeline.parameters.driver-version >>-<< parameters.os_name >>-amd64.tar.gz singlestore-connector-odbc-<< pipeline.parameters.driver-version >>-<< parameters.os_name >>-amd64
       - store_artifacts:
           path: /root/project/singlestore-connector-odbc-<< pipeline.parameters.driver-version >>-<< parameters.os_name >>-amd64.tar.gz
@@ -501,9 +503,9 @@ workflows:
           matrix:
             parameters:
               os_version:
-                - debian:9
+                - debian:11
               os_name:
-                - debian9
+                - debian11
               build_type:
                 - RelWithDebInfo
       - build-only-linux:
@@ -653,11 +655,11 @@ workflows:
               memsql_image:
                 - singlestore/cluster-in-a-box:alma-7.8.19-4263b2d130-4.0.10-1.14.4
       - build-linux-in-docker:
-          name: build-debian-9-unicode-<< matrix.build_type >>
+          name: build-debian-11-unicode-<< matrix.build_type >>
           matrix:
             parameters:
               os_version:
-                - debian:9
+                - debian:11
               build_type:
                 - RelWithDebInfo
               test_dsn:
@@ -665,11 +667,11 @@ workflows:
               test_driver:
                 - SingleStore ODBC Unicode Driver
       - build-linux-in-docker:
-          name: build-debian-9-ansi-<< matrix.build_type >>
+          name: build-debian-11-ansi-<< matrix.build_type >>
           matrix:
             parameters:
               os_version:
-                - debian:9
+                - debian:11
               build_type:
                 - RelWithDebInfo
               test_dsn:
@@ -896,9 +898,9 @@ workflows:
           matrix:
             parameters:
               os_version:
-                - debian:9
+                - debian:11
               os_name:
-                - debian9
+                - debian11
               build_type:
                 - RelWithDebInfo
           filters:
