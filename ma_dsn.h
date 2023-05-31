@@ -123,6 +123,7 @@ typedef struct st_madb_dsn
   char *ConnCPluginsDir;
   my_bool NoSsps;
   my_bool NoCache;
+  char    *ConnAttrs;
   /* SSL Settings */
   char *SslKey;
   char *SslCert;

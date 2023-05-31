@@ -818,6 +818,43 @@ real_connect:
     mysql_optionsv(Connection->mariadb, MARIADB_OPT_TLS_PASSPHRASE, (void*)Dsn->TlsKeyPwd);
   }
 
+#ifdef MAODBC_UNICODEDRIVER
+  mysql_options4(Connection->mariadb, MYSQL_OPT_CONNECT_ATTR_ADD, "_driver_name", "SingleStore ODBC Unicode Driver");
+#else
+  mysql_options4(Connection->mariadb, MYSQL_OPT_CONNECT_ATTR_ADD, "_driver_name", "SingleStore ODBC ANSI Driver");
+#endif
+  mysql_options4(Connection->mariadb, MYSQL_OPT_CONNECT_ATTR_ADD, "_driver_version", MARIADB_ODBC_VERSION);
+
+  if (!MADB_IS_EMPTY(Dsn->App))
+  {
+    mysql_options4(Connection->mariadb, MYSQL_OPT_CONNECT_ATTR_ADD, "program_name", Dsn->App);
+  }
+
+  // Dsn->ConnectAttrs is a comma-separated list of key-value pairs in the form key:value
+  if (!MADB_IS_EMPTY(Dsn->ConnAttrs))
+  {
+    char *connect_attrs = (char*)MADB_ALLOC(strlen(Dsn->ConnAttrs) + 1);
+    strcpy(connect_attrs, Dsn->ConnAttrs);
+    char *attr = strtok(connect_attrs, ",:");
+    char *key, *value;
+    int attr_idx = 0;
+    while(attr != NULL)
+    {
+      if (attr_idx % 2 == 0)
+      {
+        key = attr;
+      }
+      else
+      {
+        value = attr;
+        mysql_options4(Connection->mariadb, MYSQL_OPT_CONNECT_ATTR_ADD, key, value);
+      }
+      attr = strtok(NULL, ",:");
+      ++attr_idx;
+    }
+    MADB_FREE(connect_attrs);
+  }
+
   if (!mysql_real_connect(Connection->mariadb,
       Dsn->Socket ? "localhost" : Dsn->ServerName, Dsn->UserName, Dsn->Password,
         Dsn->Catalog && Dsn->Catalog[0] ? Dsn->Catalog : NULL, Dsn->Port, Dsn->Socket, client_flags))

@@ -35,7 +35,7 @@
 
 MADB_DsnKey DsnKeys[]=
 {
-  /* WARNING: if you add or change paramerters with indexes before 39 (NO_SSPS),
+  /* WARNING: if you add or change paramerters with indexes before 43 (BROWSER_SSO),
    make sure to update MADB_DsnMap DsnMap[] structure in odbc_dsn.c */
   {"DSN",            offsetof(MADB_Dsn, DSNName),           DSN_TYPE_STRING, 0, 0}, /* 0 */
   {"DESCRIPTION",    offsetof(MADB_Dsn, Description),       DSN_TYPE_STRING, 0, 0},
@@ -84,6 +84,7 @@ MADB_DsnKey DsnKeys[]=
   {"NO_SSPS",        offsetof(MADB_Dsn, NoSsps),            DSN_TYPE_BOOL,   0, 0},
   {"NO_CACHE",       offsetof(MADB_Dsn, NoCache),           DSN_TYPE_OPTION, MADB_OPT_FLAG_NO_CACHE, 0},  /* 40 */
   {"APP",            offsetof(MADB_Dsn, App),               DSN_TYPE_STRING, 0, 0},
+  {"CONN_ATTRS",     offsetof(MADB_Dsn, ConnAttrs),      DSN_TYPE_STRING, 0, 0},
   /* SSO/JWT parameters */
   {"BROWSER_SSO",    offsetof(MADB_Dsn, IsBrowserAuth),     DSN_TYPE_BOOL  , 0, 0},
   {"IGNORE_KEYRING_SSO", offsetof(MADB_Dsn, IgnoreKeyring), DSN_TYPE_BOOL  , 0, 0},
@@ -179,6 +180,7 @@ void MADB_DSN_Free(MADB_Dsn *Dsn)
   MADB_FREE(Dsn->JWT);
   MADB_FREE(Dsn->ServerKey);
   MADB_FREE(Dsn->TlsKeyPwd);
+  MADB_FREE(Dsn->ConnAttrs);
   if (Dsn->FreeMe)
     MADB_FREE(Dsn); 
 }

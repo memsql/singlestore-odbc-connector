@@ -84,7 +84,7 @@ MADB_DsnMap DsnMap[] = {
   {&DsnKeys[14], 2, ckReconnect,          0, 0},
   {&DsnKeys[15], 2, ckConnectPrompt,      0, 0},
   {&DsnKeys[16], 2, cbCharset,            0, 0},
-  {&DsnKeys[42], 2, cbBrowserSSO,         0, 0},
+  {&DsnKeys[43], 2, cbBrowserSSO,         0, 0},
   {&DsnKeys[34], 2, txtServerKey,       260, 0},
   {&DsnKeys[18], 3, txtPluginDir,       260, 0},
   {&DsnKeys[39], 3, ckNoSSPS,             0, 0},

@@ -142,8 +142,8 @@ jobs:
           name: Start S2MS cluster
           no_output_timeout: 30m
           command: |
-            sudo pip3 install singlestoredb
-            python3 ./.circleci/setup_s2ms_cluster.py start odbc_test
+            pip3.9 install singlestoredb
+            python3.9 ./.circleci/setup_s2ms_cluster.py start odbc_test
       - run:
           name: Define Environment Variables
           command: |
@@ -169,8 +169,8 @@ jobs:
           name: Terminate S2MS cluster
           when: always
           command: |
-            sudo pip3 install singlestoredb
-            python3 ./.circleci/setup_s2ms_cluster.py terminate
+            pip3.9 install singlestoredb
+            python3.9 ./.circleci/setup_s2ms_cluster.py terminate
 
   build-ubuntu:
     parameters:

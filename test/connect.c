@@ -2007,6 +2007,39 @@ ODBC_TEST(driver_connect_browser_sso) {
   return OK;
 }
 
+ODBC_TEST(driver_connect_with_attrs) {
+  HSTMT hdbc;
+  SQLCHAR conn[2048];
+  SQLCHAR conn_out[2048];
+
+  CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc));
+  SQLSMALLINT conn_out_len;
+  sprintf((char*)conn, "DRIVER=%s;UID=%s;PWD=%s;SERVER=%s;PORT=%u;DB=%s;CONN_ATTRS=%s;",
+          my_drivername, my_uid, my_pwd, my_servername, my_port, my_schema, "program_name:driver_connect_with_attrs_test");
+  CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
+                                      conn_out, 2048 * sizeof(SQLCHAR), &conn_out_len,
+                                      SQL_DRIVER_NOPROMPT));
+  if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
+
+  HSTMT hstmt;
+  CHECK_DBC_RC(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt));
+
+#ifdef IS_ON_S2MS
+  SQLCHAR buff[1024];
+  my_bool success = FALSE;
+  OK_SIMPLE_STMT(hstmt, "SELECT ATTRIBUTE_VALUE FROM information_schema.mv_connection_attributes");
+  while (SQLFetch(hstmt) == SQL_SUCCESS)
+  {
+    my_fetch_str(hstmt, buff, 1);
+    if (!strcmp(buff, "driver_connect_with_attrs_test")) success = TRUE;
+  }
+  FAIL_IF(!success, "information_schema.mv_connection_attributes doesn't contain driver_connect_with_attrs_test ATTRIBUTE_VALUE");
+#endif
+  CHECK_STMT_RC(hstmt, SQLFreeHandle(SQL_HANDLE_STMT, hstmt));
+  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+  return OK;
+}
+
 // TODO: test NamedPipe parameter and NamedPipe bit in options (has effect only on Windows)
 // TODO: test GUI prompts for Windows and Mac
 
@@ -2036,6 +2069,7 @@ MA_ODBC_TESTS my_tests[]=
   {driver_connect_forwardonly_w, "driver_connect_forwardonly_w", NORMAL, UNICODE_DRIVER},
   {driver_connect_no_cache, "driver_connect_no_cache", NORMAL, ALL_DRIVERS},
   {driver_connect_no_cache_w, "driver_connect_no_cache_w", NORMAL, UNICODE_DRIVER},
+  {driver_connect_with_attrs, "driver_connect_with_attrs", NORMAL, ALL_DRIVERS},
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
