@@ -44,10 +44,9 @@ else
   apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 648ACFD622F3D138  # Debian 10/buster archive signing key
   apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 0E98404D386FA1D9  # Debian 11/bullseye archive signing key
   apt-key adv --recv-keys --keyserver keyserver.ubuntu.com DCC9EFBF77E11517  # Debian 10/buster release key
-  apt-get update
-  apt-get install -y cmake make gcc libssl-dev dnsutils
   echo "deb http://deb.debian.org/debian buster main contrib non-free" >> /etc/apt/sources.list.d/tutu.list
   apt-get update
+  apt-get install -y cmake make gcc libssl-dev dnsutils
   apt-get install -y unixodbc-dev=2.3.6-0.1 'libglib2.0-0' libglib2.0-dev libsecret-1-dev xdg-utils w3m curl
   # install python and pip
   apt-get install -y python3 python3-pip
