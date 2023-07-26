@@ -132,6 +132,52 @@ SQLWCHAR *MADB_ConvertToWchar(const char *Ptr, SQLLEN PtrLength, Client_Charset*
   return WStr;
 }
 
+  /* {{{ MADB_ConvertFromLatin1Char
+  Length gets number of written bytes including TN (if StrCharLen == -1 or SQL_NTS or if StrCharLen includes
+  TN in the Str) */
+char *MADB_ConvertFromLatin1Char(const char *Str, SQLINTEGER StrCharLen, SQLULEN *Length/*Bytes*/, Client_Charset *cc, BOOL *Error)
+{
+  char *AscStr;
+  int AscLen, AllocLen, i, StrActualCharLen;
+  
+  if (Error)
+    *Error= 0;
+
+  if (cc == NULL || cc->CodePage < 1)
+  {
+    cc= &utf8;
+  }
+
+  if (StrCharLen == SQL_NTS) 
+  {
+    StrActualCharLen = strlen(Str) + 1;
+  } else 
+  {
+    StrActualCharLen = StrCharLen;
+  }
+
+  if (!(AscStr = (char *)MADB_CALLOC(StrActualCharLen * 2)))
+    return NULL;
+  
+  for (i = 0; i < StrActualCharLen; i++) 
+  {
+    char c = *(Str + i);
+    if (c & 0x80) 
+    {
+      *(AscStr + AscLen++) = c;
+    } else 
+    {
+      *(AscStr + AscLen++) = 0xc0 | (c >> 6);
+      *(AscStr + AscLen++) = 0x80 | (c & 0x3f);
+    }
+  }
+
+  if (Length)
+    *Length= (SQLINTEGER)AscLen;
+  return AscStr;
+}
+/* }}} */
+
   /* {{{ MADB_ConvertFromWChar
   Length gets number of written bytes including TN (if WstrCharLen == -1 or SQL_NTS or if WstrCharLen includes
   TN in the Wstr) */

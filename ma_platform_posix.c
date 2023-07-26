@@ -179,8 +179,8 @@ SQLWCHAR *MADB_ConvertToWchar(const char *Ptr, SQLLEN PtrLength, Client_Charset*
   return WStr;
 }
 
-/* {{{ MADB_ConvertFromANSIChar */
-char *MADB_ConvertFromANSIChar(const SQLCHAR *Ptr, SQLINTEGER PtrLength, SQLULEN *Length, Client_Charset *cc,
+/* {{{ MADB_ConvertFromLatin1Char */
+char *MADB_ConvertFromLatin1Char(const SQLCHAR *Ptr, SQLINTEGER PtrLength, SQLULEN *Length, Client_Charset *cc,
                             BOOL *Error)
 {
   char *AscStr;

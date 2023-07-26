@@ -10,7 +10,5 @@ cd build/test
 export ODBCINI="$PWD/odbc.ini"
 export ODBCSYSINI=$PWD
 
-cd ../../test
-gcc odbc_unicode_test.c -o odbc_unicode_test.c.o -g -lodbc -std=c11 -W
-./odbc_unicode_test.c.o
+ctest -R odbc_unicode
 # gdb ./<test to run> can be used to debug a specific test, e.g. gdb ./odbc_connect

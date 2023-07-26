@@ -61,29 +61,30 @@ MADB_DsnKey DsnKeys[]=
   {"TRACE",          offsetof(MADB_Dsn, TraceFile),         DSN_TYPE_STRING, 0, 0},
   {"PLUGIN_DIR",     offsetof(MADB_Dsn, ConnCPluginsDir),   DSN_TYPE_STRING, 0, 0},
   /* SSL */
-  {"SSLKEY",         offsetof(MADB_Dsn, SslKey),            DSN_TYPE_STRING, 0, 0},
-  {"SSLCERT",        offsetof(MADB_Dsn, SslCert),           DSN_TYPE_STRING, 0, 0}, /* 20 */
-  {"SSLCA",          offsetof(MADB_Dsn, SslCa),             DSN_TYPE_STRING, 0, 0},
-  {"SSLCAPATH",      offsetof(MADB_Dsn, SslCaPath),         DSN_TYPE_STRING, 0, 0},
-  {"SSLCIPHER",      offsetof(MADB_Dsn, SslCipher),         DSN_TYPE_STRING, 0, 0},
-  {"SSLVERIFY",      offsetof(MADB_Dsn, SslVerify),         DSN_TYPE_BOOL,   0, 0},
-  {"TLSPEERFP",      offsetof(MADB_Dsn, TlsPeerFp),         DSN_TYPE_STRING, 0, 0},
-  {"TLSPEERFPLIST",  offsetof(MADB_Dsn, TlsPeerFpList),     DSN_TYPE_STRING, 0, 0}, /* 26 */
-  {"SSLCRL",         offsetof(MADB_Dsn, SslCrl),            DSN_TYPE_STRING, 0, 0},
-  {"SSLCRLPATH",     offsetof(MADB_Dsn, SslCrlPath),        DSN_TYPE_STRING, 0, 0},
-  {"SOCKET",         offsetof(MADB_Dsn, Socket),            DSN_TYPE_STRING, 0, 0},
-  {"SAVEFILE",       offsetof(MADB_Dsn, SaveFile),          DSN_TYPE_STRING, 0, 0}, /* 30 */
-  {"USE_MYCNF",      offsetof(MADB_Dsn, ReadMycnf),         DSN_TYPE_OPTION, MADB_OPT_FLAG_USE_CNF, 0},
-  {"TLSVERSION",     offsetof(MADB_Dsn, TlsVersion),        DSN_TYPE_CBOXGROUP, 0, 0},
-  {"FORCETLS",       offsetof(MADB_Dsn, ForceTls),          DSN_TYPE_BOOL,   0, 0},
-  {"SERVERKEY",      offsetof(MADB_Dsn, ServerKey),         DSN_TYPE_STRING, 0, 0},
-  {"TLSKEYPWD",      offsetof(MADB_Dsn, TlsKeyPwd),         DSN_TYPE_STRING, 0, 0},
-  {"INTERACTIVE",    offsetof(MADB_Dsn, InteractiveClient), DSN_TYPE_BOOL,   0, 0},
-  {"FORWARDONLY",    offsetof(MADB_Dsn, ForceForwardOnly),  DSN_TYPE_OPTION, MADB_OPT_FLAG_FORWARD_CURSOR, 0},
-  {"COMPAT_MODE",    offsetof(MADB_Dsn, CompatMode),        DSN_TYPE_BOOL,   0, 0}, /* MYSQL_COMPATIBILITY_MODE */
-  {"NO_SSPS",        offsetof(MADB_Dsn, NoSsps),            DSN_TYPE_BOOL,   0, 0},
-  {"NO_CACHE",       offsetof(MADB_Dsn, NoCache),           DSN_TYPE_OPTION, MADB_OPT_FLAG_NO_CACHE, 0},  /* 40 */
-  {"APP",            offsetof(MADB_Dsn, App),               DSN_TYPE_STRING, 0, 0},
+  {"SSLKEY",             offsetof(MADB_Dsn, SslKey),            DSN_TYPE_STRING, 0, 0},
+  {"SSLCERT",            offsetof(MADB_Dsn, SslCert),           DSN_TYPE_STRING, 0, 0}, /* 20 */
+  {"SSLCA",              offsetof(MADB_Dsn, SslCa),             DSN_TYPE_STRING, 0, 0},
+  {"SSLCAPATH",          offsetof(MADB_Dsn, SslCaPath),         DSN_TYPE_STRING, 0, 0},
+  {"SSLCIPHER",          offsetof(MADB_Dsn, SslCipher),         DSN_TYPE_STRING, 0, 0},
+  {"SSLVERIFY",          offsetof(MADB_Dsn, SslVerify),         DSN_TYPE_BOOL,   0, 0},
+  {"TLSPEERFP",          offsetof(MADB_Dsn, TlsPeerFp),         DSN_TYPE_STRING, 0, 0},
+  {"TLSPEERFPLIST",      offsetof(MADB_Dsn, TlsPeerFpList),     DSN_TYPE_STRING, 0, 0}, /* 26 */
+  {"SSLCRL",             offsetof(MADB_Dsn, SslCrl),            DSN_TYPE_STRING, 0, 0},
+  {"SSLCRLPATH",         offsetof(MADB_Dsn, SslCrlPath),        DSN_TYPE_STRING, 0, 0},
+  {"SOCKET",             offsetof(MADB_Dsn, Socket),            DSN_TYPE_STRING, 0, 0},
+  {"SAVEFILE",           offsetof(MADB_Dsn, SaveFile),          DSN_TYPE_STRING, 0, 0}, /* 30 */
+  {"USE_MYCNF",          offsetof(MADB_Dsn, ReadMycnf),         DSN_TYPE_OPTION, MADB_OPT_FLAG_USE_CNF, 0},
+  {"TLSVERSION",         offsetof(MADB_Dsn, TlsVersion),        DSN_TYPE_CBOXGROUP, 0, 0},
+  {"FORCETLS",           offsetof(MADB_Dsn, ForceTls),          DSN_TYPE_BOOL,   0, 0},
+  {"SERVERKEY",          offsetof(MADB_Dsn, ServerKey),         DSN_TYPE_STRING, 0, 0},
+  {"TLSKEYPWD",          offsetof(MADB_Dsn, TlsKeyPwd),         DSN_TYPE_STRING, 0, 0},
+  {"INTERACTIVE",        offsetof(MADB_Dsn, InteractiveClient), DSN_TYPE_BOOL,   0, 0},
+  {"FORWARDONLY",        offsetof(MADB_Dsn, ForceForwardOnly),  DSN_TYPE_OPTION, MADB_OPT_FLAG_FORWARD_CURSOR, 0},
+  {"COMPAT_MODE",        offsetof(MADB_Dsn, CompatMode),        DSN_TYPE_BOOL,   0, 0}, /* MYSQL_COMPATIBILITY_MODE */
+  {"NO_SSPS",            offsetof(MADB_Dsn, NoSsps),            DSN_TYPE_BOOL,   0, 0},
+  {"NO_CACHE",           offsetof(MADB_Dsn, NoCache),           DSN_TYPE_OPTION, MADB_OPT_FLAG_NO_CACHE, 0},  /* 40 */
+  {"APP",                offsetof(MADB_Dsn, App),               DSN_TYPE_STRING, 0, 0},
+  {"CONVERT_FROM_LATIN", offsetof(MADB_Dsn, ConvertFromLatin),  DSN_TYPE_BOOL,   0, 0},
   /* SSO/JWT parameters */
   {"BROWSER_SSO",    offsetof(MADB_Dsn, IsBrowserAuth),     DSN_TYPE_BOOL  , 0, 0},
   {"IGNORE_KEYRING_SSO", offsetof(MADB_Dsn, IgnoreKeyring), DSN_TYPE_BOOL  , 0, 0},

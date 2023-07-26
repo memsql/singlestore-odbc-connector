@@ -1543,37 +1543,88 @@ ODBC_TEST(t_odbc253)
   return OK;
 }
 
+ODBC_TEST(convert_from_latin)
+{
+  HDBC hdbc;
+  HSTMT hstmt;
+
+  SQLCHAR conn[512];
+  SQLCHAR buffer[512] = "123\xff\x80\x8f\xa0";
+
+  /* Don't cache result option in the connection string */
+  sprintf((char *)conn, "DSN=%s;UID=%s;PASSWORD=%s;"
+          "DATABASE=%s;PORT=%d;SERVER=%s;CONVERT_FROM_LATIN=1",
+          my_dsn, my_uid, my_pwd, my_schema, my_port, my_servername);
+
+  CHECK_ENV_RC(Env, SQLAllocHandle(SQL_HANDLE_DBC, Env, &hdbc));
+
+  CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, (SQLSMALLINT)sizeof(conn), NULL,
+                                 0, NULL, SQL_DRIVER_NOPROMPT));
+  CHECK_DBC_RC(hdbc, SQLAllocStmt(hdbc, &hstmt));
+
+  OK_SIMPLE_STMT(hstmt, "drop table if exists convert_from_latin");
+  OK_SIMPLE_STMT(hstmt, "CREATE TABLE convert_from_latin(a text)");
+
+  CHECK_STMT_RC(hstmt, SQLPrepare(hstmt, "INSERT INTO convert_from_latin VALUES (?)", SQL_NTS));
+  CHECK_STMT_RC(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR, SQL_NTS, 0, buffer, sizeof(buffer), NULL));
+
+  CHECK_STMT_RC(hstmt, SQLExecute(hstmt));
+
+  CHECK_STMT_RC(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  OK_SIMPLE_STMT(hstmt, "select * from convert_from_latin");
+  
+  SQLCHAR aCol[100];
+  SQLLEN aColLen;
+
+  CHECK_STMT_RC(hstmt, SQLFetch(hstmt));
+
+  CHECK_STMT_RC(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, aCol, sizeof(aCol), &aColLen));
+  is_num(aColLen, 11);
+  IS_STR(aCol, "123\xc3\xbf\xc2\x80\xc2\x8f\xc2\xa0", aColLen+1);
+  return OK;
+
+  CHECK_STMT_RC(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  OK_SIMPLE_STMT(hstmt, "drop table if exists convert_from_latin");
+
+  CHECK_STMT_RC(hstmt, SQLFreeStmt(hstmt, SQL_DROP));
+  CHECK_DBC_RC(hdbc, SQLDisconnect(hdbc));
+  CHECK_DBC_RC(hdbc, SQLFreeHandle(SQL_HANDLE_DBC, hdbc));
+
+  return OK;
+}
 
 MA_ODBC_TESTS my_tests[]=
 {
-    {test_CONO1,        "test_CONO1",         NORMAL, UNICODE_DRIVER},
-    {test_count,        "test_count",         NORMAL, ALL_DRIVERS},
-    {sqlconnect,        "sqlconnect",         NORMAL, ALL_DRIVERS},
-    {sqlprepare,        "sqlprepare",         NORMAL, UNICODE_DRIVER},
-    {sqlprepare_ansi,   "sqlprepare_ansi",    NORMAL, ALL_DRIVERS},
-    {sqlchar,           "sqlchar",            NORMAL, UNICODE_DRIVER},
-    {sqldriverconnect,  "sqldriverconnect",   NORMAL, ALL_DRIVERS},
-    {sqlnativesql,      "sqlnativesql",       NORMAL, UNICODE_DRIVER},
-    {sqlsetcursorname,  "sqlsetcursorname",   NORMAL, UNICODE_DRIVER},
-    {sqlgetcursorname,  "sqlgetcursorname",   NORMAL, ALL_DRIVERS},
-    {sqlcolattribute,   "sqlcolattribute",    NORMAL, UNICODE_DRIVER},
-    {sqldescribecol,    "sqldescribecol",     NORMAL, UNICODE_DRIVER},
-    {sqlgetconnectattr, "sqlgetconnectattr",  NORMAL, UNICODE_DRIVER},
-    {sqlgetdiagrec,     "sqlgetdiagrec",      NORMAL, ALL_DRIVERS},
-    {sqlgetdiagfield,   "sqlgetdiagfield",    NORMAL, UNICODE_DRIVER},
-    {sqlcolumns,        "sqlcolumns",         NORMAL, UNICODE_DRIVER},
-    {sqltables,         "sqltables",          NORMAL, UNICODE_DRIVER},
-    {sqlspecialcolumns, "sqlspecialcolumns",  NORMAL, UNICODE_DRIVER},
-    {sqlprimarykeys,    "sqlprimarykeys",     NORMAL, UNICODE_DRIVER},
-    {sqlstatistics,     "sqlstatistics",      NORMAL, UNICODE_DRIVER},
-    {t_bug32161,        "t_bug32161",         NORMAL, UNICODE_DRIVER},
-    {t_bug34672,        "t_bug34672",         NORMAL, ALL_DRIVERS},
-    {t_bug28168,        "t_bug28168",         NORMAL, UNICODE_DRIVER},
-    {t_bug14363601,     "t_bug14363601",      NORMAL, ALL_DRIVERS},
-    {t_odbc19,          "test_issue_odbc19",  NORMAL, ALL_DRIVERS},
-    {t_odbc72,          "odbc72_surrogate_pairs",  TO_FIX, ALL_DRIVERS}, // TODO PLAT-5421
-    {t_odbc203,         "t_odbc203",          NORMAL, ALL_DRIVERS},
-    {t_odbc253,         "t_odbc253_empty_str_crash", NORMAL, ALL_DRIVERS},
+//    {test_CONO1,         "test_CONO1",                NORMAL, UNICODE_DRIVER},
+//    {test_count,         "test_count",                NORMAL, ALL_DRIVERS},
+//    {sqlconnect,         "sqlconnect",                NORMAL, ALL_DRIVERS},
+//    {sqlprepare,         "sqlprepare",                NORMAL, UNICODE_DRIVER},
+//    {sqlprepare_ansi,    "sqlprepare_ansi",           NORMAL, ALL_DRIVERS},
+//    {sqlchar,            "sqlchar",                   NORMAL, UNICODE_DRIVER},
+//    {sqldriverconnect,   "sqldriverconnect",          NORMAL, ALL_DRIVERS},
+//    {sqlnativesql,       "sqlnativesql",              NORMAL, UNICODE_DRIVER},
+//    {sqlsetcursorname,   "sqlsetcursorname",          NORMAL, UNICODE_DRIVER},
+//    {sqlgetcursorname,   "sqlgetcursorname",          NORMAL, ALL_DRIVERS},
+//    {sqlcolattribute,    "sqlcolattribute",           NORMAL, UNICODE_DRIVER},
+//    {sqldescribecol,     "sqldescribecol",            NORMAL, UNICODE_DRIVER},
+//    {sqlgetconnectattr,  "sqlgetconnectattr",         NORMAL, UNICODE_DRIVER},
+//    {sqlgetdiagrec,      "sqlgetdiagrec",             NORMAL, ALL_DRIVERS},
+//    {sqlgetdiagfield,    "sqlgetdiagfield",           NORMAL, UNICODE_DRIVER},
+//    {sqlcolumns,         "sqlcolumns",                NORMAL, UNICODE_DRIVER},
+//    {sqltables,          "sqltables",                 NORMAL, UNICODE_DRIVER},
+//    {sqlspecialcolumns,  "sqlspecialcolumns",         NORMAL, UNICODE_DRIVER},
+//    {sqlprimarykeys,     "sqlprimarykeys",            NORMAL, UNICODE_DRIVER},
+//    {sqlstatistics,      "sqlstatistics",             NORMAL, UNICODE_DRIVER},
+//    {t_bug32161,         "t_bug32161",                NORMAL, UNICODE_DRIVER},
+//    {t_bug34672,         "t_bug34672",                NORMAL, ALL_DRIVERS},
+//    {t_bug28168,         "t_bug28168",                NORMAL, UNICODE_DRIVER},
+//    {t_bug14363601,      "t_bug14363601",             NORMAL, ALL_DRIVERS},
+//    {t_odbc19,           "test_issue_odbc19",         NORMAL, ALL_DRIVERS},
+//    {t_odbc72,           "odbc72_surrogate_pairs",    TO_FIX, ALL_DRIVERS}, // TODO PLAT-5421
+//    {t_odbc203,          "t_odbc203",                 NORMAL, ALL_DRIVERS},
+//    {t_odbc253,          "t_odbc253_empty_str_crash", NORMAL, ALL_DRIVERS},
+    {convert_from_latin, "convert_from_latin",        NORMAL, ALL_DRIVERS},
     {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 

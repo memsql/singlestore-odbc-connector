@@ -403,19 +403,26 @@ SQLRETURN MADB_Char2Sql(MADB_Stmt *Stmt, MADB_DescRecord *CRec, void* DataPtr, S
     {
       /* Bulk shouldn't get here, thus logic for single paramset execution */
 
-      SQLULEN mbLength=0;
-      MADB_FREE(CRec->InternalBuffer);
-
-      /* conn cs ? */
-      CRec->InternalBuffer= MADB_ConvertFromANSIChar((char *)DataPtr, (SQLINTEGER)(Length), &mbLength, &Stmt->Connection->Charset, NULL);
-
-      if (CRec->InternalBuffer == NULL)
+      if (Stmt->Connection->Dsn->ConvertFromLatin) 
       {
-        return MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
-      }
+        SQLULEN mbLength=0;
+        MADB_FREE(CRec->InternalBuffer);
 
-      *LengthPtr= (unsigned long)mbLength;
-      *Buffer= CRec->InternalBuffer;
+        /* conn cs ? */
+        CRec->InternalBuffer= MADB_ConvertFromLatin1Char((char *)DataPtr, (SQLINTEGER)(Length), &mbLength, &Stmt->Connection->Charset, NULL);
+
+        if (CRec->InternalBuffer == NULL)
+        {
+          return MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
+        }
+
+        *LengthPtr= (unsigned long)mbLength;
+        *Buffer= CRec->InternalBuffer;
+      } else 
+      {
+        *LengthPtr= (unsigned long)Length;
+        *Buffer= DataPtr;
+      }
       
       MaBind->buffer_type= MYSQL_TYPE_STRING;
     }
