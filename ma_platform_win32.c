@@ -138,15 +138,10 @@ SQLWCHAR *MADB_ConvertToWchar(const char *Ptr, SQLLEN PtrLength, Client_Charset*
 char *MADB_ConvertFromLatin1Char(const char *Str, SQLINTEGER StrCharLen, SQLULEN *Length/*Bytes*/, Client_Charset *cc, BOOL *Error)
 {
   char *AscStr;
-  int AscLen, AllocLen, i, StrActualCharLen;
+  int AscLen = 0, i, StrActualCharLen;
   
   if (Error)
     *Error= 0;
-
-  if (cc == NULL || cc->CodePage < 1)
-  {
-    cc= &utf8;
-  }
 
   if (StrCharLen == SQL_NTS) 
   {
