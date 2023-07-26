@@ -63,6 +63,7 @@ MARIADB_CHARSET_INFO dummyUtf16le= {56,1, "utf16le", "utf16_general_ci", "", 120
 MARIADB_CHARSET_INFO dummyUtf16be= {54,1, "utf16", "utf16_general_ci", "", 0, "UTF16", 2, 4, CharOctetLen16, ValidChar16};
 MARIADB_CHARSET_INFO dummyUtf32le= {0, 1, "utf32le", "utf32_general_ci", "", 0, "UTF-32LE", 4, 4, CharOctetLen32, ValidChar32};
 MARIADB_CHARSET_INFO dummyUtf32be= {60,1, "utf32", "utf32_general_ci", "", 0, "UTF32", 4, 4, CharOctetLen32, ValidChar32};
+MARIADB_CHARSET_INFO dummyLatin1=  {48,1, "latin1", "latin1_general_ci", "", 1250, "LATIN1", 1, 1, NULL, NULL};
 
 MARIADB_CHARSET_INFO*  DmUnicodeCs= NULL;
 Client_Charset utf8=  {CP_UTF8, NULL};

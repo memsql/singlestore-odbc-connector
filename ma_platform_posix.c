@@ -29,6 +29,7 @@
 #include "ma_conv_charset.h"
 
 extern MARIADB_CHARSET_INFO *DmUnicodeCs;
+extern MARIADB_CHARSET_INFO  dummyLatin1;
 extern Client_Charset utf8;
 
 char LogFile[256];
@@ -178,6 +179,62 @@ SQLWCHAR *MADB_ConvertToWchar(const char *Ptr, SQLLEN PtrLength, Client_Charset*
   return WStr;
 }
 
+/* {{{ MADB_ConvertFromANSIChar */
+char *MADB_ConvertFromANSIChar(const SQLCHAR *Ptr, SQLINTEGER PtrLength, SQLULEN *Length, Client_Charset *cc,
+                            BOOL *Error)
+{
+  char *AscStr;
+  size_t AscLen, PtrOctetLen;
+  BOOL dummyError= 0;
+  
+  if (Error)
+  {
+    *Error= 0;
+  }
+  else
+  {
+    Error= &dummyError;
+  }
+
+  if (cc == NULL || cc->CodePage < 1)
+  {
+    cc= &utf8;
+  }
+
+  if (PtrLength == SQL_NTS)
+  {
+    PtrOctetLen = strlen(Ptr);
+    /* Allocating +1 character for terminating symbol */
+    AscLen= (PtrOctetLen+1)*cc->cs_info->char_maxlen;
+  }
+  else
+  {
+    PtrOctetLen= PtrLength;
+    AscLen= PtrLength*cc->cs_info->char_maxlen;
+  }
+
+  if (!(AscStr = (char *)MADB_CALLOC(AscLen)))
+    return NULL;
+
+  AscLen= MADB_ConvertString((char*)Ptr, &PtrOctetLen, &dummyLatin1, AscStr, &AscLen, cc->cs_info, Error);
+
+  if (AscLen != (size_t)-1)
+  {
+    if (PtrLength == -1 && AscLen > 0)
+    {
+      --AscLen;
+    }
+  }
+  else
+  {
+    MADB_FREE(AscStr);
+    AscLen= 0;
+  }
+  if (Length)
+    *Length= (SQLINTEGER)AscLen;
+  return AscStr;
+}
+/* }}} */
 
 /* {{{ MADB_ConvertFromWChar */
 char *MADB_ConvertFromWChar(const SQLWCHAR *Ptr, SQLINTEGER PtrLength, SQLULEN *Length, Client_Charset *cc,

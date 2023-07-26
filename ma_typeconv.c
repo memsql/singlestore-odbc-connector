@@ -399,11 +399,26 @@ SQLRETURN MADB_Char2Sql(MADB_Stmt *Stmt, MADB_DescRecord *CRec, void* DataPtr, S
     RETURN_ERROR_OR_CONTINUE(MADB_TsConversionIsPossible(&Ts, SqlRec->ConciseType, &Stmt->Error, MADB_ERR_22018, isTime));
     /* To stay on the safe side - still sending as string in the default branch */
   }
-  default:
-    /* Bulk shouldn't get here, thus logic for single paramset execution */
-    *LengthPtr= (unsigned long)Length;
-    *Buffer= DataPtr;
-    MaBind->buffer_type= MYSQL_TYPE_STRING;
+  default: 
+    {
+      /* Bulk shouldn't get here, thus logic for single paramset execution */
+
+      SQLULEN mbLength=0;
+      MADB_FREE(CRec->InternalBuffer);
+
+      /* conn cs ? */
+      CRec->InternalBuffer= MADB_ConvertFromANSIChar((char *)DataPtr, (SQLINTEGER)(Length), &mbLength, &Stmt->Connection->Charset, NULL);
+
+      if (CRec->InternalBuffer == NULL)
+      {
+        return MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
+      }
+
+      *LengthPtr= (unsigned long)mbLength;
+      *Buffer= CRec->InternalBuffer;
+      
+      MaBind->buffer_type= MYSQL_TYPE_STRING;
+    }
   }
 
   return SQL_SUCCESS;

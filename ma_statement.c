@@ -1435,7 +1435,7 @@ SQLRETURN MADB_InsertParam(MADB_Stmt* Stmt, MADB_DescRecord* ApdRecord, MADB_Des
             // DAE parameter is stored in the IpdRecord, and it's length should be properly calculated by now, so just
             // reuse it. Otherwise, calculate the length explicitly.
             Length = PARAM_IS_DAE(OctetLengthPtr) ? IpdRecord->OctetLength : MADB_CalculateLength(Stmt, OctetLengthPtr, ApdRecord, DataPtr);
-
+            printf("AAA %s %d\n", DataPtr, strlen(DataPtr));
             switch(IpdRecord->Type)
             {
                 case SQL_BIT:
@@ -1466,12 +1466,25 @@ SQLRETURN MADB_InsertParam(MADB_Stmt* Stmt, MADB_DescRecord* ApdRecord, MADB_Des
                     // if everything is ok, fall below and append a char* DataPtr.
                 }
                 default:
-                    if (MADB_DynstrAppendMem(&data, (char *) DataPtr, Length))
+                {
+                    SQLULEN convertedLen;
+                    char *converted = MADB_ConvertFromANSIChar((char *) DataPtr, Length, &convertedLen, &Stmt->Connection->Charset, &ret);
+                    if (!SQL_SUCCEEDED(ret))
                     {
+                        MADB_FREE(converted);
+                        ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY000, "Failed to convert a char parameter", 0);
+                        goto end;
+                    }
+
+                    if (MADB_DynstrAppendMem(&data, converted, convertedLen))
+                    {
+                        MADB_FREE(converted);
                         ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to append a char parameter", 0);
                         goto end;
                     }
+                    MADB_FREE(converted);
                     break;
+                }
             }
             break;
         }
@@ -1492,7 +1505,7 @@ SQLRETURN MADB_InsertParam(MADB_Stmt* Stmt, MADB_DescRecord* ApdRecord, MADB_Des
                     ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY000, "Failed to convert a wchar parameter", 0);
                     goto end;
                 }
-                if (MADB_DynstrAppend(&data, converted))
+                if (MADB_DynstrAppendMem(&data, converted, convertedLen))
                 {
                     MADB_FREE(converted);
                     ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, "Failed to append a wchar parameter", 0);

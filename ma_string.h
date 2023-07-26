@@ -23,6 +23,8 @@
 #define OUT
 #define INOUT
 
+char *MADB_ConvertFromANSIChar(const SQLCHAR *Ptr, SQLINTEGER PtrLength, SQLULEN *Length, Client_Charset *cc,
+                            BOOL *Error);
 char *MADB_ConvertFromWChar(const SQLWCHAR *Ptr, SQLINTEGER PtrLength, SQLULEN *Length, Client_Charset* cc, BOOL *DefaultCharUsed);
 int MADB_ConvertAnsi2Unicode(Client_Charset* cc, const char *AnsiString, SQLLEN AnsiLength, 
                              SQLWCHAR *UnicodeString, SQLLEN UnicodeLength, 
