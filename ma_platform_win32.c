@@ -155,7 +155,7 @@ char *MADB_ConvertFromLatin1Char(const char *Str, SQLINTEGER StrCharLen, SQLULEN
   
   for (i = 0; i < StrActualCharLen; i++) 
   {
-    char c = *(Str + i);
+    int c = *(Str + i);
     if (c < 0x80) 
     {
       *(AscStr + AscLen++) = c;
