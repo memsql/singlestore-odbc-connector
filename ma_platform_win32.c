@@ -142,7 +142,6 @@ char *MADB_ConvertFromLatin1Char(const char *Str, SQLINTEGER StrCharLen, SQLULEN
   
   if (Error)
     *Error= 0;
-  printf("AAAA1 %d\n", StrCharLen);
   if (StrCharLen == SQL_NTS) 
   {
     StrActualCharLen = strlen(Str) + 1;
@@ -150,7 +149,6 @@ char *MADB_ConvertFromLatin1Char(const char *Str, SQLINTEGER StrCharLen, SQLULEN
   {
     StrActualCharLen = StrCharLen;
   }
-  printf("AAAA2 %d\n", StrActualCharLen);
 
   if (!(AscStr = (char *)MADB_CALLOC(StrActualCharLen * 2)))
     return NULL;
@@ -158,21 +156,18 @@ char *MADB_ConvertFromLatin1Char(const char *Str, SQLINTEGER StrCharLen, SQLULEN
   for (i = 0; i < StrActualCharLen; i++) 
   {
     char c = *(Str + i);
-    printf("AAAA3 %c\n", c);
     if (c & 0x80) 
-    {
-      *(AscStr + AscLen++) = c;
-    } else 
     {
       *(AscStr + AscLen++) = 0xc0 | (c >> 6);
       *(AscStr + AscLen++) = 0x80 | (c & 0x3f);
+    } else 
+    {
+      *(AscStr + AscLen++) = c;
     }
-    printf("AAAA4 %d\n", AscLen);
   }
 
   if (Length)
     *Length= (SQLINTEGER)AscLen;
-  printf("AAAA5 %d\n", *Length);
   return AscStr;
 }
 /* }}} */
