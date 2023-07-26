@@ -1435,6 +1435,7 @@ SQLRETURN MADB_InsertParam(MADB_Stmt* Stmt, MADB_DescRecord* ApdRecord, MADB_Des
             // DAE parameter is stored in the IpdRecord, and it's length should be properly calculated by now, so just
             // reuse it. Otherwise, calculate the length explicitly.
             Length = PARAM_IS_DAE(OctetLengthPtr) ? IpdRecord->OctetLength : MADB_CalculateLength(Stmt, OctetLengthPtr, ApdRecord, DataPtr);
+
             switch(IpdRecord->Type)
             {
                 case SQL_BIT:

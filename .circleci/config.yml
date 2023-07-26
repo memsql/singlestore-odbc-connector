@@ -21,11 +21,7 @@ version: 2.1
 parameters:
   driver-version:
     type: string
-<<<<<<< Updated upstream
-    default: "1.1.2"
-=======
     default: "1.1.4"
->>>>>>> Stashed changes
 
 commands:
   setup-environment-linux:
