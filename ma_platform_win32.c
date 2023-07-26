@@ -156,13 +156,16 @@ char *MADB_ConvertFromLatin1Char(const char *Str, SQLINTEGER StrCharLen, SQLULEN
   for (i = 0; i < StrActualCharLen; i++) 
   {
     char c = *(Str + i);
-    if (c & 0x80) 
-    {
-      *(AscStr + AscLen++) = 0xc0 | (c >> 6);
-      *(AscStr + AscLen++) = 0x80 | (c & 0x3f);
-    } else 
+    if (c < 0x80) 
     {
       *(AscStr + AscLen++) = c;
+      printf("AAA1 %d\n", *(AscStr + AscLen));
+    } else 
+    {
+      *(AscStr + AscLen++) = 0xc0 | (c >> 6);
+      printf("AAA2 %d\n", *(AscStr + AscLen));
+      *(AscStr + AscLen++) = 0x80 | (c & 0x3f);
+      printf("AAA2 %d\n", *(AscStr + AscLen));
     }
   }
 
