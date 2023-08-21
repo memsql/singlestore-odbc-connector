@@ -516,13 +516,6 @@ workflows:
               build_type:
                 - RelWithDebInfo
   weekly:
-    triggers:
-      - schedule:
-          cron: "0 0 * * 1"
-          filters:
-            branches:
-              only:
-                - master
     jobs:
       - build-ubuntu:
           name: build-ubuntu-sanitizer-unicode-7.8.19-<< matrix.build_type >>
