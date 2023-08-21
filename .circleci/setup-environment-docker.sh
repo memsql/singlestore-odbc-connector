@@ -40,6 +40,7 @@ then
   make altinstall
   ln -sfn /usr/local/bin/python3.7 /usr/bin/python3
   ln -sfn /usr/local/bin/pip3.7 /usr/bin/pip3
+  pip3 install urllib3==1.26.16
 else
   apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 648ACFD622F3D138  # Debian 10/buster archive signing key
   apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 0E98404D386FA1D9  # Debian 11/bullseye archive signing key
