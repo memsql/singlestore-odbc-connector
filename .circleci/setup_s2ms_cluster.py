@@ -9,7 +9,7 @@ S2MS_API_KEY = os.getenv("S2MS_API_KEY")  # project UI env-var reference
 
 WORKSPACE_GROUP_BASE_NAME = "ODBC-connector-ci-tests"
 WORKSPACE_NAME = "tests"
-AWS_EU_CENTRAL_REGION = "7e7ffd27-20f7-44b6-87e6-e72828a81ac7"
+AWS_US_WEST_2_REGION = "64031b39-3da1-4a7b-8d3d-6ca86e8d71a7"
 WORKSPACE_ENDPOINT_FILE = "WORKSPACE_ENDPOINT_FILE"
 WORKSPACE_GROUP_ID_FILE = "WORKSPACE_GROUP_ID_FILE"
 
@@ -18,7 +18,7 @@ def cmd_start(workspace_manager):
     w_group_name = WORKSPACE_GROUP_BASE_NAME + "-" + uuid.uuid4().hex
     workspace_group = workspace_manager.create_workspace_group(
         name=w_group_name,
-        region=AWS_EU_CENTRAL_REGION,
+        region=AWS_US_WEST_2_REGION,
         firewall_ranges=["0.0.0.0/0"],
         admin_password=SQL_USER_PASSWORD,
         expires_at="1h30m"

@@ -127,8 +127,11 @@ jobs:
         type: string
       driver_type:
         type: string
+      resource_class:
+        type: string
     macos:
       xcode: 13.4.1
+      resource_class: << parameters.resource_class >>
     environment:
       BUILD_TYPE: << parameters.build_type >>
       TEST_DSN: << parameters.test_dsn >>
@@ -142,8 +145,8 @@ jobs:
           name: Start S2MS cluster
           no_output_timeout: 30m
           command: |
-            pip3.9 install singlestoredb
-            python3.9 ./.circleci/setup_s2ms_cluster.py start odbc_test
+            pip3 install singlestoredb
+            python3 ./.circleci/setup_s2ms_cluster.py start odbc_test
       - run:
           name: Define Environment Variables
           command: |
@@ -169,8 +172,8 @@ jobs:
           name: Terminate S2MS cluster
           when: always
           command: |
-            pip3.9 install singlestoredb
-            python3.9 ./.circleci/setup_s2ms_cluster.py terminate
+            pip3 install singlestoredb
+            python3 ./.circleci/setup_s2ms_cluster.py terminate
 
   build-ubuntu:
     parameters:
@@ -306,8 +309,13 @@ jobs:
     parameters:
       build_type:
         type: string
+      resource_class:
+        type: string
+      arch:
+        type: string
     macos:
       xcode: 13.4.1
+      resource_class: << parameters.resource_class >>
     environment:
       BUILD_TYPE: << parameters.build_type >>
       CONTINUOUS_INTEGRATION: true
@@ -319,7 +327,7 @@ jobs:
           command: |
             ./.circleci/build-osx.sh
       - store_artifacts:
-          path: /Users/distiller/project/osxinstall/singlestore-connector-odbc-<< pipeline.parameters.driver-version >>-osx-x86_64.pkg
+          path: /Users/distiller/project/osxinstall/singlestore-connector-odbc-<< pipeline.parameters.driver-version >>-osx-<< parameters.arch >>.pkg
 
   publish-linux:
     parameters:
@@ -431,6 +439,8 @@ workflows:
           name: build-macos-ansi-<< matrix.build_type >>
           matrix:
             parameters:
+              resource_class:
+                - macos.x86.medium.gen2
               build_type:
                 - RelWithDebInfo
               test_dsn:
@@ -439,6 +449,20 @@ workflows:
                 - SingleStore ODBC ANSI Driver
               driver_type:
                 - ansi
+      - build-macos:
+          name: build-macos-unicode-<< matrix.build_type >>
+          matrix:
+            parameters:
+              resource_class:
+                - macos.m1.medium.gen1
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_w
+              driver_name:
+                - SingleStore ODBC Unicode Driver
+              driver_type:
+                - unicode
       - build-windows:
           name: build-windows-unicode-<< matrix.build_type >>
           matrix:
@@ -453,18 +477,6 @@ workflows:
                 - unicode
               arch_bits:
                 - 64
-      - build-macos:
-          name: build-macos-unicode-<< matrix.build_type >>
-          matrix:
-            parameters:
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - ssodbc_test_w
-              driver_name:
-                - SingleStore ODBC Unicode Driver
-              driver_type:
-                - unicode
       - build-windows:
           name: build-windows-ansi-<< matrix.build_type >>
           matrix:
@@ -754,6 +766,8 @@ workflows:
           name: build-macos-unicode-<< matrix.build_type >>
           matrix:
             parameters:
+              resource_class:
+                - macos.x86.medium.gen2
               build_type:
                 - RelWithDebInfo
               test_dsn:
@@ -766,6 +780,36 @@ workflows:
           name: build-macos-ansi-<< matrix.build_type >>
           matrix:
             parameters:
+              resource_class:
+                -  macos.x86.medium.gen2
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_a
+              driver_name:
+                - SingleStore ODBC ANSI Driver
+              driver_type:
+                - ansi
+      - build-macos:
+          name: build-macos-unicode-<< matrix.build_type >>
+          matrix:
+            parameters:
+              resource_class:
+                - macos.m1.medium.gen1
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_w
+              driver_name:
+                - SingleStore ODBC Unicode Driver
+              driver_type:
+                - unicode
+      - build-macos:
+          name: build-macos-ansi-<< matrix.build_type >>
+          matrix:
+            parameters:
+              resource_class:
+                - macos.m1.medium.gen1
               build_type:
                 - RelWithDebInfo
               test_dsn:
@@ -859,6 +903,24 @@ workflows:
       - publish-macos:
           matrix:
             parameters:
+              resource_class:
+                 - macos.x86.medium.gen2
+              arch:
+                 - x86_64
+              build_type:
+                - RelWithDebInfo
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - publish-macos:
+          matrix:
+            parameters:
+              resource_class:
+                 - macos.m1.medium.gen1
+              arch:
+                 - arm64
               build_type:
                 - RelWithDebInfo
           filters:
