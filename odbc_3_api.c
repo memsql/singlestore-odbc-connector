@@ -265,7 +265,7 @@ SQLRETURN MA_SQLCancel(SQLHSTMT StatementHandle)
   {
     MYSQL *MariaDb, *Kill=Stmt->Connection->mariadb;
     
-    char StmtStr[30];
+    char StmtStr[50];
 
     if (!(MariaDb= mysql_init(NULL)))
     {
@@ -279,7 +279,7 @@ SQLRETURN MA_SQLCancel(SQLHSTMT StatementHandle)
       goto end;
     }
     
-    _snprintf(StmtStr, 30, "KILL QUERY %ld", mysql_thread_id(Kill));
+    _snprintf(StmtStr, 50, "KILL QUERY %ld %d", mysql_thread_id(Kill), Kill->ss_aggregator_id);
     if (mysql_query(MariaDb, StmtStr))
     {
       mysql_close(MariaDb);

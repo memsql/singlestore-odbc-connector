@@ -904,7 +904,7 @@ real_connect:
   if (!Dsn->CompatMode) {
     MYSQL_RES *result;
     MYSQL_ROW row;
-    const char *StmtString= "SELECT @@memsql_version";
+    const char *StmtString= "SELECT @@memsql_version, @@aggregator_id";
 
     LOCK_MARIADB(Connection);
     if (mysql_query(Connection->mariadb, StmtString))
@@ -917,7 +917,9 @@ real_connect:
     if ((row = mysql_fetch_row(result)))
     {
       char* ss_version = (char*) row[0];
+      int aggregator_id = atoi((char*)(row[1]));
       mysql_optionsv(Connection->mariadb, MYSQL_SS_VERSION, ss_version);
+      mysql_optionsv(Connection->mariadb, SS_AGGREGATOR_ID, &aggregator_id);
     }
     mysql_free_result(result);
   }

@@ -2967,6 +2967,9 @@ mysql_optionsv(MYSQL *mysql,enum mysql_option option, ...)
       goto end;
     }
     break;
+  case SS_AGGREGATOR_ID:
+    mysql->ss_aggregator_id= *((int *)arg1);
+    break;
 #ifdef _WIN32
   case MYSQL_SHARED_MEMORY_BASE_NAME:
     OPT_SET_VALUE_STR(&mysql->options, shared_memory_base_name, arg1);

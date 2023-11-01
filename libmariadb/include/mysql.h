@@ -224,8 +224,9 @@ extern const char *SQLSTATE_UNKNOWN;
     MYSQL_OPT_MAX_ALLOWED_PACKET,
     MYSQL_OPT_NET_BUFFER_LENGTH,
     MYSQL_OPT_TLS_VERSION,
+    /* SingleStore specific */
     MYSQL_SS_VERSION,
-
+    SS_AGGREGATOR_ID,
     /* MariaDB specific */
     MYSQL_PROGRESS_CALLBACK=5999,
     MYSQL_OPT_NONBLOCK,
@@ -347,6 +348,7 @@ struct st_mysql_options {
     char *host,*user,*passwd,*unix_socket,*server_version,*host_info;
     char *info,*db;
     char *ss_version;
+    int ss_aggregator_id;
     const struct ma_charset_info_st *charset;      /* character set */
     MYSQL_FIELD *fields;
     MA_MEM_ROOT field_alloc;
