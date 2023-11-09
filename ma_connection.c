@@ -591,6 +591,17 @@ SQLRETURN MADB_DbcConnectDB(MADB_Dbc *Connection,
     return SQL_ERROR;
 
   char *emailForSSO = Dsn->UserName;
+  if (Dsn->JWT)
+  {
+    // we will send JWT as the password
+    Dsn->Password = Dsn->JWT;
+    if (!Dsn->UserName || !Dsn->UserName[0])
+    {
+        Dsn->UserName = MADB_ALLOC(2*sizeof(char));
+        strcpy(Dsn->UserName, "*");
+    }
+    Dsn->JWT = NULL;
+  }
   if (Dsn->IsBrowserAuth)
   {
     if (GetCredentialsBrowserSSO(Connection, Dsn, emailForSSO, TRUE /*readCached*/))
@@ -2373,12 +2384,6 @@ SQLRETURN MADB_DriverConnect(MADB_Dbc *Dbc, SQLHWND WindowHandle, SQLCHAR *InCon
   {
     MADB_SetError(&Dbc->Error, MADB_ERR_HY000, "Only one of PASSWORD, JWT, BROWSER_SSO can be specified", 0);
     goto error;
-  }
-  if (Dsn->JWT)
-  {
-    // we will send JWT as the password
-    Dsn->Password = Dsn->JWT;
-    Dsn->JWT = NULL;
   }
 
   /* if DSN prompt is off, adjusting DriverCompletion */

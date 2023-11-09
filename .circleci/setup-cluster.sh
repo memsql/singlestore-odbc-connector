@@ -23,7 +23,7 @@ set -eu
 # this script must be run from the top-level of the repo
 cd "$(git rev-parse --show-toplevel)"
 
-DEFAULT_IMAGE_NAME="singlestore/cluster-in-a-box:alma-8.0.15-0b9b66384f-4.0.11-1.15.2"
+DEFAULT_IMAGE_NAME="singlestore/cluster-in-a-box:alma-8.1.27-a1e489fcb4-4.0.15-1.17.5"
 IMAGE_NAME="${MEMSQL_IMAGE:-$DEFAULT_IMAGE_NAME}"
 CONTAINER_NAME="memsql-integration"
 S2_MASTER_PORT="${MEMSQL_PORT:-5506}"

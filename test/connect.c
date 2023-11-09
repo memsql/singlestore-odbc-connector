@@ -1953,6 +1953,24 @@ ODBC_TEST(driver_connect_jwt) {
   if (check_connection_string(conn_out_len, strlen((char*)conn), conn_out, conn) == FAIL) { return FAIL; }
 
   HSTMT hstmt;
+  // check that we can omit username when connecting to newer servers with JWT
+  if (ServerNotOlderThan(hdbc, 8, 1, 20))
+  {
+    HSTMT hdbc2;
+    SQLCHAR conn2[2048];
+    SQLCHAR conn_out_2[2048];
+
+    CHECK_ENV_RC(Env, SQLAllocConnect(Env, &hdbc2));
+    SQLSMALLINT conn_out_len;
+    sprintf((char*)conn2, "DRIVER=%s;JWT=%s;SERVER=%s;PORT=%u;DB=%s;",
+            my_drivername, jwt_password, my_servername, my_port, my_schema);
+    CHECK_DBC_RC(hdbc2, SQLDriverConnect(hdbc2, NULL, conn2, SQL_NTS,
+                                        conn_out_2, 2048 * sizeof(SQLCHAR), &conn_out_len,
+                                        SQL_DRIVER_NOPROMPT));
+    if (check_connection_string(conn_out_len, strlen((char*)conn2), conn_out_2, conn2) == FAIL) { return FAIL; }
+    CHECK_DBC_RC(hdbc2, SQLDisconnect(hdbc2));
+  }
+
   CHECK_DBC_RC(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt));
   OK_SIMPLE_STMT(hstmt, "DROP TABLE IF EXISTS some_table");
   CHECK_STMT_RC(hstmt, SQLFreeHandle(SQL_HANDLE_STMT, hstmt));
