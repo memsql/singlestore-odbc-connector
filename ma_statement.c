@@ -5620,6 +5620,16 @@ SQLRETURN MADB_StmtSpecialColumns(MADB_Stmt *Stmt, SQLUSMALLINT IdentifierType,
           goto end;
       }
   }
+  else if (IdentifierType == SQL_ROWVER)
+  {
+      // https://docs.singlestore.com/cloud/reference/sql-reference/data-definition-language-ddl/create-table/#on-update-behavior
+      // Additionally filter for keys that can't be auto updated
+      if (MADB_DynstrAppend(&StmtStr, "AND EXTRA LIKE '%%on update%%' AND COLUMN_KEY NOT IN ('PRI', 'UNI') "))
+      {
+          ret = MADB_SetError(&Stmt->Error, MADB_ERR_HY001, NULL, 0);
+          goto end;
+      }
+  }
 
   if (MADB_DynstrAppend(&StmtStr, " ORDER BY TABLE_SCHEMA, TABLE_NAME, COLUMN_KEY"))
   {

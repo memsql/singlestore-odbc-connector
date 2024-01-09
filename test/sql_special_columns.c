@@ -35,11 +35,11 @@ int run_sql_special_columns(SQLHANDLE Stmt, const SQLSMALLINT *ExpDataType) {
     OK_SIMPLE_STMT(Stmt, ServerNotOlderThan(Connection, 7, 3, 0) ?
                                                                  "CREATE ROWSTORE TABLE t_types (a INT UNSIGNED, b BIGINT, c DOUBLE, d DECIMAL(10, 5), "
                                                                  "e DATE, f DATETIME, g TIMESTAMP(6), h CHAR(11), i BINARY, j TEXT, "
-                                                                 "aa TINYINT, ab SMALLINT, ac FLOAT, ad TIME, ae TINYTEXT, af VARBINARY(15), ag BLOB, "
+                                                                 "aa TINYINT, ab SMALLINT, ac FLOAT, ad TIMESTAMP ON UPDATE NOW(), ae TINYTEXT, af VARBINARY(15), ag BLOB, "
                                                                  "PRIMARY KEY(a, b, c, d, e, f, g, h, i, j))" :
                                                                  "CREATE TABLE t_types (a INT UNSIGNED, b BIGINT, c DOUBLE, d DECIMAL(10, 5), "
                                                                  "e DATE, f DATETIME, g TIMESTAMP(6), h CHAR(11), i BINARY, j TEXT, "
-                                                                 "aa TINYINT, ab SMALLINT, ac FLOAT, ad TIME, ae TINYTEXT, af VARBINARY(15), ag BLOB, "
+                                                                 "aa TINYINT, ab SMALLINT, ac FLOAT, ad TIMESTAMP ON UPDATE NOW(), ae TINYTEXT, af VARBINARY(15), ag BLOB, "
                                                                  "PRIMARY KEY(a, b, c, d, e, f, g, h, i, j))");
 
     // Fetch only primary key columns.
@@ -91,7 +91,7 @@ int run_sql_special_columns(SQLHANDLE Stmt, const SQLSMALLINT *ExpDataType) {
 
     SQLLEN rowCount;
     CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rowCount));
-    is_num(rowCount, 17); // Full table has 17 columns.
+    is_num(rowCount, 1); // `ad` column has ON UPDATE clause
 
     OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_types");
     CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
