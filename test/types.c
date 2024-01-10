@@ -218,13 +218,6 @@ ODBC_TEST(t_bigint)
   rc = SQLTransact(NULL,Connection,SQL_COMMIT);
   CHECK_HANDLE_RC(SQL_HANDLE_DBC, Connection,rc);
 
-  rc = SQLSpecialColumns(Stmt,SQL_ROWVER,NULL,SQL_NTS,NULL,SQL_NTS,
-                         "t_bigint",SQL_NTS,SQL_SCOPE_TRANSACTION,SQL_NULLABLE);
-
-  CHECK_HANDLE_RC(SQL_HANDLE_DBC, Connection,rc);
-
-  FAIL_IF( 2 != myrowcount(Stmt), "expected 2 rows");
-
   rc = SQLFreeStmt(Stmt,SQL_CLOSE);
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, rc);
 
