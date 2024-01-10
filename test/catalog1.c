@@ -1150,11 +1150,11 @@ ODBC_TEST(t_bug32864)
                                  NULL, &dispsize));
   if (ServerNotOlderThan(Connection, 8, 5, 0))
   {
-    is_num(colsize, 256);
+    is_num(dispsize, 256);
   }
   else
   {
-    is_num(colsize, 64);
+    is_num(dispsize, 64);
   }
   CHECK_STMT_RC(Stmt, SQLDescribeCol(Stmt, 3, dummy, sizeof(dummy), NULL, NULL,
                                 &colsize, NULL, NULL));
