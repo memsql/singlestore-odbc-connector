@@ -1270,21 +1270,20 @@ void cleanup()
     printf("Running cleanup...\n");
 
     MYSQL* mysql = mysql_init(NULL);
-    if (!mysql)
-    {
-        errorMessage = "failed to init the connection";
-        goto end;
-    }
-    if (!mysql_real_connect(mysql, (const char *)my_servername, (const char *)my_uid, (const char *)my_pwd, (const char *)my_schema, my_port, NULL, 0))
-    {
-        errorMessage = mysql_error(mysql);
-        goto end;
-    }
-
     MYSQL_FIELD *field;
     MYSQL_RES *tbl_result = NULL, *proc_result = NULL;
     MYSQL_ROW row;
 
+    if (!mysql)
+    {
+        errorMessage = "failed to init the connection";
+        goto end_no_free;
+    }
+    if (!mysql_real_connect(mysql, (const char *)my_servername, (const char *)my_uid, (const char *)my_pwd, (const char *)my_schema, my_port, NULL, 0))
+    {
+        errorMessage = mysql_error(mysql);
+        goto end_no_free;
+    }
     sprintf(buff, "SELECT CONCAT('DROP ', routine_type, ' IF EXISTS `', routine_name, '`;')\
                    FROM information_schema.routines WHERE routine_schema = '%s'", my_schema);
     if (mysql_query(mysql, buff) || !(proc_result = mysql_store_result(mysql)))
@@ -1321,7 +1320,7 @@ void cleanup()
 end:
     mysql_free_result(tbl_result);
     mysql_free_result(proc_result);
-
+end_no_free:
     if (errorMessage)   // mysql_close(mysql) frees the memory pointed to by errorMessage
     {
         printf("Cleanup failed: %s\n\n", errorMessage);

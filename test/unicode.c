@@ -1101,11 +1101,11 @@ ODBC_TEST(t_bug28168)
   wchar_t *wstr;
   SQLWCHAR errmsgtxt[256]= {0}, sqlstate[6]= {0};
   SQLWCHAR *createQuery= W(L"CREATE USER '\x03A8\x0391\x03A1\x039F uid'");
-  SQLWCHAR *grantQuery= W(L"GRANT ALL ON t_bug28168 to "
+  SQLWCHAR *grantQuery= W(L"GRANT SELECT, INSERT ON t_bug28168 to "
     L"'\x03A8\x0391\x03A1\x039F uid'@"
     L"localhost identified by "
     L"'\x03A8\x0391\x03A1\x039F pWd@2019'");
-  SQLWCHAR *grantQuery2= W(L"GRANT ALL ON t_bug28168 to "
+  SQLWCHAR *grantQuery2= W(L"GRANT SELECT, INSERT ON t_bug28168 to "
     L"'\x03A8\x0391\x03A1\x039F uid'@"
     L"'%' identified by "
     L"'\x03A8\x0391\x03A1\x039F pWd@2019'");
