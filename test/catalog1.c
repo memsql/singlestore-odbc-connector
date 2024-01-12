@@ -1148,13 +1148,25 @@ ODBC_TEST(t_bug32864)
                            NULL, 0));
   CHECK_STMT_RC(Stmt, SQLColAttribute(Stmt, 3, SQL_COLUMN_DISPLAY_SIZE, NULL, 0,
                                  NULL, &dispsize));
-
-  is_num(dispsize, 64);
-
+  if (ServerNotOlderThan(Connection, 8, 5, 0))
+  {
+    is_num(dispsize, 256);
+  }
+  else
+  {
+    is_num(dispsize, 64);
+  }
   CHECK_STMT_RC(Stmt, SQLDescribeCol(Stmt, 3, dummy, sizeof(dummy), NULL, NULL,
                                 &colsize, NULL, NULL));
 
-  is_num(colsize, 64);
+  if (ServerNotOlderThan(Connection, 8, 5, 0))
+  {
+    is_num(colsize, 256);
+  }
+  else
+  {
+    is_num(colsize, 64);
+  }
 
   return OK;
 }

@@ -326,9 +326,10 @@ ODBC_TEST(t_bug25846)
 
 ODBC_TEST(t_time)
 {
-  SQLRETURN       rc;
-  SQL_TIME_STRUCT tm;
-  SQLCHAR         str[20];
+  SQLRETURN            rc;
+  SQL_TIMESTAMP_STRUCT ts;
+  SQL_TIME_STRUCT      tm;
+  SQLCHAR              str[20];
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_time");
   rc = SQLExecDirect(Stmt,"create table t_time(tm time, ts timestamp)", SQL_NTS);
@@ -338,20 +339,25 @@ ODBC_TEST(t_time)
   CHECK_DBC_RC(Connection,rc);
 
   CHECK_STMT_RC(Stmt, SQLPrepare(Stmt,
-                            (SQLCHAR *)"insert into t_time values (?,?)",
+                            (SQLCHAR *)"insert into t_time (tm, ts) values (?,?)",
                             SQL_NTS));
 
   rc = SQLBindParameter( Stmt, 1, SQL_PARAM_INPUT, SQL_C_TIME,
                          SQL_TIME, 0, 0, &tm, 0, NULL );
   CHECK_STMT_RC(Stmt,rc);
 
-  rc = SQLBindParameter( Stmt, 2, SQL_PARAM_INPUT, SQL_C_TIME,
-                         SQL_TIMESTAMP, 0, 0, &tm, 15, NULL );
+  rc = SQLBindParameter( Stmt, 2, SQL_PARAM_INPUT, SQL_C_TIMESTAMP,
+                         SQL_TIMESTAMP, 0, 0, &ts, 15, NULL );
   CHECK_STMT_RC(Stmt,rc);
 
-  tm.hour = 20;
-  tm.minute = 59;
-  tm.second = 45;
+  tm.hour = ts.hour = 20;
+  tm.minute = ts.minute = 59;
+  tm.second = ts.second = 45;
+
+  ts.year = 2000;
+  ts.month = 1;
+  ts.day = 15;
+  ts.fraction = 0;
 
   rc = SQLExecute(Stmt);
   CHECK_STMT_RC(Stmt, rc);
@@ -724,7 +730,7 @@ ODBC_TEST(t_bug9927)
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_bug9927");
   OK_SIMPLE_STMT(Stmt,
          "CREATE TABLE t_bug9927 (a TIMESTAMP DEFAULT 0,"
-        "b TIMESTAMP PRIMARY KEY ON UPDATE CURRENT_TIMESTAMP)");
+        "b TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP)");
 
   CHECK_STMT_RC(Stmt, SQLSpecialColumns(Stmt,SQL_ROWVER,  NULL, 0,
                                    NULL, 0, (SQLCHAR *)"t_bug9927", SQL_NTS,

@@ -1100,11 +1100,12 @@ ODBC_TEST(t_bug28168)
   wchar_t dummy[256]= {0};
   wchar_t *wstr;
   SQLWCHAR errmsgtxt[256]= {0}, sqlstate[6]= {0};
-  SQLWCHAR *grantQuery= W(L"GRANT ALL ON t_bug28168 to "
+  SQLWCHAR *createQuery= W(L"CREATE USER '\x03A8\x0391\x03A1\x039F uid'");
+  SQLWCHAR *grantQuery= W(L"GRANT SELECT, INSERT ON t_bug28168 to "
     L"'\x03A8\x0391\x03A1\x039F uid'@"
     L"localhost identified by "
     L"'\x03A8\x0391\x03A1\x039F pWd@2019'");
-  SQLWCHAR *grantQuery2= W(L"GRANT ALL ON t_bug28168 to "
+  SQLWCHAR *grantQuery2= W(L"GRANT SELECT, INSERT ON t_bug28168 to "
     L"'\x03A8\x0391\x03A1\x039F uid'@"
     L"'%' identified by "
     L"'\x03A8\x0391\x03A1\x039F pWd@2019'");
@@ -1136,6 +1137,11 @@ ODBC_TEST(t_bug28168)
 
   CHECK_DBC_RC(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
+  if (!SQL_SUCCEEDED(SQLExecDirectW(hstmt1, createQuery, SQL_NTS)))
+  {
+    odbc_print_error(SQL_HANDLE_STMT, hstmt1);
+    return FAIL;
+  }
   /* 
     Grant for localhost and for all other hosts if the test server
     runs remotely
@@ -1199,9 +1205,7 @@ ODBC_TEST(t_bug28168)
    wstr= sqlwchar_to_wchar_t(errmsgtxt);
    IS(wcsstr(wstr,  
              L"Access denied for user '\x03A8\x0391\x03A1\x039F uid'@") != NULL);
-  CHECK_STMT_RC(hstmt1,SQLExecDirectW(hstmt1,
-    W(L"DROP USER "
-    L"'\x03A8\x0391\x03A1\x039F uid'@localhost"), SQL_NTS));
+  CHECK_STMT_RC(hstmt1,SQLExecDirectW(hstmt1, W(L"DROP USER '\x03A8\x0391\x03A1\x039F uid'"), SQL_NTS));
 
   CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
   CHECK_DBC_RC(hdbc1, SQLDisconnect(hdbc1));
