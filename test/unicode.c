@@ -1205,9 +1205,7 @@ ODBC_TEST(t_bug28168)
    wstr= sqlwchar_to_wchar_t(errmsgtxt);
    IS(wcsstr(wstr,  
              L"Access denied for user '\x03A8\x0391\x03A1\x039F uid'@") != NULL);
-  CHECK_STMT_RC(hstmt1,SQLExecDirectW(hstmt1,
-    W(L"DROP USER "
-    L"'\x03A8\x0391\x03A1\x039F uid'@localhost"), SQL_NTS));
+  CHECK_STMT_RC(hstmt1,SQLExecDirectW(hstmt1, W(L"DROP USER '\x03A8\x0391\x03A1\x039F uid'"), SQL_NTS));
 
   CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
   CHECK_DBC_RC(hdbc1, SQLDisconnect(hdbc1));
