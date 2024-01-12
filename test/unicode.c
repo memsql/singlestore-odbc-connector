@@ -1103,10 +1103,6 @@ ODBC_TEST(t_bug28168)
   SQLWCHAR *createQuery= W(L"CREATE USER '\x03A8\x0391\x03A1\x039F uid'");
   SQLWCHAR *grantQuery= W(L"GRANT SELECT, INSERT ON t_bug28168 to "
     L"'\x03A8\x0391\x03A1\x039F uid'@"
-    L"localhost identified by "
-    L"'\x03A8\x0391\x03A1\x039F pWd@2019'");
-  SQLWCHAR *grantQuery2= W(L"GRANT SELECT, INSERT ON t_bug28168 to "
-    L"'\x03A8\x0391\x03A1\x039F uid'@"
     L"'%' identified by "
     L"'\x03A8\x0391\x03A1\x039F pWd@2019'");
   SQLSMALLINT errmsglen;
@@ -1142,20 +1138,8 @@ ODBC_TEST(t_bug28168)
     odbc_print_error(SQL_HANDLE_STMT, hstmt1);
     return FAIL;
   }
-  /* 
-    Grant for localhost and for all other hosts if the test server
-    runs remotely
-  */
-  if (!SQL_SUCCEEDED(SQLExecDirectW(hstmt1, grantQuery, SQL_NTS)))
-  {
-    odbc_print_error(SQL_HANDLE_STMT, hstmt1);
-    if (get_native_errcode(hstmt1) == 1142)
-    {
-      skip("Test user doesn't have enough privileges to run this test");
-    }
-    return FAIL;
-  }
-  CHECK_STMT_RC(hstmt1, SQLExecDirectW(hstmt1, grantQuery2, SQL_NTS));
+
+  CHECK_STMT_RC(hstmt1, SQLExecDirectW(hstmt1, grantQuery, SQL_NTS));
   CHECK_STMT_RC(hstmt1, SQLExecDirectW(hstmt1, CW("FLUSH PRIVILEGES"), SQL_NTS));
 
   *conn_in= L'\0';
