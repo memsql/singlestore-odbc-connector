@@ -1137,6 +1137,11 @@ ODBC_TEST(t_bug28168)
 
   CHECK_DBC_RC(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
+  if (!SQL_SUCCEEDED(SQLExecDirectW(hstmt1, createQuery, SQL_NTS)))
+  {
+    odbc_print_error(SQL_HANDLE_STMT, hstmt1);
+    return FAIL;
+  }
   /* 
     Grant for localhost and for all other hosts if the test server
     runs remotely
