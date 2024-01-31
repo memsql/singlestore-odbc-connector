@@ -226,6 +226,29 @@ ODBC_TEST(execute_unbound) {
     return OK;
 }
 
+ODBC_TEST(execute_optimize) {
+    SQLHANDLE Stmt1;
+
+    CHECK_DBC_RC(Connection, SQLAllocHandle(SQL_HANDLE_STMT, Connection, &Stmt1));
+    OK_SIMPLE_STMT(Stmt1, "CREATE TABLE IF NOT EXISTS execute_optimize (i INT)");
+    OK_SIMPLE_STMT(Stmt1, "OPTIMIZE TABLE execute_optimize");
+    OK_SIMPLE_STMT(Stmt1, "OPTIMIZE TABLE execute_optimize");
+    OK_SIMPLE_STMT(Stmt1, "SHOW TABLES");
+    CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
+
+    CHECK_DBC_RC(Connection, SQLAllocHandle(SQL_HANDLE_STMT, Connection, &Stmt1));
+    PREPARE(Stmt1, "OPTIMIZE TABLE execute_optimize");
+    EXECUTE(Stmt1);
+    CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
+
+    CHECK_DBC_RC(Connection, SQLAllocHandle(SQL_HANDLE_STMT, Connection, &Stmt1));
+    PREPARE(Stmt1, "OPTIMIZE TABLE execute_optimize");
+    EXECUTE(Stmt1);
+    CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
+
+    return OK;
+}
+
 int test_transaction(SQLHANDLE conn_other, SQLHANDLE stmt_other) {
 #define TABLE "execute_5"
     SQLINTEGER in_id = 3;
@@ -350,6 +373,7 @@ MA_ODBC_TESTS my_tests[] = {
    {execute_no_data, "execute_no_data", KNOWN_FAILURE, ALL_DRIVERS},    //TODO: bug PLAT-5607
    {execute_unbound, "execute_unbound", NORMAL, ALL_DRIVERS},
    {execute_transaction, "execute_transaction", NORMAL, ALL_DRIVERS},
+   {execute_optimize, "execute_optimize", NORMAL, ALL_DRIVERS},
    {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
