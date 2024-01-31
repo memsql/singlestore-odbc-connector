@@ -1669,3 +1669,20 @@ MYSQL_RES *S2_ListFields(MADB_Stmt  *stmt,
 
   return mysql_store_result(stmt->Connection->mariadb);
 }
+
+void EmulatedCleanup(MYSQL* mysql)
+{
+  /* for multistatemnt, go through the result sets */ 
+  while (mysql_more_results(mysql))
+  {
+    mysql_next_result(mysql);
+  }
+  /* skip the remaining result set*/
+  if (mysql->status == MYSQL_STATUS_USE_RESULT ||
+      mysql->status == MYSQL_STATUS_GET_RESULT ||
+      mysql->status & SERVER_MORE_RESULTS_EXIST)
+  {
+    mthd_my_skip_result(mysql);
+    mysql->status= MYSQL_STATUS_READY;
+  }
+}

@@ -276,13 +276,10 @@ SQLRETURN MADB_StmtFree(MADB_Stmt *Stmt, SQLUSMALLINT Option)
       RESET_DAE_STATUS(Stmt);
     }
 
-    if (Stmt->State == MADB_SS_EMULATED && QUERY_IS_MULTISTMT(Stmt->Query))
+    if (Stmt->State == MADB_SS_EMULATED)
     {
       LOCK_MARIADB(Stmt->Connection);
-      while (mysql_more_results(Stmt->Connection->mariadb))
-      {
-        mysql_next_result(Stmt->Connection->mariadb);
-      }
+      EmulatedCleanup(Stmt->Connection->mariadb);
       UNLOCK_MARIADB(Stmt->Connection);
     }
 
@@ -352,12 +349,9 @@ SQLRETURN MADB_StmtFree(MADB_Stmt *Stmt, SQLUSMALLINT Option)
     }
     EnterCriticalSection(&Stmt->Connection->cs);
 
-    if (Stmt->State == MADB_SS_EMULATED && QUERY_IS_MULTISTMT(Stmt->Query))
+    if (Stmt->State == MADB_SS_EMULATED)
     {
-      while (mysql_more_results(Stmt->Connection->mariadb))
-      {
-        mysql_next_result(Stmt->Connection->mariadb);
-      }
+      EmulatedCleanup(Stmt->Connection->mariadb);
     }
 
       /* TODO: if multistatement was prepared, but not executed, we would get here Stmt->stmt leaked. Unlikely that is very probable scenario,
@@ -428,6 +422,16 @@ SQLRETURN MADB_StmtExecDirect(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER T
   if (QUERY_IS_MULTISTMT(Stmt->Query))
   {
     ExecDirect= FALSE;
+  }
+  ret = Stmt->Methods->Execute(Stmt, ExecDirect);
+  if (SQL_SUCCEEDED(ret)) return ret;
+  /* In case statement is not supported, we use mysql_query instead. */
+  /* Sometimes SingleStore returns this error only at the execute stage, */
+  /* prepare can be successful */
+  if (Stmt->Error.NativeError == 1295 /*ER_UNSUPPORTED_PS*/)
+  {
+    Stmt->Methods->Prepare(Stmt, StatementText, TextLength, ExecDirect);
+    Stmt->State= MADB_SS_EMULATED;
   }
 
   return Stmt->Methods->Execute(Stmt, ExecDirect);
@@ -514,13 +518,8 @@ void MADB_StmtReset(MADB_Stmt *Stmt)
      have ane state set, but some of stuff still needs to be cleaned. Perhaps we could introduce a state
      for such case, smth like DIREXEC_PREPARED. Would be more proper, but yet overkill */
 
-    if (QUERY_IS_MULTISTMT(Stmt->Query))
-    {
-      while (mysql_more_results(Stmt->Connection->mariadb))
-      {
-        mysql_next_result(Stmt->Connection->mariadb);
-      }
-    }
+    EmulatedCleanup(Stmt->Connection->mariadb);
+
   default:
     Stmt->PositionedCommand= 0;
     Stmt->State= MADB_SS_INITED;
@@ -2310,6 +2309,15 @@ end:
       ret= SQL_SUCCESS_WITH_INFO;
     else
       ret= SQL_ERROR;
+  }
+  if (SQL_SUCCEEDED(ret)) return ret;
+  /* In case statement is not supported, we use mysql_query instead. */
+  /* Sometimes SingleStore returns this error only at the execute stage, */
+  /* prepare can be successful */
+  if (Stmt->Error.NativeError == 1295 /*ER_UNSUPPORTED_PS*/)
+  {
+    Stmt->State= MADB_SS_EMULATED;
+    return Stmt->Methods->Execute(Stmt, ExecDirect);
   }
 
   return ret;

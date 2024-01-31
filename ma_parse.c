@@ -397,6 +397,10 @@ enum enum_madb_query_type MADB_GetQueryType(const char *Token1, const char *Toke
   {
     return MADB_QUERY_EXECUTE;
   }
+  if (_strnicmp(Token1, "OPTIMIZE", 7) == 0)
+  {
+    return MADB_QUERY_OPTIMIZE;
+  }
   if (_strnicmp(Token1, "CREATE", 6) == 0)
   {
     if (_strnicmp(Token2, "PROCEDURE", 9) == 0)

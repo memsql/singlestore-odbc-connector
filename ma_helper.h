@@ -122,6 +122,8 @@ FieldDescrList *ProcessShowColumns(MYSQL_RES *res);
 FieldDescr *GetFieldDescr(const char *name, FieldDescrList *allFields);
 void FreeFieldDescrList(FieldDescrList *allFields);
 
+void EmulatedCleanup(MYSQL *mysql);
+
 /* Stringify macros */
 #define XSTR(s) STR(s)
 #define STR(s) #s

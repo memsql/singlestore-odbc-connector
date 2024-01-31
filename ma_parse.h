@@ -40,6 +40,7 @@ enum enum_madb_query_type { MADB_QUERY_NO_RESULT= 0, /* Default type for the que
                             MADB_QUERY_EXPLAIN,
                             MADB_QUERY_CHECK,
                             MADB_QUERY_EXECUTE,
+                            MADB_QUERY_OPTIMIZE,
                             MADB_QUERY_DESCRIBE,
                             MADB_NOT_ATOMIC_BLOCK,
                             MADB_ANONYMOUS_CODE_BLOCKS,
