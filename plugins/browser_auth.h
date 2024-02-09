@@ -62,49 +62,10 @@ int parseJWTToCredentials(MADB_Dbc *Dbc, const char *token, int token_len, Brows
 // https://gnome.pages.gitlab.gnome.org/libsecret/
 #include <glib.h>
 #include <gmodule.h>
-#include <libsecret/secret.h>
 #define SECURE_JWT_STORAGE_KEY "SingleStore ODBC Driver JWT storage"
-const SecretSchema *jwt_cache_get_schema(void);
-#define JWT_CACHE_SCHEMA jwt_cache_get_schema ()
 
-struct libsecret_functions 
-{
-SecretCollection* (*secret_collection_for_alias_sync) (SecretService *service,
-                                                      const gchar *alias,
-                                                      SecretCollectionFlags flags,
-                                                      GCancellable *cancellable,
-                                                      GError **error);
-gint (*secret_service_unlock_sync) (SecretService *service,
-                                    GList *objects,
-                                    GCancellable *cancellable,
-                                    GList **unlocked,
-                                    GError **error);
-SecretService* (*secret_service_get_sync) (SecretServiceFlags flags,
-                                           GCancellable *cancellable,
-                                           GError **error);
-gboolean (*secret_collection_get_locked) (SecretCollection *self);
-gchar* (*secret_password_lookup_sync)(const SecretSchema *schema,
-                                      GCancellable *cancellable,
-                                      GError **error,
-                                      ...) G_GNUC_NULL_TERMINATED;
-void (*secret_password_free) (gchar *password);
-gboolean (*secret_password_store_sync) (const SecretSchema *schema,
-                                        const gchar *collection,
-                                        const gchar *label,
-                                        const gchar *password,
-                                        GCancellable *cancellable,
-                                        GError **error,
-                                        ...) G_GNUC_NULL_TERMINATED;
-};
-
-struct libglib_functions 
-{
-  void (*g_error_free) (GError *error);
-  GList* (*g_list_append) (GList *list, gpointer data);
-};
 #endif
 
-int PutCachedCredentials(MADB_Dbc *Dbc, BrowserAuthCredentials *bac);
 int GetCachedCredentials(MADB_Dbc *Dbc, const char *username, BrowserAuthCredentials *bac /*out*/);
 int GetCredentialsBrowserSSO(MADB_Dbc *Dbc, MADB_Dsn *Dsn /*out*/, const char* email, my_bool readCached);
 

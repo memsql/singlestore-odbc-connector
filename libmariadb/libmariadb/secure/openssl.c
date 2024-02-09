@@ -90,11 +90,13 @@ static long ma_tls_version_options(const char *version)
        disable_all_protocols;
 
   protocol_options= disable_all_protocols=
-    SSL_OP_NO_SSLv2 |
-    SSL_OP_NO_SSLv3 |
-    SSL_OP_NO_TLSv1 |
-    SSL_OP_NO_TLSv1_1 |
-    SSL_OP_NO_TLSv1_2
+    SSL_OP_NO_SSLv2
+    | SSL_OP_NO_SSLv3
+    | SSL_OP_NO_TLSv1
+#ifdef HAVE_OPENSSL_1_1_API
+    | SSL_OP_NO_TLSv1_1
+    | SSL_OP_NO_TLSv1_2
+#endif
 #ifdef TLS1_3_VERSION
     | SSL_OP_NO_TLSv1_3
 #endif
@@ -105,10 +107,12 @@ static long ma_tls_version_options(const char *version)
 
   if (strstr(version, "TLSv1.0"))
     protocol_options&= ~SSL_OP_NO_TLSv1;
+#ifdef HAVE_OPENSSL_1_1_API
   if (strstr(version, "TLSv1.1"))
     protocol_options&= ~SSL_OP_NO_TLSv1_1;
   if (strstr(version, "TLSv1.2"))
     protocol_options&= ~SSL_OP_NO_TLSv1_2;
+#endif
 #ifdef TLS1_3_VERSION
   if (strstr(version, "TLSv1.3"))
     protocol_options&= ~SSL_OP_NO_TLSv1_3;

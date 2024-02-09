@@ -21,8 +21,6 @@
 #include "stdio.h"
 #include <wchar.h>
 #if !defined(_WIN32) && !defined(__APPLE__)
-#include <glib.h>
-#include <libsecret/secret.h>
 #endif
 
 ODBC_TEST(basic_connect) {
