@@ -35,6 +35,7 @@ enum enum_madb_query_type { MADB_QUERY_NO_RESULT= 0, /* Default type for the que
                             MADB_QUERY_SELECT_INTO,
                             MADB_QUERY_SELECT,
                             MADB_QUERY_SHOW,
+                            MADB_QUERY_ECHO,
                             MADB_QUERY_CALL,
                             MADB_QUERY_ANALYZE,
                             MADB_QUERY_EXPLAIN,
@@ -78,7 +79,7 @@ void MADB_DeleteSubqueries(MADB_QUERY *Query);
 void MADB_AddSubQuery(MADB_QUERY *Query, char *SubQueryText, enum enum_madb_query_type QueryType);
 
 void MADB_DeleteQuery(MADB_QUERY *Query);
-int  MADB_ParseQuery(MADB_QUERY *Query);
+int  MADB_ParseQuery(MADB_QUERY *Query, my_bool replaceCall);
 
 #define QUERY_DOESNT_RETURN_RESULT(query_type) ((query_type) < MADB_QUERY_SELECT)
 
@@ -91,7 +92,7 @@ enum enum_madb_query_type MADB_GetQueryType(const char *Token1, const char *Toke
 
 const char * MADB_FindParamPlaceholder(MADB_Stmt *Stmt);
 char *       FixIsoFormat(char * StmtString, size_t *Length);
-int          ParseQuery(MADB_QUERY *Query);
+int          ParseQuery(MADB_QUERY *Query, my_bool replaceCall);
 char *       StripLeadingComments(char *s, size_t *Length, BOOL OverWrite);
 SQLRETURN    MADB_UnescapeQuery(MADB_Dbc *Dbc, MADB_Error *error, MADB_DynString *res, char **src, char **srcEnd, int openCurlyBrackets);
 

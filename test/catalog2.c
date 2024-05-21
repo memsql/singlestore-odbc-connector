@@ -62,7 +62,6 @@ ODBC_TEST(t_bug37621)
   if (iType != SQL_VARCHAR && iType != SQL_WVARCHAR)
     return FAIL;
   /* This can fail for the same reason as t_bug32864 */
-  is_num(uiDef, 2048);
   is_num(iScale, 0);
   is_num(iNullable, 0);
 

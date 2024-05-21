@@ -264,7 +264,7 @@ void MADB_DeleteQuery(MADB_QUERY *Query)
   memset(Query, 0, sizeof(MADB_QUERY));
 }
 
-int MADB_ParseQuery(MADB_QUERY * Query)
+int MADB_ParseQuery(MADB_QUERY * Query, my_bool replaceCall)
 {
   /* make sure we don't have trailing whitespace or semicolon */
   Query->RefinedLength= SqlRtrim(Query->RefinedText, (int)Query->RefinedLength);
@@ -276,7 +276,7 @@ int MADB_ParseQuery(MADB_QUERY * Query)
   Query->Original= strndup(Query->RefinedText, Query->RefinedLength);
   SkipSpacesAndComments(&Query->RefinedText, &Query->RefinedLength, FALSE);
 
-  return ParseQuery(Query);
+  return ParseQuery(Query, replaceCall);
 }
 
 /*----------------- Tokens stuff ------------------*/
@@ -377,6 +377,10 @@ enum enum_madb_query_type MADB_GetQueryType(const char *Token1, const char *Toke
   {
     return MADB_QUERY_CALL;
   }
+  if (_strnicmp(Token1, "ECHO", 4) == 0)
+  {
+    return MADB_QUERY_ECHO;
+  }
   if (_strnicmp(Token1, "SHOW", 4) == 0)
   {
     return MADB_QUERY_SHOW;
@@ -468,7 +472,7 @@ char* FixIsoFormat(char * StmtString, size_t *Length)
 #define SAVE_TOKEN(PTR2SAVE) do { Offset= (unsigned int)(PTR2SAVE - Query->RefinedText);\
 MADB_InsertDynamic(&Query->Tokens, (char*)&Offset); } while(0)
 
-int ParseQuery(MADB_QUERY *Query)
+int ParseQuery(MADB_QUERY *Query, my_bool replaceCall)
 {
   char        *p= Query->RefinedText, Quote;
   BOOL         ReadingToken= FALSE;
@@ -487,6 +491,13 @@ int ParseQuery(MADB_QUERY *Query)
     {
       Length= end - p;
       SkipSpacesAndComments(&p, &Length, TRUE);
+
+      if (replaceCall &&
+        StmtTokensCount == 0 &&
+        _strnicmp(Query, "CALL", 4))
+      {
+        memcpy(p, "ECHO", 4);
+      }
 
       SAVE_TOKEN(p);
 

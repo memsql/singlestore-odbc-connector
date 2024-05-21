@@ -84,11 +84,14 @@ MADB_DsnKey DsnKeys[]=
   {"NO_SSPS",        offsetof(MADB_Dsn, NoSsps),            DSN_TYPE_BOOL,   0, 0},
   {"NO_CACHE",       offsetof(MADB_Dsn, NoCache),           DSN_TYPE_OPTION, MADB_OPT_FLAG_NO_CACHE, 0},  /* 40 */
   {"APP",            offsetof(MADB_Dsn, App),               DSN_TYPE_STRING, 0, 0},
-  {"CONN_ATTRS",     offsetof(MADB_Dsn, ConnAttrs),      DSN_TYPE_STRING, 0, 0},
+  {"CONN_ATTRS",     offsetof(MADB_Dsn, ConnAttrs),         DSN_TYPE_STRING, 0, 0},
   /* SSO/JWT parameters */
   {"BROWSER_SSO",    offsetof(MADB_Dsn, IsBrowserAuth),     DSN_TYPE_BOOL  , 0, 0},
   {"IGNORE_KEYRING_SSO", offsetof(MADB_Dsn, IgnoreKeyring), DSN_TYPE_BOOL  , 0, 0},
   {"JWT",            offsetof(MADB_Dsn, JWT),               DSN_TYPE_STRING, 0, 0},
+  /* Paramaters for specific scenarios */
+  {"REWRITE_CALL_SP", offsetof(MADB_Dsn, RewriteCallSP),    DSN_TYPE_BOOL  , 0, 0},
+
   {"TEST_MODE",      offsetof(MADB_Dsn, TestMode),          DSN_TYPE_INT,    0, 0}, /* Use some mock functions for testing */
   /* Aliases. Here offset is index of aliased key */
   {"SERVERNAME",     DSNKEY_SERVER_INDEX,                   DSN_TYPE_STRING, 0, 1},

@@ -622,8 +622,7 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
   {
     return Stmt->Error.ReturnValue;
   }
-
-  MADB_ParseQuery(&Stmt->Query);
+  MADB_ParseQuery(&Stmt->Query, Stmt->Connection->Dsn->RewriteCallSP);
 
   if ((Stmt->Query.QueryType == MADB_QUERY_INSERT || Stmt->Query.QueryType == MADB_QUERY_UPDATE || Stmt->Query.QueryType == MADB_QUERY_DELETE)
     && MADB_FindToken(&Stmt->Query, "RETURNING"))
@@ -712,7 +711,7 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
         MADB_DeleteQuery(&Stmt->Query);
         Stmt->Query.allocated = Stmt->Query.RefinedText = strndup(StmtStr.str, StmtStr.length);
         Stmt->Query.RefinedLength = StmtStr.length;
-        MADB_ParseQuery(&Stmt->Query);
+        MADB_ParseQuery(&Stmt->Query, FALSE);
     } else
     {
         MADB_RESET(STMT_STRING(Stmt), StmtStr.str);
@@ -741,7 +740,7 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
     Stmt->Query.RefinedText = tmp;
     Stmt->Query.RefinedLength = strlen(Stmt->Query.RefinedText);
     Stmt->Query.allocated = Stmt->Query.RefinedText;
-    MADB_ParseQuery(&Stmt->Query);
+    MADB_ParseQuery(&Stmt->Query, FALSE);
   }
 
   if (!Stmt->Query.ReturnsResult && !Stmt->Query.HasParameters &&

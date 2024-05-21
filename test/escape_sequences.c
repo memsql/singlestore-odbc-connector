@@ -182,10 +182,22 @@ ODBC_TEST(procedure_call) {
                        "BEGIN\n"
                        "    INSERT INTO procedure_call_data VALUES (100);\n"
                        "END")
+  OK_SIMPLE_STMT(Stmt, "CREATE OR REPLACE PROCEDURE ins_return (a INT) RETURNS INT AS\n"
+                       "BEGIN\n"
+                       "    INSERT INTO procedure_call_data VALUES (a);\n"
+                       "RETURN a;"
+                       "END")
 
   OK_SIMPLE_STMT(Stmt, "{call ins(1)   }")
   OK_SIMPLE_STMT(Stmt, "{?=call ins(2) }")
   OK_SIMPLE_STMT(Stmt, "{?=call ins100  }")
+  if (NoSsps)
+  {
+    OK_SIMPLE_STMT(Stmt, "echo ins_return(1000)");
+    FETCH(Stmt);
+    is_num(my_fetch_int(Stmt, 1), 1000);
+  }
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
   OK_SIMPLE_STMT(Stmt, "SELECT * FROM procedure_call_data ORDER BY col");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
@@ -194,6 +206,11 @@ ODBC_TEST(procedure_call) {
   is_num(my_fetch_int(Stmt, 1), 2);
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   is_num(my_fetch_int(Stmt, 1), 100);
+  if (NoSsps)
+  {
+    CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+    is_num(my_fetch_int(Stmt, 1), 1000);
+  }
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
   OK_SIMPLE_STMT(Stmt, "DROP TABLE procedure_call_data")

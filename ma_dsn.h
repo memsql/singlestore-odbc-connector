@@ -148,6 +148,7 @@ typedef struct st_madb_dsn
   my_bool IsBrowserAuth;
   my_bool IgnoreKeyring;
   char *JWT;
+  my_bool RewriteCallSP;
   int TestMode;
   /* --- Internal --- */
   int isPrompt;
