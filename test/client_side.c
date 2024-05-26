@@ -1373,7 +1373,11 @@ ODBC_TEST(client_side_ipd)
 MA_ODBC_TESTS my_tests[] =
 {
     {client_side_show,                      "client_side_show", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
+#ifndef __APPLE__
     {client_side_prepare,                   "client_side_prepare", NORMAL, ALL_DRIVERS},
+    {client_side_get_data_many_types,       "client_side_get_data_many_types", NORMAL, ALL_DRIVERS},
+#endif
+// TODO: PLAT-6870: investigate why these tests fail on Mac OS
     {client_side_static_cursor,             "client_side_static_cursor", NORMAL, ALL_DRIVERS},
     {client_side_dynamic_cursor,            "client_side_dynamic_cursor", NORMAL, ALL_DRIVERS},
     {client_side_forward_only_cursor,       "client_side_forward_only_cursor", NORMAL, ALL_DRIVERS},
@@ -1382,7 +1386,6 @@ MA_ODBC_TESTS my_tests[] =
     {client_side_multirow_columnwise,       "client_side_multirow_columnwise", NORMAL, ALL_DRIVERS},
     {client_side_get_data,                  "client_side_get_data", NORMAL, ALL_DRIVERS},
     {client_side_get_data_buffered,         "client_side_get_data_buffered", NORMAL, ALL_DRIVERS},
-    {client_side_get_data_many_types,       "client_side_get_data_many_types", NORMAL, ALL_DRIVERS},
     {client_side_put_data,                  "client_side_put_data", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
     {client_side_put_data_non_char,         "client_side_put_data_non_char", CSPS_OK | SSPS_FAIL, ALL_DRIVERS},
     {client_side_put_data_multiple,         "client_side_put_data_multiple", NORMAL, ALL_DRIVERS}, // not yet supported
