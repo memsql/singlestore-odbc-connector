@@ -45,6 +45,7 @@ commands:
       - run:
           name: Setup Machine
           command: |
+            rm -rf $(brew --caskroom)/adoptopenjdk11
             brew update
             brew install openssl@1.1
             brew install curl
