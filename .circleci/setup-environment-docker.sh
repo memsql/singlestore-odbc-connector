@@ -19,8 +19,9 @@
 
 if [[ $IMAGE_NAME == centos* ]]
 then
-  sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-Linux-*
-  sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.epel.cloud|g' /etc/yum.repos.d/CentOS-Linux-*
+  sed -i s/mirror.centos.org/vault.centos.org/g /etc/yum.repos.d/*.repo
+  sed -i s/^#.*baseurl=http/baseurl=http/g /etc/yum.repos.d/*.repo
+  sed -i s/^mirrorlist=http/#mirrorlist=http/g /etc/yum.repos.d/*.repo
   yum -y update
   yum -y install gcc-c++ make gcc openssl-devel unixODBC unixODBC-devel wget bind-utils
   yum -y install libglib2.0 libsecret-1-dev  # for CentOS 7
