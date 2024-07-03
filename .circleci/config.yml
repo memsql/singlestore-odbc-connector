@@ -441,7 +441,7 @@ workflows:
           matrix:
             parameters:
               resource_class:
-                - macos.x86.medium.gen2
+                - macos.m1.medium.gen1
               build_type:
                 - RelWithDebInfo
               test_dsn:
@@ -740,34 +740,6 @@ workflows:
           matrix:
             parameters:
               resource_class:
-                - macos.x86.medium.gen2
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - ssodbc_test_w
-              driver_name:
-                - SingleStore ODBC Unicode Driver
-              driver_type:
-                - unicode
-      - build-macos:
-          name: build-macos-ansi-<< matrix.build_type >>
-          matrix:
-            parameters:
-              resource_class:
-                -  macos.x86.medium.gen2
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - ssodbc_test_a
-              driver_name:
-                - SingleStore ODBC ANSI Driver
-              driver_type:
-                - ansi
-      - build-macos:
-          name: build-macos-unicode-<< matrix.build_type >>
-          matrix:
-            parameters:
-              resource_class:
                 - macos.m1.medium.gen1
               build_type:
                 - RelWithDebInfo
@@ -868,20 +840,6 @@ workflows:
                 - RelWithDebInfo
               arch_bits:
                 - 64
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
-      - publish-macos:
-          matrix:
-            parameters:
-              resource_class:
-                 - macos.x86.medium.gen2
-              arch:
-                 - x86_64
-              build_type:
-                - RelWithDebInfo
           filters:
             tags:
               only: /^v.*/
