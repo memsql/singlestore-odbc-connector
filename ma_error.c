@@ -195,7 +195,7 @@ SQLRETURN MADB_SetNativeError(MADB_Error *Error, SQLSMALLINT HandleType, void *P
   Error->ReturnValue= SQL_ERROR;
   if (Errormsg)
   {
-    strcpy_s(Error->SqlErrorMsg + Error->PrefixLen, SQL_MAX_MESSAGE_LENGTH + 1 - Error->PrefixLen, Errormsg);
+    strncpy(Error->SqlErrorMsg + Error->PrefixLen, Errormsg, SQL_MAX_MESSAGE_LENGTH - Error->PrefixLen);
   }
   if (Sqlstate)
     strcpy_s(Error->SqlState, SQLSTATE_LENGTH + 1, Sqlstate);
