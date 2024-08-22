@@ -195,7 +195,8 @@ SQLRETURN MADB_SetNativeError(MADB_Error *Error, SQLSMALLINT HandleType, void *P
   Error->ReturnValue= SQL_ERROR;
   if (Errormsg)
   {
-    strcpy_s(Error->SqlErrorMsg + Error->PrefixLen, SQL_MAX_MESSAGE_LENGTH + 1 - Error->PrefixLen, Errormsg);
+    strncpy(Error->SqlErrorMsg + Error->PrefixLen, Errormsg, SQL_MAX_MESSAGE_LENGTH - Error->PrefixLen);
+    Error->SqlErrorMsg[SQL_MAX_MESSAGE_LENGTH] = '\0';
   }
   if (Sqlstate)
     strcpy_s(Error->SqlState, SQLSTATE_LENGTH + 1, Sqlstate);
@@ -225,12 +226,13 @@ SQLRETURN MADB_SetError(MADB_Error  *Error,
 
   if (NativeErrorMsg)
   {
-    strcpy_s(Error->SqlErrorMsg + Error->PrefixLen, SQL_MAX_MESSAGE_LENGTH + 1 - Error->PrefixLen, NativeErrorMsg);
+    strncpy(Error->SqlErrorMsg + Error->PrefixLen, NativeErrorMsg, SQL_MAX_MESSAGE_LENGTH - Error->PrefixLen);
+    Error->SqlErrorMsg[SQL_MAX_MESSAGE_LENGTH] = '\0';
   }
   else
   {
-    strcpy_s(Error->SqlErrorMsg + Error->PrefixLen, SQL_MAX_MESSAGE_LENGTH + 1 - Error->PrefixLen,
-             MADB_ErrorList[ErrorCode].SqlErrorMsg);
+    strncpy(Error->SqlErrorMsg + Error->PrefixLen, MADB_ErrorList[ErrorCode].SqlErrorMsg, SQL_MAX_MESSAGE_LENGTH - Error->PrefixLen);
+    Error->SqlErrorMsg[SQL_MAX_MESSAGE_LENGTH] = '\0';
   }
   strcpy_s(Error->SqlState, SQLSTATE_LENGTH + 1, MADB_ErrorList[ErrorCode].SqlState);
   Error->NativeError= NativeError;
