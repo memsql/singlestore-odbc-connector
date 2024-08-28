@@ -430,21 +430,21 @@ ODBC_TEST(t_bug27862_1)
   hstmt1= ConnectWithCharset(&hdbc1, "binary", NULL); /* We need to make sure that the charset used for connection is not multibyte */
 
   OK_SIMPLE_STMT(hstmt1, "DROP TABLE IF EXISTS t_bug27862");
-  OK_SIMPLE_STMT(hstmt1, "CREATE TABLE t_bug27862 (a VARCHAR(2), b VARCHAR(2))");
+  OK_SIMPLE_STMT(hstmt1, "CREATE TABLE t_bug27862 (a VARCHAR(2) CHARACTER SET BINARY, b VARCHAR(2) CHARACTER SET BINARY)");
   OK_SIMPLE_STMT(hstmt1, "INSERT INTO t_bug27862 VALUES ('a','b')");
 
   OK_SIMPLE_STMT(hstmt1, "SELECT CONCAT(a,b) FROM t_bug27862");
 
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, hstmt1, SQLColAttribute(hstmt1, 1, SQL_DESC_DISPLAY_SIZE, NULL, 0,
                                  NULL, &len));
-  is_num(len, 4);
+  is_num(len, 8);  // binary fields are represented as hex strings
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, hstmt1, SQLColAttribute(hstmt1, 1, SQL_DESC_LENGTH, NULL, 0,
                                  NULL, &len));
   is_num(len, 4);
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, hstmt1, SQLColAttribute(hstmt1, 1, SQL_DESC_OCTET_LENGTH, NULL, 0,
                                  NULL, &len));
   /* Octet length should *not* include terminanting null character according to ODBC specs. This check may fail if multibyte charset is used for connection */
-  is_num(len, 12);
+  is_num(len, 4);
 
   CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
   CHECK_DBC_RC(hdbc1, SQLDisconnect(hdbc1));

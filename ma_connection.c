@@ -891,14 +891,6 @@ real_connect:
     }
     goto mysql_native_err;
   }
-  
-  /* I guess it is better not to do that at all. Besides SQL_ATTR_PACKET_SIZE is actually not for max packet size */
-  if (Connection->PacketSize)
-  {
-    /*_snprintf(StmtStr, 128, "SET GLOBAL max_allowed_packet=%ld", Connection-> PacketSize);
-    if (mysql_query(Connection->mariadb, StmtStr))
-      goto mysql_native_err;*/
-  }
 
   /* set default catalog */
   if (Connection->CatalogName && Connection->CatalogName[0])
@@ -907,10 +899,9 @@ real_connect:
       goto mysql_native_err;
   }
 
-  /* Turn sql_auto_is_null behavior off.
-     For more details see: http://bugs.mysql.com/bug.php?id=47005 */
-  if (mysql_query(Connection->mariadb, "SET SESSION SQL_AUTO_IS_NULL=0"))
-    goto mysql_native_err;
+  // mysql_set_character_set in the form of the mysql_optionsv call is a no-op:
+  // mysql_optionsv(*, MYSQL_SET_CHARSET_NAME, *) doesn't set database/connection charset 
+  mysql_set_character_set(Connection->mariadb, Connection->Charset.cs_info->csname);
 
   /* set autocommit behavior */
   if (mysql_autocommit(Connection->mariadb, (my_bool)Connection->AutoCommit))

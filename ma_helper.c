@@ -390,6 +390,39 @@ char *MADB_GetTypeName(MYSQL_FIELD *Field)
 }
 /* }}} */
 
+/**
+  Get the decimal digits of a field, as defined at:
+    https://docs.microsoft.com/en-us/sql/odbc/reference/appendixes/decimal-digits
+
+  @param[in]  field
+
+  @return  The decimal digits, or @c SQL_NO_TOTAL where it makes no sense
+
+  The function has to return SQLSMALLINT, since it corresponds to SQL_DESC_SCALE
+  or SQL_DESC_PRECISION for some data types.
+*/
+SQLSMALLINT MADB_GetDecimalDigits(const MYSQL_FIELD *field)
+{
+  switch (field->type)
+  {
+  case MYSQL_TYPE_DECIMAL:
+  case MYSQL_TYPE_NEWDECIMAL:
+  case MYSQL_TYPE_DATETIME:
+  case MYSQL_TYPE_TIMESTAMP:
+  case MYSQL_TYPE_TIME:
+    return field->decimals;
+  /* All exact numeric types. */
+  case MYSQL_TYPE_TINY:
+  case MYSQL_TYPE_SHORT:
+  case MYSQL_TYPE_LONG:
+  case MYSQL_TYPE_LONGLONG:
+  case MYSQL_TYPE_INT24:
+    return 0;
+  default:
+    return SQL_NO_TOTAL;
+  }
+}
+
 MYSQL_RES *MADB_GetDefaultColumnValues(MADB_Stmt *Stmt, MYSQL_FIELD *fields)
 {
   MADB_DynString DynStr;
@@ -447,7 +480,7 @@ char *MADB_GetDefaultColumnValue(MYSQL_RES *res, const char *Column)
   return NULL;
 }
 
-SQLLEN MADB_GetDataSize(SQLSMALLINT SqlType, SQLLEN OctetLength, BOOL Unsigned,
+SQLLEN MADB_GetDataSize(SQLSMALLINT SqlType, SQLLEN OctetLength, BOOL isSigned,
                         SQLSMALLINT Precision, SQLSMALLINT Scale, unsigned int CharMaxLen)
 {
   switch(SqlType)
@@ -461,7 +494,7 @@ SQLLEN MADB_GetDataSize(SQLSMALLINT SqlType, SQLLEN OctetLength, BOOL Unsigned,
   case SQL_INTEGER:
     return 10;
   case SQL_BIGINT:
-    return 20 - test(Unsigned != FALSE);
+    return 20 - test(isSigned != FALSE);
   case SQL_REAL:
     return 7;
   case SQL_DOUBLE:
@@ -479,18 +512,23 @@ SQLLEN MADB_GetDataSize(SQLSMALLINT SqlType, SQLLEN OctetLength, BOOL Unsigned,
   case SQL_BINARY:
   case SQL_VARBINARY:
   case SQL_LONGVARBINARY:
-    return OctetLength;
+  case SQL_LONGVARCHAR:
+  case SQL_WLONGVARCHAR:
+    return MIN(OctetLength, S2_1_GB);
   case SQL_GUID:
-    return 36;;
+    return 36;
+  // default here corresponds to one of
+  // - SQL_CHAR, i.e. CHAR(LENGTH)
+  // - SQL_VARCHAR, i.e. VARCHAR(LENGTH)
   default:
     {
       if (CharMaxLen < 2/*i.e.0||1*/)
       {
-        return OctetLength;
+        return MIN(OctetLength, S2_1_GB);
       }
       else
       {
-        return OctetLength/CharMaxLen;
+        return MIN(OctetLength/CharMaxLen, S2_1_GB);
       }
     }
   }
@@ -535,30 +573,35 @@ size_t MADB_GetDisplaySize(MYSQL_FIELD *Field, MARIADB_CHARSET_INFO *charset)
   case MYSQL_TYPE_TIMESTAMP:
   case MYSQL_TYPE_DATETIME:
     return SQL_TIMESTAMP_LEN + MADB_FRACTIONAL_PART(Field->decimals);
-  case MYSQL_TYPE_BLOB:
-  case MYSQL_TYPE_ENUM:
-  case MYSQL_TYPE_GEOMETRY:
-  case MYSQL_TYPE_LONG_BLOB:
-  case MYSQL_TYPE_MEDIUM_BLOB:
-  case MYSQL_TYPE_SET:
-  case MYSQL_TYPE_STRING:
+  // LONGBLOB/LONGTEXT - like types, length is max size in both bytes and characters
   case MYSQL_TYPE_TINY_BLOB:
-  case MYSQL_TYPE_VARCHAR:
+  case MYSQL_TYPE_BLOB:
+  case MYSQL_TYPE_MEDIUM_BLOB:
+  case MYSQL_TYPE_LONG_BLOB:
+    return MIN(Field->length, S2_1_GB);
+  // VARCHAR(n), VARBINARY(n), ENUM, SET
   case MYSQL_TYPE_VAR_STRING:
+  // CHAR(n), BINARY(n)
+  case MYSQL_TYPE_STRING:
   {
     if (MADB_FIELD_IS_BINARY(Field))
     {
-      return Field->length*2; /* ODBC specs says we should give 2 characters per byte to display binaray data in hex form */
+      return MIN(Field->length, S2_1_GB) * 2; /* ODBC specs says we should give 2 characters per byte to display binary data in hex form */
     }
     else if (charset == NULL || charset->char_maxlen < 2/*i.e.0||1*/)
     {
-      return Field->length;
+      return MIN(Field->length, S2_1_GB);
     }
     else
     {
-      return Field->length/charset->char_maxlen;
+      return MIN(Field->length/charset->char_maxlen, S2_1_GB);
     }
   }
+  // no SingleStore type falls to the group below
+  case MYSQL_TYPE_ENUM:
+  case MYSQL_TYPE_SET:
+  case MYSQL_TYPE_GEOMETRY:
+  case MYSQL_TYPE_VARCHAR:
   default:
     return SQL_NO_TOTAL;
   }
@@ -566,9 +609,17 @@ size_t MADB_GetDisplaySize(MYSQL_FIELD *Field, MARIADB_CHARSET_INFO *charset)
 /* }}} */
 
 /* {{{ MADB_GetOctetLength */
-size_t MADB_GetOctetLength(MYSQL_FIELD *Field, unsigned short MaxCharLen)
+/**
+  Get the transfer octet length of a field, as defined at:
+    http://msdn2.microsoft.com/en-us/library/ms713979.aspx
+
+  @param[in] Field
+
+  @return  The transfer octet length. Cap at INT_MAX32 due to signed value
+*/
+size_t MADB_GetOctetLength(MYSQL_FIELD *Field)
 {
-  size_t Length= MIN(MADB_INT_MAX32, Field->length);
+  size_t Length= MIN(S2_1_GB, Field->length);
 
   switch (Field->type) {
   case MYSQL_TYPE_NULL:

@@ -47,8 +47,9 @@ size_t MADB_GetHexString(char *BinaryBuffer, size_t BinaryLength,
 int CheckExpiration(int64_t expiration);
 
 size_t  MADB_GetDisplaySize(MYSQL_FIELD *Field, MARIADB_CHARSET_INFO *charset);
-size_t  MADB_GetOctetLength(MYSQL_FIELD *Field, unsigned short MaxCharLen);
+size_t  MADB_GetOctetLength(MYSQL_FIELD *Field);
 char *  MADB_GetTypeName(MYSQL_FIELD *Field);
+SQLSMALLINT MADB_GetDecimalDigits(const MYSQL_FIELD *field);
 
 char *  ltrim(char *Str);
 char *  trim(char *Str);
@@ -129,6 +130,7 @@ void EmulatedCleanup(MYSQL *mysql);
 #define STR(s) #s
 
 #define MADB_INT_MAX32       0x7FFFFFFFL
+#define S2_1_GB              0x3FFFFFFF
 
 #ifndef MIN
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
@@ -187,5 +189,15 @@ void EmulatedCleanup(MYSQL *mysql);
 #define MADB_IS_EMPTY(STR) ((STR)==NULL || *(STR)=='\0')
 
 #define MADB_FRACTIONAL_PART(_decimals) ((_decimals) > 0 ? (_decimals) + 1/*Decimal point*/ : 0)
+
+#define is_char_sql_type(type) \
+  ((type) == SQL_CHAR || (type) == SQL_VARCHAR || (type) == SQL_LONGVARCHAR)
+#define is_wchar_sql_type(type) \
+  ((type) == SQL_WCHAR || (type) == SQL_WVARCHAR || (type) == SQL_WLONGVARCHAR)
+#define is_binary_sql_type(type) \
+  ((type) == SQL_BINARY || (type) == SQL_VARBINARY || \
+   (type) == SQL_LONGVARBINARY)
+#define is_datetime_sql_type(type) \
+  ((type) == SQL_TYPE_DATE || (type) == SQL_TYPE_TIME || (type) == SQL_TYPE_TIMESTAMP)
 
 #endif

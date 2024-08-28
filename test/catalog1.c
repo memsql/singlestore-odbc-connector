@@ -1247,14 +1247,14 @@ ODBC_TEST(t_bug12805)
   CHECK_STMT_RC(Stmt1, SQLFetch(Stmt1));
   CHECK_STMT_RC(Stmt1, SQLGetData(Stmt1, 7, SQL_C_ULONG, &len2,
                              0, NULL));
-  is_num(len2, 2147483647);
+  is_num(len2, 1073741823);
   CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
 
   length= 0;
   OK_SIMPLE_STMT(Stmt1, "SELECT * FROM bug12805");
   CHECK_STMT_RC(Stmt1, SQLDescribeCol(Stmt1, 2, dummy, sizeof(dummy) - 1, NULL,
                                  NULL, &length, NULL, NULL));
-  is_num(length, 2147483647);
+  is_num(length, 1073741823);
 
   CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
   ODBC_Disconnect(Env1, Connection1, Stmt1);
@@ -1267,7 +1267,7 @@ ODBC_TEST(t_bug12805)
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
   CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 7, SQL_C_ULONG, &len2,
                             0, NULL));
-  is_num(len2, 4294967295UL);
+  is_num(len2, 1073741823);
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
 
@@ -1275,7 +1275,7 @@ ODBC_TEST(t_bug12805)
   OK_SIMPLE_STMT(Stmt, "SELECT * FROM bug12805");
   CHECK_STMT_RC(Stmt, SQLDescribeCol(Stmt, 2, dummy, sizeof(dummy), NULL, NULL,
                                  &length, NULL, NULL));
-  is_num(length, 4294967295UL);
+  is_num(length, 1073741823);
 
   CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
   OK_SIMPLE_STMT(Stmt, "DROP TABLE bug12805");

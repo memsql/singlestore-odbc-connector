@@ -279,7 +279,7 @@ ODBC_TEST(driver_connect_simple) {
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
   CHECK_DBC_RC(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt));
-  OK_SIMPLE_STMT(hstmt, "SELECT * FROM INFORMATION_SCHEMA.GLOBAL_VARIABLES WHERE VARIABLE_NAME = 'CHARACTER_SET_CONNECTION'");
+  OK_SIMPLE_STMT(hstmt, "SELECT * FROM INFORMATION_SCHEMA.SESSION_VARIABLES WHERE VARIABLE_NAME = 'CHARACTER_SET_SERVER'");
   CHECK_STMT_RC(hstmt, SQLFetch(hstmt));
   IS_STR(my_fetch_str(hstmt, buff, 2), "utf8", sizeof("utf8"));
   CHECK_STMT_RC(hstmt, SQLFreeHandle(SQL_HANDLE_STMT, hstmt));
@@ -376,7 +376,7 @@ ODBC_TEST(driver_connect_simple_w) {
                                       conn_out, sizeof(conn_out), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));
   CHECK_DBC_RC(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt));
-  OK_SIMPLE_STMT(hstmt, "SELECT * FROM INFORMATION_SCHEMA.GLOBAL_VARIABLES WHERE VARIABLE_NAME = 'CHARACTER_SET_CONNECTION'");
+  OK_SIMPLE_STMT(hstmt, "SELECT * FROM INFORMATION_SCHEMA.SESSION_VARIABLES WHERE VARIABLE_NAME = 'CHARACTER_SET_SERVER'");
   CHECK_STMT_RC(hstmt, SQLFetch(hstmt));
   IS_STR(my_fetch_str(hstmt, buff, 2), "utf8", sizeof("utf8"));
   CHECK_STMT_RC(hstmt, SQLFreeHandle(SQL_HANDLE_STMT, hstmt));

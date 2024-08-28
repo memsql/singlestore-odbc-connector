@@ -4578,13 +4578,13 @@ SQLRETURN MADB_StmtTablePrivileges(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLI
 }
 /* }}} */
 
-static const MADB_ShortTypeInfo SqlTablesColType[5] =
-  {{SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // TABLE_CAT
-   {SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // TABLE_SCHEM
-   {SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // TABLE_NAME
-   {SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // TABLE_TYPE
-   {SQL_VARCHAR,  0, SQL_NO_NULLS, 0}};  // REMARKS
-
+static const MADB_ShortTypeInfo SqlTablesColType[5] = {
+  {SQL_VARCHAR,  0, SQL_NO_NULLS, 0, 0},  // TABLE_CAT
+  {SQL_VARCHAR,  0, SQL_NULLABLE, 0, 0},  // TABLE_SCHEM
+  {SQL_VARCHAR,  0, SQL_NO_NULLS, 0, 0},  // TABLE_NAME
+  {SQL_VARCHAR,  0, SQL_NO_NULLS, 0, 0},  // TABLE_TYPE
+  {SQL_VARCHAR,  0, SQL_NO_NULLS, 0, 0}   // REMARKS
+};
 
 /* {{{ MADB_StmtTables */
 SQLRETURN MADB_StmtTables(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLINT CatalogNameLength,
@@ -4735,11 +4735,21 @@ SQLRETURN MADB_StmtTables(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLINT Catalo
 }
 /* }}} */
 
-static const MADB_ShortTypeInfo SqlStatsColType[13]=
-                               /*1*/    {{SQL_VARCHAR, 0, SQL_NULLABLE, 0}, {SQL_VARCHAR, 0, SQL_NULLABLE, 0}, {SQL_VARCHAR, 0, SQL_NO_NULLS, 0}, {SQL_SMALLINT, 0, SQL_NULLABLE, 0},
-                               /*5*/     {SQL_VARCHAR, 0, SQL_NULLABLE, 0}, {SQL_VARCHAR, 0, SQL_NULLABLE, 0}, {SQL_SMALLINT, 0, SQL_NO_NULLS, 0}, {SQL_SMALLINT, 0, SQL_NULLABLE, 0},
-                               /*9*/     {SQL_VARCHAR, 0, SQL_NULLABLE, 0}, {SQL_CHAR, 0, SQL_NULLABLE, 2}, {SQL_INTEGER, 0, SQL_NULLABLE, 0}, {SQL_INTEGER, 0, SQL_NULLABLE, 0},
-                               /*13*/    {SQL_VARCHAR, 0, SQL_NULLABLE, 0}};
+static const MADB_ShortTypeInfo SqlStatsColType[13] = {
+  {SQL_VARCHAR,  0, SQL_NULLABLE, 0, 0},
+  {SQL_VARCHAR,  0, SQL_NULLABLE, 0, 0},
+  {SQL_VARCHAR,  0, SQL_NO_NULLS, 0, 0},
+  {SQL_SMALLINT, 0, SQL_NULLABLE, 0, 0},
+  {SQL_VARCHAR,  0, SQL_NULLABLE, 0, 0},
+  {SQL_VARCHAR,  0, SQL_NULLABLE, 0, 0},
+  {SQL_SMALLINT, 0, SQL_NO_NULLS, 0, 0},
+  {SQL_SMALLINT, 0, SQL_NULLABLE, 0, 0},
+  {SQL_VARCHAR,  0, SQL_NULLABLE, 0, 0},
+  {SQL_CHAR,     0, SQL_NULLABLE, 2, 0},
+  {SQL_INTEGER,  0, SQL_NULLABLE, 0, 0},
+  {SQL_INTEGER,  0, SQL_NULLABLE, 0, 0},
+  {SQL_VARCHAR,  0, SQL_NULLABLE, 0, 0},
+};
 
 /* {{{ MADB_StmtStatistics */
 SQLRETURN MADB_StmtStatistics(MADB_Stmt *Stmt, char *CatalogName, SQLSMALLINT NameLength1,
@@ -4838,24 +4848,24 @@ static const enum enum_field_types SqlColumnsFieldTypes[SQL_COLUMNS_FIELD_COUNT]
 };
 
 static const MADB_ShortTypeInfo SqlColumnsColType[SQL_COLUMNS_FIELD_COUNT] = {
-    {SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // TABLE_CAT
-    {SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // TABLE_SCHEM
-    {SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // TABLE_NAME
-    {SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // COLUMN_NAME
-    {SQL_SMALLINT, 0, SQL_NO_NULLS, 0},  // DATA_TYPE
-    {SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // TYPE_NAME
-    {SQL_INTEGER,  0, SQL_NULLABLE, 0},  // COLUMN_SIZE
-    {SQL_INTEGER,  0, SQL_NULLABLE, 0},  // BUFFER_LENGTH
-    {SQL_SMALLINT, 0, SQL_NULLABLE, 0},  // DECIMAL_DIGITS
-    {SQL_SMALLINT, 0, SQL_NULLABLE, 0},  // NUM_PREC_RADIX
-    {SQL_SMALLINT, 0, SQL_NO_NULLS, 0},  // NULLABLE
-    {SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // REMARKS
-    {SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // COLUMN_DEF
-    {SQL_SMALLINT, 0, SQL_NO_NULLS, 0},  // SQL_DATA_TYPE
-    {SQL_SMALLINT, 0, SQL_NULLABLE, 0},  // SQL_DATETIME_SUB
-    {SQL_INTEGER,  0, SQL_NULLABLE, 0},  // CHAR_OCTET_LENGTH
-    {SQL_INTEGER,  0, SQL_NO_NULLS, 0},  // ORDINAL_POSITION
-    {SQL_VARCHAR,  0, SQL_NULLABLE, 0}   // IS_NULLABLE
+    {SQL_VARCHAR,  0, SQL_NULLABLE, 0, 0}, // TABLE_CAT
+    {SQL_VARCHAR,  0, SQL_NULLABLE, 0, 0}, // TABLE_SCHEM
+    {SQL_VARCHAR,  0, SQL_NO_NULLS, 0, 0}, // TABLE_NAME
+    {SQL_VARCHAR,  0, SQL_NO_NULLS, 0, 0}, // COLUMN_NAME
+    {SQL_SMALLINT, 0, SQL_NO_NULLS, 0, 0}, // DATA_TYPE
+    {SQL_VARCHAR,  0, SQL_NO_NULLS, 0, 0}, // TYPE_NAME
+    {SQL_INTEGER,  0, SQL_NULLABLE, 0, 0}, // COLUMN_SIZE
+    {SQL_INTEGER,  0, SQL_NULLABLE, 0, 0}, // BUFFER_LENGTH
+    {SQL_SMALLINT, 0, SQL_NULLABLE, 0, 0}, // DECIMAL_DIGITS
+    {SQL_SMALLINT, 0, SQL_NULLABLE, 0, 0}, // NUM_PREC_RADIX
+    {SQL_SMALLINT, 0, SQL_NO_NULLS, 0, 0}, // NULLABLE
+    {SQL_VARCHAR,  0, SQL_NULLABLE, 0, 0}, // REMARKS
+    {SQL_VARCHAR,  0, SQL_NULLABLE, 0, 0}, // COLUMN_DEF
+    {SQL_SMALLINT, 0, SQL_NO_NULLS, 0, 0}, // SQL_DATA_TYPE
+    {SQL_SMALLINT, 0, SQL_NULLABLE, 0, 0}, // SQL_DATETIME_SUB
+    {SQL_INTEGER,  0, SQL_NULLABLE, 0, 0}, // CHAR_OCTET_LENGTH
+    {SQL_INTEGER,  0, SQL_NO_NULLS, 0, 0}, // ORDINAL_POSITION
+    {SQL_VARCHAR,  0, SQL_NULLABLE, 0, 0}, // IS_NULLABLE
 };
 
 short allocAndFormatInt(char **buf, int value)
@@ -4892,10 +4902,14 @@ SQLRETURN MADB_StmtColumnsNoInfoSchema(MADB_Stmt *Stmt,
   MYSQL_RES *tables_res, *columns_res, *show_columns_res;
   MYSQL_ROW table_row, columns_row;
   unsigned long *table_lengths, *columns_lengths;
-  SQLSMALLINT concise_data_type, odbc_data_type, digits;
+  SQLSMALLINT concise_data_type, odbc_data_type, sql_data_type, digits, is_signed;
+  size_t precision;
 
   FieldDescrList *tableFields;
   FieldDescr *S2FieldDescr;
+
+  SQLSMALLINT char_size = 1;
+  MARIADB_CHARSET_INFO *charset;
 
   if (CatalogName && NameLength1 <= 0)
     NameLength1 = strlen(CatalogName);
@@ -5024,18 +5038,35 @@ SQLRETURN MADB_StmtColumnsNoInfoSchema(MADB_Stmt *Stmt,
         current_row_ptr[5] = "set";
       else
         current_row_ptr[5] = MADB_GetTypeName(field);
-      // COLUMN_SIZE
-      if ((column_char_length = S2_GetColumnSize(field, odbc_type_info, S2FieldDescr->FieldTypeS2, force_db_charset, Stmt->Connection->DBCharsetnr)) != SQL_NO_TOTAL)
-        is_alloc_fail |= allocAndFormatInt(&current_row_ptr[6], column_char_length);
       // BUFFER_LENGTH
-      if ((column_length = S2_GetCharacterOctetLength(field, odbc_type_info)) != SQL_NO_TOTAL)
+      if ((column_length = MADB_GetOctetLength(field)) != SQL_NO_TOTAL)
         is_alloc_fail |= allocAndFormatInt(&current_row_ptr[7], column_length);
       // DECIMAL_DIGITS
-      if ((digits = S2_GetDecimalDigits(field)) != SQL_NO_TOTAL)
+      if ((digits = MADB_GetDecimalDigits(field)) != SQL_NO_TOTAL)
         is_alloc_fail |= allocAndFormatInt(&current_row_ptr[8], digits);
       // NUM_PREC_RADIX
       if (odbc_type_info->NumPrecRadix)
         is_alloc_fail |= allocAndFormatInt(&current_row_ptr[9], odbc_type_info->NumPrecRadix);
+      // COLUMN_SIZE
+      if (field->charsetnr != BINARY_CHARSETNR )
+      {
+        charset = mariadb_get_charset_by_nr(field->charsetnr);
+        char_size = charset ? charset->char_maxlen : 4;
+      }
+      precision = field->length - test((field->flags & UNSIGNED_FLAG) == 0) - test(field->decimals != 0);
+      is_signed = !(field->flags & UNSIGNED_FLAG);
+      if ((column_char_length = MADB_GetDataSize(concise_data_type, column_length, is_signed, precision, field->decimals, char_size)) != SQL_NO_TOTAL)
+      {
+        printf("column_char_length from MADB_GetDataSize is %d, odbc_data_type %d, name %s\n", column_char_length, odbc_data_type, field->name);
+        // mediumint maps to SQL_INTEGER which is 4 byte instead of 3
+        if (!strncmp(S2FieldDescr->FieldTypeS2, "mediumint", 9))
+          column_char_length = 7;
+        if (!strncmp(S2FieldDescr->FieldTypeS2, "mediumint unsigned", 18))
+          column_char_length = 8;
+        if (!strncmp(S2FieldDescr->FieldTypeS2, "year", 4))
+          column_char_length = 4;
+        is_alloc_fail |= allocAndFormatInt(&current_row_ptr[6], column_char_length);
+      }
       // NULLABLE
       is_alloc_fail |= allocAndFormatInt(&current_row_ptr[10], !(field->flags & NOT_NULL_FLAG));
       // IS_NULLABLE
@@ -5429,12 +5460,12 @@ static const enum enum_field_types  SqlPrimaryKeysFieldTypes[SQL_PRIMARY_KEYS_FI
 };
 
 static const MADB_ShortTypeInfo SqlPrimaryKeysColType[SQL_PRIMARY_KEYS_FIELD_COUNT] = {
-    {SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // TABLE_CAT
-    {SQL_VARCHAR,  0, SQL_NULLABLE, 0},  // TABLE_SCHEM
-    {SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // TABLE_NAME
-    {SQL_VARCHAR,  0, SQL_NO_NULLS, 0},  // COLUMN_NAME
-    {SQL_SMALLINT, 0, SQL_NO_NULLS, 0},  // KEY_SEQ
-    {SQL_VARCHAR,  0, SQL_NO_NULLS, 0}   // PK_NAME
+    {SQL_VARCHAR,  0, SQL_NULLABLE, 0, 21844},  // TABLE_CAT
+    {SQL_VARCHAR,  0, SQL_NULLABLE, 0, 21844},  // TABLE_SCHEM
+    {SQL_VARCHAR,  0, SQL_NO_NULLS, 0, 21844},  // TABLE_NAME
+    {SQL_VARCHAR,  0, SQL_NO_NULLS, 0, 21844},  // COLUMN_NAME
+    {SQL_SMALLINT, 0, SQL_NO_NULLS, 0, 0},      // KEY_SEQ
+    {SQL_VARCHAR,  0, SQL_NO_NULLS, 0, 21844}   // PK_NAME
 };
 
 /* {{{ MADB_StmtPrimaryKeysNoInfoSchema */

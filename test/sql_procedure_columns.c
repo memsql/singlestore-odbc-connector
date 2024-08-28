@@ -105,25 +105,27 @@ int run_sql_procedurecolumns_routine_type(SQLHANDLE Stmt, const SQLSMALLINT *Exp
     unsigned long crLength = strlen(CREATE_ROUTINE_TEMPLATE) + strlen(RoutineType) + 1;
     _snprintf(createStmtStr, crLength, CREATE_ROUTINE_TEMPLATE, RoutineType);
 
-    char *ExpTypeName[33] = {"tinyint", "smallint", "mediumint unsigned", "int", "bigint unsigned", "double", "float",
-                             ServerNotOlderThan(Connection, 7, 5, 0) ? "decimal" : "newdecimal", "date", "time", "datetime", "datetime", "timestamp", "timestamp", "year",
-                             "char", "binary", "varchar", "varbinary", "longtext", "mediumtext", "text", "tinytext",
-                             "longblob", "mediumblob", "blob", "tinyblob", "bit",
-                             "json", "geography", "geographypoint", "enum", "set"};
+    char *ExpTypeName[33] = {"tinyint", "smallint", "mediumint unsigned", "int", "bigint unsigned",
+                             "double", "float", "decimal",
+                             "date", "time", "datetime", "datetime", "timestamp", "timestamp", "year",
+                             "char", "binary", "varchar", "varbinary",
+                             "longtext", "mediumtext", "text", "tinytext",
+                             "longblob", "mediumblob", "blob", "tinyblob",
+                             "bit", "json", "geography", "geographypoint", "enum", "set"};
     SQLINTEGER ExpColSize[33] = {3, 5, 8, 10, 20,
-                                 ServerNotOlderThan(Connection, 7, 5, 0) ? 22 : 50,
-                                 ServerNotOlderThan(Connection, 7, 5, 0) ? 12 : 50, 10, 10, 8, 19, 26, 19, 26, 4,
-                                 ServerNotOlderThan(Connection, 7, 5, 0) ? 11 : 33, 1,
-                                 ServerNotOlderThan(Connection, 7, 5, 0) ? 13 : 39, 17,
-                                 ServerNotOlderThan(Connection, 7, 5, 0) ? 1431655765 : 2147483647,
-                                 ServerNotOlderThan(Connection, 7, 5, 0) ? 5592405 : 50331645,
-                                 ServerNotOlderThan(Connection, 7, 5, 0) ? 21845 : 196605,
-                                 ServerNotOlderThan(Connection, 7, 5, 0) ? 85 : 765, 2147483647, 16777215, 65535, 255,
+                                 15, 7, 10,
+                                 10, 8, 19, 26, 19, 26, 4,
+                                 11, 1, 13, 17,
+                                 1073741823, 16777215, 65535, 255,
+                                 1073741823, 16777215, 65535, 255,
                                  -1, -1, -1, -1, -1, -1};
     SQLSMALLINT ExpDecimalDigits[33] = {0, 0, 0, 0, 0,
-                                        ServerNotOlderThan(Connection, 7, 5, 0) ? 6 : 31,
-                                        ServerNotOlderThan(Connection, 7, 5, 0) ? 0 : 31, 5, 0, 0, 0, 6, 0, 6,
-                                        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+                                        -1, -1, 5,
+                                        0, 0, 0, 6, 0, 6, -1,
+                                        -1, -1, -1, -1,
+                                        -1, -1, -1, -1,
+                                        -1, -1, -1, -1,
+                                        -1, -1, -1, -1, -1, -1};
     SQLSMALLINT ExpNumPrecRadix[33] = {10, 10, 10, 10, 10, 10, 10, 10, -1, -1, -1, -1, -1, -1,
                                        10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
     SQLSMALLINT ExpDatetimeSub[33] = {-1, -1, -1, -1, -1, -1, -1, -1, 1, 2, 3, 3, 3, 3,
@@ -190,7 +192,10 @@ int run_sql_procedurecolumns_routine_type(SQLHANDLE Stmt, const SQLSMALLINT *Exp
         }
 
         if (ExpColSize[numOfRowsFetched] != SQL_NULL_DATA) {
-            FAIL_IF(columnSize != ExpColSize[numOfRowsFetched], "Wrong COLUMN_SIZE returned!");
+            if (columnSize != ExpColSize[numOfRowsFetched]) {
+                fprintf(stdout, "Wrong COLUMN_SIZE returned for column %s of type %s, #%d \n", colName, typeName, numOfRowsFetched);
+                is_num(columnSize, ExpColSize[numOfRowsFetched]);
+            }
         }
         if (ExpDecimalDigits[numOfRowsFetched] != SQL_NULL_DATA) {
             FAIL_IF(decimalDigits != ExpDecimalDigits[numOfRowsFetched], "Wrong DECIMAL_DIGITS returned!");
