@@ -494,7 +494,7 @@ int ParseQuery(MADB_QUERY *Query, my_bool replaceCall)
 
       if (replaceCall &&
         StmtTokensCount == 0 &&
-        _strnicmp(Query, "CALL", 4))
+        _strnicmp(p, "CALL", 4) == 0)
       {
         memcpy(p, "ECHO", 4);
       }
