@@ -975,11 +975,13 @@ int GetCredentialsBrowserSSO(MADB_Dbc *Dbc, MADB_Dsn *Dsn, const char *email, my
   {
     if (BrowserAuth(Dbc, email, &creds, Dsn->TestMode))
     {
+      BrowserAuthCredentialsFree(&creds);
       MDBUG_C_RETURN(Dbc, SQL_ERROR, &Dbc->Error);
     }
     // 3. Store credentials in the keyring
     if (!Dsn->IgnoreKeyring && PutCachedCredentials(Dbc, &creds))
     {
+      BrowserAuthCredentialsFree(&creds);
       MDBUG_C_RETURN(Dbc, SQL_ERROR, &Dbc->Error);
     }
   }

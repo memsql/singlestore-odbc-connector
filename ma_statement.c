@@ -3385,8 +3385,8 @@ SQLRETURN MADB_StmtFetch(MADB_Stmt *Stmt)
 
 #undef CALC_ALL_ROWS_RC
 
-/* {{{ MADB_StmtGetAttr */ 
-SQLRETURN MADB_StmtGetAttr(MADB_Stmt *Stmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr, SQLINTEGER BufferLength,
+/* {{{ MADB_StmtGetStmtAttr */ 
+SQLRETURN MADB_StmtGetStmtAttr(MADB_Stmt *Stmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr, SQLINTEGER BufferLength,
                        SQLINTEGER *StringLengthPtr)
 {
   SQLINTEGER StringLength;
@@ -3499,8 +3499,8 @@ SQLRETURN MADB_StmtGetAttr(MADB_Stmt *Stmt, SQLINTEGER Attribute, SQLPOINTER Val
 /* }}} */
 
 
-/* {{{ MADB_StmtSetAttr */
-SQLRETURN MADB_StmtSetAttr(MADB_Stmt *Stmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr, SQLINTEGER StringLength)
+/* {{{ MADB_StmtSetStmtAttr */
+SQLRETURN MADB_StmtSetStmtAttr(MADB_Stmt *Stmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr, SQLINTEGER StringLength)
 {
   SQLRETURN ret= SQL_SUCCESS;
 
@@ -4344,8 +4344,8 @@ SQLRETURN MADB_StmtColumnCount(MADB_Stmt *Stmt, SQLSMALLINT *ColumnCountPtr)
 }
 /* }}} */
 
-/* {{{ MADB_StmtColAttr */
-SQLRETURN MADB_StmtColAttr(MADB_Stmt *Stmt, SQLUSMALLINT ColumnNumber, SQLUSMALLINT FieldIdentifier, SQLPOINTER CharacterAttributePtr,
+/* {{{ MADB_StmtColAttribute */
+SQLRETURN MADB_StmtColAttribute(MADB_Stmt *Stmt, SQLUSMALLINT ColumnNumber, SQLUSMALLINT FieldIdentifier, SQLPOINTER CharacterAttributePtr,
              SQLSMALLINT BufferLength, SQLSMALLINT *StringLengthPtr, SQLLEN *NumericAttributePtr, my_bool IsWchar)
 {
   MADB_DescRecord *Record;
@@ -6390,10 +6390,10 @@ struct st_ma_stmt_methods MADB_StmtMethods=
   MADB_StmtRowCount,
   MADB_StmtParamCount,
   MADB_StmtColumnCount,
-  MADB_StmtGetAttr,
-  MADB_StmtSetAttr,
+  MADB_StmtGetStmtAttr,
+  MADB_StmtSetStmtAttr,
   MADB_StmtFree,
-  MADB_StmtColAttr,
+  MADB_StmtColAttribute,
   MADB_StmtColumnPrivileges,
   MADB_StmtTablePrivileges,
   MADB_StmtTables,

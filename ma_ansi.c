@@ -21,6 +21,14 @@
 #include <ma_parse.h>
 #include <odbc_3_api.h>
 
+/**
+ * Funcions SQL<something> are usually mapped to:
+ * - MADB_Stmt<something> from MADB_StmtMethods
+ *   (e.g. SQLColumnPrivileges is implemented in MADB_StmtColumnPrivileges) or
+ * - MADB_Dbc<something> from MADB_Dbc_Methods
+ *   (e.g. SQLDriverConnect is implemented in MADB_DbcDriverConnect)
+ */
+
 /* {{{ SQLColAttribute */
 SQLRETURN SQL_API SQLColAttribute (SQLHSTMT StatementHandle,
                                    SQLUSMALLINT ColumnNumber,

@@ -33,12 +33,11 @@ commands:
             sudo apt update
             sudo apt install -y curl
             sudo apt-get update
-            sudo apt-get install -y mariadb-client-core-10.3
+            sudo apt-get install -y mariadb-client-core-10.6
             sudo apt-get install unixodbc odbcinst
             sudo apt-get install unixodbc-dev
             sudo apt-get install --allow-unauthenticated -y --force-yes -m unixodbc-dev odbcinst1debian2 libodbc1
-            sudo apt-get install -y libglib2.0 libsecret-1-dev libkrb5-dev
-            sudo apt-get clean
+            sudo NEEDRESTART_MODE=a apt-get install -y libglib2.0 libsecret-1-dev libkrb5-dev
   setup-environment-macos:
     description: "Setup the macos environment"
     steps:
@@ -192,7 +191,7 @@ jobs:
         type: boolean
         default: false
     machine:
-      image: ubuntu-2004:202010-01
+      image: ubuntu-2204:2024.04.4
     resource_class: << parameters.machine_class >>
     environment:
       WITH_SANITIZER: << parameters.with_sanitizer >>
@@ -393,37 +392,7 @@ workflows:
   test:
     jobs:
       - build-ubuntu:
-          name: build-ubuntu-sanitizer-unicode-8.1.27-<< matrix.build_type >>
-          matrix:
-            parameters:
-              machine_class:
-                - large
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - ssodbc_test_w
-              test_driver:
-                - SingleStore ODBC Unicode Driver
-              memsql_image:
-                - singlestore/cluster-in-a-box:alma-8.1.27-a1e489fcb4-4.0.15-1.17.5
-              with_sanitizer:
-                - true
-      - build-ubuntu:
-          name: build-ubuntu-unicode-8.0.15-<< matrix.build_type >>
-          matrix:
-            parameters:
-              machine_class:
-                - large
-              build_type:
-                - RelWithDebInfo
-              test_dsn:
-                - ssodbc_test_w
-              test_driver:
-                - SingleStore ODBC Unicode Driver
-              memsql_image:
-                - singlestore/cluster-in-a-box:alma-8.0.15-0b9b66384f-4.0.11-1.15.2
-      - build-ubuntu:
-          name: build-ubuntu-ansi-8.0.15-<< matrix.build_type >>
+          name: build-ubuntu-sanitizer-ansi-8.7-<< matrix.build_type >>
           matrix:
             parameters:
               machine_class:
@@ -435,7 +404,53 @@ workflows:
               test_driver:
                 - SingleStore ODBC ANSI Driver
               memsql_image:
-                - singlestore/cluster-in-a-box:alma-8.0.15-0b9b66384f-4.0.11-1.15.2
+                - singlestore/cluster-in-a-box:alma-8.7.12-483e5f8acb-4.1.0-1.17.15
+              with_sanitizer:
+                - true
+      - build-ubuntu:
+          name: build-ubuntu-sanitizer-unicode-8.5-<< matrix.build_type >>
+          matrix:
+            parameters:
+              machine_class:
+                - large
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_w
+              test_driver:
+                - SingleStore ODBC Unicode Driver
+              memsql_image:
+                - singlestore/cluster-in-a-box:alma-8.5.22-fe61f40cd1-4.1.0-1.17.11
+              with_sanitizer:
+                - true
+      - build-ubuntu:
+          name: build-ubuntu-unicode-8.0-<< matrix.build_type >>
+          matrix:
+            parameters:
+              machine_class:
+                - large
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_w
+              test_driver:
+                - SingleStore ODBC Unicode Driver
+              memsql_image:
+                - singlestore/cluster-in-a-box:alma-8.0.19-f48780d261-4.0.11-1.16.0
+      - build-ubuntu:
+          name: build-ubuntu-ansi-8.1-<< matrix.build_type >>
+          matrix:
+            parameters:
+              machine_class:
+                - large
+              build_type:
+                - RelWithDebInfo
+              test_dsn:
+                - ssodbc_test_a
+              test_driver:
+                - SingleStore ODBC ANSI Driver
+              memsql_image:
+                - singlestore/cluster-in-a-box:alma-8.1.32-e3d3cde6da-4.0.16-1.17.6
       - build-macos:
           name: build-macos-ansi-<< matrix.build_type >>
           matrix:

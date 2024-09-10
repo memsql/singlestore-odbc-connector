@@ -95,7 +95,6 @@ main () {
     -CAkey "${caKeyFile}" \
     -days 3650 \
     -in "${csrFile}" \
-    -signkey "${keyFile}" \
     -out "${certFile}"
 
   log "Generating client certificate"

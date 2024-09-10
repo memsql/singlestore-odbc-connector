@@ -23,6 +23,14 @@
 
 extern Client_Charset utf8;
 
+/**
+ * Funcions SQL<something>W are usually mapped to:
+ * - MADB_Stmt<something> from MADB_StmtMethods
+ *   (e.g. SQLColumnPrivileges is implemented in MADB_StmtColumnPrivileges) or
+ * - MADB_Dbc<something> from MADB_Dbc_Methods
+ *   (e.g. SQLDriverConnect is implemented in MADB_DbcDriverConnect)
+ */
+
 /* {{{ SQLColAttributeW */
 SQLRETURN SQL_API SQLColAttributeW (SQLHSTMT StatementHandle,
                                     SQLUSMALLINT ColumnNumber,
@@ -400,7 +408,7 @@ SQLRETURN SQL_API SQLGetConnectAttrW(SQLHDBC ConnectionHandle,
     MDBUG_C_DUMP(Dbc, BufferLength, d);
     MDBUG_C_DUMP(Dbc, StringLengthPtr, 0x);
 
-    ret= Dbc->Methods->GetAttr(Dbc, Attribute, ValuePtr, BufferLength, StringLengthPtr, TRUE);
+    ret= Dbc->Methods->GetConnectAttr(Dbc, Attribute, ValuePtr, BufferLength, StringLengthPtr, TRUE);
 
     MDBUG_C_RETURN(Dbc, ret, &Dbc->Error);
 }
@@ -632,7 +640,7 @@ SQLRETURN SQL_API SQLGetStmtAttrW(SQLHSTMT StatementHandle,
         return SQL_INVALID_HANDLE;
     MADB_CLEAR_ERROR(&Stmt->Error);
 
-    return Stmt->Methods->GetAttr(Stmt, Attribute, ValuePtr, BufferLength, StringLengthPtr);
+    return Stmt->Methods->GetStmtAttr(Stmt, Attribute, ValuePtr, BufferLength, StringLengthPtr);
 }
 /* }}} */
 
@@ -885,7 +893,7 @@ SQLRETURN SQL_API SQLSetConnectAttrW(SQLHDBC ConnectionHandle,
     MDBUG_C_DUMP(Dbc, Attribute, d);
     MDBUG_C_DUMP(Dbc, ValuePtr, 0x);
     MDBUG_C_DUMP(Dbc, StringLength, d);
-    ret= Dbc->Methods->SetAttr(Dbc, Attribute, ValuePtr, StringLength, TRUE);
+    ret= Dbc->Methods->SetConnectAttr(Dbc, Attribute, ValuePtr, StringLength, TRUE);
 
     MDBUG_C_RETURN(Dbc, ret, &Dbc->Error);
 }
@@ -909,7 +917,7 @@ SQLRETURN SQL_API SQLSetConnectOptionW(SQLHDBC Hdbc, SQLUSMALLINT Option, SQLULE
     if (Option == SQL_ATTR_CURRENT_CATALOG)
         StringLength= SQL_NTS;
 
-    ret= Dbc->Methods->SetAttr(Dbc, Option, (SQLPOINTER)Param, StringLength, TRUE);
+    ret= Dbc->Methods->SetConnectAttr(Dbc, Option, (SQLPOINTER)Param, StringLength, TRUE);
 
     MDBUG_C_RETURN(Dbc, ret, &Dbc->Error);
 }
