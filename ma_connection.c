@@ -575,10 +575,10 @@ SQLRETURN MADB_DbcEndTran(MADB_Dbc *Dbc, SQLSMALLINT CompletionType)
 }
 /* }}} */
 
-/* {{{ MADB_Dbc_ConnectDB
+/* {{{ MADB_Dbc_Connect
        Mind that this function is used for establishing connection from the setup lib
 */
-SQLRETURN MADB_DbcConnectDB(MADB_Dbc *Connection,
+SQLRETURN MADB_DbcConnect(MADB_Dbc *Connection,
     MADB_Dsn *Dsn)
 {
   char StmtStr[128];
@@ -875,6 +875,10 @@ real_connect:
     if (Dsn->IsBrowserAuth && !connectionTried)
     {
       connectionTried = TRUE;
+      // we've already tried to run GetCredentialsBrowserSSO above, so
+      // we need to cleanup the old credentials first 
+      MADB_FREE(Dsn->UserName);
+      MADB_FREE(Dsn->Password);
       if (GetCredentialsBrowserSSO(Connection, Dsn, emailForSSO, FALSE /*readCached*/))
       {
         goto end;
@@ -2353,8 +2357,8 @@ void MADB_DriverSideFree(void *ptr)
 /* }}} */
 
 
-/* {{{ MADB_DriverConnect */
-SQLRETURN MADB_DriverConnect(MADB_Dbc *Dbc, SQLHWND WindowHandle, SQLCHAR *InConnectionString,
+/* {{{ MADB_DbcDriverConnect */
+SQLRETURN MADB_DbcDriverConnect(MADB_Dbc *Dbc, SQLHWND WindowHandle, SQLCHAR *InConnectionString,
                              SQLULEN StringLength1, SQLCHAR *OutConnectionString,
                              SQLULEN BufferLength, SQLSMALLINT *StringLength2Ptr,
                              SQLUSMALLINT DriverCompletion)
@@ -2395,7 +2399,7 @@ SQLRETURN MADB_DriverConnect(MADB_Dbc *Dbc, SQLHWND WindowHandle, SQLCHAR *InCon
   case SQL_DRIVER_COMPLETE:
   case SQL_DRIVER_NOPROMPT:
 
-    if (SQL_SUCCEEDED(MADB_DbcConnectDB(Dbc, Dsn)))
+    if (SQL_SUCCEEDED(MADB_DbcConnect(Dbc, Dsn)))
     {
       goto end;
     }
@@ -2472,7 +2476,7 @@ SQLRETURN MADB_DriverConnect(MADB_Dbc *Dbc, SQLHWND WindowHandle, SQLCHAR *InCon
 
   DSNPrompt_Free(&DSNPrompt);
 
-  ret= MADB_DbcConnectDB(Dbc, Dsn);
+  ret= MADB_DbcConnect(Dbc, Dsn);
   if (!SQL_SUCCEEDED(ret))
   {
     goto error;
@@ -2534,9 +2538,9 @@ struct st_ma_connection_methods MADB_Dbc_Methods =
 { 
   MADB_DbcSetAttr,
   MADB_DbcGetAttr,
-  MADB_DbcConnectDB,
+  MADB_DbcConnect,
   MADB_DbcEndTran,
   MADB_DbcGetFunctions,
   MADB_DbcGetInfo,
-  MADB_DriverConnect
+  MADB_DbcDriverConnect
 };

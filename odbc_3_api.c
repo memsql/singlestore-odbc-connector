@@ -416,7 +416,7 @@ SQLRETURN SQLConnectCommon(SQLHDBC ConnectionHandle,
   MADB_DSN_SET_STR(Dsn, UserName, (char *)UserName, NameLength2);
   MADB_DSN_SET_STR(Dsn, Password, (char *)Authentication, NameLength3);
 
-  ret= Connection->Methods->ConnectDB(Connection, Dsn);
+  ret= Connection->Methods->Connect(Connection, Dsn);
 
   if (SQL_SUCCEEDED(ret))
   {
@@ -811,7 +811,7 @@ SQLRETURN MA_SQLGetConnectAttr(SQLHDBC ConnectionHandle,
   MDBUG_C_DUMP(Dbc, BufferLength, d);
   MDBUG_C_DUMP(Dbc, StringLengthPtr, 0x);
 
-  ret= Dbc->Methods->GetAttr(Dbc, Attribute, ValuePtr, BufferLength, StringLengthPtr, FALSE);
+  ret= Dbc->Methods->GetConnectAttr(Dbc, Attribute, ValuePtr, BufferLength, StringLengthPtr, FALSE);
 
   MDBUG_C_RETURN(Dbc, ret, &Dbc->Error);
 }
@@ -1013,7 +1013,7 @@ SQLRETURN MA_SQLGetStmtAttr(SQLHSTMT StatementHandle,
   MADB_Stmt *Stmt= (MADB_Stmt *)StatementHandle;
   if (!Stmt)
     return SQL_INVALID_HANDLE;
-  return Stmt->Methods->GetAttr(Stmt, Attribute, ValuePtr, BufferLength, StringLengthPtr);
+  return Stmt->Methods->GetStmtAttr(Stmt, Attribute, ValuePtr, BufferLength, StringLengthPtr);
 }
 
 /* {{{ SQLGetStmtOption */
@@ -1133,7 +1133,7 @@ SQLRETURN MA_SQLSetConnectAttr(SQLHDBC ConnectionHandle,
   MDBUG_C_DUMP(Dbc, ValuePtr, 0x);
   MDBUG_C_DUMP(Dbc, StringLength, d);
 
-  ret= Dbc->Methods->SetAttr(Dbc, Attribute, ValuePtr, StringLength, FALSE);
+  ret= Dbc->Methods->SetConnectAttr(Dbc, Attribute, ValuePtr, StringLength, FALSE);
 
   MDBUG_C_RETURN(Dbc, ret, &Dbc->Error);
 }
@@ -1238,7 +1238,7 @@ SQLRETURN MA_SQLSetStmtAttr(SQLHSTMT StatementHandle,
   MDBUG_C_DUMP(Stmt->Connection, ValuePtr, 0x);
   MDBUG_C_DUMP(Stmt->Connection, StringLength, d);
 
-  ret= Stmt->Methods->SetAttr(Stmt, Attribute, ValuePtr, StringLength);
+  ret= Stmt->Methods->SetStmtAttr(Stmt, Attribute, ValuePtr, StringLength);
 
   MDBUG_C_RETURN(Stmt->Connection, ret, &Stmt->Error);
 }

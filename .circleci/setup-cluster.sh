@@ -88,10 +88,13 @@ docker exec -it ${CONTAINER_NAME} memsqlctl update-config --yes --all --key ssl_
 echo "Restarting cluster"
 docker exec -it ${CONTAINER_NAME} memsqlctl restart-node --yes --all
 memsql-wait-start
+
 echo "Setting up root-ssl user"
-mysql -u root -h 127.0.0.1 -P $S2_MASTER_PORT -p"${MEMSQL_PASSWORD}" -e 'grant all privileges on *.* to "root-ssl"@"%" require ssl with grant option'
-mysql -u root -h 127.0.0.1 -P $S2_AGG_PORT_1 -p"${MEMSQL_PASSWORD}" -e 'grant all privileges on *.* to "root-ssl"@"%" require ssl with grant option'
-mysql -u root -h 127.0.0.1 -P $S2_AGG_PORT_2 -p"${MEMSQL_PASSWORD}" -e 'grant all privileges on *.* to "root-ssl"@"%" require ssl with grant option'
+mysql -u root -h 127.0.0.1 -P $S2_MASTER_PORT -p"${MEMSQL_PASSWORD}" -e 'create user "root-ssl"@"%" require ssl'
+mysql -u root -h 127.0.0.1 -P $S2_AGG_PORT_1  -p"${MEMSQL_PASSWORD}" -e 'create user "root-ssl"@"%" require ssl'
+
+mysql -u root -h 127.0.0.1 -P $S2_MASTER_PORT -p"${MEMSQL_PASSWORD}" -e 'grant all privileges on *.* to "root-ssl"@"%" with grant option'
+mysql -u root -h 127.0.0.1 -P $S2_AGG_PORT_1  -p"${MEMSQL_PASSWORD}" -e 'grant all privileges on *.* to "root-ssl"@"%" with grant option'
 echo "Done!"
 
 echo

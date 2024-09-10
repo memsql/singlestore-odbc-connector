@@ -190,7 +190,7 @@ int MADB_KeyTypeCount(MADB_Dbc *Connection, char *TableName, int KeyFlag)
   MADB_Stmt    *Stmt= NULL;
   MYSQL_FIELD  *Field;
   
-  Connection->Methods->GetAttr(Connection, SQL_ATTR_CURRENT_CATALOG, Database, 65, NULL, FALSE);
+  Connection->Methods->GetConnectAttr(Connection, SQL_ATTR_CURRENT_CATALOG, Database, 65, NULL, FALSE);
   p+= _snprintf(p, 1024, "SELECT * FROM ");
   if (Database[0] != '\0')
   {
