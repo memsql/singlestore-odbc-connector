@@ -5057,7 +5057,6 @@ SQLRETURN MADB_StmtColumnsNoInfoSchema(MADB_Stmt *Stmt,
       is_signed = !(field->flags & UNSIGNED_FLAG);
       if ((column_char_length = MADB_GetDataSize(concise_data_type, column_length, is_signed, precision, field->decimals, char_size)) != SQL_NO_TOTAL)
       {
-        printf("column_char_length from MADB_GetDataSize is %d, odbc_data_type %d, name %s\n", column_char_length, odbc_data_type, field->name);
         // mediumint maps to SQL_INTEGER which is 4 byte instead of 3
         if (!strncmp(S2FieldDescr->FieldTypeS2, "mediumint", 9))
           column_char_length = 7;

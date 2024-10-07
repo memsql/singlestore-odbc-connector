@@ -615,7 +615,8 @@ size_t MADB_GetDisplaySize(MYSQL_FIELD *Field, MARIADB_CHARSET_INFO *charset)
 
   @param[in] Field
 
-  @return  The transfer octet length. Cap at INT_MAX32 due to signed value
+  @return The transfer octet length. Cap at 1 GB due to max packet packet size
+  which limits max field size in bytes
 */
 size_t MADB_GetOctetLength(MYSQL_FIELD *Field)
 {

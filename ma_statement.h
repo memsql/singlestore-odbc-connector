@@ -368,6 +368,8 @@ void         MADB_CspsFreeDAE(MADB_Stmt *Stmt);
   "NULL AS REMARKS, "\
   MADB_PROCEDURE_COLUMNS_DEFAULT_VALUE " AS COLUMN_DEF,"
 
+// field size is limited by the max_packet_size that can't be larger that 1 GB,
+// so we cap CHAR_OCTET_LENGTH at 107374183 bytes
 #define MADB_PROCEDURE_COLUMNSp3 \
   " AS SQL_DATA_TYPE, "\
   MADB_COLUMNS_DATETIME_SUB " AS SQL_DATETIME_SUB, "\
@@ -375,8 +377,6 @@ void         MADB_CspsFreeDAE(MADB_Stmt *Stmt);
   "ORDINAL_POSITION, "\
   "IF(DTD_IDENTIFIER LIKE '%%NOT NULL%%', 'NO', 'YES') AS IS_NULLABLE FROM INFORMATION_SCHEMA.PARAMETERS "
 
-// max_packet_size can't be larger that 1 GB, so 1073741823 is the maximum number of bytes
-// that can be stored in a SingleStore field
 
 #define MADB_PROCEDURE_COLUMNS_DATA_TYPE_UNICODE \
     " WHEN 'char' THEN IF(DTD_IDENTIFIER LIKE '%%binary%%', " XSTR(SQL_BINARY) ", " XSTR(SQL_WCHAR) ")"\
