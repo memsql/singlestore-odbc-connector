@@ -3738,7 +3738,7 @@ int STDCALL mysql_set_character_set(MYSQL *mysql, const char *csname)
   {
     char buff[64];
 
-    snprintf(buff, 63, "SET NAMES %s", cs->csname);
+    snprintf(buff, 63, "SET CHARACTER_SET_SERVER=%s", cs->csname);
     if (!mysql_real_query(mysql, buff, (unsigned long)strlen(buff)))
     {
       mysql->charset= cs;

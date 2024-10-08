@@ -60,7 +60,6 @@ SET (MARIADB_ODBC_SOURCES odbc_3_api.c
         ma_error.c
         ma_connection.c
         ma_helper.c
-        ma_type_helper.c
         ma_debug.c
         ma_dsn.c
         ma_driver.c

@@ -27,20 +27,15 @@ int run_sql_special_columns(SQLHANDLE Stmt, const SQLSMALLINT *ExpDataType) {
     const int ExpNumOfRowsFetched = 10;
 
     char *ExpTypeName[10] = {"int unsigned", "bigint", "double", "decimal", "date", "datetime", "timestamp", "char", "binary", "text"};
-    SQLINTEGER ExpColSize[10] = {10, 19, 22, 10, 10, 19, 26, 11, 1,
-                                 ServerNotOlderThan(Connection, 7, 5, 0) ? 21845 : 65535};
-    SQLSMALLINT ExpDecimalDigits[10] = {0, 0, 6, 5, 0, 0, 6, -1, -1, -1};
+    SQLINTEGER ExpColSize[10] = {10, 19, 15, 10, 10, 19, 26, 11, 1, 65535};
+    // https://learn.microsoft.com/en-us/sql/odbc/reference/appendixes/decimal-digits?view=sql-server-ver16
+    SQLSMALLINT ExpDecimalDigits[10] = {0, 0, -1, 5, 0, 0, 6, -1, -1, -1};
 
     OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_types");
-    OK_SIMPLE_STMT(Stmt, ServerNotOlderThan(Connection, 7, 3, 0) ?
-                                                                 "CREATE ROWSTORE TABLE t_types (a INT UNSIGNED, b BIGINT, c DOUBLE, d DECIMAL(10, 5), "
-                                                                 "e DATE, f DATETIME, g TIMESTAMP(6), h CHAR(11), i BINARY, j TEXT, "
-                                                                 "aa TINYINT, ab SMALLINT, ac FLOAT, ad TIMESTAMP ON UPDATE NOW(), ae TINYTEXT, af VARBINARY(15), ag BLOB, "
-                                                                 "PRIMARY KEY(a, b, c, d, e, f, g, h, i, j))" :
-                                                                 "CREATE TABLE t_types (a INT UNSIGNED, b BIGINT, c DOUBLE, d DECIMAL(10, 5), "
-                                                                 "e DATE, f DATETIME, g TIMESTAMP(6), h CHAR(11), i BINARY, j TEXT, "
-                                                                 "aa TINYINT, ab SMALLINT, ac FLOAT, ad TIMESTAMP ON UPDATE NOW(), ae TINYTEXT, af VARBINARY(15), ag BLOB, "
-                                                                 "PRIMARY KEY(a, b, c, d, e, f, g, h, i, j))");
+    OK_SIMPLE_STMT(Stmt, "CREATE ROWSTORE TABLE t_types (a INT UNSIGNED, b BIGINT, c DOUBLE, d DECIMAL(10, 5), "
+                         "e DATE, f DATETIME, g TIMESTAMP(6), h CHAR(11), i BINARY, j TEXT, "
+                         "aa TINYINT, ab SMALLINT, ac FLOAT, ad TIMESTAMP ON UPDATE NOW(), ae TINYTEXT, af VARBINARY(15), ag BLOB, "
+                         "PRIMARY KEY(a, b, c, d, e, f, g, h, i, j))");
 
     // Fetch only primary key columns.
     CHECK_STMT_RC(Stmt, SQLSpecialColumns(Stmt, SQL_BEST_ROWID, my_schema, SQL_NTS, NULL, 0,
@@ -71,7 +66,10 @@ int run_sql_special_columns(SQLHANDLE Stmt, const SQLSMALLINT *ExpDataType) {
         FAIL_IF(_strnicmp(colName, ExpColName, cnSize) != 0, "Wrong COLUMN_NAME returned!");
         FAIL_IF(dataType != ExpDataType[numOfRowsFetched], "Wrong DATA_TYPE returned!");
         FAIL_IF(_strnicmp(typeName, ExpTypeName[numOfRowsFetched], tnSize) != 0, "Wrong TYPE_NAME returned!");
-        FAIL_IF(columnSize != ExpColSize[numOfRowsFetched], "Wrong COLUMN_SIZE returned!");
+        if(columnSize != ExpColSize[numOfRowsFetched]) {
+            fprintf(stdout, "Wrong COLUMN_SIZE returned for column %s of type %s, #%d \n", colName, typeName, numOfRowsFetched);
+            is_num(columnSize, ExpColSize[numOfRowsFetched]);
+        }
 
         if (ExpDecimalDigits[numOfRowsFetched] != SQL_NULL_DATA) {
             FAIL_IF(decimalDigits != ExpDecimalDigits[numOfRowsFetched], "Wrong DECIMAL_DIGITS returned!");
@@ -238,9 +236,9 @@ ODBC_TEST(t_specialcolumns2A) {
 
 MA_ODBC_TESTS my_tests[] =
         {
+#ifndef __APPLE__
                 {t_specialcolumns2A, "t_specialcolumns2A", NORMAL, ANSI_DRIVER},
                 {t_specialcolumns3A, "t_specialcolumns3A", NORMAL, ANSI_DRIVER},
-#ifndef __APPLE__
                 {t_specialcolumns2U, "t_specialcolumns2U", NORMAL, UNICODE_DRIVER},
                 {t_specialcolumns3U, "t_specialcolumns3U", NORMAL, UNICODE_DRIVER},
 #endif

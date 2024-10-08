@@ -29,17 +29,17 @@ int run_sql_columns(SQLHANDLE Stmt, const SQLSMALLINT *ExpDataType, const SQLSMA
 
   char *ExpTypeName[33] = {"tinyint", "smallint", "mediumint", "int unsigned", "bigint unsigned", "double", "float",
                              "decimal", "date", "time", "datetime", "datetime", "timestamp", "timestamp", "year",
-                             "char", "binary", "varchar", "varbinary", "longtext", "mediumtext", "text", "tinytext",
-                             "longblob", "mediumblob", "blob", "tinyblob", "bit",
-                             "json", "geography", "geographypoint", "enum", "set"};
-  SQLINTEGER ExpColSize[33] = {3, 5, 7, 10, 20, 15, 7, 10, 10, 8, 19, 26, 19, 26, 4, 11, 1, 13, 17,
-                               // values below are computed as maximum memory for type divided by the char size in the default charset.
-                               // Default charset is UTF8MB3 for server older than 7.5.0, UTF8MB4 starting with 7.5
-                               utf8_char_size > 3 ? 1073741823 : 1431655765,
-                               utf8_char_size > 3 ? 4194303 : 5592405,
-                               utf8_char_size > 3 ? 16383 : 21845,
-                               utf8_char_size > 3 ? 63 : 85, 2147483647, 16777215, 65535, 255, 8, -1, -1, -1, 1,
-                               1};
+                             "char", "binary", "varchar", "varbinary",
+                             "longtext", "mediumtext", "text", "tinytext",
+                             "longblob", "mediumblob", "blob", "tinyblob",
+                             "bit", "json", "geography", "geographypoint", "enum", "set"};
+  // https://learn.microsoft.com/en-us/sql/odbc/reference/appendixes/column-size?view=sql-server-ver16
+  SQLINTEGER ExpColSize[33] = {3, 5, 7, 10, 20, 15, 7,
+                               10, 10, 8, 19, 26, 19, 26, 4,
+                               11, 1, 13, 17,
+                               1073741823, 16777215, 65535, 255,
+                               1073741823, 16777215, 65535, 255,
+                               8, -1, -1, -1, 1, 1};
   SQLSMALLINT ExpDecimalDigits[33] = {0, 0, 0, 0, 0, -1, -1, 5, -1, 0, 0, 6, 0, 6,
                                       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
   SQLSMALLINT ExpNumPrecRadix[33] = {10, 10, 10, 10, 10, 10, 10, 10, -1, -1, -1, -1, -1, -1,
@@ -48,18 +48,11 @@ int run_sql_columns(SQLHANDLE Stmt, const SQLSMALLINT *ExpDataType, const SQLSMA
                                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_types");
-  OK_SIMPLE_STMT(Stmt, ServerNotOlderThan(Connection, 7, 3, 0) ?
-                                                               "CREATE ROWSTORE TABLE t_types (a TINYINT, b SMALLINT, c MEDIUMINT, d INT UNSIGNED, e BIGINT UNSIGNED, f DOUBLE, g FLOAT,"
-                                                               "h DECIMAL(10, 5), i DATE, j TIME, k DATETIME, l DATETIME(6), m TIMESTAMP, n TIMESTAMP(6), o YEAR,"
-                                                               "p CHAR(11), q BINARY, r VARCHAR(13), s VARBINARY(17), t LONGTEXT, u MEDIUMTEXT, v TEXT, w TINYTEXT,"
-                                                               "x LONGBLOB, y MEDIUMBLOB, z BLOB, aa TINYBLOB, ab BIT(1),"
-                                                               "ac JSON, ad GEOGRAPHY, ae GEOGRAPHYPOINT, af ENUM('e'), ag SET('s'))" :
-
-                                                               "CREATE TABLE t_types (a TINYINT, b SMALLINT, c MEDIUMINT, d INT UNSIGNED, e BIGINT UNSIGNED, f DOUBLE, g FLOAT,"
-                                                               "h DECIMAL(10, 5), i DATE, j TIME, k DATETIME, l DATETIME(6), m TIMESTAMP, n TIMESTAMP(6), o YEAR,"
-                                                               "p CHAR(11), q BINARY, r VARCHAR(13), s VARBINARY(17), t LONGTEXT, u MEDIUMTEXT, v TEXT, w TINYTEXT,"
-                                                               "x LONGBLOB, y MEDIUMBLOB, z BLOB, aa TINYBLOB, ab BIT(1),"
-                                                               "ac JSON, ad GEOGRAPHY, ae GEOGRAPHYPOINT, af ENUM('e'), ag SET('s'))");
+  OK_SIMPLE_STMT(Stmt, "CREATE ROWSTORE TABLE t_types (a TINYINT, b SMALLINT, c MEDIUMINT, d INT UNSIGNED, e BIGINT UNSIGNED, f DOUBLE, g FLOAT,"
+                       "h DECIMAL(10, 5), i DATE, j TIME, k DATETIME, l DATETIME(6), m TIMESTAMP, n TIMESTAMP(6), o YEAR,"
+                       "p CHAR(11), q BINARY, r VARCHAR(13), s VARBINARY(17), t LONGTEXT, u MEDIUMTEXT, v TEXT, w TINYTEXT,"
+                       "x LONGBLOB, y MEDIUMBLOB, z BLOB, aa TINYBLOB, ab BIT(1),"
+                       "ac JSON, ad GEOGRAPHY, ae GEOGRAPHYPOINT, af ENUM('e'), ag SET('s'))");
 
   CHECK_HANDLE_RC(SQL_HANDLE_STMT, Stmt, SQLColumns(Stmt, ExpTableCat, SQL_NTS, NULL, 0,
                                                     (SQLCHAR *) "t_types", SQL_NTS, NULL, 0));
@@ -105,9 +98,15 @@ int run_sql_columns(SQLHANDLE Stmt, const SQLSMALLINT *ExpDataType, const SQLSMA
     FAIL_IF_NE_STR(ExpTypeName[numOfRowsFetched], typeName, "Wrong TYPE_NAME returned!");
 
     if (ExpColSize[numOfRowsFetched] != SQL_NULL_DATA) {
+        if (columnSize != ExpColSize[numOfRowsFetched]) {
+            fprintf(stdout, "Wrong COLUMN_SIZE for column #%d %s\n", numOfRowsFetched, colName);
+        }
         is_num(columnSize, ExpColSize[numOfRowsFetched]);
     }
     if (ExpDecimalDigits[numOfRowsFetched] != SQL_NULL_DATA) {
+        if (decimalDigits != ExpDecimalDigits[numOfRowsFetched]) {
+            fprintf(stdout, "Wrong DECIMAL_DIGITS for column #%d, %s\n", numOfRowsFetched, colName);
+        }
         is_num(decimalDigits, ExpDecimalDigits[numOfRowsFetched]);
     }
     if (ExpNumPrecRadix[numOfRowsFetched] != SQL_NULL_DATA) {

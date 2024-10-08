@@ -32,23 +32,39 @@ static const enum enum_field_types fieldTypes[TYPE_INFO_FIELDS_COUNT] = {MYSQL_T
                                                             MYSQL_TYPE_SHORT, MYSQL_TYPE_SHORT, MYSQL_TYPE_SHORT, MYSQL_TYPE_SHORT, MYSQL_TYPE_VAR_STRING, MYSQL_TYPE_SHORT,
                                                             MYSQL_TYPE_SHORT, MYSQL_TYPE_SHORT, MYSQL_TYPE_SHORT, MYSQL_TYPE_LONG, MYSQL_TYPE_SHORT};
 
-static const MADB_ShortTypeInfo gtiDefType[19]= {{SQL_VARCHAR, 0, SQL_TRUE, 0}, {SQL_SMALLINT, 0, 0, 0}, {SQL_INTEGER, 0, 0, 0}, {SQL_VARCHAR, 0, SQL_TRUE, 0}, {SQL_VARCHAR, 0, SQL_TRUE, 0}, {SQL_VARCHAR, 0, SQL_TRUE, 0},
-        /*7*/     {SQL_SMALLINT, 0, 0, 0}, {SQL_SMALLINT, 0, 0, 0}, {SQL_SMALLINT, 0, 0, 0}, {SQL_SMALLINT, 0, 0, 0},
-        /*11*/    {SQL_SMALLINT, 0, 0, 0}, {SQL_SMALLINT, 0, 0, 0}, {SQL_VARCHAR, 0, SQL_TRUE, 0}, {SQL_SMALLINT, 0, 0, 0}, {SQL_SMALLINT, 0, 0, 0},
-        /*16*/    {SQL_SMALLINT, 0, 0, 0}, {SQL_SMALLINT, 0, 0, 0}, {SQL_INTEGER, 0, 0, 0}, {SQL_SMALLINT, 0, 0, 0} };
-
+static const MADB_ShortTypeInfo getTypeInfoColType[TYPE_INFO_FIELDS_COUNT] = {
+  {SQL_VARCHAR,  0, SQL_TRUE, 0, 21844}, // TYPE_NAME
+  {SQL_SMALLINT, 0, 0,        0, 0},     // DATA_TYPE
+  {SQL_INTEGER,  0, 0,        0, 0},     // COLUMN_SIZE
+  {SQL_VARCHAR,  0, SQL_TRUE, 0, 21844}, // LITERAL_PREFIX
+  {SQL_VARCHAR,  0, SQL_TRUE, 0, 21844}, // LITERAL_SUFFIX
+  {SQL_VARCHAR,  0, SQL_TRUE, 0, 21844}, // CREATE_PARAMS
+  {SQL_SMALLINT, 0,           0, 0},     // NULLABLE
+  {SQL_SMALLINT, 0,           0, 0},     // CASE_SENSITIVE
+  {SQL_SMALLINT, 0,           0, 0},     // SEARCHABLE
+  {SQL_SMALLINT, 0,           0, 0},     // UNSIGNED_ATTRIBUTE
+  {SQL_SMALLINT, 0,           0, 0},     // FIXED_PREC_SCALE
+  {SQL_SMALLINT, 0,           0, 0},     // AUTO_UNIQUE_VALUE
+  {SQL_VARCHAR,  0, SQL_TRUE, 0, 21844}, // LOCAL_TYPE_NAME
+  {SQL_SMALLINT, 0,           0, 0},     // MINIMUM_SCALE
+  {SQL_SMALLINT, 0,           0, 0},     // MAXIMUM_SCALE
+  {SQL_SMALLINT, 0,           0, 0},     // SQL_DATA_TYPE
+  {SQL_SMALLINT, 0,           0, 0},     // SQL_DATETIME_SUB
+  {SQL_INTEGER,  0,           0, 0},     // NUM_PREC_RADIX
+  {SQL_SMALLINT, 0,           0, 0},     // INTERVAL_PRECISION
+};
 
 static const MADB_TypeInfo TypeInfoV3[] =
 {
   {"json"              ,SQL_WLONGVARCHAR  ,16777216  ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"json"              ,0   ,0  ,0                 ,0,0 ,SQL_WLONGVARCHAR },
   {"long varchar"      ,SQL_WLONGVARCHAR  ,16777215  ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"long varchar"      ,0   ,0  ,0                 ,0,0 ,SQL_WLONGVARCHAR },
-  {"longtext"          ,SQL_WLONGVARCHAR  ,2147483647,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"longtext"          ,0   ,0  ,0                 ,0,0 ,SQL_WLONGVARCHAR },
+  {"longtext"          ,SQL_WLONGVARCHAR  ,1073741823,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"longtext"          ,0   ,0  ,0                 ,0,0 ,SQL_WLONGVARCHAR },
   {"mediumtext"        ,SQL_WLONGVARCHAR  ,16777215  ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"mediumtext"        ,0   ,0  ,0                 ,0,0 ,SQL_WLONGVARCHAR },
   {"text"              ,SQL_WLONGVARCHAR  ,65535     ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"text"              ,0   ,0  ,0                 ,0,0 ,SQL_WLONGVARCHAR },
   {"tinytext"          ,SQL_WLONGVARCHAR  ,255       ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"tinytext"          ,0   ,0  ,0                 ,0,0 ,SQL_WLONGVARCHAR },
   {"enum"              ,SQL_WVARCHAR      ,65535     ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"enum"              ,0   ,0  ,0                 ,0,0 ,SQL_WVARCHAR     },
   {"set"               ,SQL_WVARCHAR      ,64        ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"set"               ,0   ,0  ,0                 ,0,0 ,SQL_WVARCHAR     },
-  {"varchar"           ,SQL_WVARCHAR      ,255       ,"'","'","'length'"         ,1,0,SQL_SEARCHABLE,0,0,0,"varchar"           ,0   ,0  ,0                 ,0,0 ,SQL_WVARCHAR     },
+  {"varchar"           ,SQL_WVARCHAR      ,21844     ,"'","'","'length'"         ,1,0,SQL_SEARCHABLE,0,0,0,"varchar"           ,0   ,0  ,0                 ,0,0 ,SQL_WVARCHAR     },
   {"char"              ,SQL_WCHAR         ,255       ,"'","'","'length'"         ,1,0,SQL_SEARCHABLE,0,0,0,"char"              ,0   ,0  ,0                 ,0,0 ,SQL_WCHAR        },
   {"bool"              ,SQL_TINYINT       ,1         ,"" ,"" ,"NULL"             ,1,1,SQL_SEARCHABLE,0,0,0,"bool"              ,0   ,0  ,0                 ,0,10,SQL_TINYINT      },
   {"boolean"           ,SQL_TINYINT       ,1         ,"" ,"" ,"NULL"             ,1,1,SQL_SEARCHABLE,0,0,0,"boolean"           ,0   ,0  ,0                 ,0,10,SQL_TINYINT      },
@@ -58,7 +74,7 @@ static const MADB_TypeInfo TypeInfoV3[] =
   {"bigint unsigned"   ,SQL_BIGINT        ,20        ,"" ,"" ,"NULL"             ,1,0,SQL_SEARCHABLE,1,0,1,"bigint unsigned"   ,0   ,0  ,0                 ,0,10,SQL_BIGINT       },
   {"blob"              ,SQL_LONGVARBINARY ,65535     ,"'","'","NULL"             ,1,1,SQL_SEARCHABLE,0,0,0,"blob"              ,0   ,0  ,0                 ,0,0 ,SQL_LONGVARBINARY},
   {"long varbinary"    ,SQL_LONGVARBINARY ,16777215  ,"'","'","NULL"             ,1,1,SQL_SEARCHABLE,0,0,0,"long varbinary"    ,0   ,0  ,0                 ,0,0 ,SQL_LONGVARBINARY},
-  {"longblob"          ,SQL_LONGVARBINARY ,2147483647,"'","'","NULL"             ,1,1,SQL_SEARCHABLE,0,0,0,"longblob"          ,0   ,0  ,0                 ,0,0 ,SQL_LONGVARBINARY},
+  {"longblob"          ,SQL_LONGVARBINARY ,1073741823,"'","'","NULL"             ,1,1,SQL_SEARCHABLE,0,0,0,"longblob"          ,0   ,0  ,0                 ,0,0 ,SQL_LONGVARBINARY},
   {"mediumblob"        ,SQL_LONGVARBINARY ,16777215  ,"'","'","NULL"             ,1,1,SQL_SEARCHABLE,0,0,0,"mediumblob"        ,0   ,0  ,0                 ,0,0 ,SQL_LONGVARBINARY},
   {"tinyblob"          ,SQL_LONGVARBINARY ,255       ,"'","'","NULL"             ,1,1,SQL_SEARCHABLE,0,0,0,"tinyblob"          ,0   ,0  ,0                 ,0,0 ,SQL_LONGVARBINARY},
   {"geography"         ,SQL_VARBINARY     ,255       ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"geography"         ,0   ,0  ,0                 ,0,0 ,SQL_VARBINARY    },
@@ -67,7 +83,7 @@ static const MADB_TypeInfo TypeInfoV3[] =
   {"binary"            ,SQL_BINARY        ,255       ,"'","'","'length'"         ,1,1,SQL_SEARCHABLE,0,0,0,"binary"            ,0   ,0  ,0                 ,0,0 ,SQL_BINARY       },
   {"bit"               ,SQL_BINARY        ,8         ,"" ,"" ,"NULL"             ,1,1,SQL_SEARCHABLE,0,0,0,"bit"               ,0   ,0  ,0                 ,0,0 ,SQL_BINARY       },
   {"json"              ,SQL_LONGVARCHAR   ,16777216  ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"json"              ,0   ,0  ,0                 ,0,0 ,SQL_LONGVARCHAR  },
-  {"longtext"          ,SQL_LONGVARCHAR   ,2147483647,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"longtext"          ,0   ,0  ,0                 ,0,0 ,SQL_LONGVARCHAR  },
+  {"longtext"          ,SQL_LONGVARCHAR   ,1073741823,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"longtext"          ,0   ,0  ,0                 ,0,0 ,SQL_LONGVARCHAR  },
   {"mediumtext"        ,SQL_LONGVARCHAR   ,16777215  ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"mediumtext"        ,0   ,0  ,0                 ,0,0 ,SQL_LONGVARCHAR  },
   {"text"              ,SQL_LONGVARCHAR   ,65535     ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"text"              ,0   ,0  ,0                 ,0,0 ,SQL_LONGVARCHAR  },
   {"tinytext"          ,SQL_LONGVARCHAR   ,255       ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"tinytext"          ,0   ,0  ,0                 ,0,0 ,SQL_LONGVARCHAR  },
@@ -91,7 +107,7 @@ static const MADB_TypeInfo TypeInfoV3[] =
   {"real"              ,SQL_DOUBLE        ,15        ,"" ,"" ,"NULL"             ,1,0,SQL_SEARCHABLE,0,0,1,"real"              ,-308,308,0                 ,0,10,SQL_DOUBLE       },
   {"enum"              ,SQL_VARCHAR       ,65535     ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"enum"              ,0   ,0  ,0                 ,0,0 ,SQL_VARCHAR      },
   {"set"               ,SQL_VARCHAR       ,64        ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"set"               ,0   ,0  ,0                 ,0,0 ,SQL_VARCHAR      },
-  {"varchar"           ,SQL_VARCHAR       ,255       ,"'","'","'length'"         ,1,0,SQL_SEARCHABLE,0,0,0,"varchar"           ,0   ,0  ,0                 ,0,0 ,SQL_VARCHAR      },
+  {"varchar"           ,SQL_VARCHAR       ,21844     ,"'","'","'length'"         ,1,0,SQL_SEARCHABLE,0,0,0,"varchar"           ,0   ,0  ,0                 ,0,0 ,SQL_VARCHAR      },
   {"date"              ,SQL_TYPE_DATE     ,10        ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"date"              ,0   ,0  ,SQL_CODE_DATE     ,0,0 ,SQL_DATETIME     },
   {"time"              ,SQL_TYPE_TIME     ,8         ,"'","'","'scale'"          ,1,0,SQL_SEARCHABLE,0,0,0,"time"              ,0   ,0  ,SQL_CODE_TIME     ,0,0 ,SQL_DATETIME     },
   {"datetime"          ,SQL_TYPE_TIMESTAMP,26        ,"'","'","'scale'"          ,1,0,SQL_SEARCHABLE,0,0,0,"datetime"          ,0   ,0  ,SQL_CODE_TIMESTAMP,0,0 ,SQL_DATETIME     },
@@ -102,13 +118,13 @@ static const MADB_TypeInfo TypeInfoV2[]=
 {
   {"json"              ,SQL_WLONGVARCHAR ,16777216  ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"json"              ,0   ,0  ,0,0,0 ,SQL_WLONGVARCHAR },
   {"long varchar"      ,SQL_WLONGVARCHAR ,16777215  ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"long varchar"      ,0   ,0  ,0,0,0 ,SQL_WLONGVARCHAR },
-  {"longtext"          ,SQL_WLONGVARCHAR ,2147483647,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"longtext"          ,0   ,0  ,0,0,0 ,SQL_WLONGVARCHAR },
+  {"longtext"          ,SQL_WLONGVARCHAR ,1073741823,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"longtext"          ,0   ,0  ,0,0,0 ,SQL_WLONGVARCHAR },
   {"mediumtext"        ,SQL_WLONGVARCHAR ,16777215  ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"mediumtext"        ,0   ,0  ,0,0,0 ,SQL_WLONGVARCHAR },
   {"text"              ,SQL_WLONGVARCHAR ,65535     ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"text"              ,0   ,0  ,0,0,0 ,SQL_WLONGVARCHAR },
   {"tinytext"          ,SQL_WLONGVARCHAR ,255       ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"tinytext"          ,0   ,0  ,0,0,0 ,SQL_WLONGVARCHAR },
   {"enum"              ,SQL_WVARCHAR     ,65535     ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"enum"              ,0   ,0  ,0,0,0 ,SQL_WVARCHAR     },
   {"set"               ,SQL_WVARCHAR     ,64        ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"set"               ,0   ,0  ,0,0,0 ,SQL_WVARCHAR     },
-  {"varchar"           ,SQL_WVARCHAR     ,255       ,"'","'","'length'"         ,1,0,SQL_SEARCHABLE,0,0,0,"varchar"           ,0   ,0  ,0,0,0 ,SQL_WVARCHAR     },
+  {"varchar"           ,SQL_WVARCHAR     ,21844     ,"'","'","'length'"         ,1,0,SQL_SEARCHABLE,0,0,0,"varchar"           ,0   ,0  ,0,0,0 ,SQL_WVARCHAR     },
   {"char"              ,SQL_WCHAR        ,255       ,"'","'","'length'"         ,1,0,SQL_SEARCHABLE,0,0,0,"char"              ,0   ,0  ,0,0,0 ,SQL_WCHAR        },
   {"bool"              ,SQL_TINYINT      ,1         ,"" ,"" ,"NULL"             ,1,1,SQL_SEARCHABLE,0,0,0,"bool"              ,0   ,0  ,0,0,10,SQL_TINYINT      },
   {"boolean"           ,SQL_TINYINT      ,1         ,"" ,"" ,"NULL"             ,1,1,SQL_SEARCHABLE,0,0,0,"boolean"           ,0   ,0  ,0,0,10,SQL_TINYINT      },
@@ -118,7 +134,7 @@ static const MADB_TypeInfo TypeInfoV2[]=
   {"bigint unsigned"   ,SQL_BIGINT       ,20        ,"" ,"" ,"NULL"             ,1,0,SQL_SEARCHABLE,1,0,1,"bigint unsigned"   ,0   ,0  ,0,0,10,SQL_BIGINT       },
   {"blob"              ,SQL_LONGVARBINARY,65535     ,"'","'","NULL"             ,1,1,SQL_SEARCHABLE,0,0,0,"blob"              ,0   ,0  ,0,0,0 ,SQL_LONGVARBINARY},
   {"long varbinary"    ,SQL_LONGVARBINARY,16777215  ,"'","'","NULL"             ,1,1,SQL_SEARCHABLE,0,0,0,"long varbinary"    ,0   ,0  ,0,0,0 ,SQL_LONGVARBINARY},
-  {"longblob"          ,SQL_LONGVARBINARY,2147483647,"'","'","NULL"             ,1,1,SQL_SEARCHABLE,0,0,0,"longblob"          ,0   ,0  ,0,0,0 ,SQL_LONGVARBINARY},
+  {"longblob"          ,SQL_LONGVARBINARY,1073741823,"'","'","NULL"             ,1,1,SQL_SEARCHABLE,0,0,0,"longblob"          ,0   ,0  ,0,0,0 ,SQL_LONGVARBINARY},
   {"mediumblob"        ,SQL_LONGVARBINARY,16777215  ,"'","'","NULL"             ,1,1,SQL_SEARCHABLE,0,0,0,"mediumblob"        ,0   ,0  ,0,0,0 ,SQL_LONGVARBINARY},
   {"tinyblob"          ,SQL_LONGVARBINARY,255       ,"'","'","NULL"             ,1,1,SQL_SEARCHABLE,0,0,0,"tinyblob"          ,0   ,0  ,0,0,0 ,SQL_LONGVARBINARY},
   {"geography"         ,SQL_VARBINARY    ,255       ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"geography"         ,0   ,0  ,0,0,0 ,SQL_VARBINARY    },
@@ -127,7 +143,7 @@ static const MADB_TypeInfo TypeInfoV2[]=
   {"binary"            ,SQL_BINARY       ,255       ,"'","'","'length'"         ,1,1,SQL_SEARCHABLE,0,0,0,"binary"            ,0   ,0  ,0,0,0 ,SQL_BINARY       },
   {"bit"               ,SQL_BINARY       ,8         ,"" ,"" ,"NULL"             ,1,1,SQL_SEARCHABLE,0,0,0,"bit"               ,0   ,0  ,0,0,0 ,SQL_BINARY       },
   {"json"              ,SQL_LONGVARCHAR  ,16777216  ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"json"              ,0   ,0  ,0,0,0 ,SQL_LONGVARCHAR  },
-  {"longtext"          ,SQL_LONGVARCHAR  ,2147483647,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"longtext"          ,0   ,0  ,0,0,0 ,SQL_LONGVARCHAR  },
+  {"longtext"          ,SQL_LONGVARCHAR  ,1073741823,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"longtext"          ,0   ,0  ,0,0,0 ,SQL_LONGVARCHAR  },
   {"mediumtext"        ,SQL_LONGVARCHAR  ,16777215  ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"mediumtext"        ,0   ,0  ,0,0,0 ,SQL_LONGVARCHAR  },
   {"text"              ,SQL_LONGVARCHAR  ,65535     ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"text"              ,0   ,0  ,0,0,0 ,SQL_LONGVARCHAR  },
   {"tinytext"          ,SQL_LONGVARCHAR  ,255       ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"tinytext"          ,0   ,0  ,0,0,0 ,SQL_LONGVARCHAR  },
@@ -145,7 +161,7 @@ static const MADB_TypeInfo TypeInfoV2[]=
   {"smallint"          ,SQL_SMALLINT     ,5         ,"" ,"" ,"NULL"             ,1,0,SQL_SEARCHABLE,0,0,1,"smallint"          ,0   ,0  ,0,0,10,SQL_SMALLINT     },
   {"smallint unsigned" ,SQL_SMALLINT     ,5         ,"" ,"" ,"NULL"             ,1,0,SQL_SEARCHABLE,1,0,1,"smallint unsigned" ,0   ,0  ,0,0,10,SQL_SMALLINT     },
   {"year"              ,SQL_SMALLINT     ,4         ,"" ,"" ,"NULL"             ,1,0,SQL_SEARCHABLE,0,0,1,"year"              ,0   ,0  ,0,0,10,SQL_SMALLINT     },
-  {"float"             ,SQL_REAL         ,7        ,"" ,"" ,"NULL"              ,1,0,SQL_SEARCHABLE,0,0,1,"float"             ,-38 ,38 ,0,0,10,SQL_REAL          },
+  {"float"             ,SQL_REAL         ,7         ,"" ,"" ,"NULL"             ,1,0,SQL_SEARCHABLE,0,0,1,"float"             ,-38 ,38 ,0,0,10,SQL_REAL         },
   {"double"            ,SQL_DOUBLE       ,15        ,"" ,"" ,"NULL"             ,1,0,SQL_SEARCHABLE,0,0,1,"double"            ,-308,308,0,0,10,SQL_DOUBLE       },
   {"double precision"  ,SQL_DOUBLE       ,15        ,"" ,"" ,"NULL"             ,1,0,SQL_SEARCHABLE,0,0,1,"double precision"  ,-308,308,0,0,10,SQL_DOUBLE       },
   {"real"              ,SQL_DOUBLE       ,15        ,"" ,"" ,"NULL"             ,1,0,SQL_SEARCHABLE,0,0,1,"real"              ,-308,308,0,0,10,SQL_DOUBLE       },
@@ -155,7 +171,7 @@ static const MADB_TypeInfo TypeInfoV2[]=
   {"timestamp"         ,SQL_TIMESTAMP    ,26        ,"'","'","'scale'"          ,1,0,SQL_SEARCHABLE,0,0,0,"timestamp"         ,0   ,0  ,0,0,0 ,SQL_DATETIME     },
   {"enum"              ,SQL_VARCHAR      ,65535     ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"enum"              ,0   ,0  ,0,0,0 ,SQL_VARCHAR      },
   {"set"               ,SQL_VARCHAR      ,64        ,"'","'","NULL"             ,1,0,SQL_SEARCHABLE,0,0,0,"set"               ,0   ,0  ,0,0,0 ,SQL_VARCHAR      },
-  {"varchar"           ,SQL_VARCHAR      ,255       ,"'","'","'length'"         ,1,0,SQL_SEARCHABLE,0,0,0,"varchar"           ,0   ,0  ,0,0,0 ,SQL_VARCHAR      },
+  {"varchar"           ,SQL_VARCHAR      ,21844     ,"'","'","'length'"         ,1,0,SQL_SEARCHABLE,0,0,0,"varchar"           ,0   ,0  ,0,0,0 ,SQL_VARCHAR      },
 };
 
 const MADB_TypeInfo* GetTypeInfo(SQLSMALLINT SqlType, MYSQL_FIELD *Field)
@@ -244,7 +260,7 @@ SQLRETURN MADB_GetTypeInfo(SQLHSTMT StatementHandle,
   ret= Stmt->Methods->ExecDirect(Stmt, StmtStr, SQL_NTS);
   if (SQL_SUCCEEDED(ret))
   {
-    MADB_FixColumnDataTypes(Stmt, gtiDefType);
+    MADB_FixColumnDataTypes(Stmt, getTypeInfoColType);
   }
   return ret;
 }

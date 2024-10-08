@@ -201,12 +201,18 @@ void         MADB_CspsFreeDAE(MADB_Stmt *Stmt);
 #define MADB_COLUMNS_TYPE_NAME "IF (COLUMN_TYPE LIKE '%UNSIGNED%', CONCAT(DATA_TYPE, ' unsigned'), DATA_TYPE)"
 
 #define MADB_COLUMNS_COLUMN_SIZE "CASE WHEN DATA_TYPE = 'bit' THEN 1"\
-    " WHEN DATA_TYPE IN ('tinyint', 'smallint', 'mediumint', 'int', 'bigint', 'decimal', 'newdecimal', 'double', 'float') THEN NUMERIC_PRECISION" \
+    " WHEN DATA_TYPE IN ('tinyint', 'smallint', 'mediumint', 'int', 'bigint', 'decimal', 'newdecimal') THEN NUMERIC_PRECISION" \
     " WHEN DATA_TYPE = 'date' THEN 10" \
     " WHEN DATA_TYPE = 'time' THEN IF(COLUMN_TYPE = 'time(6)', 15, 8)" \
     " WHEN DATA_TYPE = 'datetime' THEN IF(COLUMN_TYPE = 'datetime(6)', 26, 19)" \
     " WHEN DATA_TYPE = 'timestamp' THEN IF(COLUMN_TYPE = 'timestamp(6)', 26, 19)" \
     " WHEN DATA_TYPE = 'year' THEN 4" \
+    " WHEN DATA_TYPE = 'tinytext' THEN 255" \
+    " WHEN DATA_TYPE = 'text' THEN 65535" \
+    " WHEN DATA_TYPE = 'mediumtext' THEN 16777215" \
+    " WHEN DATA_TYPE = 'longtext' THEN 1073741823" \
+    " WHEN DATA_TYPE = 'double' THEN 15" \
+    " WHEN DATA_TYPE = 'float' THEN 7" \
     " ELSE CHARACTER_MAXIMUM_LENGTH END :> INT"
 
 #define MADB_COLUMNS_BUFFER_LEN "CASE DATA_TYPE WHEN 'bit' THEN 1"\
@@ -233,8 +239,6 @@ void         MADB_CspsFreeDAE(MADB_Stmt *Stmt);
     " WHEN 'mediumint' THEN 0" \
     " WHEN 'int' THEN 0" \
     " WHEN 'bigint' THEN 0" \
-    " WHEN 'double' THEN IF(NUMERIC_SCALE IS NULL, 6, NUMERIC_SCALE)" \
-    " WHEN 'float' THEN IF(NUMERIC_SCALE IS NULL, 0, NUMERIC_SCALE)" \
     " WHEN 'date' THEN 0" \
     " WHEN 'time' THEN IF(COLUMN_TYPE = 'time(6)', 6, 0)" \
     " WHEN 'datetime' THEN IF(COLUMN_TYPE = 'datetime(6)', 6, 0)" \
@@ -291,12 +295,18 @@ void         MADB_CspsFreeDAE(MADB_Stmt *Stmt);
     "RIGHT(dtd_identifier, LENGTH(dtd_identifier) - (REGEXP_INSTR(dtd_identifier, 'DEFAULT [^\\s]+') + 7)), NULL) "
 
 #define MADB_PROCEDURE_COLUMNS_COLUMN_SIZE "CASE WHEN DATA_TYPE = 'bit' THEN 1"\
-    " WHEN DATA_TYPE IN ('tinyint', 'smallint', 'mediumint', 'int', 'bigint', 'decimal', 'newdecimal', 'double', 'float') THEN NUMERIC_PRECISION" \
+    " WHEN DATA_TYPE IN ('tinyint', 'smallint', 'mediumint', 'int', 'bigint', 'decimal', 'newdecimal') THEN NUMERIC_PRECISION" \
     " WHEN DATA_TYPE = 'date' THEN 10" \
     " WHEN DATA_TYPE = 'time' THEN IF(DTD_IDENTIFIER like '%%time(6)%%', 15, 8)" \
     " WHEN DATA_TYPE = 'datetime' THEN IF(DTD_IDENTIFIER like '%%datetime(6)%%', 26, 19)" \
     " WHEN DATA_TYPE = 'timestamp' THEN IF(DTD_IDENTIFIER like '%%timestamp(6)%%', 26, 19)" \
     " WHEN DATA_TYPE = 'year' THEN 4" \
+    " WHEN DATA_TYPE = 'tinytext' THEN 255" \
+    " WHEN DATA_TYPE = 'text' THEN 65535" \
+    " WHEN DATA_TYPE = 'mediumtext' THEN 16777215" \
+    " WHEN DATA_TYPE = 'longtext' THEN 1073741823" \
+    " WHEN DATA_TYPE = 'double' THEN 15" \
+    " WHEN DATA_TYPE = 'float' THEN 7" \
     " ELSE CHARACTER_MAXIMUM_LENGTH END :> INT"
 
 #define MADB_PROCEDURE_COLUMNS_BUFFER_LEN \
@@ -315,6 +325,8 @@ void         MADB_CspsFreeDAE(MADB_Stmt *Stmt);
     " WHEN 'datetime' THEN 16" \
     " WHEN 'timestamp' THEN 16" \
     " WHEN 'year' THEN 2" \
+    " WHEN 'longtext' THEN 1073741823" \
+    " WHEN 'longblob' THEN 1073741823" \
     " ELSE CHARACTER_OCTET_LENGTH END :> INT"
 
 #define MADB_PROCEDURE_COLUMNS_DECIMAL_DIGITS "CASE DATA_TYPE WHEN 'decimal' THEN NUMERIC_SCALE" \
@@ -324,8 +336,6 @@ void         MADB_CspsFreeDAE(MADB_Stmt *Stmt);
     " WHEN 'mediumint' THEN 0" \
     " WHEN 'int' THEN 0" \
     " WHEN 'bigint' THEN 0" \
-    " WHEN 'double' THEN IF(NUMERIC_SCALE IS NULL, 6, NUMERIC_SCALE)" \
-    " WHEN 'float' THEN IF(NUMERIC_SCALE IS NULL, 0, NUMERIC_SCALE)" \
     " WHEN 'date' THEN 0" \
     " WHEN 'time' THEN IF(DTD_IDENTIFIER like '%%time(6)%%', 6, 0)" \
     " WHEN 'datetime' THEN IF(DTD_IDENTIFIER like '%%datetime(6)%%', 6, 0)" \
@@ -358,10 +368,12 @@ void         MADB_CspsFreeDAE(MADB_Stmt *Stmt);
   "NULL AS REMARKS, "\
   MADB_PROCEDURE_COLUMNS_DEFAULT_VALUE " AS COLUMN_DEF,"
 
+// field size is limited by the max_packet_size that can't be larger that 1 GB,
+// so we cap CHAR_OCTET_LENGTH at 107374183 bytes
 #define MADB_PROCEDURE_COLUMNSp3 \
   " AS SQL_DATA_TYPE, "\
   MADB_COLUMNS_DATETIME_SUB " AS SQL_DATETIME_SUB, "\
-  "CHARACTER_OCTET_LENGTH :> INT AS CHAR_OCTET_LENGTH, "\
+  "LEAST(CHARACTER_OCTET_LENGTH, 1073741823) AS CHAR_OCTET_LENGTH, "\
   "ORDINAL_POSITION, "\
   "IF(DTD_IDENTIFIER LIKE '%%NOT NULL%%', 'NO', 'YES') AS IS_NULLABLE FROM INFORMATION_SCHEMA.PARAMETERS "
 

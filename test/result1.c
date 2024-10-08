@@ -231,7 +231,7 @@ ODBC_TEST(t_convert_type)
 
 
 static SQLINTEGER desc_col_check(SQLHSTMT Stmt,
-                           SQLUSMALLINT icol,
+                           SQLUSMALLINT ColumnNumber,
                            const char *name,
                            SQLSMALLINT sql_type,
                            SQLULEN col_def,
@@ -240,29 +240,29 @@ static SQLINTEGER desc_col_check(SQLHSTMT Stmt,
                            SQLSMALLINT nullable)
 {
   SQLRETURN   rc;
-  SQLSMALLINT pcbColName, pfSqlType, pibScale, pfNullable;
-  SQLULEN     pcbColDef;
-  SQLCHAR     szColName[MAX_NAME_LEN];
+  SQLSMALLINT NameLength, DataType, DecimalDigits, Nullable;
+  SQLULEN     ColumnSize;
+  SQLCHAR     ColumnName[MAX_NAME_LEN];
 
-  rc = SQLDescribeCol(Stmt, icol,
-                      szColName,MAX_NAME_LEN,&pcbColName,
-                      &pfSqlType,&pcbColDef,&pibScale,&pfNullable);
-  CHECK_STMT_RC(Stmt,rc);
+  rc = SQLDescribeCol(Stmt, ColumnNumber,
+                      ColumnName, MAX_NAME_LEN, &NameLength,
+                      &DataType, &ColumnSize, &DecimalDigits, &Nullable);
+  CHECK_STMT_RC(Stmt, rc);
 
-  diag("Column Number'%d':", icol);
+  diag("Column Number'%d':", ColumnNumber);
 
-  diag(" Column Name    : %s", szColName);
-  diag(" NameLengh      : %d", pcbColName);
-  diag(" DataType       : %d", pfSqlType);
-  diag(" ColumnSize     : %d", pcbColDef);
-  diag(" DecimalDigits  : %d", pibScale);
-  diag(" Nullable       : %d", pfNullable);
+  diag(" Column Name    : %s", ColumnName);
+  diag(" NameLengh      : %d", NameLength);
+  diag(" DataType       : %d", DataType);
+  diag(" ColumnSize     : %d", ColumnSize);
+  diag(" DecimalDigits  : %d", DecimalDigits);
+  diag(" Nullable       : %d", Nullable);
 
-  IS_STR(szColName, name, pcbColName);
-  is_num(pfSqlType, sql_type);
-  IS(col_def == pcbColDef || col_def1 == pcbColDef);
-  is_num(pibScale, scale);
-  is_num(pfNullable, nullable);
+  IS_STR(ColumnName, name, NameLength);
+  is_num(DataType, sql_type);
+  IS(col_def == ColumnSize || col_def1 == ColumnSize);
+  is_num(DecimalDigits, scale);
+  is_num(Nullable, nullable);
 
   return OK;
 }
@@ -276,7 +276,7 @@ ODBC_TEST(t_desc_col)
   SQLHSTMT    Stmt1;
 
   AllocEnvConn(&Env, &hdbc1);
-  Stmt1= ConnectWithCharset(&hdbc1, "binary", NULL); /* We need to make sure that the charset used for connection is not multibyte */
+  Stmt1= ConnectWithCharset(&hdbc1, "", NULL);
 
   OK_SIMPLE_STMT(Stmt1, "DROP TABLE IF EXISTS t_desc_col");
 
@@ -303,7 +303,7 @@ ODBC_TEST(t_desc_col)
          "c20 blob,"
          "c21 mediumblob,"
          "c22 longblob,"
-         "c23 tinyblob) CHARSET latin1");
+         "c23 tinyblob)");
 
   OK_SIMPLE_STMT(Stmt1, "SELECT * FROM t_desc_col");
 
@@ -335,11 +335,11 @@ ODBC_TEST(t_desc_col)
   IS(desc_col_check(Stmt1, 16, "c16", is_unicode_driver() ? SQL_WLONGVARCHAR : SQL_LONGVARCHAR, 65535, 65535 / utf8_char_size, 0,  SQL_NULLABLE) == OK);
   IS(desc_col_check(Stmt1, 17, "c17", is_unicode_driver() ? SQL_WLONGVARCHAR : SQL_LONGVARCHAR, 16777215, 16777215 / utf8_char_size, 0,  SQL_NULLABLE) == OK);
   /* Test may fail here if connection charset mbmaxlen > 1 */
-  IS(desc_col_check(Stmt1, 18, "c18", is_unicode_driver() ? SQL_WLONGVARCHAR : SQL_LONGVARCHAR, 4294967295UL, 4294967295UL / utf8_char_size, 0,  SQL_NULLABLE) == OK);
+  IS(desc_col_check(Stmt1, 18, "c18", is_unicode_driver() ? SQL_WLONGVARCHAR : SQL_LONGVARCHAR, 1073741823, 1073741823 / utf8_char_size, 0,  SQL_NULLABLE) == OK);
   IS(desc_col_check(Stmt1, 19, "c19", SQL_LONGVARBINARY, 255, 255, 0,  SQL_NULLABLE) == OK);
   IS(desc_col_check(Stmt1, 20, "c20", SQL_LONGVARBINARY, 65535, 65535, 0,  SQL_NULLABLE) == OK);
   IS(desc_col_check(Stmt1, 21, "c21", SQL_LONGVARBINARY, 16777215, 16777215, 0,  SQL_NULLABLE) == OK);
-  IS(desc_col_check(Stmt1, 22, "c22", SQL_LONGVARBINARY, 4294967295UL, 16777215 , 0,  SQL_NULLABLE) == OK);
+  IS(desc_col_check(Stmt1, 22, "c22", SQL_LONGVARBINARY, 1073741823, 16777215 , 0,  SQL_NULLABLE) == OK);
   IS(desc_col_check(Stmt1, 23, "c23", SQL_LONGVARBINARY, 255, 5, 0,  SQL_NULLABLE) == OK);
 
   CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
@@ -2087,15 +2087,15 @@ ODBC_TEST(t_bug13776)
                                  &pfSqlType, &pcColSz, &pcbScale, &pfNullable));
 
   /* Size of LONGTEXT should have been capped to 1 << 31. */
-  is_num(pcColSz, 2147483647L);
+  is_num(pcColSz, 1073741823);
 
   /* also, check display size and octet length (see bug#30890) */
   CHECK_STMT_RC(hstmt1, SQLColAttribute(hstmt1, 1, SQL_DESC_DISPLAY_SIZE, NULL,
                                   0, NULL, &display_size));
   CHECK_STMT_RC(hstmt1, SQLColAttribute(hstmt1, 1, SQL_DESC_OCTET_LENGTH, NULL,
                                   0, NULL, &octet_length));
-  is_num(display_size, 2147483647L);
-  is_num(octet_length, 2147483647L);
+  is_num(display_size, 1073741823);
+  is_num(octet_length, 1073741823);
 
   CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
@@ -2171,7 +2171,7 @@ ODBC_TEST(t_bug13776_auto)
     IF adodb15.dll IS loaded SQLDescribeCol should return the length of
     LONGTEXT columns as 2G instead of 4G
   */
-  is_num(pcColSz, 2147483647L);
+  is_num(pcColSz, 1073741823);
 
   CHECK_STMT_RC(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 

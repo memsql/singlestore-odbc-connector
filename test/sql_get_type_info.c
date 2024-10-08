@@ -621,11 +621,11 @@ ODBC_TEST(t_sqlgettypeinfo_describecol) {
     for(i = 0; i < TYPE_INFO_FIELDS_COUNT;i++) {
         CHECK_STMT_RC(Stmt1, SQLDescribeCol(Stmt1, i + 1, ColumnName, BUFFER_LEN, &NameLength, &DataType, &ColumnSize,
                                            &DecimalDigits, &Nullable));
-        FAIL_IF_NE_STR(fieldNames[i], ColumnName, "Invalid column name returned");
-        FAIL_IF_NE_INT(fieldTypes[i], DataType, "Invalid data type returned");
-        FAIL_IF_NE_INT(fieldSizes[i], ColumnSize, "Invalid column size returned");
-        FAIL_IF_NE_INT(0, DecimalDigits, "Invalid decimal digits returned");
-        FAIL_IF_NE_INT(DataType == SQL_VARCHAR, Nullable, "Invalid nullable returned");
+        FAIL_IF_NE_STR(ColumnName, fieldNames[i], "Invalid column name returned");
+        FAIL_IF_NE_INT(DataType, fieldTypes[i], "Invalid data type returned");
+        FAIL_IF_NE_INT(ColumnSize, fieldSizes[i], "Invalid column size returned");
+        FAIL_IF_NE_INT(DecimalDigits, 0, "Invalid decimal digits returned");
+        FAIL_IF_NE_INT(Nullable, DataType == SQL_VARCHAR, "Invalid nullable returned");
     }
 
     CHECK_STMT_RC(Stmt1, SQLFreeHandle(SQL_HANDLE_STMT, Stmt1));
