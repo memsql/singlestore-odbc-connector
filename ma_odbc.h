@@ -273,6 +273,7 @@ typedef struct
   my_bool     Unsigned;
   SQLSMALLINT Nullable;
   SQLLEN      OctetLength;
+  SQLLEN      CharacterLength;
 
 } MADB_ShortTypeInfo;
 
@@ -472,7 +473,6 @@ case SQL_TYPE_DATE
 #include <ma_result.h>
 #include <ma_driver.h>
 #include <ma_helper.h>
-#include <ma_type_helper.h>
 #include <ma_typeconv.h>
 #include <ma_fake_request.h>
 #include <plugins/browser_auth.h>

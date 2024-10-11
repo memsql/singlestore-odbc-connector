@@ -216,12 +216,14 @@ MADB_SetIrdRecord(MADB_Stmt *Stmt, MADB_DescRecord *Record, MYSQL_FIELD *Field)
       Record->Precision= Record->Scale;
     }
     break;
-  case MYSQL_TYPE_FLOAT:
-    Record->NumPrecRadix= 2;
-    Record->Precision= (SQLSMALLINT)Field->length - 2;
-    //Record->Scale= Field->decimals;
-    break;
   case MYSQL_TYPE_DOUBLE:
+    Record->NumPrecRadix = 10;
+    Record->Precision = 15;
+    break;
+  case MYSQL_TYPE_FLOAT:
+    Record->NumPrecRadix = 10;
+    Record->Precision = 7;
+    break;
   case MYSQL_TYPE_TINY:
   case MYSQL_TYPE_SHORT:
   case MYSQL_TYPE_INT24:
@@ -268,7 +270,7 @@ MADB_SetIrdRecord(MADB_Stmt *Stmt, MADB_DescRecord *Record, MYSQL_FIELD *Field)
                        Record->ConciseType == SQL_LONGVARBINARY) ? SQL_PRED_CHAR : SQL_SEARCHABLE;
 
   Record->DisplaySize= MADB_GetDisplaySize(Field, mariadb_get_charset_by_nr(Field->charsetnr));
-  Record->OctetLength= MADB_GetOctetLength(Field, cs.mbmaxlen);
+  Record->OctetLength= MADB_GetOctetLength(Field);
   FieldCs= mariadb_get_charset_by_nr(Field->charsetnr);
   Record->Length= MADB_GetDataSize(Record->ConciseType, Field->length, Record->Unsigned == SQL_TRUE,
                                    Record->Precision, Record->Scale, FieldCs!= NULL ? FieldCs->char_maxlen : 1);
@@ -357,7 +359,7 @@ void MADB_FixOctetLength(MADB_DescRecord *Record)
     Record->OctetLength= sizeof(SQL_TIMESTAMP_STRUCT);
     break;
   default:
-    Record->OctetLength= MIN(MADB_INT_MAX32, Record->OctetLength);
+    Record->OctetLength= MIN(S2_1_GB, Record->OctetLength);
   }
 }
 /* }}} */
@@ -455,12 +457,16 @@ MADB_FixIrdRecord(MADB_Stmt *Stmt, MADB_DescRecord *Record)
     Record->Precision= (SQLSMALLINT)Record->OctetLength - 2;
     /*Record->Scale= Fields[i].decimals;*/
     break;
-  case SQL_REAL:
-    /* Float*/
-    Record->NumPrecRadix= 2;
-    Record->Precision= (SQLSMALLINT)Record->OctetLength - 2;
-    break;
   case SQL_DOUBLE:
+    /* Double */ 
+    Record->NumPrecRadix = 10;
+    Record->Precision = 15;
+    break;
+  case SQL_REAL:
+    /* Float */
+    Record->NumPrecRadix = 10;
+    Record->Precision = 7;
+    break;
   case SQL_TINYINT:
   case SQL_SMALLINT:
   case SQL_INTEGER:
@@ -558,6 +564,7 @@ MADB_FixColumnDataTypes(MADB_Stmt *Stmt, const MADB_ShortTypeInfo *ColTypesArr)
 
       Record->Unsigned= ColTypesArr[i].Unsigned != 0 ? SQL_TRUE : SQL_FALSE;
 
+      // MADB_FixIrdRecord needs to have the correct OctetLength
       if (ColTypesArr[i].OctetLength > 0)
       {
         Record->OctetLength= ColTypesArr[i].OctetLength;
@@ -565,6 +572,11 @@ MADB_FixColumnDataTypes(MADB_Stmt *Stmt, const MADB_ShortTypeInfo *ColTypesArr)
       if (MADB_FixIrdRecord(Stmt, Record))
       {
         return 1;
+      }
+      // we set Record->Length after MADB_FixIrdRecord so that it's not affected by the function
+      if (ColTypesArr[i].CharacterLength > 0)
+      {
+        Record->Length = ColTypesArr[i].CharacterLength;
       }
     }
   }
