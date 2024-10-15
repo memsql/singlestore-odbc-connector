@@ -1272,6 +1272,32 @@ ODBC_TEST(t_odbc158)
   return OK;
 }
 
+ODBC_TEST(t_bigint_c_default)
+{
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_bigint_c_default");
+  OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_bigint_c_default (bi bigint not null, t text)");
+  OK_SIMPLE_STMT(Stmt, "INSERT INTO t_bigint_c_default (bi, t) VALUES (1234567890, 'abc')");
+
+  OK_SIMPLE_STMT(Stmt, "SELECT bi, t FROM t_bigint_c_default ORDER BY bi");
+  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+
+  SQLLEN     Len;
+  char buf1[504], buf2[30];
+
+  CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 1, SQL_C_DEFAULT, buf1, 504, &Len));
+  is_num(Len, 10);
+  IS_STR(buf1, "1234567890", 10);
+
+  CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 2, SQL_C_DEFAULT, buf2, 30, &Len));
+  is_num(Len, 3);
+  IS_STR(buf2, "abc", 3);
+
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_bigint_c_default");
+
+  return OK;
+}
+
 MA_ODBC_TESTS my_tests[]=
 {
   {t_longlong1,        "t_longlong1",       NORMAL, ALL_DRIVERS},
@@ -1300,6 +1326,7 @@ MA_ODBC_TESTS my_tests[]=
   {t_bug29402,         "t_bug29402",        NORMAL, ALL_DRIVERS},
   {t_sqlnum_truncate,  "t_sqlnum_truncate", NORMAL, ALL_DRIVERS},
   {t_odbc158,          "odbc158_bigintcolumn_as_c_long", NORMAL, ALL_DRIVERS},
+  {t_bigint_c_default, "t_bigint_c_default",  NORMAL, ALL_DRIVERS},
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
