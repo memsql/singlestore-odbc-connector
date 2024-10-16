@@ -4258,13 +4258,6 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
         {
           *StrLen_or_IndPtr= IrdRec->OctetLength;
         }
-        // MS Access again. In case on SQL_C_DEFAULT used to read BIGINT, we need to return Bind.length_value,
-        // not the supplied buffer length which may be greater than the largest possible column size.
-        // and Access complains about that
-        if (TargetType == SQL_C_DEFAULT && MadbType == MYSQL_TYPE_BLOB && Bind.length_value < Bind.buffer_length)
-        {
-          *StrLen_or_IndPtr = Bind.length_value;
-        }
       }
     }
   }             /* End of switch(OdbcType) */
