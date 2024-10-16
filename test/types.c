@@ -1285,8 +1285,8 @@ ODBC_TEST(t_bigint_c_default)
   char buf1[504], buf2[30];
 
   CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 1, SQL_C_DEFAULT, buf1, 504, &Len));
-  is_num(Len, 10);
-  IS_STR(buf1, "1234567890", 10);
+  is_num(Len, 8);
+  is_num(*(long long *)buf1, 1234567890);
 
   CHECK_STMT_RC(Stmt, SQLGetData(Stmt, 2, SQL_C_DEFAULT, buf2, 30, &Len));
   is_num(Len, 3);

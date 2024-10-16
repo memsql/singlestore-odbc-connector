@@ -873,6 +873,9 @@ int MADB_GetMaDBTypeAndLength(SQLINTEGER SqlDataType, my_bool *Unsigned, unsigne
     *Length= sizeof(SQLINTEGER);
     *Unsigned= (SqlDataType == SQL_C_ULONG);
     return MYSQL_TYPE_LONG;
+  case SQL_BIGINT:
+      *Length= sizeof(long long);
+      return MYSQL_TYPE_LONGLONG;
   case SQL_C_UBIGINT:
   case SQL_C_SBIGINT:
     *Length= sizeof(long long);
