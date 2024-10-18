@@ -1790,7 +1790,7 @@ static int CspsRunStatementQuery(   MADB_Stmt* const Stmt,
     return ret;
 }
 
-static void CspsReceiveStatementResults(MADB_Stmt* const Stmt, const SQLRETURN ret)
+static void CspsReceiveStatementResults(MADB_Stmt* const Stmt, SQLRETURN* const ret)
 {
     // Free the previous result if there was any.
     // In case of a multistatement it's correct to pass CspsResult and stmt because they are pointing to the proper
@@ -1830,6 +1830,12 @@ static void CspsReceiveStatementResults(MADB_Stmt* const Stmt, const SQLRETURN r
         {
           cspsResult = mysql_store_result(Stmt->stmt->mysql);
         }
+        if (mysql_errno(Stmt->stmt->mysql))
+        {
+          MADB_SetError(&Stmt->Error, MADB_ERR_HY001, mysql_error(Stmt->stmt->mysql), 
+                            mysql_errno(Stmt->stmt->mysql));
+          *ret = SQL_ERROR;
+        }
         if (cspsResult != NULL)
         {
             MADB_CspsCopyResult(Stmt, cspsResult, Stmt->stmt);
@@ -1844,14 +1850,14 @@ static void CspsReceiveStatementResults(MADB_Stmt* const Stmt, const SQLRETURN r
     else // field_count is zero, so the query does not return a result.
     {
         // Update affected rows only if the statement does not return a result.
-        if (SQL_SUCCEEDED(ret) && !Stmt->MultiStmts)
+        if (SQL_SUCCEEDED(*ret) && !Stmt->MultiStmts)
         {
             Stmt->AffectedRows += mysql_stmt_affected_rows(Stmt->stmt);
         }
     }
 }
 
-static void CspsReceiveStatementResultsMulti(MADB_Stmt* const Stmt, unsigned int* const ErrorCount, SQLRETURN ret)
+static void CspsReceiveStatementResultsMulti(MADB_Stmt* const Stmt, unsigned int* const ErrorCount, SQLRETURN* const ret)
 {
   int status = 0;
   int j;
@@ -1860,7 +1866,7 @@ static void CspsReceiveStatementResultsMulti(MADB_Stmt* const Stmt, unsigned int
   for (j = 0; j < Stmt->Apd->Header.ArraySize; ++j)
   {
       status = (j == 0) ? 0 : mysql_next_result(Stmt->stmt->mysql);
-      if (status > 0 || !SQL_SUCCEEDED(ret))
+      if (status > 0 || !SQL_SUCCEEDED(*ret))
       {
           MADB_SetNativeError(&Stmt->Error, SQL_HANDLE_DBC, Stmt->stmt->mysql);
           ++*ErrorCount;
@@ -1886,7 +1892,7 @@ static void CspsReceiveStatementResultsMulti(MADB_Stmt* const Stmt, unsigned int
               else
               {
                   Stmt->Ipd->Header.ArrayStatusPtr[j] =
-                      SQL_SUCCEEDED(ret)  ? SQL_PARAM_SUCCESS : SQL_PARAM_ERROR;
+                      SQL_SUCCEEDED(*ret)  ? SQL_PARAM_SUCCESS : SQL_PARAM_ERROR;
               }
           }
       }
@@ -2060,7 +2066,7 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
                   }
                   MADB_DynstrFree(&final_query);
               }
-              CspsReceiveStatementResults(Stmt, ret);
+              CspsReceiveStatementResults(Stmt, &ret);
           }
 
           // Move forward to the next subquery in the multistatement.
