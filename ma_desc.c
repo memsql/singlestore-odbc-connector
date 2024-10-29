@@ -241,6 +241,11 @@ MADB_SetIrdRecord(MADB_Stmt *Stmt, MADB_DescRecord *Record, MYSQL_FIELD *Field)
     break;
   }
   Record->ConciseType= MapMariadDbToOdbcType(Field);
+  // for Unicode driver, we want to use wide character types by default
+  if (!(Stmt->Connection->IsAnsi))
+  {
+    Record->ConciseType = MADB_GetWCharType(Record->ConciseType);
+  }
   /* 
       TYPE:
       For the datetime and interval data types, this field returns the verbose data type: SQL_DATETIME or SQL_INTERVAL.
