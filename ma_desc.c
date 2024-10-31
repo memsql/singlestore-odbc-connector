@@ -242,9 +242,22 @@ MADB_SetIrdRecord(MADB_Stmt *Stmt, MADB_DescRecord *Record, MYSQL_FIELD *Field)
   }
   Record->ConciseType= MapMariadDbToOdbcType(Field);
   // for Unicode driver, we want to use wide character types by default
-  if (!(Stmt->Connection->IsAnsi))
+  if (!(Stmt->Connection->IsAnsi) && Stmt->Connection->Dsn->UseWcharTypes)
   {
-    Record->ConciseType = MADB_GetWCharType(Record->ConciseType);
+    switch(Field->type)
+    {
+    case MYSQL_TYPE_BLOB:
+    case MYSQL_TYPE_LONG_BLOB:
+    case MYSQL_TYPE_MEDIUM_BLOB:
+    case MYSQL_TYPE_STRING:
+    case MYSQL_TYPE_TINY_BLOB:
+    case MYSQL_TYPE_VAR_STRING:
+      if (!(Field->flags & BINARY_FLAG))
+      {
+        Record->ConciseType = MADB_GetWCharType(Record->ConciseType);
+        break;
+      }
+    }
   }
   /* 
       TYPE:

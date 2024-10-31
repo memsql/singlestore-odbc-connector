@@ -26,6 +26,7 @@
 
 #include "tap.h"
 
+#include <locale.h>
 #include <time.h>
 
 #include <sqlucode.h>
@@ -80,8 +81,6 @@ ODBC_TEST(test_count)
   SQLDescribeColW(Stmt,1, columnname, 64, &columnlength, &datatype, &columnsize, &digits, &nullable);
   SQLBindCol(Stmt, 1, SQL_INTEGER, &columnsize, sizeof(SQLINTEGER), NULL);
   CHECK_STMT_RC(Stmt, SQLFetchScroll(Stmt, SQL_FETCH_FIRST, 1L));
-
-  wprintf(L"%s: %lu\n", columnname, (unsigned long)columnsize);
 
   return (OK);
 }
@@ -1531,6 +1530,138 @@ ODBC_TEST(t_odbc253)
   return OK;
 }
 
+ODBC_TEST(t_access_read_by_pk)
+{
+  SQLHENV env1;
+  SQLHDBC hdbc1;
+  SQLHSTMT stmt, stmt1;
+
+  SQLWCHAR outstr[1024];
+  SQLSMALLINT outstrlen;
+
+  SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &env1);
+  SQLSetEnvAttr(env1, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)SQL_OV_ODBC3, 0);
+  
+  SQLAllocHandle(SQL_HANDLE_DBC, env1, &hdbc1);
+  SQLWCHAR connW[512];
+
+  wchar_t dummy[256] = {0}, work_conn_in[512]= {0};
+
+  wcscat(work_conn_in, L"DSN=");
+  mbstowcs(dummy, (char *)my_dsn, sizeof(dummy)/sizeof(wchar_t));
+  wcscat(work_conn_in, dummy);
+  wcscat(work_conn_in, L";UID=");
+  mbstowcs(dummy, (char *)my_uid, sizeof(dummy)/sizeof(wchar_t));
+  wcscat(work_conn_in, dummy);
+  wcscat(work_conn_in, L";PWD=");
+  mbstowcs(dummy, (char *)my_pwd, sizeof(dummy)/sizeof(wchar_t));
+  wcscat(work_conn_in, dummy);
+  wcscat(work_conn_in, L";USE_WCHAR_TYPES=1");
+
+  CHECK_ENV_RC(Env, SQLAllocHandle(SQL_HANDLE_DBC, Env, &hdbc1));
+
+  /* Connect using UTF8 as transport to avoid server bug with user names */
+  CHECK_DBC_RC(hdbc1, SQLDriverConnectW(hdbc1, NULL, WL(work_conn_in, 
+                                (SQLSMALLINT)wcslen(work_conn_in)),
+                                (SQLSMALLINT)wcslen(work_conn_in), NULL, 0,
+                                0, SQL_DRIVER_NOPROMPT));
+
+  size_t i;
+
+  CHECK_DBC_RC(hdbc1, SQLAllocHandle(SQL_HANDLE_STMT, hdbc1, &stmt));
+
+  SQLCHAR query_create[512] = "CREATE TABLE t_access_read_by_pk (\
+    `pk_1` varchar(10),\
+    `pk_2` varchar(20),\
+    `col_1` varchar(200),\
+    `col_2` varchar(100),\
+    `col_3` varchar(100),\
+    `col_dec` decimal(30,4) DEFAULT NULL,\
+    `ext_id` int(11) DEFAULT NULL,\
+    `dateadded` datetime DEFAULT NULL,\
+    SHARD KEY (pk_1),\
+    PRIMARY KEY (pk_1, pk_2))";
+  SQLCHAR query_insert[512] = "INSERT INTO t_access_read_by_pk VALUES\
+    ('pk_1_val', 'pk_2_value', 'name_1', 'type_2', 'country_3', 1.2345, 1234, now())";
+
+  CHECK_STMT_RC(Stmt, SQLExecDirectW(Stmt, CW("DROP TABLE IF EXISTS t_access_read_by_pk"), SQL_NTS));
+  CHECK_STMT_RC(Stmt, SQLExecDirectW(Stmt, CW(query_create), SQL_NTS));
+  CHECK_STMT_RC(Stmt, SQLExecDirectW(Stmt, CW(query_insert), SQL_NTS));
+
+  SQLCHAR *query = "SELECT pk_1, pk_2 FROM t_access_read_by_pk";
+  SQLWCHAR queryW[256];
+  for (i = 0; i < strlen(query); i++)
+  {
+      queryW[i] = query[i];
+  }
+  queryW[i] = 0;
+
+  CHECK_STMT_RC(stmt, SQLExecDirectW(stmt, queryW, SQL_NTS));
+
+  // Bind columns to these buffers
+  SQLWCHAR pk_1_val_W[512];
+  SQLWCHAR pk_2_val_W[512];
+  SQLLEN pk_1_len, pk_2_len;
+
+  while(SQLFetch(stmt) != SQL_NO_DATA) 
+  {
+    CHECK_STMT_RC(stmt, SQLGetData(stmt, 1, SQL_C_DEFAULT, pk_1_val_W, sizeof(pk_1_val_W), &pk_1_len));
+    is_num(strlen("pk_1_val") * sizeof(SQLWCHAR), pk_1_len);
+    IS_WSTR(pk_1_val_W, CW("pk_1_val"), strlen("pk_1_val"));
+
+    CHECK_STMT_RC(stmt, SQLGetData(stmt, 2, SQL_C_DEFAULT, pk_2_val_W, sizeof(pk_2_val_W), &pk_2_len));
+    is_num(strlen("pk_2_value") * sizeof(SQLWCHAR), pk_2_len);
+    IS_WSTR(pk_2_val_W, CW("pk_2_value"), strlen("pk_2_value"));
+  }
+  SQLFreeHandle(SQL_HANDLE_STMT, stmt);
+
+  SQLCHAR query_by_pk[256] = "SELECT pk_1, pk_2, col_1, col_2, col_3, col_dec, ext_id, dateadded FROM t_access_read_by_pk WHERE pk_1 = ? AND pk_2 = ?";
+  SQLWCHAR query_by_pkW[256];
+  // below we manually convert SQLCHAR* to SQLWCHAR*. This can be used in other programs without the need to import
+  // internal driver code  
+  for (i = 0; i < strlen(query_by_pk); ++i)
+  {
+      query_by_pkW[i] = query_by_pk[i];
+  }
+  query_by_pkW[i] = 0;
+  
+  CHECK_DBC_RC(hdbc1, SQLAllocHandle(SQL_HANDLE_STMT, hdbc1, &stmt1));
+
+  CHECK_STMT_RC(stmt,SQLPrepareW(stmt1, query_by_pkW, SQL_NTS));
+
+  SQLBindParameter(stmt1, 1, SQL_PARAM_INPUT, SQL_C_DEFAULT, SQL_WVARCHAR, 10, 0, pk_1_val_W, 0, &pk_1_len);
+  SQLBindParameter(stmt1, 2, SQL_PARAM_INPUT, SQL_C_DEFAULT, SQL_WVARCHAR, 20, 0, pk_2_val_W, 0, &pk_2_len);
+
+  CHECK_STMT_RC(stmt1, SQLExecute(stmt1));
+
+  int n_rows = 0;
+  while(SQLFetch(stmt1) != SQL_NO_DATA)
+  {
+    ++n_rows;
+    SQLWCHAR col_1[500], col_2[500], col_3[500];
+    SQLLEN l_1, l_2, l_3, l_4, l_5;
+
+    SQLCHAR col_dec[64];
+    SQLINTEGER col_int;
+
+    CHECK_STMT_RC(stmt1, SQLGetData(stmt1, 3, SQL_C_DEFAULT, col_1, sizeof(col_1), &l_1));
+    CHECK_STMT_RC(stmt1, SQLGetData(stmt1, 4, SQL_C_DEFAULT, col_2, sizeof(col_2), &l_2));
+    CHECK_STMT_RC(stmt1, SQLGetData(stmt1, 5, SQL_C_DEFAULT, col_3, sizeof(col_3), &l_3));
+    CHECK_STMT_RC(stmt1, SQLGetData(stmt1, 6, SQL_C_DEFAULT, col_dec, sizeof(col_dec), &l_4));
+    CHECK_STMT_RC(stmt1, SQLGetData(stmt1, 7, SQL_C_DEFAULT, &col_int, sizeof(col_int), &l_5));
+
+    IS_STR("1.2345", col_dec, 5);
+    is_num(1234, col_int);
+  }
+  // exactly one row should have been fetched
+  is_num(n_rows, 1);
+
+  SQLFreeHandle(SQL_HANDLE_STMT, stmt1);
+  SQLDisconnect(hdbc1);
+  SQLFreeHandle(SQL_HANDLE_DBC, hdbc1);
+  SQLFreeHandle(SQL_HANDLE_ENV, env1);
+  return OK;
+}
 
 MA_ODBC_TESTS my_tests[]=
 {
@@ -1562,6 +1693,7 @@ MA_ODBC_TESTS my_tests[]=
     {t_odbc72,          "odbc72_surrogate_pairs",  TO_FIX, ALL_DRIVERS}, // TODO PLAT-5421
     {t_odbc203,         "t_odbc203",          NORMAL, ALL_DRIVERS},
     {t_odbc253,         "t_odbc253_empty_str_crash", NORMAL, ALL_DRIVERS},
+    {t_access_read_by_pk, "t_access_read_by_pk",  NORMAL, UNICODE_DRIVER},
     {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
