@@ -105,6 +105,7 @@
 #define cbInteractive                   1220
 #define ckNoSSPS                        1221
 #define cbBrowserSSO                    1222
+#define ckUseWcharTypes                 1223
 
 // Next default values for new objects
 // 
