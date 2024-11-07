@@ -27,9 +27,12 @@
 
 void ma_debug_print(my_bool ident, char *format, ...);
 void ma_debug_print_error(MADB_Error *err);
+void ma_debug_print_bytes(char *name, char *ptr, int len);
 
 /* Debug is on for connection */
 #define MDBUG_C_IS_ON(C) ((C) && (((MADB_Dbc*)(C))->Options & MA_DEBUG_FLAG))
+/* Use the definition below for debug build on Windows, as Options is not exposed in the Data Source UI */
+// #define MDBUG_C_IS_ON(C) ((C))
 
 #ifdef WIN32
 #define MDBUG_C_ENTER(C,A)\
@@ -73,6 +76,9 @@ void ma_debug_print_error(MADB_Error *err);
   if (MDBUG_C_IS_ON(C))\
   ma_debug_print(1, #A ":\t%" #B, A);
 
+#define MDBUG_C_DUMP_HEX(C,A,L)\
+  if (MDBUG_C_IS_ON(C))\
+  ma_debug_print_bytes("Buffer bytes: ", A, L)
 
 /* These macros will be used to force debug output 
    for functions without a DBC handle */
