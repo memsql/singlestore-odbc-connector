@@ -3073,9 +3073,16 @@ MYSQL_ROW FetchRowCsps(MADB_Stmt* Stmt, unsigned long **field_lengths)
     if (row == NULL)
     {
       Stmt->stmt->state= MYSQL_STMT_FETCH_DONE;
-    } else
+    }
+    else
     {
       Stmt->stmt->state= MYSQL_STMT_USER_FETCHING;
+    }
+    if (mysql_errno(Stmt->stmt->mysql))
+    {
+      MADB_SetError(&Stmt->Error, MADB_ERR_HY000, mysql_error(Stmt->stmt->mysql),
+                    mysql_errno(Stmt->stmt->mysql));
+      return NULL;
     }
 
     *field_lengths = mysql_fetch_lengths(Stmt->CspsResult);
@@ -3117,7 +3124,14 @@ SQLRETURN MADB_FetchCsps(MADB_Stmt *Stmt)
     row = FetchRowCsps(Stmt, &field_lengths);
     if (row == NULL)
     {
+      if (SQL_SUCCEEDED(Stmt->Error.ReturnValue))
+      {
         return MYSQL_NO_DATA;
+      }
+      else
+      {
+        return 1;
+      }
     }
 
     for (i = 0; i < Stmt->stmt->field_count; ++i)
@@ -3183,10 +3197,10 @@ else if (_cur_row_rc != _accumulated_rc) _accumulated_rc= SQL_SUCCESS_WITH_INFO
 /* {{{ MADB_StmtFetch */
 SQLRETURN MADB_StmtFetch(MADB_Stmt *Stmt)
 {
-  unsigned int     RowNum, j, rc;
+  unsigned int     RowNum, j;
   SQLULEN          Rows2Fetch=  Stmt->Ard->Header.ArraySize, Processed, *ProcessedPtr= &Processed;
   MYSQL_ROW_OFFSET SaveCursor= NULL;
-  SQLRETURN        Result= SQL_SUCCESS, RowResult;
+  SQLRETURN        Result= SQL_SUCCESS, RowResult, rc;
 
   MADB_CLEAR_ERROR(&Stmt->Error);
 
@@ -3306,6 +3320,16 @@ SQLRETURN MADB_StmtFetch(MADB_Stmt *Stmt)
 
     switch(rc) {
     case 1:
+    if (MADB_SSPS_DISABLED(Stmt))
+    {
+      if (Stmt->Ird->Header.ArrayStatusPtr)
+      {
+        Stmt->Ird->Header.ArrayStatusPtr[RowNum]= SQL_ROW_ERROR;
+      }
+      return SQL_ERROR;
+    }
+    else
+    {
       RowResult= MADB_SetNativeError(&Stmt->Error, SQL_HANDLE_STMT, Stmt->stmt);
       /* If mysql_stmt_fetch returned error, there is no sense to continue */
       if (Stmt->Ird->Header.ArrayStatusPtr)
@@ -3314,7 +3338,7 @@ SQLRETURN MADB_StmtFetch(MADB_Stmt *Stmt)
       }
       CALC_ALL_ROWS_RC(Result, RowResult, RowNum);
       return Result;
-
+    }
     case MYSQL_DATA_TRUNCATED:
     {
       /* We will not report truncation if a dummy buffer was bound */
