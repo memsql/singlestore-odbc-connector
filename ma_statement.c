@@ -3078,6 +3078,7 @@ MYSQL_ROW FetchRowCsps(MADB_Stmt* Stmt, unsigned long **field_lengths)
     {
       Stmt->stmt->state= MYSQL_STMT_USER_FETCHING;
     }
+
     if (mysql_errno(Stmt->stmt->mysql))
     {
       MADB_SetError(&Stmt->Error, MADB_ERR_HY000, mysql_error(Stmt->stmt->mysql),
