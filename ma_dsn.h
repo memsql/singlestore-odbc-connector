@@ -149,6 +149,7 @@ typedef struct st_madb_dsn
   my_bool IgnoreKeyring;
   char *JWT;
   my_bool RewriteCallSP;
+  my_bool UseWcharTypes;
   int TestMode;
   /* --- Internal --- */
   int isPrompt;

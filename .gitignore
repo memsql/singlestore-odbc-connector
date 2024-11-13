@@ -117,6 +117,7 @@ libmariadb/RelWithDebInfo
 # ODBC connector .gitignore
 build
 .vscode
+.vs
 
 osxinstall/install_driver
 osxinstall/WELCOME.html

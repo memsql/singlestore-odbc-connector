@@ -37,6 +37,22 @@ void ma_debug_print(my_bool ident, char *format, ...)
   }
 }
 
+void ma_debug_print_bytes(char *name, char *ptr, int len)
+{
+  FILE *fp= fopen(LogFile, "a");
+  int i;
+  if (fp)
+  {
+    fprintf(fp, "\t%s", name);
+    for (i = 0; i < len; ++i)
+    {
+      fprintf(fp, "%02X", ptr[i]);
+    }
+    fprintf(fp, "\n");
+    fclose(fp);
+  }
+}
+
 void ma_debug_printw(wchar_t *format, ...)
 {
   FILE *fp= fopen(LogFile, "a");

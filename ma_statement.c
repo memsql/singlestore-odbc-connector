@@ -3957,10 +3957,11 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
       }
     }
     break;
-  case SQL_WCHAR:
+  case SQL_WCHAR:  // same as SQL_C_WCHAR 
   case SQL_WVARCHAR:
   case SQL_WLONGVARCHAR:
     {
+      MDBUG_C_PRINT(Stmt->Connection, "SQLGetData for WCHAR type, Col_or_Param_Num: %d OdbcType %d", Col_or_Param_Num, OdbcType);
       char  *ClientValue= NULL;
       size_t CharLength= 0;
 
@@ -4078,7 +4079,7 @@ SQLRETURN MADB_StmtGetData(SQLHSTMT StatementHandle,
         Stmt->CharOffset[Offset]= Stmt->Lengths[Offset];
         MADB_FREE(IrdRec->InternalBuffer);
       }
-
+      MDBUG_C_DUMP_HEX(Stmt->Connection, TargetValuePtr, *StrLen_or_IndPtr);
       MADB_FREE(ClientValue);
     }
     break;
