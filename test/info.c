@@ -159,10 +159,6 @@ ODBC_TEST(t_bug14639)
 
   /* Create a new connection that we deliberately will kill */
   ODBC_Connect(&henv2, &Connection2, &Stmt2);
-  OK_SIMPLE_STMT(Stmt2, "SELECT connection_id()");
-  CHECK_STMT_RC(Stmt2, SQLFetch(Stmt2));
-  connection_id= my_fetch_int(Stmt2, 1);
-  CHECK_STMT_RC(Stmt2, SQLFreeStmt(Stmt2, SQL_CLOSE));
 
   /* Check that connection is alive */
   CHECK_DBC_RC(Connection2, SQLGetConnectAttr(Connection2, SQL_ATTR_CONNECTION_DEAD, &is_dead,
@@ -170,8 +166,7 @@ ODBC_TEST(t_bug14639)
   is_num(is_dead, SQL_CD_FALSE);
 
   /* From another connection, kill the connection created above */
-  sprintf(buf, "KILL %d", connection_id);
-  CHECK_STMT_RC(Stmt, SQLExecDirect(Stmt, (SQLCHAR *)buf, SQL_NTS));
+  killConnection(Stmt2, Stmt);
 
   /* Now check that the connection killed returns the right state */
   CHECK_DBC_RC(Connection, SQLGetConnectAttr(Connection2, SQL_ATTR_CONNECTION_DEAD, &is_dead,
