@@ -977,15 +977,10 @@ void killConnection(SQLHSTMT *Stmt1, SQLHSTMT *Stmt2 ) {
   SQLINTEGER connection_id, node_id;
   char       Kill[64], buf_get_node_id[128];
 
-  OK_SIMPLE_STMT(Stmt1, "SELECT connection_id()");
+  OK_SIMPLE_STMT(Stmt1, "SELECT connection_id(), aggregator_id();");
   CHECK_STMT_RC(Stmt1, SQLFetch(Stmt1));
   connection_id= my_fetch_int(Stmt1, 1);
-  CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
-
-  sprintf(buf_get_node_id, "SELECT node_id FROM INFORMATION_SCHEMA.MV_PROCESSLIST where id = %d", connection_id);
-  OK_SIMPLE_STMT(Stmt1, buf_get_node_id);
-  CHECK_STMT_RC(Stmt1, SQLFetch(Stmt1));
-  node_id = my_fetch_int(Stmt1, 1);
+  node_id = my_fetch_int(Stmt1, 2);
   CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
 
   /* From another connection, kill the connection created above */
