@@ -38,25 +38,25 @@ ODBC_TEST(client_side_prepare)
     SQLCHAR bParam[10] = "hundred";
     SQLLEN bParamLen = strlen(bParam);
     SQL_NUMERIC_STRUCT cParam = {10, 3, 1, "\xff\xa0"}; // With scale=3 should be equal to 41.215
-    SQLLEN cParamLen;
+    SQLLEN cParamLen = sizeof(cParam);
     SQLINTEGER dParam = -193;
-    SQLLEN dParamLen;
+    SQLLEN dParamLen = sizeof(dParam);
     SQLUBIGINT eParam = 18446744073709551615ULL;
-    SQLLEN eParamLen;
+    SQLLEN eParamLen = sizeof(eParam);
     SQL_TIMESTAMP_STRUCT fParam = {2020, 11, 20, 19, 5, 31};
-    SQLLEN fParamLen;
+    SQLLEN fParamLen = sizeof(fParam);
     SQLCHAR gParam[10] = "\x64\x65";
     SQLLEN gParamLen = strlen(gParam);
     SQLCHAR hParam[20] = "\x61\x62\x63";
     SQLLEN hParamLen = strlen(hParam);
     char iParam = 120;
-    SQLLEN iParamLen;
+    SQLLEN iParamLen = sizeof(iParam);
     SQL_TIME_STRUCT jParam = {19, 43, 1};
-    SQLLEN jParamLen;
+    SQLLEN jParamLen  = sizeof(jParam);
     SQL_DATE_STRUCT kParam = {2020, 11, 20};
-    SQLLEN kParamLen;
+    SQLLEN kParamLen = sizeof(kParam);
     SQLDOUBLE lParam = -123456789.123456789123456789;
-    SQLLEN lParamLen;
+    SQLLEN lParamLen = sizeof(lParam);
     SQLINTEGER nParam = -16;
     SQLLEN nParamInd = SQL_NULL_DATA;
 
@@ -65,6 +65,7 @@ ODBC_TEST(client_side_prepare)
                              "f datetime(6), g binary(5), h bit(64), i tinyint, j time, k date, l double, n int)";
 
     OK_SIMPLE_STMT(Stmt, createTableQuery);
+    CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
     CHECK_STMT_RC(Stmt, SQLPrepare(Stmt, (SQLCHAR *) "INSERT INTO csps VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                                    SQL_NTS));
     CHECK_STMT_RC(Stmt,
@@ -734,25 +735,25 @@ ODBC_TEST(client_side_get_data_many_types)
     SQLCHAR bParam[10] = "hundred";
     SQLLEN bParamLen = strlen(bParam);
     SQL_NUMERIC_STRUCT cParam = {10, 3, 1, "\xff\xa0"}; // With scale=3 should be equal to 41.215
-    SQLLEN cParamLen;
+    SQLLEN cParamLen = sizeof(cParam);
     SQLINTEGER dParam = -193;
-    SQLLEN dParamLen;
+    SQLLEN dParamLen = sizeof(dParam);
     SQLUBIGINT eParam = 18446744073709551615ULL;
-    SQLLEN eParamLen;
+    SQLLEN eParamLen = sizeof(eParam);
     SQL_TIMESTAMP_STRUCT fParam = {2020, 11, 20, 19, 5, 31, 123456000};
-    SQLLEN fParamLen;
+    SQLLEN fParamLen = sizeof(fParam);
     SQLCHAR gParam[10] = "\x64\x65";
     SQLLEN gParamLen = strlen(gParam);
     SQLCHAR hParam[20] = "\x61\x62\x63";
     SQLLEN hParamLen = strlen(hParam);
     char iParam = 120;
-    SQLLEN iParamLen;
+    SQLLEN iParamLen = sizeof(iParam);
     SQL_TIME_STRUCT jParam = {19, 43, 1};
-    SQLLEN jParamLen;
+    SQLLEN jParamLen=sizeof(jParam);
     SQL_DATE_STRUCT kParam = {2020, 11, 20};
-    SQLLEN kParamLen;
+    SQLLEN kParamLen = sizeof(kParam);
     SQLDOUBLE lParam = -123456789.123456789123456789;
-    SQLLEN lParamLen;
+    SQLLEN lParamLen = sizeof(lParam);
     SQLINTEGER nParam = -16;
     SQLLEN nParamInd = SQL_NULL_DATA;
 
