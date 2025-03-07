@@ -35,6 +35,8 @@ then
   yum -y install xdg-utils w3m curl
   # install python and pip
   yum -y install wget make gcc openssl-devel bzip2-devel
+  yum -y install libegl-dev
+  yum -y install yaru-theme-icon
   wget https://www.python.org/ftp/python/3.7.9/Python-3.7.9.tgz
   tar xzf Python-3.7.9.tgz
   ./Python-3.7.9/configure --enable-optimizations
@@ -53,6 +55,8 @@ else
   # install python and pip
   apt-get install -y python3 python3-pip
   apt-get install -y libkrb5-dev
+  apt-get install -y libegl-dev
+  apt-get install -y yaru-theme-icon
 fi
 
 echo 'export BROWSER=$(which w3m)' >> $BASH_ENV
