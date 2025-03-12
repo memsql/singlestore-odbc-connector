@@ -36,7 +36,7 @@ commands:
             sudo apt-get install -y mariadb-client-core-10.6
             sudo apt-get install -y unixodbc odbcinst unixodbc-dev
             sudo apt-get install --allow-unauthenticated -y --force-yes -m unixodbc-dev odbcinst1debian2 libodbc1
-            sudo NEEDRESTART_MODE=a apt-get install -y libglib2.0 libsecret-1-dev libkrb5-dev
+            sudo NEEDRESTART_MODE=a apt-get install -y libglib2.0 libsecret-1-dev libkrb5-dev libegl-dev yaru-theme-icon
   setup-environment-macos:
     description: "Setup the macos environment"
     steps:
