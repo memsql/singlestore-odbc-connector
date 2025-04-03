@@ -21,7 +21,7 @@
 set -eo pipefail
 
 # set variables for Connector/ODBC
-export OPENSSL_ROOT_DIR=(/usr/local/Cellar/openssl@1.1/1.1.1*)
+export OPENSSL_ROOT_DIR=(/usr/local/Cellar/openssl@3*)
 
 cd libmariadb
 cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_SSL=OPENSSL -DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR} && cmake --build . --config DEBUG

@@ -45,7 +45,7 @@ commands:
           command: |
             rm -rf $(brew --caskroom)/adoptopenjdk11
             brew update
-            brew install openssl@1.1
+            brew install openssl
             brew install curl
             brew install libiodbc
             brew link libiodbc --force
