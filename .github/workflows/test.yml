@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    # Run on all branches
+    branches: ["**"]
+  pull_request:
+    # Run on all branches
+    branches: ["main", "master"]
+  schedule:
+    - cron: '0 0 * * 1' # Weekly build, as in CircleCI 'weekly' workflow
+
+jobs:
+  build-linux:
+    name: Build & Test (Linux)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build_type: [RelWithDebInfo]
+        driver_type: [unicode, ansi]
+        include:
+          - build_type: RelWithDebInfo
+            driver_type: unicode
+            test_dsn: ssodbc_test_w
+            test_driver: 'SingleStore ODBC Unicode Driver'
+          - build_type: RelWithDebInfo
+            driver_type: ansi
+            test_dsn: ssodbc_test_a
+            test_driver: 'SingleStore ODBC ANSI Driver'
+    env:
+      BUILD_TYPE: ${{ matrix.build_type }}
+      TEST_DSN: ${{ matrix.test_dsn }}
+      TEST_DRIVER: ${{ matrix.test_driver }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake gcc g++ unixodbc-dev
+      - name: Build
+        run: |
+          ./build-local.sh
+      - name: Run tests
+        run: |
+          ./test-local.sh
+
+  build-macos:
+    name: Build & Test (macOS)
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        build_type: [RelWithDebInfo]
+        driver_type: [unicode, ansi]
+        include:
+          - build_type: RelWithDebInfo
+            driver_type: unicode
+            test_dsn: ssodbc_test_w
+            driver_name: 'SingleStore ODBC Unicode Driver'
+          - build_type: RelWithDebInfo
+            driver_type: ansi
+            test_dsn: ssodbc_test_a
+            driver_name: 'SingleStore ODBC ANSI Driver'
+    env:
+      BUILD_TYPE: ${{ matrix.build_type }}
+      TEST_DSN: ${{ matrix.test_dsn }}
+      DRIVER_NAME: ${{ matrix.driver_name }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up dependencies
+        run: |
+          brew update
+          brew install cmake unixodbc
+      - name: Build
+        run: |
+          ./build-local.sh
+      - name: Run tests
+        run: |
+          ./test-local.sh
+
+  build-windows:
+    name: Build & Test (Windows)
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        build_type: [RelWithDebInfo]
+        driver_type: [unicode, ansi]
+        include:
+          - build_type: RelWithDebInfo
+            driver_type: unicode
+            test_dsn: ssodbc_test_w
+            test_driver: 'SingleStore ODBC Unicode Driver'
+          - build_type: RelWithDebInfo
+            driver_type: ansi
+            test_dsn: ssodbc_test_a
+            test_driver: 'SingleStore ODBC ANSI Driver'
+    env:
+      BUILD_TYPE: ${{ matrix.build_type }}
+      TEST_DSN: ${{ matrix.test_dsn }}
+      TEST_DRIVER: ${{ matrix.test_driver }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up dependencies
+        run: |
+          choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' --yes
+      - name: Build
+        run: |
+          ./build-local.sh
+      - name: Run tests
+        run: |
+          ./test-local.sh
