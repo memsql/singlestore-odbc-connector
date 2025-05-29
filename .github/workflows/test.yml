@@ -1,4 +1,4 @@
-name: CI
+name: Run tests
 
 on:
   push:
@@ -37,7 +37,7 @@ jobs:
       - name: Set up dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake gcc g++ unixodbc-dev
+          sudo apt-get install -y cmake gcc g++ libglib2.0 libsecret-1-dev libkrb5-dev unixodbc unixodbc-dev odbcinst
       - name: Build
         run: |
           ./build-local.sh
@@ -70,8 +70,16 @@ jobs:
         uses: actions/checkout@v4
       - name: Set up dependencies
         run: |
+          rm -rf $(brew --caskroom)/adoptopenjdk11 || true
           brew update
-          brew install cmake unixodbc
+          brew install openssl@1.1
+          brew install curl
+          brew install libiodbc
+          brew link libiodbc --force
+          brew install mysql-client
+          brew install cmake
+          brew install bind
+          brew cleanup
       - name: Build
         run: |
           ./build-local.sh
