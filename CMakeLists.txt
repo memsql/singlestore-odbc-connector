@@ -19,7 +19,7 @@
 # *************************************************************************************/
 PROJECT(singlestore_connector_odbc C)
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.9)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
 SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version" FORCE)
 
 SET(MARIADB_ODBC_VERSION_MAJOR 1)
