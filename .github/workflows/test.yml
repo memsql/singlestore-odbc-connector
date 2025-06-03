@@ -31,6 +31,9 @@ jobs:
       BUILD_TYPE: ${{ matrix.build_type }}
       TEST_DSN: ${{ matrix.test_dsn }}
       TEST_DRIVER: ${{ matrix.test_driver }}
+      S2MS_API_KEY: ${{ secrets.S2MS_API_KEY }}
+      LICENSE_KEY: ${{ secrets.SINGLESTORE_LICENSE }}
+      ROOT_PASSWORD: ${{ secrets.SINGLESTORE_PASSWORD }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

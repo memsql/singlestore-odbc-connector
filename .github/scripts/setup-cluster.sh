@@ -47,7 +47,7 @@ if [[ "${EXISTS}" -eq 0 ]]; then
         -v ${PWD}/test/ssl:/test-ssl \
         -v ${PWD}/test/jwt:/test-jwt \
         -e LICENSE_KEY=${LICENSE_KEY} \
-        -e ROOT_PASSWORD=${MEMSQL_PASSWORD} \
+        -e ROOT_PASSWORD=${ROOT_PASSWORD} \
         -p $S2_MASTER_PORT:3306 -p $S2_AGG_PORT_1:3307 -p $S2_AGG_PORT_2:3308 \
         ${IMAGE_NAME}
 fi
