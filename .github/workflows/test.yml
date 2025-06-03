@@ -38,18 +38,14 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake gcc g++ libglib2.0 libsecret-1-dev libkrb5-dev unixodbc unixodbc-dev odbcinst
-      - run:
-          name: Setup test cluster
-          command: ./.github/scripts/setup-cluster.sh
-      - run:
-          name: Build project
-          command: ./.github/scripts/build-ubuntu.sh
-      - run:
-          name: Run tests
-          command: ./.github/scripts/run-tests-linux.sh
-      - run:
-          name: Run browser auth tests
-          command: ./test/odbc_browser_auth
+      - name: Setup test cluster
+        run: ./.github/scripts/setup-cluster.sh
+      - name: Build project
+        run:  ./.github/scripts/build-ubuntu.sh
+      - name: Run tests
+        run: ./.github/scripts/run-tests-linux.sh
+      - name: Run browser auth tests
+        run: ./test/odbc_browser_auth
 
   build-macos:
     name: Build & Test (macOS)
