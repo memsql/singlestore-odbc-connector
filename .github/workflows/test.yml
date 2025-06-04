@@ -10,6 +10,11 @@ on:
   schedule:
     - cron: '0 0 * * 1' # Weekly build, as in CircleCI 'weekly' workflow
 
+env:
+  S2MS_API_KEY: ${{ secrets.S2MS_API_KEY }}
+  SINGLESTORE_LICENSE: ${{ secrets.SINGLESTORE_LICENSE }}
+  ROOT_PASSWORD: ${{ secrets.SINGLESTORE_PASSWORD }}
+
 jobs:
   build-linux:
     name: Build & Test (Linux)
@@ -31,9 +36,6 @@ jobs:
       BUILD_TYPE: ${{ matrix.build_type }}
       TEST_DSN: ${{ matrix.test_dsn }}
       TEST_DRIVER: ${{ matrix.test_driver }}
-      S2MS_API_KEY: ${{ secrets.S2MS_API_KEY }}
-      SINGLESTORE_LICENSE: ${{ secrets.SINGLESTORE_LICENSE }}
-      ROOT_PASSWORD: ${{ secrets.SINGLESTORE_PASSWORD }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -145,8 +147,6 @@ jobs:
       #     Install-WindowsFeature Net-Framework-Core
       - name: Start S2MS cluster
         run: |
-            python3 -m venv .venv
-            source .venv\bin\activate
             python -m pip install singlestoredb
             python .github\scripts\setup_s2ms_cluster.py start odbc_test
       - name: Build project
@@ -160,7 +160,6 @@ jobs:
             cd ..
       - name: Terminate S2MS cluster
         run: |
-            source .venv\bin\activate
             python -m pip install singlestoredb
             python .\.github\scripts\setup_s2ms_cluster.py terminate
         if: always()
