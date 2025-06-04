@@ -73,24 +73,37 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Set up dependencies
+      - name: Start S2MS cluster
         run: |
-          rm -rf $(brew --caskroom)/adoptopenjdk11 || true
-          brew update
-          brew install openssl@1.1
-          brew install curl
-          brew install libiodbc
-          brew link libiodbc --force
-          brew install mysql-client
-          brew install cmake
-          brew install bind
-          brew cleanup
-      - name: Build
+            pip3 install singlestoredb
+            python3 ./.github/scripts/setup_s2ms_cluster.py start odbc_test
+      - name: Define Environment Variables
         run: |
-          ./build-local.sh
+            echo 'export TEST_SERVER=$(echo "$(cat WORKSPACE_ENDPOINT_FILE)")' >> $BASH_ENV
+            echo 'export TEST_DRIVER=$DRIVER_NAME' >> $BASH_ENV
+            echo 'export TEST_UID=$MEMSQL_USER' >> $BASH_ENV
+            echo 'export TEST_PORT=$MEMSQL_PORT' >> $BASH_ENV
+            echo 'export TEST_PASSWORD=$MEMSQL_PASSWORD' >> $BASH_ENV
+            source $BASH_ENV
+      - name: Setup Environment on MacOS
+        run: |
+            rm -rf $(brew --caskroom)/adoptopenjdk11
+            brew update
+            brew install openssl curl mysql-client cmake bind
+            brew install libiodbc
+            brew link libiodbc --force
+            brew cleanup
+      - name: Build project
+        run: ./.github/scripts/build-osx.sh
       - name: Run tests
+        run: ./.github/scripts/run-tests-osx.sh
+      - name: Run browser auth tests
+        run: ./test/odbc_browser_auth
+      - name: Terminate S2MS cluster
+        if: always()
         run: |
-          ./test-local.sh
+            pip3 install singlestoredb
+            python3 ./.github/scripts/setup_s2ms_cluster.py terminate
 
   build-windows:
     name: Build & Test (Windows)
@@ -127,8 +140,6 @@ jobs:
       #     Expand-Archive $Env:HOMEPATH\cmake-3.19.0-win64-x64.zip -DestinationPath "$Env:ProgramFiles"
       #     Rename-Item "$Env:ProgramFiles\cmake-3.19.0-win64-x64" -NewName CMake
       #     Install-WindowsFeature Net-Framework-Core
-      - name: Download Chrome
-        run: .github\scripts\install-chrome.ps1
       - name: Start S2MS cluster
         run: |
             pip install singlestoredb
@@ -143,5 +154,7 @@ jobs:
             ../test/${{ matrix.build_type }}/odbc_browser_auth
             cd ..
       - name: Terminate S2MS cluster
-        run: python .\.github\scripts\setup_s2ms_cluster.py terminate
+        run: |
+            pip install singlestoredb
+            python .\.github\scripts\setup_s2ms_cluster.py terminate
         if: always()
