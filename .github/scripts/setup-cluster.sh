@@ -55,8 +55,6 @@ if [[ "${EXISTS}" -eq 0 ]]; then
         ${IMAGE_NAME}
 fi
 
-docker start ${CONTAINER_NAME}
-
 singlestore-wait-start() {
   echo -n "Waiting for SingleStore to start..."
   while true; do
@@ -84,13 +82,14 @@ fi
 echo
 echo "Setting up JWT"
 docker exec ${CONTAINER_NAME} memsqlctl update-config --yes --all --key jwt_auth_config_file --value /test-jwt/jwt_auth_config.json
+
 echo "Setting up SSL"
 docker exec ${CONTAINER_NAME} memsqlctl update-config --yes --all --key ssl_ca --value /test-ssl/test-ca-cert.pem
 docker exec ${CONTAINER_NAME} memsqlctl update-config --yes --all --key ssl_cert --value /test-ssl/test-memsql-cert.pem
 docker exec ${CONTAINER_NAME} memsqlctl update-config --yes --all --key ssl_key --value /test-ssl/test-memsql-key.pem
 
 echo "Restarting cluster"
-docker exec ${CONTAINER_NAME} memsqlctl restart-node --yes --all
+docker restart ${CONTAINER_NAME}
 singlestore-wait-start
 
 echo "Setting up root-ssl user"
