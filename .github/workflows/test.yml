@@ -72,6 +72,7 @@ jobs:
       BUILD_TYPE: ${{ matrix.build_type }}
       TEST_DSN: ${{ matrix.test_dsn }}
       DRIVER_NAME: ${{ matrix.driver_name }}
+      MEMSQL_PORT: 3306
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -83,12 +84,12 @@ jobs:
           python ./.github/scripts/setup_s2ms_cluster.py start odbc_test
       - name: Define Environment Variables
         run: |
-            echo 'export TEST_SERVER=$(echo "$(cat WORKSPACE_ENDPOINT_FILE)")' >> $BASH_ENV
-            echo 'export TEST_DRIVER=$DRIVER_NAME' >> $BASH_ENV
-            echo 'export TEST_UID=$MEMSQL_USER' >> $BASH_ENV
-            echo 'export TEST_PORT=$MEMSQL_PORT' >> $BASH_ENV
-            echo 'export TEST_PASSWORD=$MEMSQL_PASSWORD' >> $BASH_ENV
-            source $BASH_ENV
+            echo 'export TEST_SERVER=$(echo "$(cat WORKSPACE_ENDPOINT_FILE)")' >> "${BASH_ENV}"
+            echo 'export TEST_DRIVER=$DRIVER_NAME' >> "${BASH_ENV}"
+            echo 'export TEST_UID=$MEMSQL_USER' >> "${BASH_ENV}"
+            echo 'export TEST_PORT=$MEMSQL_PORT' >> "${BASH_ENV}"
+            echo 'export TEST_PASSWORD=$MEMSQL_PASSWORD' >> "${BASH_ENV}"
+            source "${BASH_ENV}"
       - name: Setup Environment on MacOS
         run: |
             rm -rf $(brew --caskroom)/adoptopenjdk11
@@ -135,6 +136,7 @@ jobs:
       TEST_DRIVER: ${{ matrix.test_driver }}
       DRIVER_TYPE: ${{ matrix.driver_type }}
       ARCH_BITS: ${{ matrix.arch_bits }}
+      MEMSQL_PORT: 3306
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
