@@ -75,8 +75,10 @@ jobs:
         uses: actions/checkout@v4
       - name: Start S2MS cluster
         run: |
-            pip3 install singlestoredb
-            python3 ./.github/scripts/setup_s2ms_cluster.py start odbc_test
+          python3 -m venv .venv
+          source .venv/bin/activate
+          python -m pip install singlestoredb
+          python ./.github/scripts/setup_s2ms_cluster.py start odbc_test
       - name: Define Environment Variables
         run: |
             echo 'export TEST_SERVER=$(echo "$(cat WORKSPACE_ENDPOINT_FILE)")' >> $BASH_ENV
@@ -102,8 +104,9 @@ jobs:
       - name: Terminate S2MS cluster
         if: always()
         run: |
-            pip3 install singlestoredb
-            python3 ./.github/scripts/setup_s2ms_cluster.py terminate
+            source .venv/bin/activate
+            python -m pip install singlestoredb
+            python ./.github/scripts/setup_s2ms_cluster.py terminate
 
   build-windows:
     name: Build & Test (Windows)
@@ -142,7 +145,9 @@ jobs:
       #     Install-WindowsFeature Net-Framework-Core
       - name: Start S2MS cluster
         run: |
-            pip install singlestoredb
+            python3 -m venv .venv
+            source .venv\bin\activate
+            python -m pip install singlestoredb
             python .github\scripts\setup_s2ms_cluster.py start odbc_test
       - name: Build project
         run: .github\scripts\build-windows.ps1
@@ -155,6 +160,7 @@ jobs:
             cd ..
       - name: Terminate S2MS cluster
         run: |
-            pip install singlestoredb
+            source .venv\bin\activate
+            python -m pip install singlestoredb
             python .\.github\scripts\setup_s2ms_cluster.py terminate
         if: always()
