@@ -46,9 +46,9 @@ DEBIAN_FRONTEND=noninteractive sudo apt-get update
 DEBIAN_FRONTEND=noninteractive sudo apt-get install --allow-unauthenticated -y --force-yes -m unixodbc-dev odbcinst1debian2 libodbc1 
 
 ## Export password and port
-if [ -n "$MEMSQL_PASSWORD" ]
+if [ -n "$ROOT_PASSWORD" ]
 then
-  export TEST_PASSWORD=$MEMSQL_PASSWORD
+  export TEST_PASSWORD=$ROOT_PASSWORD
 fi
 
 if [ -n "$MEMSQL_PORT" ]
