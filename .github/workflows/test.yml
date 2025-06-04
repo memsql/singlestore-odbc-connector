@@ -111,21 +111,12 @@ jobs:
             arch_bits: 64
             test_dsn: ssodbc_test_a
             test_driver: 'SingleStore ODBC ANSI Driver'
-        include:
-          - build_type: RelWithDebInfo
-            driver_type: unicode
-            test_dsn: ssodbc_test_w
-            test_driver: 'SingleStore ODBC Unicode Driver'
-          - build_type: RelWithDebInfo
-            driver_type: ansi
-            test_dsn: ssodbc_test_a
-            test_driver: 'SingleStore ODBC ANSI Driver'
     env:
       BUILD_TYPE: ${{ matrix.build_type }}
       TEST_DSN: ${{ matrix.test_dsn }}
       TEST_DRIVER: ${{ matrix.test_driver }}
-      DRIVER_TYPE: << matrix.driver_type >>
-      ARCH_BITS: << matrix.arch_bits >>
+      DRIVER_TYPE: ${{ matrix.driver_type }}
+      ARCH_BITS: ${{ matrix.arch_bits }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -148,8 +139,8 @@ jobs:
         run: .github\scripts\run-tests-windows.ps1
       - name: Run browser auth tests
         run: |
-            cd ./<< parameters.build_type >>
-            ../test/<< parameters.build_type >>/odbc_browser_auth
+            cd ./${{ matrix.build_type }}
+            ../test/${{ matrix.build_type }}/odbc_browser_auth
             cd ..
       - name: Terminate S2MS cluster
         run: python .\.github\scripts\setup_s2ms_cluster.py terminate
