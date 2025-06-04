@@ -74,11 +74,11 @@ singlestore-wait-start
 if [[ "${EXISTS}" -eq 0 ]]; then
     echo
     echo "Creating aggregator nodes"
-    docker exec -it ${CONTAINER_NAME} memsqlctl create-node --yes --password ${MEMSQL_PASSWORD} --port 3308
+    docker exec -it ${CONTAINER_NAME} memsqlctl create-node --yes --password ${ROOT_PASSWORD} --port 3308
     docker exec -it ${CONTAINER_NAME} memsqlctl update-config --yes --all --key minimum_core_count --value 0
     docker exec -it ${CONTAINER_NAME} memsqlctl update-config --yes --all --key minimum_memory_mb --value 0
     docker exec -it ${CONTAINER_NAME} memsqlctl start-node --yes --all
-    docker exec -it ${CONTAINER_NAME} memsqlctl add-aggregator --yes --host 127.0.0.1 --password ${MEMSQL_PASSWORD} --port 3308
+    docker exec -it ${CONTAINER_NAME} memsqlctl add-aggregator --yes --host 127.0.0.1 --password ${ROOT_PASSWORD} --port 3308
 fi
 
 echo
@@ -94,35 +94,35 @@ docker exec -it ${CONTAINER_NAME} memsqlctl restart-node --yes --all
 singlestore-wait-start
 
 echo "Setting up root-ssl user"
-mysql -u root -h 127.0.0.1 -P $S2_MASTER_PORT -p"${MEMSQL_PASSWORD}" -e 'create user "root-ssl"@"%" require ssl'
-mysql -u root -h 127.0.0.1 -P $S2_AGG_PORT_1  -p"${MEMSQL_PASSWORD}" -e 'create user "root-ssl"@"%" require ssl'
+mysql -u root -h 127.0.0.1 -P $S2_MASTER_PORT -p"${ROOT_PASSWORD}" -e 'create user "root-ssl"@"%" require ssl'
+mysql -u root -h 127.0.0.1 -P $S2_AGG_PORT_1  -p"${ROOT_PASSWORD}" -e 'create user "root-ssl"@"%" require ssl'
 
-mysql -u root -h 127.0.0.1 -P $S2_MASTER_PORT -p"${MEMSQL_PASSWORD}" -e 'grant all privileges on *.* to "root-ssl"@"%" with grant option'
-mysql -u root -h 127.0.0.1 -P $S2_AGG_PORT_1  -p"${MEMSQL_PASSWORD}" -e 'grant all privileges on *.* to "root-ssl"@"%" with grant option'
+mysql -u root -h 127.0.0.1 -P $S2_MASTER_PORT -p"${ROOT_PASSWORD}" -e 'grant all privileges on *.* to "root-ssl"@"%" with grant option'
+mysql -u root -h 127.0.0.1 -P $S2_AGG_PORT_1  -p"${ROOT_PASSWORD}" -e 'grant all privileges on *.* to "root-ssl"@"%" with grant option'
 echo "Done!"
 
 echo
 echo "Ensuring child nodes are connected using container IP"
 CONTAINER_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${CONTAINER_NAME})
-CURRENT_LEAF_IP=$(mysql -u root -h 127.0.0.1 -P $S2_MASTER_PORT -p"${MEMSQL_PASSWORD}" --batch -N -e 'select host from information_schema.leaves')
+CURRENT_LEAF_IP=$(mysql -u root -h 127.0.0.1 -P $S2_MASTER_PORT -p"${ROOT_PASSWORD}" --batch -N -e 'select host from information_schema.leaves')
 if [[ ${CONTAINER_IP} != "${CURRENT_LEAF_IP}" ]]; then
     # remove leaf with current ip
-    mysql -u root -h 127.0.0.1 -P $S2_MASTER_PORT -p"${MEMSQL_PASSWORD}" --batch -N -e "remove leaf '${CURRENT_LEAF_IP}':3307"
+    mysql -u root -h 127.0.0.1 -P $S2_MASTER_PORT -p"${ROOT_PASSWORD}" --batch -N -e "remove leaf '${CURRENT_LEAF_IP}':3307"
     # add leaf with correct ip
-    mysql -u root -h 127.0.0.1 -P $S2_MASTER_PORT -p"${MEMSQL_PASSWORD}" --batch -N -e "add leaf root:'${MEMSQL_PASSWORD}'@'${CONTAINER_IP}':3307"
+    mysql -u root -h 127.0.0.1 -P $S2_MASTER_PORT -p"${ROOT_PASSWORD}" --batch -N -e "add leaf root:'${ROOT_PASSWORD}'@'${CONTAINER_IP}':3307"
 fi
-CURRENT_AGG_IP=$(mysql -u root -h 127.0.0.1 -P $S2_MASTER_PORT -p"${MEMSQL_PASSWORD}" --batch -N -e 'select host from information_schema.aggregators where master_aggregator=0')
+CURRENT_AGG_IP=$(mysql -u root -h 127.0.0.1 -P $S2_MASTER_PORT -p"${ROOT_PASSWORD}" --batch -N -e 'select host from information_schema.aggregators where master_aggregator=0')
 if [[ ${CONTAINER_IP} != "${CURRENT_AGG_IP}" ]]; then
     # remove aggregator with current ip
-    mysql -u root -h 127.0.0.1 -P $S2_MASTER_PORT -p"${MEMSQL_PASSWORD}" --batch -N -e "remove aggregator '${CURRENT_AGG_IP}':3308"
+    mysql -u root -h 127.0.0.1 -P $S2_MASTER_PORT -p"${ROOT_PASSWORD}" --batch -N -e "remove aggregator '${CURRENT_AGG_IP}':3308"
     # add aggregator with correct ip
-    mysql -u root -h 127.0.0.1 -P $S2_MASTER_PORT -p"${MEMSQL_PASSWORD}" --batch -N -e "add aggregator root:'${MEMSQL_PASSWORD}'@'${CONTAINER_IP}':3308"
+    mysql -u root -h 127.0.0.1 -P $S2_MASTER_PORT -p"${ROOT_PASSWORD}" --batch -N -e "add aggregator root:'${ROOT_PASSWORD}'@'${CONTAINER_IP}':3308"
 fi
 echo "Done!"
 
 echo "Preparing database and jwt user..."
-mysql -h 127.0.0.1 -u root -P $S2_MASTER_PORT -p"${MEMSQL_PASSWORD}" -e "CREATE DATABASE IF NOT EXISTS odbc_test"
-mysql -h 127.0.0.1 -u root -P $S2_MASTER_PORT -p"${MEMSQL_PASSWORD}" -e "SET GLOBAL data_conversion_compatibility_level = '6.0'"
-mysql -h 127.0.0.1 -u root -P $S2_MASTER_PORT -p"${MEMSQL_PASSWORD}" -e "CREATE USER 'test_jwt_user' IDENTIFIED WITH authentication_jwt"
-mysql -h 127.0.0.1 -u root -P $S2_MASTER_PORT -p"${MEMSQL_PASSWORD}" -e "GRANT ALL PRIVILEGES ON odbc_test.* TO 'test_jwt_user'@'%'"
+mysql -h 127.0.0.1 -u root -P $S2_MASTER_PORT -p"${ROOT_PASSWORD}" -e "CREATE DATABASE IF NOT EXISTS odbc_test"
+mysql -h 127.0.0.1 -u root -P $S2_MASTER_PORT -p"${ROOT_PASSWORD}" -e "SET GLOBAL data_conversion_compatibility_level = '6.0'"
+mysql -h 127.0.0.1 -u root -P $S2_MASTER_PORT -p"${ROOT_PASSWORD}" -e "CREATE USER 'test_jwt_user' IDENTIFIED WITH authentication_jwt"
+mysql -h 127.0.0.1 -u root -P $S2_MASTER_PORT -p"${ROOT_PASSWORD}" -e "GRANT ALL PRIVILEGES ON odbc_test.* TO 'test_jwt_user'@'%'"
 echo "Done!"

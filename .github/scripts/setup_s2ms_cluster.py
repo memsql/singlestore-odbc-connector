@@ -4,7 +4,7 @@ import singlestoredb as s2
 import uuid
 
 
-SQL_USER_PASSWORD = os.getenv("MEMSQL_PASSWORD")  # project UI env-var reference
+SQL_USER_PASSWORD = os.getenv("ROOT_PASSWORD")  # project UI env-var reference
 S2MS_API_KEY = os.getenv("S2MS_API_KEY")  # project UI env-var reference
 
 WORKSPACE_GROUP_BASE_NAME = "ODBC-connector-ci-tests"
