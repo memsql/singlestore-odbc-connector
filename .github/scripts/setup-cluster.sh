@@ -49,7 +49,7 @@ if [[ "${EXISTS}" -eq 0 ]]; then
         -v ${PWD}/test/ssl:/test-ssl \
         -v ${PWD}/test/jwt:/test-jwt \
         -e SINGLESTORE_LICENSE=${SINGLESTORE_LICENSE} \
-        -e ROOT_PASSWORD=${ROOT_PASSWORD} \
+        -e ROOT_PASSWORD="${ROOT_PASSWORD}" \
         -e SINGLESTORE_VERSION=${VERSION} \
         -p 5506:3306 -p 5507:3307 -p 5508:3308 \
         ${IMAGE_NAME}
