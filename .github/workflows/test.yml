@@ -33,7 +33,7 @@ jobs:
       TEST_DRIVER: ${{ matrix.test_driver }}
       S2MS_API_KEY: ${{ secrets.S2MS_API_KEY }}
       SINGLESTORE_LICENSE: ${{ secrets.SINGLESTORE_LICENSE }}
-      MEMSQL_PASSWORD: ${{ secrets.SINGLESTORE_PASSWORD }}
+      ROOT_PASSWORD: ${{ secrets.SINGLESTORE_PASSWORD }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
