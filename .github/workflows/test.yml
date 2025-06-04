@@ -99,7 +99,7 @@ jobs:
       matrix:
         build_type: [RelWithDebInfo]
         driver_type: [unicode, ansi]
-        arch_bits: [32, 64]
+        arch_bits: [64]
         include:
           - build_type: RelWithDebInfo
             driver_type: unicode
@@ -120,13 +120,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Download CMake
-        run: |
-          $ProgressPreference = "SilentlyContinue"
-          Invoke-WebRequest -URI https://github.com/Kitware/CMake/releases/download/v3.19.0/cmake-3.19.0-win64-x64.zip -OutFile $Env:HOMEPATH\cmake-3.19.0-win64-x64.zip
-          Expand-Archive $Env:HOMEPATH\cmake-3.19.0-win64-x64.zip -DestinationPath "$Env:ProgramFiles"
-          Rename-Item "$Env:ProgramFiles\cmake-3.19.0-win64-x64" -NewName CMake
-          Install-WindowsFeature Net-Framework-Core
+      # - name: Download CMake
+      #   run: |
+      #     $ProgressPreference = "SilentlyContinue"
+      #     Invoke-WebRequest -URI https://github.com/Kitware/CMake/releases/download/v3.19.0/cmake-3.19.0-win64-x64.zip -OutFile $Env:HOMEPATH\cmake-3.19.0-win64-x64.zip
+      #     Expand-Archive $Env:HOMEPATH\cmake-3.19.0-win64-x64.zip -DestinationPath "$Env:ProgramFiles"
+      #     Rename-Item "$Env:ProgramFiles\cmake-3.19.0-win64-x64" -NewName CMake
+      #     Install-WindowsFeature Net-Framework-Core
       - name: Download Chrome
         run: .github\scripts\install-chrome.ps1
       - name: Start S2MS cluster
