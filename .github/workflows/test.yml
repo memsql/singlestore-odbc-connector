@@ -40,7 +40,7 @@ jobs:
       - name: Set up dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake gcc g++ libglib2.0 libsecret-1-dev libkrb5-dev unixodbc unixodbc-dev odbcinst libodbc1
+          sudo apt-get install -y cmake gcc g++ libglib2.0 libsecret-1-dev libkrb5-dev unixodbc unixodbc-dev odbcinst libodbc2
       - name: Setup test cluster
         run: ./.github/scripts/setup-cluster.sh
       - name: Build project
