@@ -21,9 +21,9 @@
 set -eo pipefail
 
 ## Export password and port
-if [ -n "$ROOT_PASSWORD" ]
+if [ -n "$MEMSQL_PASSWORD" ]
 then
-  export TEST_PASSWORD=$ROOT_PASSWORD
+  export TEST_PASSWORD=$MEMSQL_PASSWORD
 fi
 
 if [ -n "$MEMSQL_PORT" ]

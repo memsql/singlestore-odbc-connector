@@ -7,7 +7,7 @@ on:
 env:
   S2MS_API_KEY: ${{ secrets.S2MS_API_KEY }}
   SINGLESTORE_LICENSE: ${{ secrets.SINGLESTORE_LICENSE }}
-  ROOT_PASSWORD: ${{ secrets.SINGLESTORE_PASSWORD }}
+  MEMSQL_PASSWORD: ${{ secrets.SINGLESTORE_PASSWORD }}
 
 jobs:
   build-macos:
