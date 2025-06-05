@@ -73,6 +73,8 @@ jobs:
       TEST_DSN: ${{ matrix.test_dsn }}
       DRIVER_NAME: ${{ matrix.driver_name }}
       MEMSQL_PORT: 3306
+      MEMSQL_USER: admin
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -137,6 +139,7 @@ jobs:
       DRIVER_TYPE: ${{ matrix.driver_type }}
       ARCH_BITS: ${{ matrix.arch_bits }}
       MEMSQL_PORT: 3306
+      MEMSQL_USER: admin
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
