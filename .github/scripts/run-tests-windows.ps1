@@ -32,7 +32,7 @@ Set-ItemProperty -Path $regPath -Name "DESCRIPTION" -Value "SingleStore ODBC tes
 Set-ItemProperty -Path $regPath -Name "DRIVER" -Value $ENV:TEST_DRIVER
 Set-ItemProperty -Path $regPath -Name "OPTIONS" -Value "0"
 Set-ItemProperty -Path $regPath -Name "PORT" -Value $ENV:MEMSQL_PORT
-Set-ItemProperty -Path $regPath -Name "PWD" -Value $ENV:ROOT_PASSWORD
+Set-ItemProperty -Path $regPath -Name "PWD" -Value $ENV:MEMSQL_PASSWORD
 Set-ItemProperty -Path $regPath -Name "SSLVERIFY" -Value "0"
 Set-ItemProperty -Path $regPath -Name "TCPIP" -Value "1"
 Set-ItemProperty -Path $regPath -Name "UID" -Value $ENV:MEMSQL_USER
@@ -41,7 +41,7 @@ Set-ItemProperty -Path "HKCU:\Software\ODBC\ODBC.INI\ODBC Data Sources" -Name $E
 
 $env:TEST_SCHEMA="odbc_test"
 $env:TEST_PORT=$ENV:MEMSQL_PORT
-$env:TEST_PASSWORD=$ENV:ROOT_PASSWORD
+$env:TEST_PASSWORD=$ENV:MEMSQL_PASSWORD
 $env:TEST_UID=$ENV:MEMSQL_USER
 $env:TEST_SERVER=$(cat WORKSPACE_ENDPOINT_FILE)
 
