@@ -23,6 +23,12 @@ set -eo pipefail
 # set variables for Connector/ODBC
 export OPENSSL_ROOT_DIR=(/usr/local/Cellar/openssl@1.1/1.1.1*)
 
+export TEST_SERVER=$(echo "$(cat WORKSPACE_ENDPOINT_FILE)")
+export TEST_DRIVER="${DRIVER_NAME}"
+export TEST_UID="${MEMSQL_USER}"
+export TEST_PORT="${MEMSQL_PORT}"
+export TEST_PASSWORD="${MEMSQL_PASSWORD}"
+
 cd libmariadb
 cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_SSL=OPENSSL -DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR} && cmake --build . --config DEBUG
 cd ..

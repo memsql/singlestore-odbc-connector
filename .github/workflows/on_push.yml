@@ -29,7 +29,8 @@ jobs:
     env:
       BUILD_TYPE: ${{ matrix.build_type }}
       TEST_DSN: ${{ matrix.test_dsn }}
-      DRIVER_NAME: ${{ matrix.driver_name }}
+      TEST_DRIVER: ${{ matrix.test_driver }}
+      DRIVER_TYPE: ${{ matrix.driver_type }}
       MEMSQL_PORT: 3306
       MEMSQL_USER: admin
 
