@@ -1,14 +1,10 @@
-name: Run tests
+name: Run tests for different platforms and database versions
 
 on:
-  push:
-    # Run on all branches TODO
-    branches: ["**"]
   pull_request:
-    # Run on all branches
     branches: ["main", "master"]
   schedule:
-    - cron: '0 0 * * 1' # Weekly build, as in CircleCI 'weekly' workflow
+    - cron: '0 0 * * 1'
 
 env:
   S2MS_API_KEY: ${{ secrets.S2MS_API_KEY }}
@@ -84,14 +80,6 @@ jobs:
           source .venv/bin/activate
           python -m pip install singlestoredb
           python ./.github/scripts/setup_s2ms_cluster.py start odbc_test
-      - name: Define Environment Variables
-        run: |
-            echo 'export TEST_SERVER=$(echo "$(cat WORKSPACE_ENDPOINT_FILE)")' >> "${BASH_ENV}"
-            echo 'export TEST_DRIVER=$DRIVER_NAME' >> "${BASH_ENV}"
-            echo 'export TEST_UID=$MEMSQL_USER' >> "${BASH_ENV}"
-            echo 'export TEST_PORT=$MEMSQL_PORT' >> "${BASH_ENV}"
-            echo 'export TEST_PASSWORD=$MEMSQL_PASSWORD' >> "${BASH_ENV}"
-            source "${BASH_ENV}"
       - name: Setup Environment on MacOS
         run: |
             rm -rf $(brew --caskroom)/adoptopenjdk11
@@ -143,13 +131,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      # - name: Download CMake
-      #   run: |
-      #     $ProgressPreference = "SilentlyContinue"
-      #     Invoke-WebRequest -URI https://github.com/Kitware/CMake/releases/download/v3.19.0/cmake-3.19.0-win64-x64.zip -OutFile $Env:HOMEPATH\cmake-3.19.0-win64-x64.zip
-      #     Expand-Archive $Env:HOMEPATH\cmake-3.19.0-win64-x64.zip -DestinationPath "$Env:ProgramFiles"
-      #     Rename-Item "$Env:ProgramFiles\cmake-3.19.0-win64-x64" -NewName CMake
-      #     Install-WindowsFeature Net-Framework-Core
       - name: Start S2MS cluster
         run: |
             python -m pip install singlestoredb

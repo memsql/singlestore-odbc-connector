@@ -1,0 +1,64 @@
+name: Run tests for a particular commit
+
+on:
+  push:
+    branches: ["**"]
+
+env:
+  S2MS_API_KEY: ${{ secrets.S2MS_API_KEY }}
+  SINGLESTORE_LICENSE: ${{ secrets.SINGLESTORE_LICENSE }}
+  ROOT_PASSWORD: ${{ secrets.SINGLESTORE_PASSWORD }}
+
+jobs:
+  build-macos:
+    name: Build & Test (macOS)
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        build_type: [RelWithDebInfo]
+        driver_type: [unicode, ansi]
+        include:
+          - build_type: RelWithDebInfo
+            driver_type: unicode
+            test_dsn: ssodbc_test_w
+            driver_name: 'SingleStore ODBC Unicode Driver'
+          - build_type: RelWithDebInfo
+            driver_type: ansi
+            test_dsn: ssodbc_test_a
+            driver_name: 'SingleStore ODBC ANSI Driver'
+    env:
+      BUILD_TYPE: ${{ matrix.build_type }}
+      TEST_DSN: ${{ matrix.test_dsn }}
+      DRIVER_NAME: ${{ matrix.driver_name }}
+      MEMSQL_PORT: 3306
+      MEMSQL_USER: admin
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Start S2MS cluster
+        run: |
+          python3 -m venv .venv
+          source .venv/bin/activate
+          python -m pip install singlestoredb
+          python ./.github/scripts/setup_s2ms_cluster.py start odbc_test
+      - name: Setup Environment on MacOS
+        run: |
+            rm -rf $(brew --caskroom)/adoptopenjdk11
+            brew update
+            brew install openssl curl mysql-client cmake bind
+            brew install libiodbc
+            brew link libiodbc --force
+            brew cleanup
+      - name: Build project
+        run: ./.github/scripts/build-osx.sh
+      - name: Run tests
+        run: ./.github/scripts/run-tests-osx.sh
+      - name: Run browser auth tests
+        run: ./test/odbc_browser_auth
+      - name: Terminate S2MS cluster
+        if: always()
+        run: |
+            source .venv/bin/activate
+            python -m pip install singlestoredb
+            python ./.github/scripts/setup_s2ms_cluster.py terminate
