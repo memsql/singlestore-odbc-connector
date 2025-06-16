@@ -21,7 +21,6 @@
 set -eo pipefail
 
 export TEST_SERVER=$(echo "$(cat WORKSPACE_ENDPOINT_FILE)")
-export TEST_DRIVER="${DRIVER_NAME}"
 export TEST_UID="${MEMSQL_USER}"
 export TEST_PORT="${MEMSQL_PORT}"
 export TEST_PASSWORD="${MEMSQL_PASSWORD}"

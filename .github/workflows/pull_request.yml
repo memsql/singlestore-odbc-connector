@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: ["main", "master"]
   schedule:
-    - cron: '0 0 * * 1'
+    - cron: '0 0 * * 1'  # Runs every Monday at midnight UTC
 
 env:
   S2MS_API_KEY: ${{ secrets.S2MS_API_KEY }}
@@ -59,11 +59,11 @@ jobs:
           - build_type: RelWithDebInfo
             driver_type: unicode
             test_dsn: ssodbc_test_w
-            driver_name: 'SingleStore ODBC Unicode Driver'
+            test_driver: 'SingleStore ODBC Unicode Driver'
           - build_type: RelWithDebInfo
             driver_type: ansi
             test_dsn: ssodbc_test_a
-            driver_name: 'SingleStore ODBC ANSI Driver'
+            test_driver: 'SingleStore ODBC ANSI Driver'
     env:
       BUILD_TYPE: ${{ matrix.build_type }}
       TEST_DSN: ${{ matrix.test_dsn }}
