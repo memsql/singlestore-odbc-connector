@@ -1,4 +1,4 @@
-name: Run tests for different platforms and database versions
+name: Run tests
 
 on:
   push:
@@ -7,7 +7,8 @@ on:
   pull_request:
     branches:
       - master
-  cron: '0 0 * * 1'  # Runs every Monday at midnight UTC
+  schedule:
+    - cron: '0 0 * * 0'  # Runs every Monday at midnight UTC
 
 env:
   S2MS_API_KEY: ${{ secrets.S2MS_API_KEY }}
