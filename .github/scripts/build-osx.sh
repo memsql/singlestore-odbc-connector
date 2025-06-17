@@ -20,6 +20,15 @@
 
 set -eo pipefail
 
+brew install llvm@16
+
+export LLVM_PATH=$(brew --prefix llvm@16)
+export PATH="$LLVM_PATH:$PATH"
+export CC="$LLVM_PATH/bin/clang"
+export CXX="$CC++"
+export LDFLAGS="$LDFLAGS -L$LLVM_PATH/lib"
+export CPPFLAGS="$CPPFLAGS -I$LLVM_PATH/include"
+
 # set variables for Connector/ODBC
 export OPENSSL_ROOT_DIR=(/usr/local/Cellar/openssl@1.1/1.1.1*)
 
@@ -29,8 +38,9 @@ export TEST_PORT="${MEMSQL_PORT}"
 export TEST_PASSWORD="${MEMSQL_PASSWORD}"
 
 cd libmariadb
-cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_SSL=OPENSSL -DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR} && cmake --build . --config DEBUG
+cmake -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_SSL=OPENSSL -DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR}
+cmake --build . 2>/dev/null
 cd ..
 
-cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL -DWITH_IODBC=ON -DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR} -DOPENSSL_LIBRARIES=${OPENSSL_ROOT_DIR}/lib -DIS_ON_S2MS=1 -Wno-pointer-sign
-cmake --build . --config ${BUILD_TYPE} 2>/dev/null
+cmake -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL -DWITH_IODBC=ON -DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR} -DOPENSSL_LIBRARIES=${OPENSSL_ROOT_DIR}/lib -DIS_ON_S2MS=1 -Wno-pointer-sign
+cmake --build . 2>/dev/null
