@@ -807,6 +807,10 @@ ODBC_TEST(my_information_schema)
   rc = SQLFreeStmt(Stmt1, SQL_CLOSE);
   CHECK_STMT_RC(Stmt1,rc);
 
+  OK_SIMPLE_STMT(Stmt, "DROP DATABASE istest__");
+  OK_SIMPLE_STMT(Stmt, "DROP DATABASE istest_1");
+  OK_SIMPLE_STMT(Stmt, "DROP DATABASE istest_2");
+
   CHECK_DBC_RC(Connection1, SQLDisconnect(Connection1));
   CHECK_DBC_RC(Connection1, SQLFreeHandle(SQL_HANDLE_DBC, Connection1));
 

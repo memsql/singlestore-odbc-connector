@@ -20,6 +20,7 @@
 
 set -eo pipefail
 
+# newer versions of macOS require older llvm because of zlib compatibility
 brew install llvm@16
 
 export LLVM_PATH=$(brew --prefix llvm@16)
