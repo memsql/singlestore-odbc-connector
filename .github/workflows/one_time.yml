@@ -1,9 +1,9 @@
-name: Run single job to debug it
+name: Run single job
 
 on:
   push:
     branches:
-      - **
+      - '**'
 
 env:
   S2MS_API_KEY: ${{ secrets.S2MS_API_KEY }}
