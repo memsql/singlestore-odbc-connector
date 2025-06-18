@@ -28,7 +28,7 @@ VERSION="${SINGLESTORE_VERSION:-$DEFAULT_SINGLESTORE_VERSION}"
 IMAGE_NAME="ghcr.io/singlestore-labs/singlestoredb-dev:latest"
 CONTAINER_NAME="singlestore-integration"
 
-S2_MASTER_PORT="${MEMSQL_PORT:-5506}"
+S2_MASTER_PORT=5506
 S2_AGG_PORT_1=5507
 S2_AGG_PORT_2=5508
 
@@ -51,14 +51,14 @@ if [[ "${EXISTS}" -eq 0 ]]; then
         -e SINGLESTORE_LICENSE=${SINGLESTORE_LICENSE} \
         -e ROOT_PASSWORD="${MEMSQL_PASSWORD}" \
         -e SINGLESTORE_VERSION=${VERSION} \
-        -p 5506:3306 -p 5507:3307 -p 5508:3308 \
+        -p ${S2_MASTER_PORT}:3306 -p ${S2_AGG_PORT_1}:3307 -p ${S2_AGG_PORT_2}:3308 \
         ${IMAGE_NAME}
 fi
 
 singlestore-wait-start() {
   echo -n "Waiting for SingleStore to start..."
   while true; do
-      if mysql -u root -h 127.0.0.1 -P 5506 -p"${MEMSQL_PASSWORD}" -e "select 1" >/dev/null 2>/dev/null; then
+      if mysql -u root -h 127.0.0.1 -P ${S2_MASTER_PORT} -p"${MEMSQL_PASSWORD}" -e "select 1" >/dev/null 2>/dev/null; then
           break
       fi
       echo -n "."
