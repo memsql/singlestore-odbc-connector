@@ -14,7 +14,6 @@ env:
   S2MS_API_KEY: ${{ secrets.S2MS_API_KEY }}
   SINGLESTORE_LICENSE: ${{ secrets.SINGLESTORE_LICENSE }}
   MEMSQL_PASSWORD: ${{ secrets.SINGLESTORE_PASSWORD }}
-  MEMSQL_JWT: ${{ secrets.MEMSQL_JWT }}
 
 jobs:
   build-linux:
@@ -39,6 +38,8 @@ jobs:
       TEST_DRIVER: ${{ matrix.test_driver }}
       MEMSQL_PORT: 5506
       MEMSQL_USER: root
+      MEMSQL_JWT: ${{ secrets.MEMSQL_JWT }}
+
     steps:
       - name: Remove unnecessary pre-installed toolchains for free disk spaces
         run: |
