@@ -36,5 +36,6 @@ echo "Running tests"
 cd test
 export ODBCINI="$PWD/odbc.ini"
 export ODBCSYSINI=$PWD
+echo $MEMSQL_JWT
 
 ctest -V
