@@ -38,8 +38,6 @@ jobs:
       TEST_DRIVER: ${{ matrix.test_driver }}
       MEMSQL_PORT: 5506
       MEMSQL_USER: root
-      MEMSQL_JWT: ${{ secrets.MEMSQL_JWT }}
-
     steps:
       - name: Remove unnecessary pre-installed toolchains for free disk spaces
         run: |
@@ -50,9 +48,7 @@ jobs:
           sudo rm -rf /usr/local/share/boost
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
           sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/hostedtoolcache/CodeQL
-          sudo rm -rf /opt/hostedtoolcache/Ruby
-          sudo rm -rf /opt/hostedtoolcache/Go
+          sudo rm -rf /opt/hostedtoolcache
           docker system prune -af || true
           sudo apt-get clean
           echo "=== AFTER ==="
