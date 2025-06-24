@@ -969,7 +969,7 @@ int using_dm(HDBC hdbc)
   Uses Stmt2 to run the KILL CONNECTION command
   Function assumes that Stmt1 and Stmt2 already have a connection to the DB
 */
-void killConnection(SQLHSTMT *Stmt1, SQLHSTMT *Stmt2 ) {
+int killConnection(SQLHSTMT *Stmt1, SQLHSTMT *Stmt2 ) {
   
   CHECK_SQLSTATE(Stmt1, "00000");
   CHECK_SQLSTATE(Stmt2, "00000");
@@ -986,6 +986,7 @@ void killConnection(SQLHSTMT *Stmt1, SQLHSTMT *Stmt2 ) {
   /* From another connection, kill the connection created above */
   sprintf(Kill, "KILL CONNECTION %d %d", connection_id, node_id);
   OK_SIMPLE_STMT(Stmt2, Kill);
+  return 0;
 }
 
 int mydrvconnect(SQLHENV *henv, SQLHDBC *hdbc, SQLHSTMT *hstmt, SQLCHAR *connIn)

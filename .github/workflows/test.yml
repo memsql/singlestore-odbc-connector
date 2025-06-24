@@ -1,0 +1,168 @@
+name: Run tests
+
+on:
+  pull_request:
+    branches:
+      - master
+  schedule:
+    - cron: '0 0 * * 0'  # Runs every Monday at midnight UTC
+
+env:
+  S2MS_API_KEY: ${{ secrets.S2MS_API_KEY }}
+  SINGLESTORE_LICENSE: ${{ secrets.SINGLESTORE_LICENSE }}
+  MEMSQL_PASSWORD: ${{ secrets.SINGLESTORE_PASSWORD }}
+
+jobs:
+  build-linux:
+    name: Build & Test (Linux)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build_type: [RelWithDebInfo]
+        driver_type: [unicode, ansi]
+        include:
+          - build_type: RelWithDebInfo
+            driver_type: unicode
+            test_dsn: ssodbc_test_w
+            test_driver: 'SingleStore ODBC Unicode Driver'
+          - build_type: RelWithDebInfo
+            driver_type: ansi
+            test_dsn: ssodbc_test_a
+            test_driver: 'SingleStore ODBC ANSI Driver'
+    env:
+      BUILD_TYPE: ${{ matrix.build_type }}
+      TEST_DSN: ${{ matrix.test_dsn }}
+      TEST_DRIVER: ${{ matrix.test_driver }}
+      MEMSQL_PORT: 5506
+      MEMSQL_USER: root
+    steps:
+      - name: Remove unnecessary pre-installed toolchains for free disk spaces
+        run: |
+          echo "=== BEFORE ==="
+          df -h
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/hostedtoolcache
+          docker system prune -af || true
+          sudo apt-get clean
+          echo "=== AFTER ==="
+          df -h
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake gcc g++ libglib2.0 libsecret-1-dev libkrb5-dev unixodbc unixodbc-dev odbcinst libodbc2
+      - name: Setup test cluster
+        run: ./.github/scripts/setup-cluster.sh
+      - name: Build project
+        run:  ./.github/scripts/build-ubuntu.sh
+      - name: Run tests
+        run: ./.github/scripts/run-tests-linux.sh
+      # - name: Run browser auth tests  TODO: PLAT-7389 enable these tests
+      #   run: ./test/odbc_browser_auth
+
+  build-macos:
+    name: Build & Test (macOS)
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        build_type: [RelWithDebInfo]
+        driver_type: [unicode, ansi]
+        include:
+          - build_type: RelWithDebInfo
+            driver_type: unicode
+            test_dsn: ssodbc_test_w
+            test_driver: 'SingleStore ODBC Unicode Driver'
+          - build_type: RelWithDebInfo
+            driver_type: ansi
+            test_dsn: ssodbc_test_a
+            test_driver: 'SingleStore ODBC ANSI Driver'
+    env:
+      BUILD_TYPE: ${{ matrix.build_type }}
+      TEST_DSN: ${{ matrix.test_dsn }}
+      TEST_DRIVER: ${{ matrix.test_driver }}
+      DRIVER_TYPE: ${{ matrix.driver_type }}
+      MEMSQL_PORT: 3306
+      MEMSQL_USER: admin
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Start S2MS cluster
+        run: |
+          python3 -m venv .venv
+          source .venv/bin/activate
+          python -m pip install singlestoredb
+          python ./.github/scripts/setup_s2ms_cluster.py start odbc_test
+      - name: Setup Environment on MacOS
+        run: |
+            rm -rf $(brew --caskroom)/adoptopenjdk11
+            brew update
+            brew install openssl curl mysql-client cmake bind
+            brew install libiodbc
+            brew link libiodbc --force
+            brew cleanup
+      - name: Build project
+        run: ./.github/scripts/build-osx.sh
+      - name: Run tests
+        run: ./.github/scripts/run-tests-osx.sh
+      # - name: Run browser auth tests  TODO: PLAT-7389 enable these tests
+      #   run: ./test/odbc_browser_auth
+      - name: Terminate S2MS cluster
+        if: always()
+        run: |
+            source .venv/bin/activate
+            python -m pip install singlestoredb
+            python ./.github/scripts/setup_s2ms_cluster.py terminate
+
+  build-windows:
+    name: Build & Test (Windows)
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        build_type: [RelWithDebInfo]
+        driver_type: [unicode, ansi]
+        arch_bits: [64]
+        include:
+          - build_type: RelWithDebInfo
+            driver_type: unicode
+            arch_bits: 64
+            test_dsn: ssodbc_test_w
+            test_driver: 'SingleStore ODBC Unicode Driver'
+          - build_type: RelWithDebInfo
+            driver_type: ansi
+            arch_bits: 64
+            test_dsn: ssodbc_test_a
+            test_driver: 'SingleStore ODBC ANSI Driver'
+    env:
+      BUILD_TYPE: ${{ matrix.build_type }}
+      TEST_DSN: ${{ matrix.test_dsn }}
+      TEST_DRIVER: ${{ matrix.test_driver }}
+      DRIVER_TYPE: ${{ matrix.driver_type }}
+      ARCH_BITS: ${{ matrix.arch_bits }}
+      MEMSQL_PORT: 3306
+      MEMSQL_USER: admin
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Start S2MS cluster
+        run: |
+            python -m pip install singlestoredb
+            python .github\scripts\setup_s2ms_cluster.py start odbc_test
+      - name: Build project
+        run: .github\scripts\build-windows.ps1
+      - name: Run tests
+        run: .github\scripts\run-tests-windows.ps1
+      # - name: Run browser auth tests TODO: PLAT-7389 enable these tests
+      #   run: |
+      #       cd ./${{ matrix.build_type }}
+      #       ../test/${{ matrix.build_type }}/odbc_browser_auth
+      - name: Terminate S2MS cluster
+        run: |
+            python -m pip install singlestoredb
+            python .\.github\scripts\setup_s2ms_cluster.py terminate
+        if: always()

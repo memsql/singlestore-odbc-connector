@@ -20,26 +20,28 @@
 
 set -eo pipefail
 
-# set variables for odbc.ini and odbcinst.ini
-export ODBCINI="$PWD/test/odbc.ini"
-cat ${ODBCINI}
-export ODBCINSTINI="$PWD/test/odbcinst.ini"
-cat ${ODBCINSTINI}
+# newer versions of macOS require older llvm because of zlib compatibility
+brew install llvm@16
 
-echo "Modifying /etc/hosts and ~/my.cnf to enable connect tests"
-echo "${TEST_SERVER} test-memsql-server" | sudo tee -a /etc/hosts
-echo "${TEST_SERVER} test-memsql-cluster" | sudo tee -a /etc/hosts
-echo "${TEST_SERVER} singlestore.test.com" | sudo tee -a /etc/hosts
-echo "[mysqld]
-plugin-load-add=authentication_pam.so
+export LLVM_PATH=$(brew --prefix llvm@16)
+export PATH="$LLVM_PATH:$PATH"
+export CC="$LLVM_PATH/bin/clang"
+export CXX="$CC++"
+export LDFLAGS="$LDFLAGS -L$LLVM_PATH/lib"
+export CPPFLAGS="$CPPFLAGS -I$LLVM_PATH/include"
 
-[client]
-protocol = TCP
+# set variables for Connector/ODBC
+export OPENSSL_ROOT_DIR=(/usr/local/Cellar/openssl@1.1/1.1.1*)
 
-[odbc]
-database = odbc_test_mycnf
-" | sudo tee -a ~/.my.cnf
+export TEST_SERVER=$(echo "$(cat WORKSPACE_ENDPOINT_FILE)")
+export TEST_UID="${MEMSQL_USER}"
+export TEST_PORT="${MEMSQL_PORT}"
+export TEST_PASSWORD="${MEMSQL_PASSWORD}"
 
-echo "Running tests"
-cd test
-ctest -V
+cd libmariadb
+cmake -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_SSL=OPENSSL -DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR}
+cmake --build . 2>/dev/null
+cd ..
+
+cmake -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL -DWITH_IODBC=ON -DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR} -DOPENSSL_LIBRARIES=${OPENSSL_ROOT_DIR}/lib -DIS_ON_S2MS=1 -Wno-pointer-sign
+cmake --build . 2>/dev/null

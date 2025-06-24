@@ -20,10 +20,21 @@
 
 set -eo pipefail
 
+export TEST_SERVER=$(echo "$(cat WORKSPACE_ENDPOINT_FILE)")
+export TEST_UID="${MEMSQL_USER}"
+export TEST_PORT="${MEMSQL_PORT}"
+export TEST_PASSWORD="${MEMSQL_PASSWORD}"
+
+# set variables for odbc.ini and odbcinst.ini
+export ODBCINI="$PWD/test/odbc.ini"
+cat ${ODBCINI}
+export ODBCINSTINI="$PWD/test/odbcinst.ini"
+cat ${ODBCINSTINI}
+
 echo "Modifying /etc/hosts and ~/my.cnf to enable connect tests"
-echo 127.0.0.1 singlestore.test.com | sudo tee -a /etc/hosts
-echo 127.0.0.1 test-memsql-server | sudo tee -a /etc/hosts
-echo 127.0.0.1 test-memsql-cluster | sudo tee -a /etc/hosts
+echo "${TEST_SERVER} test-memsql-server" | sudo tee -a /etc/hosts
+echo "${TEST_SERVER} test-memsql-cluster" | sudo tee -a /etc/hosts
+echo "${TEST_SERVER} singlestore.test.com" | sudo tee -a /etc/hosts
 echo "[mysqld]
 plugin-load-add=authentication_pam.so
 
@@ -32,37 +43,8 @@ protocol = TCP
 
 [odbc]
 database = odbc_test_mycnf
-" | sudo tee ~/.my.cnf
+" | sudo tee -a ~/.my.cnf
 
-export PROJ_PATH=`pwd`
-mkdir -p tmp
-.circleci/gen-ssl.sh singlestore.test.com tmp
-export SSLCERT=$PROJ_PATH/tmp
-
-# list ssl certificates
-ls -lrt ${SSLCERT}
-
-DEBIAN_FRONTEND=noninteractive sudo apt-get update
-DEBIAN_FRONTEND=noninteractive sudo apt-get install --allow-unauthenticated -y --force-yes -m unixodbc-dev odbcinst1debian2 libodbc1 
-
-## Export password and port
-if [ -n "$MEMSQL_PASSWORD" ]
-then
-  export TEST_PASSWORD=$MEMSQL_PASSWORD
-fi
-
-if [ -n "$MEMSQL_PORT" ]
-then
-  export TEST_PORT=$MEMSQL_PORT
-fi
-
-if [ "$WITH_SANITIZER" = "true" ]
-then
-  SANITIZER_OPTION="ON"
-else
-  SANITIZER_OPTION="OFF"
-fi
-
-## build odbc connector
-cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL -DWITH_SANITIZER=$SANITIZER_OPTION
-cmake --build . --config ${BUILD_TYPE}
+echo "Running tests"
+cd test
+ctest -V

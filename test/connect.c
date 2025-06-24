@@ -1947,6 +1947,7 @@ ODBC_TEST(driver_connect_jwt) {
   SQLSMALLINT conn_out_len;
   sprintf((char*)conn, "DRIVER=%s;UID=%s;JWT=%s;SERVER=%s;PORT=%u;DB=%s;",
           my_drivername, jwt_user, jwt_password, my_servername, my_port, my_schema);
+  fprintf(stdout, "Connecting with JWT: %s\n", conn);
   CHECK_DBC_RC(hdbc, SQLDriverConnect(hdbc, NULL, conn, SQL_NTS,
                                       conn_out, 2048 * sizeof(SQLCHAR), &conn_out_len,
                                       SQL_DRIVER_NOPROMPT));

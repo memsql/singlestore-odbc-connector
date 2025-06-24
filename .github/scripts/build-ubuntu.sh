@@ -20,12 +20,46 @@
 
 set -eo pipefail
 
-# set variables for Connector/ODBC
-export OPENSSL_ROOT_DIR=(/usr/local/Cellar/openssl@1.1/1.1.1*)
+echo "Modifying /etc/hosts and ~/my.cnf to enable connect tests"
+echo 127.0.0.1 singlestore.test.com | sudo tee -a /etc/hosts
+echo 127.0.0.1 test-memsql-server | sudo tee -a /etc/hosts
+echo 127.0.0.1 test-memsql-cluster | sudo tee -a /etc/hosts
+echo "[mysqld]
+plugin-load-add=authentication_pam.so
 
-cd libmariadb
-cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_SSL=OPENSSL -DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR} && cmake --build . --config DEBUG
-cd ..
+[client]
+protocol = TCP
 
-cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL -DWITH_IODBC=ON -DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR} -DOPENSSL_LIBRARIES=${OPENSSL_ROOT_DIR}/lib -DIS_ON_S2MS=1 -Wno-pointer-sign
-cmake --build . --config ${BUILD_TYPE} 2>/dev/null
+[odbc]
+database = odbc_test_mycnf
+" | sudo tee ~/.my.cnf
+
+export PROJ_PATH=`pwd`
+mkdir -p tmp
+.github/scripts/gen-ssl.sh singlestore.test.com tmp
+export SSLCERT=$PROJ_PATH/tmp
+
+# list ssl certificates
+ls -lrt ${SSLCERT}
+
+## Export password and port
+if [ -n "$MEMSQL_PASSWORD" ]
+then
+  export TEST_PASSWORD=$MEMSQL_PASSWORD
+fi
+
+if [ -n "$MEMSQL_PORT" ]
+then
+  export TEST_PORT=$MEMSQL_PORT
+fi
+
+if [ "$WITH_SANITIZER" = "true" ]
+then
+  SANITIZER_OPTION="ON"
+else
+  SANITIZER_OPTION="OFF"
+fi
+
+## build odbc connector
+cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL -DWITH_SANITIZER=$SANITIZER_OPTION
+cmake --build . --config ${BUILD_TYPE}

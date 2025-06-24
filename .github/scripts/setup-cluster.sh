@@ -23,10 +23,12 @@ set -eu
 # this script must be run from the top-level of the repo
 cd "$(git rev-parse --show-toplevel)"
 
-DEFAULT_IMAGE_NAME="singlestore/cluster-in-a-box:alma-8.1.27-a1e489fcb4-4.0.15-1.17.5"
-IMAGE_NAME="${MEMSQL_IMAGE:-$DEFAULT_IMAGE_NAME}"
-CONTAINER_NAME="memsql-integration"
-S2_MASTER_PORT="${MEMSQL_PORT:-5506}"
+DEFAULT_SINGLESTORE_VERSION="8.9"
+VERSION="${SINGLESTORE_VERSION:-$DEFAULT_SINGLESTORE_VERSION}"
+IMAGE_NAME="ghcr.io/singlestore-labs/singlestoredb-dev:latest"
+CONTAINER_NAME="singlestore-integration"
+
+S2_MASTER_PORT=5506
 S2_AGG_PORT_1=5507
 S2_AGG_PORT_2=5508
 
@@ -42,22 +44,21 @@ if [[ "${EXISTS}" -eq 1 ]]; then
 fi
 
 if [[ "${EXISTS}" -eq 0 ]]; then
-    docker run -i --init \
+    docker run -d \
         --name ${CONTAINER_NAME} \
         -v ${PWD}/test/ssl:/test-ssl \
         -v ${PWD}/test/jwt:/test-jwt \
-        -e LICENSE_KEY=${LICENSE_KEY} \
-        -e ROOT_PASSWORD=${MEMSQL_PASSWORD} \
-        -p $S2_MASTER_PORT:3306 -p $S2_AGG_PORT_1:3307 -p $S2_AGG_PORT_2:3308 \
+        -e SINGLESTORE_LICENSE=${SINGLESTORE_LICENSE} \
+        -e ROOT_PASSWORD="${MEMSQL_PASSWORD}" \
+        -e SINGLESTORE_VERSION=${VERSION} \
+        -p ${S2_MASTER_PORT}:3306 -p ${S2_AGG_PORT_1}:3307 -p ${S2_AGG_PORT_2}:3308 \
         ${IMAGE_NAME}
 fi
 
-docker start ${CONTAINER_NAME}
-
-memsql-wait-start() {
-  echo -n "Waiting for MemSQL to start..."
+singlestore-wait-start() {
+  echo -n "Waiting for SingleStore to start..."
   while true; do
-      if mysql -u root -h 127.0.0.1 -P $S2_MASTER_PORT -p"${MEMSQL_PASSWORD}" -e "select 1" >/dev/null 2>/dev/null; then
+      if mysql -u root -h 127.0.0.1 -P ${S2_MASTER_PORT} -p"${MEMSQL_PASSWORD}" -e "select 1" >/dev/null 2>/dev/null; then
           break
       fi
       echo -n "."
@@ -66,28 +67,30 @@ memsql-wait-start() {
   echo ". Success!"
 }
 
-memsql-wait-start
+singlestore-wait-start
 
 if [[ "${EXISTS}" -eq 0 ]]; then
     echo
     echo "Creating aggregator nodes"
-    docker exec -it ${CONTAINER_NAME} memsqlctl create-node --yes --password ${MEMSQL_PASSWORD} --port 3308
-    docker exec -it ${CONTAINER_NAME} memsqlctl update-config --yes --all --key minimum_core_count --value 0
-    docker exec -it ${CONTAINER_NAME} memsqlctl update-config --yes --all --key minimum_memory_mb --value 0
-    docker exec -it ${CONTAINER_NAME} memsqlctl start-node --yes --all
-    docker exec -it ${CONTAINER_NAME} memsqlctl add-aggregator --yes --host 127.0.0.1 --password ${MEMSQL_PASSWORD} --port 3308
+    docker exec ${CONTAINER_NAME} memsqlctl create-node --yes --password ${MEMSQL_PASSWORD} --port 3308
+    docker exec ${CONTAINER_NAME} memsqlctl update-config --yes --all --key minimum_core_count --value 0
+    docker exec ${CONTAINER_NAME} memsqlctl update-config --yes --all --key minimum_memory_mb --value 0
+    docker exec ${CONTAINER_NAME} memsqlctl start-node --yes --all
+    docker exec ${CONTAINER_NAME} memsqlctl add-aggregator --yes --host 127.0.0.1 --password ${MEMSQL_PASSWORD} --port 3308
 fi
 
 echo
 echo "Setting up JWT"
-docker exec -it ${CONTAINER_NAME} memsqlctl update-config --yes --all --key jwt_auth_config_file --value /test-jwt/jwt_auth_config.json
+docker exec ${CONTAINER_NAME} memsqlctl update-config --yes --all --key jwt_auth_config_file --value /test-jwt/jwt_auth_config.json
+
 echo "Setting up SSL"
-docker exec -it ${CONTAINER_NAME} memsqlctl update-config --yes --all --key ssl_ca --value /test-ssl/test-ca-cert.pem
-docker exec -it ${CONTAINER_NAME} memsqlctl update-config --yes --all --key ssl_cert --value /test-ssl/test-memsql-cert.pem
-docker exec -it ${CONTAINER_NAME} memsqlctl update-config --yes --all --key ssl_key --value /test-ssl/test-memsql-key.pem
+docker exec ${CONTAINER_NAME} memsqlctl update-config --yes --all --key ssl_ca --value /test-ssl/test-ca-cert.pem
+docker exec ${CONTAINER_NAME} memsqlctl update-config --yes --all --key ssl_cert --value /test-ssl/test-memsql-cert.pem
+docker exec ${CONTAINER_NAME} memsqlctl update-config --yes --all --key ssl_key --value /test-ssl/test-memsql-key.pem
+
 echo "Restarting cluster"
-docker exec -it ${CONTAINER_NAME} memsqlctl restart-node --yes --all
-memsql-wait-start
+docker restart ${CONTAINER_NAME}
+singlestore-wait-start
 
 echo "Setting up root-ssl user"
 mysql -u root -h 127.0.0.1 -P $S2_MASTER_PORT -p"${MEMSQL_PASSWORD}" -e 'create user "root-ssl"@"%" require ssl'
