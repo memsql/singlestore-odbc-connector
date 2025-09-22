@@ -2,7 +2,6 @@ name: Build & Test (MacOS)
 runs-on: macos-latest
 
 runs:
-  using: "composite"
   steps:
     - name: Checkout code
       uses: actions/checkout@v4

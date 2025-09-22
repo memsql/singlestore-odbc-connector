@@ -2,7 +2,6 @@ name: Build & Test (Windows)
 runs-on: windows-latest
 
 runs:
-  using: "composite"
   steps:
     - name: Checkout code
       uses: actions/checkout@v4
