@@ -12,7 +12,7 @@ env:
   S2MS_API_KEY: ${{ secrets.S2MS_API_KEY }}
   SINGLESTORE_LICENSE: ${{ secrets.SINGLESTORE_LICENSE }}
   MEMSQL_PASSWORD: ${{ secrets.SINGLESTORE_PASSWORD }}
-  DRIVER_VERSION: 1.3.0
+  DRIVER_VERSION: 1.2.0
 
 jobs:
   build-test-linux:
@@ -45,18 +45,18 @@ jobs:
         uses: ./.github/workflows/actions/build_test_linux
       - name: Create archive
         run: |
-            mkdir singlestore-connector-odbc-{{ env.DRIVER_VERSION }}-{{ matrix.os_name }}-amd64
-            mkdir singlestore-connector-odbc-{{ env.DRIVER_VERSION }}-{{ matrix.os_name }}-amd64/plugins
-            cp linuxinstall/README.md singlestore-connector-odbc-{{ env.DRIVER_VERSION }}-{{ matrix.os_name }}-amd64
-            cp libssodbca.so singlestore-connector-odbc-{{ env.DRIVER_VERSION }}-{{ matrix.os_name }}-amd64
-            cp libssodbcw.so singlestore-connector-odbc-{{ env.DRIVER_VERSION }}-{{ matrix.os_name }}-amd64
-            cp libmariadb/auth_gssapi_client.so singlestore-connector-odbc-{{ env.DRIVER_VERSION }}-{{ matrix.os_name }}-amd64/plugins
-            tar -zcvf singlestore-connector-odbc-{{ env.DRIVER_VERSION }}-{{ matrix.os_name }}-amd64.tar.gz singlestore-connector-odbc-{{ env.DRIVER_VERSION }}-{{ matrix.os_name }}-amd64
+            mkdir singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64
+            mkdir singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64/plugins
+            cp linuxinstall/README.md singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64
+            cp libssodbca.so singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64
+            cp libssodbcw.so singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64
+            cp libmariadb/auth_gssapi_client.so singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64/plugins
+            tar -zcvf singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64.tar.gz singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: singlestore-odbc-${{ matrix.driver_type }}-linux
-          path: singlestore-connector-odbc-{{ env.DRIVER_VERSION }}-{{ matrix.os_name }}-amd64.tar.gz
+          path: singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64.tar.gz
           retention-days: 30
 
   build-macos:
@@ -64,8 +64,8 @@ jobs:
     strategy:
       matrix:
         build_type: [Release]
-        driver_type: [unicode, ansi]
-        arch: [intel, arm64]
+        driver_type: [unicode]
+        arch: [arm64]
         include:
           - build_type: Release
             driver_type: unicode
@@ -105,8 +105,8 @@ jobs:
     strategy:
       matrix:
         build_type: [Release]
-        driver_type: [unicode, ansi]
-        arch_bits: [64, 32]
+        driver_type: [unicode]
+        arch_bits: [64]
         include:
           - build_type: Release
             driver_type: unicode
@@ -115,7 +115,7 @@ jobs:
             test_driver: 'SingleStore ODBC Unicode Driver'
           - build_type: Release
             driver_type: ansi
-            arch_bits: 64
+            arch_bits: 32
             test_dsn: ssodbc_test_a
             test_driver: 'SingleStore ODBC ANSI Driver'
     env:
