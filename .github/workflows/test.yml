@@ -13,7 +13,7 @@ env:
   MEMSQL_PASSWORD: ${{ secrets.SINGLESTORE_PASSWORD }}
 
 jobs:
-  build-linux:
+  build-test-linux:
     name: Build & Test (Linux)
     runs-on: ubuntu-latest
     strategy:
@@ -36,34 +36,8 @@ jobs:
       MEMSQL_PORT: 5506
       MEMSQL_USER: root
     steps:
-      - name: Remove unnecessary pre-installed toolchains for free disk spaces
-        run: |
-          echo "=== BEFORE ==="
-          df -h
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/share/boost
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/hostedtoolcache
-          docker system prune -af || true
-          sudo apt-get clean
-          echo "=== AFTER ==="
-          df -h
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set up dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake gcc g++ libglib2.0 libsecret-1-dev libkrb5-dev unixodbc unixodbc-dev odbcinst libodbc2
-      - name: Setup test cluster
-        run: ./.github/scripts/setup-cluster.sh
-      - name: Build project
-        run:  ./.github/scripts/build-ubuntu.sh
-      - name: Run tests
-        run: ./.github/scripts/run-tests-linux.sh
-      # - name: Run browser auth tests  TODO: PLAT-7389 enable these tests
-      #   run: ./test/odbc_browser_auth
+      - name: Run build and test on Linux (Ubuntu)
+        uses: ./.github/workflows/actions/build_test_linux
 
   build-macos:
     name: Build & Test (macOS)
@@ -119,7 +93,7 @@ jobs:
             python -m pip install singlestoredb
             python ./.github/scripts/setup_s2ms_cluster.py terminate
 
-  build-windows:
+  build-test-windows:
     name: Build & Test (Windows)
     runs-on: windows-latest
     strategy:
