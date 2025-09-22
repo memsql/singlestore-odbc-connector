@@ -1,0 +1,32 @@
+name: Build & Test (MacOS)
+runs-on: macos-latest
+
+steps:
+  - name: Checkout code
+    uses: actions/checkout@v4
+  - name: Start S2MS cluster
+    run: |
+      python3 -m venv .venv
+      source .venv/bin/activate
+      python -m pip install singlestoredb
+      python ./.github/scripts/setup_s2ms_cluster.py start odbc_test
+  - name: Setup Environment on MacOS
+    run: |
+        rm -rf $(brew --caskroom)/adoptopenjdk11
+        brew update
+        brew install openssl curl mysql-client cmake bind
+        brew install libiodbc
+        brew link libiodbc --force
+        brew cleanup
+  - name: Build project
+    run: ./.github/scripts/build-osx.sh
+  - name: Run tests
+    run: ./.github/scripts/run-tests-osx.sh
+  # - name: Run browser auth tests  TODO: PLAT-7389 enable these tests
+  #   run: ./test/odbc_browser_auth
+  - name: Terminate S2MS cluster
+    if: always()
+    run: |
+        source .venv/bin/activate
+        python -m pip install singlestoredb
+        python ./.github/scripts/setup_s2ms_cluster.py terminate

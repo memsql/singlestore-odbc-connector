@@ -1,4 +1,5 @@
 name: Build & Test (Linux)
+runs-on: ubuntu-latest
 
 steps:
   - name: Remove unnecessary pre-installed toolchains for free disk spaces
