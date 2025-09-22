@@ -4,6 +4,9 @@ on:
   push:
     tags:
       - "v*"
+  pull_request:
+    branches:
+      - master
 
 env:
   S2MS_API_KEY: ${{ secrets.S2MS_API_KEY }}
