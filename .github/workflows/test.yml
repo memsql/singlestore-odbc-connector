@@ -5,7 +5,7 @@ on:
     branches:
       - master
   schedule:
-    - cron: '12 34 * * 0'  # Runs every Sunday at 12:34 AM UTC
+    - cron: '12 10 * * 0'  # Runs every Sunday at 10:12 UTC
 
 env:
   S2MS_API_KEY: ${{ secrets.S2MS_API_KEY }}
