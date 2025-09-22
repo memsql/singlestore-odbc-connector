@@ -7,7 +7,7 @@ runs:
       shell: pwsh
       run: |
         python -m pip install singlestoredb
-        python ./.github/scripts/setup_s2ms_cluster.py start odbc_test
+        python .github\scripts\setup_s2ms_cluster.py start odbc_test
     - name: Build project
       shell: pwsh
       run: .github\scripts\build-windows.ps1
@@ -23,4 +23,4 @@ runs:
       if: always()
       run: |
           python -m pip install singlestoredb
-          python ./.github/scripts/setup_s2ms_cluster.py terminate
+          python .github\scripts\setup_s2ms_cluster.py terminate
