@@ -34,4 +34,4 @@ runs:
       run: |
           source .venv/bin/activate
           python -m pip install singlestoredb
-          python ./.github/scripts/setup_s2ms_cluster.py terminate
+          python ./.github/scripts/setup_s2ms_cluster.py terminate || true

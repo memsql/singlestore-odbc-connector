@@ -19,6 +19,7 @@ jobs:
     name: Build & Test (Linux)
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         build_type: [Release]
         driver_type: [unicode, ansi]
@@ -62,6 +63,7 @@ jobs:
   build-macos:
     name: Build & Test (macOS)
     strategy:
+      fail-fast: false
       matrix:
         build_type: [Release]
         driver_type: [unicode]
@@ -103,6 +105,7 @@ jobs:
     name: Build & Test (Windows)
     runs-on: windows-latest
     strategy:
+      fail-fast: false
       matrix:
         build_type: [Release]
         driver_type: [unicode]
