@@ -6,8 +6,6 @@ runs:
     - name: Start S2MS cluster
       shell: pwsh
       run: |
-        python3 -m venv .venv
-        ./.venv/Scripts/activate.ps1
         python -m pip install singlestoredb
         python ./.github/scripts/setup_s2ms_cluster.py start odbc_test
     - name: Build project
@@ -24,6 +22,5 @@ runs:
       shell: pwsh
       if: always()
       run: |
-          ./.venv/Scripts/activate.ps1
           python -m pip install singlestoredb
-          python ./.github/scripts/setup_s2ms_cluster.py terminate || true
+          python ./.github/scripts/setup_s2ms_cluster.py terminate

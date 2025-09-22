@@ -18,6 +18,7 @@ runs:
           brew update
           brew install openssl curl mysql-client cmake bind
           brew install libiodbc
+          brew unlink unixodbc
           brew link libiodbc --force
           brew cleanup
     - name: Build project
