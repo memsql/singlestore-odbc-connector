@@ -1,32 +1,34 @@
 name: Build & Test (Linux)
 runs-on: ubuntu-latest
 
-steps:
-  - name: Remove unnecessary pre-installed toolchains for free disk spaces
-    run: |
-      echo "=== BEFORE ==="
-      df -h
-      sudo rm -rf /usr/share/dotnet
-      sudo rm -rf /opt/ghc
-      sudo rm -rf /usr/local/share/boost
-      sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-      sudo rm -rf /usr/local/lib/android
-      sudo rm -rf /opt/hostedtoolcache
-      docker system prune -af || true
-      sudo apt-get clean
-      echo "=== AFTER ==="
-      df -h
-  - name: Checkout code
-    uses: actions/checkout@v4
-  - name: Set up dependencies
-    run: |
-      sudo apt-get update
-      sudo apt-get install -y cmake gcc g++ libglib2.0 libsecret-1-dev libkrb5-dev unixodbc unixodbc-dev odbcinst libodbc2
-  - name: Setup test cluster
-    run: ./.github/scripts/setup-cluster.sh
-  - name: Build project
-    run:  ./.github/scripts/build-ubuntu.sh
-  - name: Run tests
-    run: ./.github/scripts/run-tests-linux.sh
-  # - name: Run browser auth tests  TODO: PLAT-7389 enable these tests
-  #   run: ./test/odbc_browser_auth
+runs:
+  using: "composite"
+  steps:
+    - name: Remove unnecessary pre-installed toolchains for free disk spaces
+      run: |
+        echo "=== BEFORE ==="
+        df -h
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /usr/local/share/boost
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /opt/hostedtoolcache
+        docker system prune -af || true
+        sudo apt-get clean
+        echo "=== AFTER ==="
+        df -h
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Set up dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake gcc g++ libglib2.0 libsecret-1-dev libkrb5-dev unixodbc unixodbc-dev odbcinst libodbc2
+    - name: Setup test cluster
+      run: ./.github/scripts/setup-cluster.sh
+    - name: Build project
+      run:  ./.github/scripts/build-ubuntu.sh
+    - name: Run tests
+      run: ./.github/scripts/run-tests-linux.sh
+    # - name: Run browser auth tests  TODO: PLAT-7389 enable these tests
+    #   run: ./test/odbc_browser_auth
