@@ -1,12 +1,8 @@
 name: Build & Test (Windows)
-runs-on: windows-latest
 
 runs:
   using: "composite"
   steps:
-    - name: Checkout code
-      shell: pwsh
-      uses: actions/checkout@v4
     - name: Start S2MS cluster
       shell: pwsh
       run: |

@@ -1,5 +1,5 @@
 name: Build & Test (Linux)
-runs-on: ubuntu-latest
+description: "Composite action to build and test the ODBC connector on Linux"
 
 runs:
   using: "composite"
@@ -19,9 +19,6 @@ runs:
         sudo apt-get clean
         echo "=== AFTER ==="
         df -h
-    - name: Checkout code
-      shell: bash
-      uses: actions/checkout@v4
     - name: Set up dependencies
       shell: bash
       run: |
