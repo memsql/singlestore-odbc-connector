@@ -1,11 +1,9 @@
-name: Run tests
+name: Publish artifacts (after running the tests)
 
 on:
-  pull_request:
-    branches:
-      - master
-  schedule:
-    - cron: '12 34 * * 0'  # Runs every Sunday at 12:34 AM UTC
+  push:
+    tags:
+      - "v*"
 
 env:
   S2MS_API_KEY: ${{ secrets.S2MS_API_KEY }}
@@ -40,6 +38,15 @@ jobs:
         uses: actions/checkout@v4
       - name: Run build and test on Linux (Ubuntu)
         uses: ./.github/workflows/actions/build_test_linux
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: singlestore-odbc-${{ matrix.driver_type }}-linux
+          path: |
+            build/*.so
+            build/libssodbca.so
+            build/libssodbcw.so
+          retention-days: 30
 
   build-macos:
     name: Build & Test (macOS)
@@ -70,6 +77,15 @@ jobs:
         uses: actions/checkout@v4
       - name: Run build and test on MacOS
         uses: ./.github/workflows/actions/build_test_macos
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: singlestore-odbc-${{ matrix.driver_type }}-macos
+          path: |
+            build/*.dylib
+            build/libssodbca.dylib
+            build/libssodbcw.dylib
+          retention-days: 30
 
   build-test-windows:
     name: Build & Test (Windows)
@@ -103,3 +119,12 @@ jobs:
         uses: actions/checkout@v4
       - name: Run build and test on Windows
         uses: ./.github/workflows/actions/build_test_windows
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: singlestore-odbc-${{ matrix.driver_type }}-windows-${{ matrix.arch_bits }}bit
+          path: |
+            build/*.dll
+            build/Release/*.dll
+            build/Debug/*.dll
+          retention-days: 30
