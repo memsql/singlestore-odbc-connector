@@ -1,31 +1,35 @@
-name: Run tests
+name: Publish artifacts
 
 on:
-  # pull_request:
-  #   branches:
-  #     - master
-  schedule:
-    - cron: '12 10 * * 0'  # Runs every Sunday at 10:12 UTC
+  push:
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - master
 
 env:
   S2MS_API_KEY: ${{ secrets.S2MS_API_KEY }}
   SINGLESTORE_LICENSE: ${{ secrets.SINGLESTORE_LICENSE }}
   MEMSQL_PASSWORD: ${{ secrets.SINGLESTORE_PASSWORD }}
+  DRIVER_VERSION: 1.2.0
 
 jobs:
   build-test-ubuntu:
     name: Build & Test (Ubuntu)
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        build_type: [RelWithDebInfo]
+        build_type: [Release]
         driver_type: [unicode, ansi]
+        os_name: [linux]
         include:
-          - build_type: RelWithDebInfo
+          - build_type: Release
             driver_type: unicode
             test_dsn: ssodbc_test_w
             test_driver: 'SingleStore ODBC Unicode Driver'
-          - build_type: RelWithDebInfo
+          - build_type: Release
             driver_type: ansi
             test_dsn: ssodbc_test_a
             test_driver: 'SingleStore ODBC ANSI Driver'
@@ -40,6 +44,21 @@ jobs:
         uses: actions/checkout@v4
       - name: Run build and test on Linux (Ubuntu)
         uses: ./.github/workflows/actions/build_test_linux
+      - name: Create archive
+        run: |
+            mkdir singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64
+            mkdir singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64/plugins
+            cp linuxinstall/README.md singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64
+            cp libssodbca.so singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64
+            cp libssodbcw.so singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64
+            cp libmariadb/auth_gssapi_client.so singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64/plugins
+            tar -zcvf singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64.tar.gz singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: singlestore-odbc-${{ matrix.driver_type }}-linux
+          path: singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64.tar.gz
+          retention-days: 30
 
   build-test-centos:
     name: Build & Test (RHEL/CentOS)
@@ -71,23 +90,34 @@ jobs:
         uses: actions/checkout@v4
       - name: Run build and test on RHEL/CentOS
         uses: ./.github/workflows/actions/build_test_centos
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: singlestore-odbc-${{ matrix.driver_type }}-linux
+          path: singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64.tar.gz
+          retention-days: 30
 
   build-test-macos:
     name: Build & Test (macOS)
-    runs-on: macos-15-intel
     strategy:
+      fail-fast: false
       matrix:
-        build_type: [RelWithDebInfo]
-        driver_type: [unicode, ansi]
+        build_type: [Release]
+        driver_type: [unicode]
+        arch: [arm64]
         include:
-          - build_type: RelWithDebInfo
+          - build_type: Release
             driver_type: unicode
             test_dsn: ssodbc_test_w
             test_driver: 'SingleStore ODBC Unicode Driver'
-          - build_type: RelWithDebInfo
+            arch: arm64
+          - build_type: Release
             driver_type: ansi
             test_dsn: ssodbc_test_a
             test_driver: 'SingleStore ODBC ANSI Driver'
+            arch: intel
+
+    runs-on: macos-15-${{ matrix.arch }}
     env:
       BUILD_TYPE: ${{ matrix.build_type }}
       TEST_DSN: ${{ matrix.test_dsn }}
@@ -101,14 +131,21 @@ jobs:
         uses: actions/checkout@v4
       - name: Run build and test on MacOS
         uses: ./.github/workflows/actions/build_test_macos
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: singlestore-odbc-${{ matrix.driver_type }}-macos
+          path: osxinstall/singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-macos-${{ matrix.arch }}.pkg
+          retention-days: 30
 
   build-test-windows:
     name: Build & Test (Windows)
     runs-on: windows-latest
     strategy:
+      fail-fast: false
       matrix:
         build_type: [RelWithDebInfo]
-        driver_type: [unicode, ansi]
+        driver_type: [unicode]
         arch_bits: [64]
         include:
           - build_type: RelWithDebInfo
@@ -118,7 +155,7 @@ jobs:
             test_driver: 'SingleStore ODBC Unicode Driver'
           - build_type: RelWithDebInfo
             driver_type: ansi
-            arch_bits: 64
+            arch_bits: 32
             test_dsn: ssodbc_test_a
             test_driver: 'SingleStore ODBC ANSI Driver'
     env:
@@ -134,3 +171,10 @@ jobs:
         uses: actions/checkout@v4
       - name: Run build and test on Windows
         uses: ./.github/workflows/actions/build_test_windows
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: singlestore-odbc-${{ matrix.driver_type }}-windows-${{ matrix.arch_bits }}bit
+          path: wininstall\singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-win${{ matrix.arch_bits }}.msi
+
+          retention-days: 30

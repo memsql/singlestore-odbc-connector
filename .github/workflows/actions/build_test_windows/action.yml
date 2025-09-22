@@ -1,0 +1,26 @@
+name: Build & Test (Windows)
+
+runs:
+  using: "composite"
+  steps:
+    - name: Start S2MS cluster
+      shell: pwsh
+      run: |
+        python -m pip install singlestoredb
+        python .github\scripts\setup_s2ms_cluster.py start odbc_test
+    - name: Build project
+      shell: pwsh
+      run: .github\scripts\build-windows.ps1
+    # - name: Run tests
+    #   shell: pwsh
+    #   run: .github\scripts\run-tests-windows.ps1
+    # - name: Run browser auth tests TODO: PLAT-7389 enable these tests
+    #   run: |
+    #       cd ./${{ matrix.build_type }}
+    #       ../test/${{ matrix.build_type }}/odbc_browser_auth
+    - name: Terminate S2MS cluster
+      shell: pwsh
+      if: always()
+      run: |
+          python -m pip install singlestoredb
+          python .github\scripts\setup_s2ms_cluster.py terminate

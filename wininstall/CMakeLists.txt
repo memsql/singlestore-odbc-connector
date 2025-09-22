@@ -15,7 +15,7 @@ IF(NOT WIX_DIR)
 ENDIF()
 SET(PRODUCT_NAME "SingleStore ODBC Driver")
 SET(PRODUCT_MANUFACTURER "SingleStore")
-SET(PRODUCT_VERSION "${MARIADB_ODBC_VERSION_MAJOR}.${MARIADB_ODBC_VERSION_MINOR}.${MARIADB_ODBC_VERSION_PATCH}")
+SET(PRODUCT_VERSION "${SS_ODBC_VERSION_MAJOR}.${SS_ODBC_VERSION_MINOR}.${SS_ODBC_VERSION_PATCH}")
 
 SET(TLS_LIB_BEGIN "!-- ")
 SET(TLS_LIB_END " --")
@@ -59,15 +59,15 @@ ELSE()
   SET(GUID_INSTALLER_TOOLS "786BD2C3-20B0-4b8f-8D9B-374C736E3A1B")
 ENDIF()
 
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/wininstall/mariadb_odbc.xml.in
-               ${CMAKE_BINARY_DIR}/wininstall/mariadb_odbc.xml)
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/wininstall/ss_odbc.xml.in
+               ${CMAKE_BINARY_DIR}/wininstall/ss_odbc.xml)
 IF(${revno})
   SET(MSI_PACKAGE "singlestore-connector-odbc-${PRODUCT_VERSION}-r${revno}-${PLATFORM}.msi")
 ELSE()
   SET(MSI_PACKAGE "singlestore-connector-odbc-${PRODUCT_VERSION}-${PLATFORM}.msi")
 ENDIF()
 
-SET(ENV{MARIADB_ODBC_MSI_PACKAGE} "${MSI_PACKAGE}")
+SET(ENV{SS_ODBC_MSI_PACKAGE} "${MSI_PACKAGE}")
 
 IF(WITH_SIGNCODE)
   IF(EXISTS "/tools/sign.bat")
@@ -87,14 +87,14 @@ MESSAGE(STATUS "MSI package name ${MSI_PACKAGE}")
 
 ADD_CUSTOM_TARGET(
         ${MSI_PACKAGE}
-        COMMAND ${WIX_DIR}light.exe -ext WixUIExtension -ext WixUtilExtension mariadb_odbc.wixobj -o ${MSI_PACKAGE})
+        COMMAND ${WIX_DIR}light.exe -ext WixUIExtension -ext WixUtilExtension ss_odbc.wixobj -o ${MSI_PACKAGE})
 
 SET_TARGET_PROPERTIES(${MSI_PACKAGE} PROPERTIES EXCLUDE_FROM_ALL OFF)
 
 ADD_CUSTOM_TARGET(
         ODBC_WIX
-        DEPENDS mariadb_odbc.xml binaries_dir.xml
-        COMMAND ${WIX_DIR}candle.exe -ext WixUIExtension -ext WixUtilExtension mariadb_odbc.xml -o mariadb_odbc.wixobj)
+        DEPENDS ss_odbc.xml binaries_dir.xml
+        COMMAND ${WIX_DIR}candle.exe -ext WixUIExtension -ext WixUtilExtension ss_odbc.xml -o ss_odbc.wixobj)
 
 ADD_DEPENDENCIES(${MSI_PACKAGE} ODBC_WIX)
 FOREACH(CONNECTOR_DRIVER_TYPE_SHORT IN LISTS CONNECTOR_DRIVER_TYPES_SHORT)
