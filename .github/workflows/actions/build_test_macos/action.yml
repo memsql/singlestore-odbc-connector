@@ -2,16 +2,20 @@ name: Build & Test (MacOS)
 runs-on: macos-latest
 
 runs:
+  using: "composite"
   steps:
     - name: Checkout code
+      shell: bash
       uses: actions/checkout@v4
     - name: Start S2MS cluster
+      shell: bash
       run: |
         python3 -m venv .venv
         source .venv/bin/activate
         python -m pip install singlestoredb
         python ./.github/scripts/setup_s2ms_cluster.py start odbc_test
     - name: Setup Environment on MacOS
+      shell: bash
       run: |
           rm -rf $(brew --caskroom)/adoptopenjdk11
           brew update
@@ -20,12 +24,15 @@ runs:
           brew link libiodbc --force
           brew cleanup
     - name: Build project
+      shell: bash
       run: ./.github/scripts/build-osx.sh
     - name: Run tests
+      shell: bash
       run: ./.github/scripts/run-tests-osx.sh
     # - name: Run browser auth tests  TODO: PLAT-7389 enable these tests
     #   run: ./test/odbc_browser_auth
     - name: Terminate S2MS cluster
+      shell: bash
       if: always()
       run: |
           source .venv/bin/activate
