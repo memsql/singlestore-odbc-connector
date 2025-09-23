@@ -38,8 +38,8 @@ export TEST_PASSWORD="${MEMSQL_PASSWORD}"
 
 cd libmariadb
 cmake -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_SSL=OPENSSL
-cmake --build
+cmake --build . --config ${BUILD_TYPE}
 cd ..
 
 cmake -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL -DWITH_IODBC=ON -DIS_ON_S2MS=1 -Wno-pointer-sign
-cmake --build
+cmake --build . --config ${BUILD_TYPE}
