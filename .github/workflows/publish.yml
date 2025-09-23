@@ -111,12 +111,12 @@ jobs:
         driver_type: [unicode]
         arch_bits: [64]
         include:
-          - build_type: Release
+          - build_type: RelWithDebInfo
             driver_type: unicode
             arch_bits: 64
             test_dsn: ssodbc_test_w
             test_driver: 'SingleStore ODBC Unicode Driver'
-          - build_type: Release
+          - build_type: RelWithDebInfo
             driver_type: ansi
             arch_bits: 32
             test_dsn: ssodbc_test_a

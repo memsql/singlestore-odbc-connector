@@ -1,0 +1,5 @@
+LIBRARY ssodbcs.dll
+EXPORTS
+  ConfigDSN
+  DSNDialog
+  DSNPrompt
