@@ -9,6 +9,7 @@ runs:
       run: |
         # Install EPEL repository for additional packages
         dnf install -y epel-release
+        dnf config-manager --set-enabled crb -y
 
         # Update package lists
         dnf update -y

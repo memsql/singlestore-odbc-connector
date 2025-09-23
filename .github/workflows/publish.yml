@@ -60,7 +60,7 @@ jobs:
           path: singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64.tar.gz
           retention-days: 30
 
-  build-test-rhel:
+  build-test-centos:
     name: Build & Test (RHEL/CentOS)
     runs-on: ubuntu-latest
     container: 
@@ -88,7 +88,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Run build and test on RHEL/CentOS
-        uses: ./.github/workflows/actions/build_test_rhel
+        uses: ./.github/workflows/actions/build_test_centos
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:

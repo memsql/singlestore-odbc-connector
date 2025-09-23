@@ -41,7 +41,7 @@ jobs:
       - name: Run build and test on Linux (Ubuntu)
         uses: ./.github/workflows/actions/build_test_linux
 
-  build-test-rhel:
+  build-test-centos:
     name: Build & Test (RHEL/CentOS)
     runs-on: ubuntu-latest
     container: 
@@ -69,7 +69,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Run build and test on RHEL/CentOS
-        uses: ./.github/workflows/actions/build_test_rhel
+        uses: ./.github/workflows/actions/build_test_centos
 
   build-test-macos:
     name: Build & Test (macOS)
