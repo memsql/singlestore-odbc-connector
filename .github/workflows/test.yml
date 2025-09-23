@@ -13,8 +13,8 @@ env:
   MEMSQL_PASSWORD: ${{ secrets.SINGLESTORE_PASSWORD }}
 
 jobs:
-  build-test-linux:
-    name: Build & Test (Linux)
+  build-test-ubuntu:
+    name: Build & Test (Ubuntu)
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -71,7 +71,7 @@ jobs:
       - name: Run build and test on RHEL/CentOS
         uses: ./.github/workflows/actions/build_test_rhel
 
-  build-macos:
+  build-test-macos:
     name: Build & Test (macOS)
     runs-on: macos-latest
     strategy:
