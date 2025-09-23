@@ -29,7 +29,7 @@ runs:
       run: ./.github/scripts/setup-cluster.sh
     - name: Build project
       shell: bash
-      run:  ./.github/scripts/build-ubuntu.sh
+      run:  ./.github/scripts/build-linux.sh
     # - name: Run tests
     #   shell: bash
     #   run: ./.github/scripts/run-tests-linux.sh

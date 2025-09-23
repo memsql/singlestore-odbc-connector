@@ -41,6 +41,36 @@ jobs:
       - name: Run build and test on Linux (Ubuntu)
         uses: ./.github/workflows/actions/build_test_linux
 
+  build-test-rhel:
+    name: Build & Test (RHEL/CentOS)
+    runs-on: ubuntu-latest
+    container: 
+      image: quay.io/centos/centos:stream9
+    strategy:
+      matrix:
+        build_type: [RelWithDebInfo]
+        driver_type: [unicode, ansi]
+        include:
+          - build_type: RelWithDebInfo
+            driver_type: unicode
+            test_dsn: ssodbc_test_w
+            test_driver: 'SingleStore ODBC Unicode Driver'
+          - build_type: RelWithDebInfo
+            driver_type: ansi
+            test_dsn: ssodbc_test_a
+            test_driver: 'SingleStore ODBC ANSI Driver'
+    env:
+      BUILD_TYPE: ${{ matrix.build_type }}
+      TEST_DSN: ${{ matrix.test_dsn }}
+      TEST_DRIVER: ${{ matrix.test_driver }}
+      MEMSQL_PORT: 5506
+      MEMSQL_USER: root
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run build and test on RHEL/CentOS
+        uses: ./.github/workflows/actions/build_test_rhel
+
   build-macos:
     name: Build & Test (macOS)
     runs-on: macos-latest
