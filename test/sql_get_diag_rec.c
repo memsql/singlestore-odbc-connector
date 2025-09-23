@@ -93,7 +93,7 @@ ODBC_TEST(sql_get_diag_rec)
   FAIL_IF(SQLGetDiagRec(SQL_HANDLE_STMT, Stmt, 1, NULL, NULL, NULL, 0, NULL) != SQL_NO_DATA,
           "Expected no data error")
   ERR_SIMPLE_STMT(Stmt, "Some wrong query");
-  sprintf(errMsg, "%s[%s]You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Some wrong query' at line 1", MARIADB_ODBC_ERR_PREFIX, version);
+  sprintf(errMsg, "%s[%s]You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Some wrong query' at line 1", SS_ODBC_ERR_PREFIX, version);
   IS_OK(CheckRec(SQL_HANDLE_STMT, Stmt, 1, "42000", 1064, errMsg))
 
   // output buffer is too small
@@ -103,7 +103,7 @@ ODBC_TEST(sql_get_diag_rec)
                              catalog, sizeof(catalog), &catalogLength) != SQL_SUCCESS_WITH_INFO, "expected SUCCESS_WITH_INFO");
   if ((iOdbc() || UnixOdbc()))
   {
-    sprintf(errMsg, "%sString data, right-truncated", MARIADB_ODBC_ERR_PREFIX);
+    sprintf(errMsg, "%sString data, right-truncated", SS_ODBC_ERR_PREFIX);
   } else
   {
     sprintf(errMsg, "[Microsoft][ODBC Driver Manager] Data truncated");

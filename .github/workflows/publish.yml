@@ -107,7 +107,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build_type: [Release]
+        build_type: [RelWithDebInfo]
         driver_type: [unicode]
         arch_bits: [64]
         include:
