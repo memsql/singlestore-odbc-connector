@@ -16,7 +16,7 @@ runs:
 
         # Install build dependencies
         dnf groupinstall -y "Development Tools"
-        dnf install -y cmake gcc gcc-c++ glib2-devel libsecret-devel krb5-devel unixODBC unixODBC-devel openssl-devel git which
+        dnf install -y cmake gcc gcc-c++ glib2-devel libsecret-devel krb5-devel unixODBC unixODBC-devel openssl-devel git which docker
 
     - name: Setup test cluster
       shell: bash
