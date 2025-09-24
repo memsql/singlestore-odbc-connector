@@ -1,4 +1,4 @@
-name: Publish artifacts
+name: Publish ODBC Driver installation packages
 
 on:
   push:
@@ -17,7 +17,6 @@ env:
 jobs:
   build-test-ubuntu:
     name: Build & Test (Ubuntu)
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -29,10 +28,15 @@ jobs:
             driver_type: unicode
             test_dsn: ssodbc_test_w
             test_driver: 'SingleStore ODBC Unicode Driver'
+            arch: amd64
+            image: ubuntu-24.04
           - build_type: Release
             driver_type: ansi
             test_dsn: ssodbc_test_a
             test_driver: 'SingleStore ODBC ANSI Driver'
+            arch: arm64
+            image: ubuntu-24.04-arm
+    runs-on: ${{ matrix.image }}
     env:
       BUILD_TYPE: ${{ matrix.build_type }}
       TEST_DSN: ${{ matrix.test_dsn }}
@@ -46,19 +50,18 @@ jobs:
         uses: ./.github/workflows/actions/build_test_linux
       - name: Create archive
         run: |
-            mkdir singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64
-            mkdir singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64/plugins
-            cp linuxinstall/README.md singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64
-            cp libssodbca.so singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64
-            cp libssodbcw.so singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64
-            cp libmariadb/auth_gssapi_client.so singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64/plugins
-            tar -zcvf singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64.tar.gz singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64
+            mkdir singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}
+            mkdir singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}/plugins
+            cp linuxinstall/README.md singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}
+            cp libssodbca.so singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}
+            cp libssodbcw.so singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}
+            cp libmariadb/auth_gssapi_client.so singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}/plugins
+            tar -zcvf singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}.tar.gz singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}
       - name: Upload artifacts
-        if: matrix.driver_type == 'unicode'
         uses: actions/upload-artifact@v4
         with:
           name: singlestore-odbc-${{ matrix.driver_type }}-linux
-          path: singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64.tar.gz
+          path: singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}.tar.gz
           retention-days: 30
 
   build-test-centos:
@@ -70,7 +73,7 @@ jobs:
       matrix:
         build_type: [Release]
         driver_type: [unicode, ansi]
-        os_name: [ubuntu]
+        os_name: [centos]
         include:
           - build_type: Release
             driver_type: unicode
