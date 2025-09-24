@@ -35,7 +35,7 @@ jobs:
             test_dsn: ssodbc_test_a
             test_driver: 'SingleStore ODBC ANSI Driver'
             arch: amd64  # TODO: change to arm64 when arm64 dev image is released
-            image: ubuntu-22.04-arm
+            image: ubuntu-22.04
     runs-on: ${{ matrix.image }}
     env:
       BUILD_TYPE: ${{ matrix.build_type }}
