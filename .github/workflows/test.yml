@@ -63,8 +63,9 @@ jobs:
       BUILD_TYPE: ${{ matrix.build_type }}
       TEST_DSN: ${{ matrix.test_dsn }}
       TEST_DRIVER: ${{ matrix.test_driver }}
-      MEMSQL_PORT: 5506
-      MEMSQL_USER: root
+      DRIVER_TYPE: ${{ matrix.driver_type }}
+      MEMSQL_PORT: 3306
+      MEMSQL_USER: admin
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

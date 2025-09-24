@@ -82,8 +82,9 @@ jobs:
       BUILD_TYPE: ${{ matrix.build_type }}
       TEST_DSN: ${{ matrix.test_dsn }}
       TEST_DRIVER: ${{ matrix.test_driver }}
-      MEMSQL_PORT: 5506
-      MEMSQL_USER: root
+      DRIVER_TYPE: ${{ matrix.driver_type }}
+      MEMSQL_PORT: 3306
+      MEMSQL_USER: admin
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -134,7 +135,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: singlestore-odbc-${{ matrix.driver_type }}-macos
-          path: osxinstall/singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-osx-${{ matrix.arch }}.pkg
+          path: osxinstall/singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-macos-${{ matrix.arch }}.pkg
           retention-days: 30
 
   build-test-windows:

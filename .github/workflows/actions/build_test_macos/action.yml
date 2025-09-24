@@ -23,10 +23,10 @@ runs:
           brew cleanup
     - name: Build project
       shell: bash
-      run: ./.github/scripts/build-osx.sh
+      run: ./.github/scripts/build-macos.sh
     # - name: Run tests
     #   shell: bash
-    #   run: ./.github/scripts/run-tests-osx.sh
+    #   run: ./.github/scripts/run-tests-macos.sh
     # - name: Run browser auth tests  TODO: PLAT-7389 enable these tests
     #   run: ./test/odbc_browser_auth
     - name: Terminate S2MS cluster
