@@ -44,7 +44,7 @@ echo "Running tests"
 pwd
 ls -la
 
-cd test
+cd build/test
 export ODBCINI="$PWD/odbc.ini"
 export ODBCSYSINI=$PWD
 
