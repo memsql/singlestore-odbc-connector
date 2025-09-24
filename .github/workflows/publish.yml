@@ -23,7 +23,7 @@ jobs:
       matrix:
         build_type: [Release]
         driver_type: [unicode, ansi]
-        os_name: [linux]
+        os_name: [ubuntu]
         include:
           - build_type: Release
             driver_type: unicode
@@ -54,6 +54,7 @@ jobs:
             cp libmariadb/auth_gssapi_client.so singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64/plugins
             tar -zcvf singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64.tar.gz singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64
       - name: Upload artifacts
+        if: matrix.driver_type == 'unicode'
         uses: actions/upload-artifact@v4
         with:
           name: singlestore-odbc-${{ matrix.driver_type }}-linux
@@ -67,14 +68,15 @@ jobs:
       image: quay.io/centos/centos:stream9
     strategy:
       matrix:
-        build_type: [RelWithDebInfo]
+        build_type: [Release]
         driver_type: [unicode, ansi]
+        os_name: [ubuntu]
         include:
-          - build_type: RelWithDebInfo
+          - build_type: Release
             driver_type: unicode
             test_dsn: ssodbc_test_w
             test_driver: 'SingleStore ODBC Unicode Driver'
-          - build_type: RelWithDebInfo
+          - build_type: Release
             driver_type: ansi
             test_dsn: ssodbc_test_a
             test_driver: 'SingleStore ODBC ANSI Driver'
@@ -100,6 +102,7 @@ jobs:
             cp libmariadb/auth_gssapi_client.so singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64/plugins
             tar -zcvf singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64.tar.gz singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64
       - name: Upload artifacts
+        if: matrix.driver_type == 'unicode'
         uses: actions/upload-artifact@v4
         with:
           name: singlestore-odbc-${{ matrix.driver_type }}-linux
@@ -141,6 +144,7 @@ jobs:
       - name: Run build and test on MacOS
         uses: ./.github/workflows/actions/build_test_macos
       - name: Upload artifacts
+        if: matrix.driver_type == 'unicode'
         uses: actions/upload-artifact@v4
         with:
           name: singlestore-odbc-${{ matrix.driver_type }}-macos
