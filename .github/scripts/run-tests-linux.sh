@@ -41,6 +41,8 @@ export MEMSQL_JWT="eyJhbGciOiJSUzM4NCIsInR5cCI6IkpXVCJ9."\
 "udKDUWVrYZJtxZU2Ci3ZuEdYteXJ3VoUBG7m_Ydsky2GUz7sNZWhdsaYD_Ghy66XsO-2cW-kX7GjvX28HOBWWzzPpzT_25W54cxsc-c"
 
 echo "Running tests"
+pwd
+ls -la
 
 cd test
 export ODBCINI="$PWD/odbc.ini"
