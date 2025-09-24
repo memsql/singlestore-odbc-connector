@@ -24,7 +24,7 @@ set -eo pipefail
 brew install llvm@16
 
 export LLVM_PATH=$(brew --prefix llvm@16)
-export PATH="$LLVM_PATH:$PATH"
+export PATH="$LLVM_PATH/bin:$PATH"
 export CC="$LLVM_PATH/bin/clang"
 export CXX="$CC++"
 export LDFLAGS="$LDFLAGS -L$LLVM_PATH/lib"
