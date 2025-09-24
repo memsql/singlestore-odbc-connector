@@ -116,20 +116,22 @@ jobs:
       matrix:
         build_type: [Release]
         driver_type: [unicode]
-        arch: [intel]
+        arch: [x86_64]
         include:
           - build_type: Release
             driver_type: unicode
             test_dsn: ssodbc_test_w
             test_driver: 'SingleStore ODBC Unicode Driver'
-            arch: intel
+            arch: x86_64
+            image_arch: intel
           - build_type: Release
             driver_type: ansi
             test_dsn: ssodbc_test_a
             test_driver: 'SingleStore ODBC ANSI Driver'
-            arch: intel
+            arch: x86_64
+            image_arch: intel
 
-    runs-on: macos-15-${{ matrix.arch }}
+    runs-on: macos-15-${{ matrix.image_arch }}
     env:
       BUILD_TYPE: ${{ matrix.build_type }}
       TEST_DSN: ${{ matrix.test_dsn }}
@@ -189,5 +191,4 @@ jobs:
         with:
           name: singlestore-odbc-${{ matrix.driver_type }}-windows-${{ matrix.arch_bits }}bit
           path: wininstall\singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-win${{ matrix.arch_bits }}.msi
-
           retention-days: 30
