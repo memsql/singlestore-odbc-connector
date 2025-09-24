@@ -1,4 +1,4 @@
-name: Publish ODBC Driver installation packages
+name: Publish installers
 
 on:
   push:
@@ -34,8 +34,8 @@ jobs:
             driver_type: ansi
             test_dsn: ssodbc_test_a
             test_driver: 'SingleStore ODBC ANSI Driver'
-            arch: arm64
-            image: ubuntu-24.04-arm
+            arch: amd64  # TODO: change to arm64 when arm64 dev image is released
+            image: ubuntu-22.04-arm
     runs-on: ${{ matrix.image }}
     env:
       BUILD_TYPE: ${{ matrix.build_type }}
@@ -58,9 +58,10 @@ jobs:
             cp libmariadb/auth_gssapi_client.so singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}/plugins
             tar -zcvf singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}.tar.gz singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}
       - name: Upload artifacts
+        if: matrix.driver_type == 'unicode'
         uses: actions/upload-artifact@v4
         with:
-          name: singlestore-odbc-${{ matrix.driver_type }}-linux
+          name: singlestore-odbc-${{ matrix.driver_type }}-${{ matrix.os_name }}
           path: singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}.tar.gz
           retention-days: 30
 
@@ -108,7 +109,7 @@ jobs:
         if: matrix.driver_type == 'unicode'
         uses: actions/upload-artifact@v4
         with:
-          name: singlestore-odbc-${{ matrix.driver_type }}-linux
+          name: singlestore-odbc-${{ matrix.driver_type }}-${{ matrix.os_name }}
           path: singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64.tar.gz
           retention-days: 30
 
@@ -195,3 +196,44 @@ jobs:
           name: singlestore-odbc-${{ matrix.driver_type }}-windows-${{ matrix.arch_bits }}bit
           path: wininstall\singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-win${{ matrix.arch_bits }}.msi
           retention-days: 30
+
+  create-draft-release:
+    name: Create Draft Release
+    runs-on: ubuntu-latest
+    # if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build-test-ubuntu, build-test-centos, build-test-macos, build-test-windows]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      
+      - name: Create Draft Release with Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          name: SingleStore ODBC Connector ${{ github.ref_name }}
+          body: |
+            ## SingleStore ODBC Connector ${{ github.ref_name }}
+            
+            This is a draft release for the SingleStore ODBC Connector.
+            
+            ### Downloads
+            - **Linux (Ubuntu)**: `singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-ubuntu-*.tar.gz`
+            - **Linux (CentOS/RHEL)**: `singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-centos-*.tar.gz`
+            - **macOS**: `singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-macos-*.pkg`
+            - **Windows**: `singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-win*.msi`
+            
+            ### Installation Instructions
+            Please refer to the README.md file included in each package for installation instructions.
+          draft: true
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            artifacts/singlestore-odbc-unicode-ubuntu/singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-ubuntu-amd64.tar.gz
+            artifacts/singlestore-odbc-unicode-centos/singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-centos-amd64.tar.gz
+            artifacts/singlestore-odbc-unicode-macos/singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-macos-x86_64.pkg
+            artifacts/singlestore-odbc-unicode-windows-64bit/singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-win64.msi
+            artifacts/singlestore-odbc-ansi-windows-32bit/singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-win32.msi
