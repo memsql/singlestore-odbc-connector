@@ -20,17 +20,17 @@ jobs:
   #   strategy:
   #     fail-fast: false
   #     matrix:
-  #       build_type: [Release]
+  #       build_type: [RelWithDebInfo]
   #       driver_type: [unicode, ansi]
   #       os_name: [ubuntu]
   #       include:
-  #         - build_type: Release
+  #         - build_type: RelWithDebInfo
   #           driver_type: unicode
   #           test_dsn: ssodbc_test_w
   #           test_driver: 'SingleStore ODBC Unicode Driver'
   #           arch: amd64
   #           image: ubuntu-24.04
-  #         - build_type: Release
+  #         - build_type: RelWithDebInfo
   #           driver_type: ansi
   #           test_dsn: ssodbc_test_a
   #           test_driver: 'SingleStore ODBC ANSI Driver'
@@ -72,15 +72,15 @@ jobs:
       image: quay.io/centos/centos:stream9
     strategy:
       matrix:
-        build_type: [Release]
+        build_type: [RelWithDebInfo]
         driver_type: [unicode, ansi]
         os_name: [centos]
         include:
-          - build_type: Release
+          - build_type: RelWithDebInfo
             driver_type: unicode
             test_dsn: ssodbc_test_w
             test_driver: 'SingleStore ODBC Unicode Driver'
-          - build_type: Release
+          - build_type: RelWithDebInfo
             driver_type: ansi
             test_dsn: ssodbc_test_a
             test_driver: 'SingleStore ODBC ANSI Driver'
@@ -118,17 +118,17 @@ jobs:
   #   strategy:
   #     fail-fast: false
   #     matrix:
-  #       build_type: [Release]
+  #       build_type: [RelWithDebInfo]
   #       driver_type: [unicode]
   #       arch: [x86_64]
   #       include:
-  #         - build_type: Release
+  #         - build_type: RelWithDebInfo
   #           driver_type: unicode
   #           test_dsn: ssodbc_test_w
   #           test_driver: 'SingleStore ODBC Unicode Driver'
   #           arch: x86_64
   #           image_arch: intel
-  #         - build_type: Release
+  #         - build_type: RelWithDebInfo
   #           driver_type: ansi
   #           test_dsn: ssodbc_test_a
   #           test_driver: 'SingleStore ODBC ANSI Driver'
