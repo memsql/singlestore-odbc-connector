@@ -40,11 +40,11 @@ export MEMSQL_JWT="eyJhbGciOiJSUzM4NCIsInR5cCI6IkpXVCJ9."\
 "lp-ffRjnBJSNjTYF5wUwCQdaUcaklfEJJYhNHrRBQ4dTu9Jq2CbZztex6zfIpd2PRiPauaEcE0Di4nyJZjSSxQj0ao-us3523eC2XDXvIH1E7Y2I235h"\
 "udKDUWVrYZJtxZU2Ci3ZuEdYteXJ3VoUBG7m_Ydsky2GUz7sNZWhdsaYD_Ghy66XsO-2cW-kX7GjvX28HOBWWzzPpzT_25W54cxsc-c"
 
-echo "Running tests"
-pwd
-ls -la
+echo "Running tests from $PWD"
 
-cd build/test
+cd build
+ls -la
+cd test
 export ODBCINI="$PWD/odbc.ini"
 export ODBCSYSINI=$PWD
 
