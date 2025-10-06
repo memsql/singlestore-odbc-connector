@@ -24,7 +24,7 @@ runs:
         python3 -m venv .venv
         source .venv/bin/activate
         python -m pip install singlestoredb
-        python ./.github/scripts/setup_s2ms_cluster.py start odbc_test
+        # python ./.github/scripts/setup_s2ms_cluster.py start odbc_test
     - name: Build project
       shell: bash
       run: ./.github/scripts/build-linux-in-docker.sh
