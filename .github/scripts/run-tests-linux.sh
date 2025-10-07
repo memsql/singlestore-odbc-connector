@@ -20,7 +20,7 @@
 
 set -eo pipefail
 
-## Export password and port
+## Export password, port and user if they are set
 if [ -n "$MEMSQL_PASSWORD" ]
 then
   export TEST_PASSWORD=$MEMSQL_PASSWORD
@@ -30,6 +30,16 @@ if [ -n "$MEMSQL_PORT" ]
 then
   export TEST_PORT=$MEMSQL_PORT
 fi
+
+if [ -n "$MEMSQL_USER" ]
+then
+  export TEST_UID=$MEMSQL_USER
+fi
+
+if [ -f WORKSPACE_ENDPOINT_FILE ]; then
+  export TEST_SERVER=$(cat WORKSPACE_ENDPOINT_FILE)
+fi
+
 
 export MEMSQL_JWT="eyJhbGciOiJSUzM4NCIsInR5cCI6IkpXVCJ9."\
 "eyJ1c2VybmFtZSI6InRlc3Rfand0X3VzZXIiLCJleHAiOjI1MTQzNTk5MjAsImVtYWlsIjoidGVzdEBzaW5nbGVzdG9yZS5jb20ifQ."\
