@@ -94,12 +94,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: LS-L-checkout
-        run: ls -la
       - name: Run build and test on RHEL/CentOS
         uses: ./.github/workflows/actions/build_test_centos
-      - name: LS-L-build
-        run: ls -la
       - name: Create archive
         run: |
             mkdir singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64
