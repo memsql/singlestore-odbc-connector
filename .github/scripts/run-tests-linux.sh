@@ -42,9 +42,7 @@ export MEMSQL_JWT="eyJhbGciOiJSUzM4NCIsInR5cCI6IkpXVCJ9."\
 
 echo "Running tests from $PWD"
 
-cd build
-ls -la
-cd test
+cd build/test
 export ODBCINI="$PWD/odbc.ini"
 export ODBCSYSINI=$PWD
 
