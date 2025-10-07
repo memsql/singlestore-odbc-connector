@@ -40,8 +40,13 @@ else
   SANITIZER_OPTION="OFF"
 fi
 
+# set variables for Connector/ODBC test binaries
+export TEST_SERVER=$(echo "$(cat WORKSPACE_ENDPOINT_FILE)")
+export TEST_UID="${MEMSQL_USER}"
+export TEST_PORT="${MEMSQL_PORT}"
+export TEST_PASSWORD="${MEMSQL_PASSWORD}"
+
 mkdir -p build && cd build
 ## build odbc connector
 cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL -DWITH_SANITIZER=$SANITIZER_OPTION -DIS_ON_S2MS=1
-
 cmake --build . --config ${BUILD_TYPE}
