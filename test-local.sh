@@ -1,10 +1,11 @@
 #!/bin/bash
 # This is a template script to run and debug tests locally on Linux
-export TEST_PASSWORD=''  # local DB password
-export TEST_PORT=3306    # local DB port
+export TEST_PASSWORD='p'  # local DB password
+export TEST_PORT=5506    # local DB port
 
 ./build-local.sh
 
+cp -r test/ssl build/test 
 cd build/test
 
 export ODBCINI="$PWD/odbc.ini"
