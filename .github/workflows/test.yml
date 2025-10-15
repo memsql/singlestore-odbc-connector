@@ -11,6 +11,7 @@ env:
   S2MS_API_KEY: ${{ secrets.S2MS_API_KEY }}
   SINGLESTORE_LICENSE: ${{ secrets.SINGLESTORE_LICENSE }}
   MEMSQL_PASSWORD: ${{ secrets.SINGLESTORE_PASSWORD }}
+  NEED_RUN_TESTS: 'true'  
 
 jobs:
   build-test-ubuntu:
