@@ -4,16 +4,13 @@ on:
   push:
     tags:
       - "v*"
-  pull_request:
-    branches:
-      - master
 
 env:
   S2MS_API_KEY: ${{ secrets.S2MS_API_KEY }}
   SINGLESTORE_LICENSE: ${{ secrets.SINGLESTORE_LICENSE }}
   MEMSQL_PASSWORD: ${{ secrets.SINGLESTORE_PASSWORD }}
   DRIVER_VERSION: 1.2.0
-  NEED_RUN_TESTS: 'false'
+  NEED_RUN_TESTS: 'true'  
 
 jobs:
   build-test-ubuntu:
@@ -35,7 +32,7 @@ jobs:
             driver_type: ansi
             test_dsn: ssodbc_test_a
             test_driver: 'SingleStore ODBC ANSI Driver'
-            arch: amd64  # TODO: change to arm64 when arm64 dev image is released
+            arch: amd64  # TODO: add support for arm64 when arm64 dev image is released
             image: ubuntu-22.04
     runs-on: ${{ matrix.image }}
     env:
@@ -218,17 +215,17 @@ jobs:
           name: SingleStore ODBC Connector ${{ github.ref_name }}
           body: |
             ## SingleStore ODBC Connector ${{ github.ref_name }}
-            
+
             This is a draft release for the SingleStore ODBC Connector.
-            
+
             ### Downloads
             - **Linux (Ubuntu)**: `singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-ubuntu-*.tar.gz`
             - **Linux (CentOS/RHEL)**: `singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-centos-*.tar.gz`
             - **macOS**: `singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-macos-*.pkg`
             - **Windows**: `singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-win*.msi`
-            
+
             ### Installation Instructions
-            Please refer to the README.md file included in each package for installation instructions.
+            Please refer to (SingleStore documentation)[https://docs.singlestore.com/cloud/developer-resources/connect-with-application-development-tools/connect-with-odbc/the-singlestore-odbc-driver/] for installation instructions.
           draft: true
           prerelease: false
           generate_release_notes: true
