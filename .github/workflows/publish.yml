@@ -53,9 +53,9 @@ jobs:
             mkdir singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}
             mkdir singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}/plugins
             cp linuxinstall/README.md singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}
-            cp libssodbca.so singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}
-            cp libssodbcw.so singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}
-            cp libmariadb/auth_gssapi_client.so singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}/plugins
+            cp build/libssodbca.so singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}
+            cp build/libssodbcw.so singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}
+            cp build/libmariadb/auth_gssapi_client.so singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}/plugins
             tar -zcvf singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}.tar.gz singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}
       - name: Upload artifacts
         if: matrix.driver_type == 'unicode'
