@@ -61,7 +61,7 @@ jobs:
         if: matrix.driver_type == 'unicode'
         uses: actions/upload-artifact@v4
         with:
-          name: singlestore-odbc-${{ matrix.driver_type }}-${{ matrix.os_name }}
+          name: singlestore-odbc-${{ matrix.os_name }}
           path: singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}.tar.gz
           retention-days: 30
 
@@ -109,7 +109,7 @@ jobs:
         if: matrix.driver_type == 'unicode'
         uses: actions/upload-artifact@v4
         with:
-          name: singlestore-odbc-${{ matrix.driver_type }}-${{ matrix.os_name }}
+          name: singlestore-odbc-${{ matrix.os_name }}
           path: singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-amd64.tar.gz
           retention-days: 30
 
@@ -153,7 +153,7 @@ jobs:
         if: matrix.driver_type == 'unicode'
         uses: actions/upload-artifact@v4
         with:
-          name: singlestore-odbc-${{ matrix.driver_type }}-macos
+          name: singlestore-odbc-macos
           path: osxinstall/singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-macos-${{ matrix.arch }}.pkg
           retention-days: 30
 
@@ -193,7 +193,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: singlestore-odbc-${{ matrix.driver_type }}-windows-${{ matrix.arch_bits }}bit
+          name: singlestore-odbc-windows-${{ matrix.arch_bits }}bit
           path: wininstall\singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-win${{ matrix.arch_bits }}.msi
           retention-days: 30
 
