@@ -13,6 +13,7 @@ env:
   SINGLESTORE_LICENSE: ${{ secrets.SINGLESTORE_LICENSE }}
   MEMSQL_PASSWORD: ${{ secrets.SINGLESTORE_PASSWORD }}
   DRIVER_VERSION: 1.2.0
+  NEED_RUN_TESTS: 'false'
 
 jobs:
   build-test-ubuntu:
@@ -232,8 +233,8 @@ jobs:
           prerelease: false
           generate_release_notes: true
           files: |
-            artifacts/singlestore-odbc-unicode-ubuntu/singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-ubuntu-amd64.tar.gz
-            artifacts/singlestore-odbc-unicode-centos/singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-centos-amd64.tar.gz
-            artifacts/singlestore-odbc-unicode-macos/singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-macos-x86_64.pkg
-            artifacts/singlestore-odbc-unicode-windows-64bit/singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-win64.msi
-            artifacts/singlestore-odbc-ansi-windows-32bit/singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-win32.msi
+            artifacts/singlestore-odbc-ubuntu/singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-ubuntu-amd64.tar.gz
+            artifacts/singlestore-odbc-centos/singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-centos-amd64.tar.gz
+            artifacts/singlestore-odbc-macos/singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-macos-x86_64.pkg
+            artifacts/singlestore-odbc-windows-64bit/singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-win64.msi
+            artifacts/singlestore-odbc-windows-32bit/singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-win32.msi
