@@ -131,7 +131,7 @@ static void ma_tls_set_error(MYSQL *mysql)
     pvio->set_error(mysql, CR_SSL_CONNECTION_ERROR, SQLSTATE_UNKNOWN, "Unknown SSL error");
     return;
   }
-  if ((ssl_error_reason= ERR_error_string(ssl_errno, ssl_error)))
+  if ((ssl_error_reason= ERR_reason_error_string(ssl_errno)))
   {
     pvio->set_error(mysql, CR_SSL_CONNECTION_ERROR, SQLSTATE_UNKNOWN, 
                    0, ssl_error_reason);
