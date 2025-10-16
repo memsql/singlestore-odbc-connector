@@ -224,7 +224,7 @@ jobs:
             - **Windows**: `singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-win*.msi`
 
             ### Installation Instructions
-            Please refer to (SingleStore documentation)[https://docs.singlestore.com/cloud/developer-resources/connect-with-application-development-tools/connect-with-odbc/the-singlestore-odbc-driver/] for installation instructions.
+            Please refer to [SingleStore documentation](https://docs.singlestore.com/cloud/developer-resources/connect-with-application-development-tools/connect-with-odbc/the-singlestore-odbc-driver/) for installation instructions.
           draft: true
           prerelease: false
           generate_release_notes: true
