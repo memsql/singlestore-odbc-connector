@@ -137,7 +137,7 @@ Testing
 CTestTestfile.cmake
 
 ma_odbc_version.h
-wininstall/mariadb_odbc.xml
+wininstall/ss_odbc.xml
 mariadb-odbc-driver-uni.def
 mariadb-odbc-driver-asc.def
 maodbcw.rc

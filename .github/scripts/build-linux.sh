@@ -20,26 +20,47 @@
 
 set -eo pipefail
 
-# newer versions of macOS require older llvm because of zlib compatibility
-brew install llvm@16
+echo "Modifying /etc/hosts and ~/my.cnf to enable connect tests"
+echo 127.0.0.1 singlestore.test.com | sudo tee -a /etc/hosts
+echo 127.0.0.1 test-memsql-server | sudo tee -a /etc/hosts
+echo 127.0.0.1 test-memsql-cluster | sudo tee -a /etc/hosts
+echo "[mysqld]
+plugin-load-add=authentication_pam.so
 
-export LLVM_PATH=$(brew --prefix llvm@16)
-export PATH="$LLVM_PATH/bin:$PATH"
-export CC="$LLVM_PATH/bin/clang"
-export CXX="$CC++"
-export LDFLAGS="$LDFLAGS -L$LLVM_PATH/lib"
-export CPPFLAGS="$CPPFLAGS -I$LLVM_PATH/include"
+[client]
+protocol = TCP
 
-# set variables for Connector/ODBC test binaries
-export TEST_SERVER=$(echo "$(cat WORKSPACE_ENDPOINT_FILE)")
-export TEST_UID="${MEMSQL_USER}"
-export TEST_PORT="${MEMSQL_PORT}"
-export TEST_PASSWORD="${MEMSQL_PASSWORD}"
+[odbc]
+database = odbc_test_mycnf
+" | sudo tee ~/.my.cnf
 
-cd libmariadb
-cmake -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_SSL=OPENSSL
-cmake --build . --config ${BUILD_TYPE}
-cd ..
+export PROJ_PATH=`pwd`
+mkdir -p tmp
+.github/scripts/gen-ssl.sh singlestore.test.com tmp
+export SSLCERT=$PROJ_PATH/tmp
 
-cmake -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL -DWITH_IODBC=ON -DIS_ON_S2MS=1 -Wno-pointer-sign
+# list ssl certificates
+ls -lrt ${SSLCERT}
+
+## Export password and port
+if [ -n "$MEMSQL_PASSWORD" ]
+then
+  export TEST_PASSWORD=$MEMSQL_PASSWORD
+fi
+
+if [ -n "$MEMSQL_PORT" ]
+then
+  export TEST_PORT=$MEMSQL_PORT
+fi
+
+if [ "$WITH_SANITIZER" = "true" ]
+then
+  SANITIZER_OPTION="ON"
+else
+  SANITIZER_OPTION="OFF"
+fi
+
+mkdir -p build && cd build
+## build odbc connector
+cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL -DWITH_SANITIZER=$SANITIZER_OPTION
 cmake --build . --config ${BUILD_TYPE}

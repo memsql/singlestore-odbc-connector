@@ -1,0 +1,39 @@
+name: Build & Test (MacOS)
+description: "Composite action to build and test the ODBC connector on MacOS"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Start S2MS cluster
+      shell: bash
+      run: |
+        python3 -m venv .venv
+        source .venv/bin/activate
+        python -m pip install singlestoredb
+        python ./.github/scripts/setup_s2ms_cluster.py start odbc_test
+    - name: Setup Environment on MacOS
+      shell: bash
+      run: |
+          rm -rf $(brew --caskroom)/adoptopenjdk11
+          brew update
+          brew install openssl curl mysql-client cmake bind
+          brew install libiodbc
+          brew unlink unixodbc
+          brew link libiodbc --force
+          brew cleanup
+    - name: Build project
+      shell: bash
+      run: ./.github/scripts/build-macos.sh
+    - name: Run tests
+      shell: bash
+      if: env.NEED_RUN_TESTS != 'false'
+      run: ./.github/scripts/run-tests-macos.sh
+    # - name: Run browser auth tests  TODO: PLAT-7389 enable these tests
+    #   run: ./test/odbc_browser_auth
+    - name: Terminate S2MS cluster
+      shell: bash
+      if: always()
+      run: |
+          source .venv/bin/activate
+          python -m pip install singlestoredb
+          python ./.github/scripts/setup_s2ms_cluster.py terminate || true

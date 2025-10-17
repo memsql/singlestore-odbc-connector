@@ -156,8 +156,8 @@ char* MADB_PutErrorPrefix(MADB_Dbc *dbc, MADB_Error *error)
   /* If prefix is already there - we do not write again. One shoud reset error->PrefixLen in order to force */
   if (error->PrefixLen == 0)
   {
-    error->PrefixLen= strlen(MARIADB_ODBC_ERR_PREFIX);
-    strcpy_s(error->SqlErrorMsg, SQL_MAX_MESSAGE_LENGTH + 1, MARIADB_ODBC_ERR_PREFIX);
+    error->PrefixLen= strlen(SS_ODBC_ERR_PREFIX);
+    strcpy_s(error->SqlErrorMsg, SQL_MAX_MESSAGE_LENGTH + 1, SS_ODBC_ERR_PREFIX);
     if (dbc != NULL && dbc->mariadb != NULL)
     {
       error->PrefixLen += _snprintf(error->SqlErrorMsg + error->PrefixLen,

@@ -13,7 +13,7 @@ WORKSPACE_ENDPOINT_FILE = "WORKSPACE_ENDPOINT_FILE"
 WORKSPACE_GROUP_ID_FILE = "WORKSPACE_GROUP_ID_FILE"
 
 
-def cmd_start(workspace_manager):
+def cmd_start(workspace_manager, db_name=None):
     for reg in workspace_manager.regions:
         if 'US' in reg.name:
             region = reg
@@ -71,7 +71,7 @@ if __name__ == "__main__":
     workspace_manager = s2.manage_workspaces(access_token=S2MS_API_KEY)
 
     if command == "start":
-        cmd_start(workspace_manager)
+        cmd_start(workspace_manager, db_name)
 
     elif command == "terminate":
         cmd_terminate(workspace_manager)

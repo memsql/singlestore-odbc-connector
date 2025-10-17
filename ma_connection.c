@@ -834,7 +834,7 @@ real_connect:
 #else
   mysql_options4(Connection->mariadb, MYSQL_OPT_CONNECT_ATTR_ADD, "_driver_name", "SingleStore ODBC ANSI Driver");
 #endif
-  mysql_options4(Connection->mariadb, MYSQL_OPT_CONNECT_ATTR_ADD, "_driver_version", MARIADB_ODBC_VERSION);
+  mysql_options4(Connection->mariadb, MYSQL_OPT_CONNECT_ATTR_ADD, "_driver_version", SS_ODBC_VERSION);
 
   if (!MADB_IS_EMPTY(Dsn->App))
   {
@@ -1512,7 +1512,7 @@ SQLRETURN MADB_DbcGetInfo(MADB_Dbc *Dbc, SQLUSMALLINT InfoType, SQLPOINTER InfoV
      // A character string with the version of the driver and optionally, a description of the driver
      SLen= (SQLSMALLINT)MADB_SetString(CHARSET_PTR(isWChar, Dbc),
                                      (void *)InfoValuePtr, BUFFER_CHAR_LEN(BufferLength, isWChar), 
-                                     MARIADB_ODBC_VERSION, SQL_NTS, &Dbc->Error);
+                                     SS_ODBC_VERSION, SQL_NTS, &Dbc->Error);
     break;
     /*******************************/
   case SQL_DROP_ASSERTION:

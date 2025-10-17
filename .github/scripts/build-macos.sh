@@ -20,31 +20,26 @@
 
 set -eo pipefail
 
-export TEST_SERVER=$(echo "$(cat WORKSPACE_ENDPOINT_FILE)")
+# newer versions of macOS require older llvm because of zlib compatibility
+brew install llvm@16
+
+export LLVM_PATH=$(brew --prefix llvm@16)
+export PATH="$LLVM_PATH/bin:$PATH"
+export CC="$LLVM_PATH/bin/clang"
+export CXX="$CC++"
+export LDFLAGS="$LDFLAGS -L$LLVM_PATH/lib"
+export CPPFLAGS="$CPPFLAGS -I$LLVM_PATH/include"
+
+# set variables for Connector/ODBC test binaries
+export TEST_SERVER="$(cat WORKSPACE_ENDPOINT_FILE)"
 export TEST_UID="${MEMSQL_USER}"
 export TEST_PORT="${MEMSQL_PORT}"
 export TEST_PASSWORD="${MEMSQL_PASSWORD}"
 
-# set variables for odbc.ini and odbcinst.ini
-export ODBCINI="$PWD/test/odbc.ini"
-cat ${ODBCINI}
-export ODBCINSTINI="$PWD/test/odbcinst.ini"
-cat ${ODBCINSTINI}
+cd libmariadb
+cmake -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_SSL=OPENSSL
+cmake --build . --config ${BUILD_TYPE}
+cd ..
 
-echo "Modifying /etc/hosts and ~/my.cnf to enable connect tests"
-echo "${TEST_SERVER} test-memsql-server" | sudo tee -a /etc/hosts
-echo "${TEST_SERVER} test-memsql-cluster" | sudo tee -a /etc/hosts
-echo "${TEST_SERVER} singlestore.test.com" | sudo tee -a /etc/hosts
-echo "[mysqld]
-plugin-load-add=authentication_pam.so
-
-[client]
-protocol = TCP
-
-[odbc]
-database = odbc_test_mycnf
-" | sudo tee -a ~/.my.cnf
-
-echo "Running tests"
-cd test
-ctest -V
+cmake -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL -DWITH_IODBC=ON -DIS_ON_S2MS=1 -Wno-pointer-sign
+cmake --build . --config ${BUILD_TYPE}

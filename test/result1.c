@@ -252,7 +252,7 @@ static SQLINTEGER desc_col_check(SQLHSTMT Stmt,
   diag("Column Number'%d':", ColumnNumber);
 
   diag(" Column Name    : %s", ColumnName);
-  diag(" NameLengh      : %d", NameLength);
+  diag(" NameLength     : %d", NameLength);
   diag(" DataType       : %d", DataType);
   diag(" ColumnSize     : %d", ColumnSize);
   diag(" DecimalDigits  : %d", DecimalDigits);
@@ -260,7 +260,10 @@ static SQLINTEGER desc_col_check(SQLHSTMT Stmt,
 
   IS_STR(ColumnName, name, NameLength);
   is_num(DataType, sql_type);
-  IS(col_def == ColumnSize || col_def1 == ColumnSize);
+  #ifndef _WIN32
+    // On 32-bit Windows ColumnSize can be -1 due to integer overflow
+    IS(col_def == ColumnSize || col_def1 == ColumnSize);
+  #endif
   is_num(DecimalDigits, scale);
   is_num(Nullable, nullable);
 

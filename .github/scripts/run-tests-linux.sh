@@ -20,7 +20,7 @@
 
 set -eo pipefail
 
-## Export password and port
+## Export password, port and user if they are set
 if [ -n "$MEMSQL_PASSWORD" ]
 then
   export TEST_PASSWORD=$MEMSQL_PASSWORD
@@ -31,6 +31,16 @@ then
   export TEST_PORT=$MEMSQL_PORT
 fi
 
+if [ -n "$MEMSQL_USER" ]
+then
+  export TEST_UID=$MEMSQL_USER
+fi
+
+if [ -f WORKSPACE_ENDPOINT_FILE ]; then
+  export TEST_SERVER=$(cat WORKSPACE_ENDPOINT_FILE)
+fi
+
+
 export MEMSQL_JWT="eyJhbGciOiJSUzM4NCIsInR5cCI6IkpXVCJ9."\
 "eyJ1c2VybmFtZSI6InRlc3Rfand0X3VzZXIiLCJleHAiOjI1MTQzNTk5MjAsImVtYWlsIjoidGVzdEBzaW5nbGVzdG9yZS5jb20ifQ."\
 "kzcqllfR9HIjJLG8ZxS8Ck_N1PUjqdPTdXOv_jRWJCwzdBP8x0kuOtvtx-XScJq2PN3x41I8BkC74T3eUt1dUo_PqhDGcgePNDKgdrqvyGxLZxNiyydt"\
@@ -40,9 +50,11 @@ export MEMSQL_JWT="eyJhbGciOiJSUzM4NCIsInR5cCI6IkpXVCJ9."\
 "lp-ffRjnBJSNjTYF5wUwCQdaUcaklfEJJYhNHrRBQ4dTu9Jq2CbZztex6zfIpd2PRiPauaEcE0Di4nyJZjSSxQj0ao-us3523eC2XDXvIH1E7Y2I235h"\
 "udKDUWVrYZJtxZU2Ci3ZuEdYteXJ3VoUBG7m_Ydsky2GUz7sNZWhdsaYD_Ghy66XsO-2cW-kX7GjvX28HOBWWzzPpzT_25W54cxsc-c"
 
-echo "Running tests"
+echo "Running tests from $PWD"
 
-cd test
+cp -r test/ssl build/test
+cd build/test
+
 export ODBCINI="$PWD/odbc.ini"
 export ODBCSYSINI=$PWD
 
