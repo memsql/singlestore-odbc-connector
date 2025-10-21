@@ -14,64 +14,64 @@ env:
   NEED_RUN_TESTS: 'true'  
 
 jobs:
-  # build-test-ubuntu:
-  #   name: Build & Test (Ubuntu)
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     matrix:
-  #       build_type: [RelWithDebInfo]
-  #       driver_type: [unicode, ansi]
-  #       include:
-  #         - build_type: RelWithDebInfo
-  #           driver_type: unicode
-  #           test_dsn: ssodbc_test_w
-  #           test_driver: 'SingleStore ODBC Unicode Driver'
-  #         - build_type: RelWithDebInfo
-  #           driver_type: ansi
-  #           test_dsn: ssodbc_test_a
-  #           test_driver: 'SingleStore ODBC ANSI Driver'
-  #   env:
-  #     BUILD_TYPE: ${{ matrix.build_type }}
-  #     TEST_DSN: ${{ matrix.test_dsn }}
-  #     TEST_DRIVER: ${{ matrix.test_driver }}
-  #     MEMSQL_PORT: 5506
-  #     MEMSQL_USER: root
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #     - name: Run build and test on Linux (Ubuntu)
-  #       uses: ./.github/workflows/actions/build_test_linux
+  build-test-ubuntu:
+    name: Build & Test (Ubuntu)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build_type: [RelWithDebInfo]
+        driver_type: [unicode, ansi]
+        include:
+          - build_type: RelWithDebInfo
+            driver_type: unicode
+            test_dsn: ssodbc_test_w
+            test_driver: 'SingleStore ODBC Unicode Driver'
+          - build_type: RelWithDebInfo
+            driver_type: ansi
+            test_dsn: ssodbc_test_a
+            test_driver: 'SingleStore ODBC ANSI Driver'
+    env:
+      BUILD_TYPE: ${{ matrix.build_type }}
+      TEST_DSN: ${{ matrix.test_dsn }}
+      TEST_DRIVER: ${{ matrix.test_driver }}
+      MEMSQL_PORT: 5506
+      MEMSQL_USER: root
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run build and test on Linux (Ubuntu)
+        uses: ./.github/workflows/actions/build_test_linux
 
-  # build-test-centos:
-  #   name: Build & Test (RHEL/CentOS)
-  #   runs-on: ubuntu-latest
-  #   container: 
-  #     image: quay.io/centos/centos:stream9
-  #   strategy:
-  #     matrix:
-  #       build_type: [RelWithDebInfo]
-  #       driver_type: [unicode, ansi]
-  #       include:
-  #         - build_type: RelWithDebInfo
-  #           driver_type: unicode
-  #           test_dsn: ssodbc_test_w
-  #           test_driver: 'SingleStore ODBC Unicode Driver'
-  #         - build_type: RelWithDebInfo
-  #           driver_type: ansi
-  #           test_dsn: ssodbc_test_a
-  #           test_driver: 'SingleStore ODBC ANSI Driver'
-  #   env:
-  #     BUILD_TYPE: ${{ matrix.build_type }}
-  #     TEST_DSN: ${{ matrix.test_dsn }}
-  #     TEST_DRIVER: ${{ matrix.test_driver }}
-  #     DRIVER_TYPE: ${{ matrix.driver_type }}
-  #     MEMSQL_PORT: 3306
-  #     MEMSQL_USER: admin
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #     - name: Run build and test on RHEL/CentOS
-  #       uses: ./.github/workflows/actions/build_test_centos
+  build-test-centos:
+    name: Build & Test (RHEL/CentOS)
+    runs-on: ubuntu-latest
+    container: 
+      image: quay.io/centos/centos:stream9
+    strategy:
+      matrix:
+        build_type: [RelWithDebInfo]
+        driver_type: [unicode, ansi]
+        include:
+          - build_type: RelWithDebInfo
+            driver_type: unicode
+            test_dsn: ssodbc_test_w
+            test_driver: 'SingleStore ODBC Unicode Driver'
+          - build_type: RelWithDebInfo
+            driver_type: ansi
+            test_dsn: ssodbc_test_a
+            test_driver: 'SingleStore ODBC ANSI Driver'
+    env:
+      BUILD_TYPE: ${{ matrix.build_type }}
+      TEST_DSN: ${{ matrix.test_dsn }}
+      TEST_DRIVER: ${{ matrix.test_driver }}
+      DRIVER_TYPE: ${{ matrix.driver_type }}
+      MEMSQL_PORT: 3306
+      MEMSQL_USER: admin
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run build and test on RHEL/CentOS
+        uses: ./.github/workflows/actions/build_test_centos
 
   build-test-macos:
     name: Build & Test (macOS)
@@ -103,35 +103,35 @@ jobs:
       - name: Run build and test on MacOS
         uses: ./.github/workflows/actions/build_test_macos
 
-  # build-test-windows:
-  #   name: Build & Test (Windows)
-  #   runs-on: windows-latest
-  #   strategy:
-  #     matrix:
-  #       build_type: [RelWithDebInfo]
-  #       driver_type: [unicode, ansi]
-  #       arch_bits: [64]
-  #       include:
-  #         - build_type: RelWithDebInfo
-  #           driver_type: unicode
-  #           arch_bits: 64
-  #           test_dsn: ssodbc_test_w
-  #           test_driver: 'SingleStore ODBC Unicode Driver'
-  #         - build_type: RelWithDebInfo
-  #           driver_type: ansi
-  #           arch_bits: 64
-  #           test_dsn: ssodbc_test_a
-  #           test_driver: 'SingleStore ODBC ANSI Driver'
-  #   env:
-  #     BUILD_TYPE: ${{ matrix.build_type }}
-  #     TEST_DSN: ${{ matrix.test_dsn }}
-  #     TEST_DRIVER: ${{ matrix.test_driver }}
-  #     DRIVER_TYPE: ${{ matrix.driver_type }}
-  #     ARCH_BITS: ${{ matrix.arch_bits }}
-  #     MEMSQL_PORT: 3306
-  #     MEMSQL_USER: admin
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #     - name: Run build and test on Windows
-  #       uses: ./.github/workflows/actions/build_test_windows
+  build-test-windows:
+    name: Build & Test (Windows)
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        build_type: [RelWithDebInfo]
+        driver_type: [unicode, ansi]
+        arch_bits: [64]
+        include:
+          - build_type: RelWithDebInfo
+            driver_type: unicode
+            arch_bits: 64
+            test_dsn: ssodbc_test_w
+            test_driver: 'SingleStore ODBC Unicode Driver'
+          - build_type: RelWithDebInfo
+            driver_type: ansi
+            arch_bits: 64
+            test_dsn: ssodbc_test_a
+            test_driver: 'SingleStore ODBC ANSI Driver'
+    env:
+      BUILD_TYPE: ${{ matrix.build_type }}
+      TEST_DSN: ${{ matrix.test_dsn }}
+      TEST_DRIVER: ${{ matrix.test_driver }}
+      DRIVER_TYPE: ${{ matrix.driver_type }}
+      ARCH_BITS: ${{ matrix.arch_bits }}
+      MEMSQL_PORT: 3306
+      MEMSQL_USER: admin
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run build and test on Windows
+        uses: ./.github/workflows/actions/build_test_windows
