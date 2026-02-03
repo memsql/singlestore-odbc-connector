@@ -59,6 +59,7 @@ then
 else
   SANITIZER_OPTION="OFF"
 fi
+export BUILD_TYPE="${BUILD_TYPE:-RelWithDebInfo}"
 
 mkdir -p build && cd build
 ## build odbc connector
