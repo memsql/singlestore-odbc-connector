@@ -899,10 +899,6 @@ real_connect:
       goto mysql_native_err;
   }
 
-  // mysql_set_character_set in the form of the mysql_optionsv call is a no-op:
-  // mysql_optionsv(*, MYSQL_SET_CHARSET_NAME, *) doesn't set database/connection charset 
-  mysql_set_character_set(Connection->mariadb, Connection->Charset.cs_info->csname);
-
   /* set autocommit behavior */
   if (mysql_autocommit(Connection->mariadb, (my_bool)Connection->AutoCommit))
     goto mysql_native_err;
