@@ -70,7 +70,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     # Commit changes
     git add CMakeLists.txt .github/workflows/publish.yml
     git commit -m "Bump version to $NEW_VERSION"
-`
+
     # Create tag
     git tag "v$NEW_VERSION"
 
