@@ -1382,14 +1382,12 @@ MA_ODBC_TESTS my_tests[]=
   {t_sqltables, "t_sqltables", NORMAL, ALL_DRIVERS},
   {my_information_schema, "my_information_schema", NORMAL, ALL_DRIVERS},
   {empty_set, "empty_set", NORMAL, ALL_DRIVERS},
+// disable tests that cause timeout on MacOS CI runners
+#ifndef __APPLE__
   {t_bug23031, "t_bug23031", NORMAL, ALL_DRIVERS},
   {bug15713, "bug15713", NORMAL, ALL_DRIVERS},
   {t_bug28316, "t_bug28316", NORMAL, ALL_DRIVERS},
   {bug8860, "bug8860", NORMAL, ALL_DRIVERS},
-// TODO: PLAT-6326
-#ifndef IS_ON_S2MS
-  {t_bug26934, "t_bug26934", NORMAL, ALL_DRIVERS},
-#endif
   {t_bug29888, "t_bug29888", NORMAL, ALL_DRIVERS},
   {t_bug14407, "t_bug14407", NORMAL, ALL_DRIVERS},
   {t_bug32864, "t_bug32864", NORMAL, ALL_DRIVERS},
@@ -1399,6 +1397,11 @@ MA_ODBC_TESTS my_tests[]=
   {t_bug30770,"t_bug30770", NORMAL, ALL_DRIVERS},
   {t_bug36275, "t_bug36275", NORMAL, ALL_DRIVERS},
   {t_bug39957, "t_bug39957", NORMAL, ALL_DRIVERS},
+#endif
+// TODO: PLAT-6326
+#ifndef IS_ON_S2MS
+  {t_bug26934, "t_bug26934", NORMAL, ALL_DRIVERS},
+#endif
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
