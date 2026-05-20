@@ -1,0 +1,15 @@
+SingleStore ODBC Driver
+Copyright (C) 2021-2026 SingleStore, Inc.
+Copyright (C) 2013, 2019 MariaDB Corporation AB
+
+This library is free software; you can redistribute it and/or modify it
+under the terms of the GNU Lesser General Public License version 2.1 as
+published by the Free Software Foundation.
+
+This library is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+License for more details.
+
+The full text of the GNU LGPL v2.1 is provided in the COPYING file
+distributed with this software, or at <https://www.gnu.org/licenses/lgpl-2.1.html>.
