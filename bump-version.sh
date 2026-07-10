@@ -5,6 +5,10 @@
 # Example: ./bump-version.sh 1.2.2
 #          ./bump-version.sh 1.2.3-beta
 #          ./bump-version.sh 1.3.0-rc1
+#
+# After updating CMakeLists.txt, this script can commit, tag, and push.
+# Pushing the version tag triggers the Publish installers workflow.
+# See RELEASING.md for the full release process.
 
 set -euo pipefail
 
@@ -52,23 +56,20 @@ sed -i.bak "s/SET(SS_ODBC_VERSION_PATCH [0-9][0-9]*)/SET(SS_ODBC_VERSION_PATCH $
 sed -i.bak "s/SET(SS_ODBC_VERSION_QUALITY \"[^\"]*\")/SET(SS_ODBC_VERSION_QUALITY \"$QUALITY\")/" CMakeLists.txt
 sed -i.bak "s/SET(SS_ODBC_VERSION \"[0-9.][0-9.]*\")/SET(SS_ODBC_VERSION \"$FORMATTED_VERSION\")/" CMakeLists.txt
 
-# Update publish.yml
-sed -i.bak "s/DRIVER_VERSION: [0-9][0-9.]*\(-[a-zA-Z0-9][a-zA-Z0-9]*\)*/DRIVER_VERSION: $NEW_VERSION/" .github/workflows/publish.yml
-
 # Remove backup files
-rm -f CMakeLists.txt.bak .github/workflows/publish.yml.bak
+rm -f CMakeLists.txt.bak
 
-echo "Updated CMakeLists.txt and publish.yml"
+echo "Updated CMakeLists.txt"
 echo ""
 echo "Changes made:"
-git --no-pager diff CMakeLists.txt .github/workflows/publish.yml
+git --no-pager diff CMakeLists.txt
 
 # Prompt for confirmation
-read -p "Do you want to commit and push these changes? (y/n) " -n 1 -r
+read -p "Do you want to commit, tag, and push these changes? (y/n) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     # Commit changes
-    git add CMakeLists.txt .github/workflows/publish.yml
+    git add CMakeLists.txt
     git commit -m "Bump version to $NEW_VERSION"
 
     # Create tag
@@ -81,6 +82,8 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "✓ Version bumped to $NEW_VERSION"
     echo "✓ Committed and pushed to remote"
     echo "✓ Tag v$NEW_VERSION created and pushed"
+    echo "✓ Publish installers workflow should now be running"
+    echo "  See RELEASING.md for next steps (edit the pre-release and mark it as latest)"
 else
     echo "Changes not committed. You can review them with 'git diff'"
     exit 1
