@@ -17,7 +17,7 @@ Tags must match `vX.Y.Z` or `vX.Y.Z-<suffix>`:
 | `vX.Y.Z` | `v1.2.2` |
 | `vX.Y.Z-<suffix>` | `v1.2.3-beta`, `v1.3.0-rc1` |
 
-The version in `CMakeLists.txt` must match the tag base version (`X.Y.Z`). Use `bump-version.sh` to keep them in sync.
+The version in `CMakeLists.txt` must match the tag. Use `bump-version.sh` to keep them in sync. The release workflow fails if the tag does not match `SS_ODBC_VERSION_*` in `CMakeLists.txt` (including quality: `ga` for `vX.Y.Z`, or the suffix for `vX.Y.Z-<suffix>`).
 
 ## Create a release
 
@@ -55,6 +55,8 @@ The [Publish installers](.github/workflows/publish.yml) workflow runs on every `
 1. Builds and tests installers on Ubuntu, CentOS/RHEL, macOS, and Windows
 2. Packages platform artifacts
 3. Creates a GitHub **Pre-release** with those artifacts attached
+
+The workflow first checks that the tag matches the version in `CMakeLists.txt`. A mismatch fails the job before builds start.
 
 ## Finalize the release
 

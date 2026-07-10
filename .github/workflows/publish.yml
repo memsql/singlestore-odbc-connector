@@ -19,15 +19,47 @@ jobs:
       driver_version: ${{ steps.version.outputs.driver_version }}
       package_version: ${{ steps.version.outputs.package_version }}
     steps:
-      - name: Derive release version
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Derive and validate release version
         id: version
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           # CMake package names use MAJOR.MINOR.PATCH without a pre-release suffix
           PACKAGE_VERSION="${VERSION%%-*}"
+          if [[ "$VERSION" == *"-"* ]]; then
+            TAG_QUALITY="${VERSION#*-}"
+          else
+            TAG_QUALITY="ga"
+          fi
+
+          CMAKE_MAJOR=$(sed -n 's/^SET(SS_ODBC_VERSION_MAJOR \([0-9][0-9]*\))/\1/p' CMakeLists.txt)
+          CMAKE_MINOR=$(sed -n 's/^SET(SS_ODBC_VERSION_MINOR \([0-9][0-9]*\))/\1/p' CMakeLists.txt)
+          CMAKE_PATCH=$(sed -n 's/^SET(SS_ODBC_VERSION_PATCH \([0-9][0-9]*\))/\1/p' CMakeLists.txt)
+          CMAKE_QUALITY=$(sed -n 's/^SET(SS_ODBC_VERSION_QUALITY "\([^"]*\)")/\1/p' CMakeLists.txt)
+          CMAKE_VERSION="${CMAKE_MAJOR}.${CMAKE_MINOR}.${CMAKE_PATCH}"
+
+          if [[ -z "$CMAKE_MAJOR" || -z "$CMAKE_MINOR" || -z "$CMAKE_PATCH" || -z "$CMAKE_QUALITY" ]]; then
+            echo "Error: failed to parse version from CMakeLists.txt"
+            exit 1
+          fi
+
+          if [[ "$PACKAGE_VERSION" != "$CMAKE_VERSION" ]]; then
+            echo "Error: tag version '$PACKAGE_VERSION' does not match CMakeLists.txt version '$CMAKE_VERSION'"
+            echo "Update CMakeLists.txt (e.g. via ./bump-version.sh) before tagging."
+            exit 1
+          fi
+
+          if [[ "$TAG_QUALITY" != "$CMAKE_QUALITY" ]]; then
+            echo "Error: tag quality '$TAG_QUALITY' does not match CMakeLists.txt quality '$CMAKE_QUALITY'"
+            echo "Update CMakeLists.txt (e.g. via ./bump-version.sh) before tagging."
+            exit 1
+          fi
+
           echo "driver_version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "package_version=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
-          echo "Release version: $VERSION (package version: $PACKAGE_VERSION)"
+          echo "Release version: $VERSION (package version: $PACKAGE_VERSION, quality: $TAG_QUALITY)"
+          echo "Validated against CMakeLists.txt: $CMAKE_VERSION ($CMAKE_QUALITY)"
 
   build-test-ubuntu:
     name: Build & Test (Ubuntu)
@@ -255,7 +287,7 @@ jobs:
 
             ### Installation Instructions
             Please refer to [SingleStore documentation](https://docs.singlestore.com/cloud/developer-resources/connect-with-application-development-tools/connect-with-odbc/the-singlestore-odbc-driver/) for installation instructions.
-          draft: false
+          draft: true
           prerelease: true
           generate_release_notes: true
           fail_on_unmatched_files: true
