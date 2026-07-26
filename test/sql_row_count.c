@@ -192,6 +192,39 @@ ODBC_TEST(t_sqlrowcnt_delete) {
     return OK;
 }
 
+// Regression test: a prepared statement that is executed more than once on the
+// same handle must report the affected-row count of the current execution only.
+// In the client-side prepared statement path the count was accumulated into the
+// underlying MYSQL_STMT and never reset per execute, so a re-execute matching 0
+// rows used to report the previous execute's non-zero count.
+ODBC_TEST(t_sqlrowcnt_reused_prepared_stmt) {
+    SQLLEN     rc;
+    SQLINTEGER grp;
+
+    OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS test_rowcount_values");
+    OK_SIMPLE_STMT(Stmt, "CREATE TABLE test_rowcount_values (id INT PRIMARY KEY, grp INT)");
+    OK_SIMPLE_STMT(Stmt, "INSERT INTO test_rowcount_values VALUES (1,1),(2,1),(3,1),(4,2)");
+
+    CHECK_STMT_RC(Stmt, SQLPrepare(Stmt,
+        (SQLCHAR *)"UPDATE test_rowcount_values SET id = id + 10 WHERE grp = ?", SQL_NTS));
+    CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_LONG,
+        SQL_INTEGER, 0, 0, &grp, 0, NULL));
+
+    // First execute matches 3 rows.
+    grp = 1;
+    CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
+    CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
+    FAIL_IF_NE_INT(rc, 3, "first execute should report 3 affected rows");
+
+    // Re-execute the SAME handle matching 0 rows: must report 0, not the stale 3.
+    grp = 9;
+    CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
+    CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
+    FAIL_IF_NE_INT(rc, 0, "re-execute matching 0 rows must report 0, not the previous count");
+
+    return OK;
+}
+
 ODBC_TEST(t_sqlrowcnt_bulk_operation) {
     SQLLEN rc;
     SQLINTEGER ids[INSERT_CNT] = {1, 2, 3};
@@ -284,6 +317,7 @@ MA_ODBC_TESTS my_tests[] =
 #endif
     {t_sqlrowcnt_insert_no_client_found_rows, "t_sqlrowcnt_insert_no_client_found_rows", NORMAL, ALL_DRIVERS},
     {t_sqlrowcnt_delete, "t_sqlrowcnt_delete", NORMAL, ALL_DRIVERS},
+    {t_sqlrowcnt_reused_prepared_stmt, "t_sqlrowcnt_reused_prepared_stmt", NORMAL, ALL_DRIVERS},
     {t_sqlrowcnt_bulk_operation, "t_sqlrowcnt_bulk_operation", NORMAL, ALL_DRIVERS},
     {t_sqlrowcnt_batch, "t_sqlrowcnt_batch", NORMAL, ALL_DRIVERS},
     {NULL, NULL, NORMAL, ALL_DRIVERS}
