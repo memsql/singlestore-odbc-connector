@@ -202,11 +202,12 @@ ODBC_TEST(t_sqlrowcnt_reused_prepared_stmt) {
     SQLINTEGER grp;
 
     OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS test_rowcount_values");
-    OK_SIMPLE_STMT(Stmt, "CREATE TABLE test_rowcount_values (id INT PRIMARY KEY, grp INT)");
-    OK_SIMPLE_STMT(Stmt, "INSERT INTO test_rowcount_values VALUES (1,1),(2,1),(3,1),(4,2)");
+    // 'id' is the shard key, which SingleStore forbids updating, so the UPDATE below targets 'val'.
+    OK_SIMPLE_STMT(Stmt, "CREATE TABLE test_rowcount_values (id INT PRIMARY KEY, grp INT, val INT)");
+    OK_SIMPLE_STMT(Stmt, "INSERT INTO test_rowcount_values VALUES (1,1,0),(2,1,0),(3,1,0),(4,2,0)");
 
     CHECK_STMT_RC(Stmt, SQLPrepare(Stmt,
-        (SQLCHAR *)"UPDATE test_rowcount_values SET id = id + 10 WHERE grp = ?", SQL_NTS));
+        (SQLCHAR *)"UPDATE test_rowcount_values SET val = val + 1 WHERE grp = ?", SQL_NTS));
     CHECK_STMT_RC(Stmt, SQLBindParameter(Stmt, 1, SQL_PARAM_INPUT, SQL_C_LONG,
         SQL_INTEGER, 0, 0, &grp, 0, NULL));
 
