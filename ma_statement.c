@@ -1940,6 +1940,18 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
       LOCK_MARIADB(Stmt->Connection);
       Stmt->AffectedRows = 0;
 
+      /* Client-side prepared statements (CSPS) accumulate affected rows into
+         the underlying MYSQL_STMT's upsert_status via '+=' (see
+         CspsRunStatementQuery), and that field is never reset per execute.
+         mysql_stmt_affected_rows() reads it, so a re-executed statement whose
+         new run affects 0 rows would otherwise report the previous execute's
+         count. Reset it here at execute start so the count reflects only this
+         execution. */
+      if (Stmt->stmt)
+      {
+          Stmt->stmt->upsert_status.affected_rows = 0;
+      }
+
       if (Stmt->Ipd->Header.RowsProcessedPtr)
       {
           *Stmt->Ipd->Header.RowsProcessedPtr= 0;
