@@ -213,6 +213,9 @@ jobs:
     name: Build & Test (Windows)
     needs: [derive-version]
     runs-on: windows-latest
+    permissions:
+      id-token: write
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -244,6 +247,29 @@ jobs:
         uses: actions/checkout@v4
       - name: Run build and test on Windows
         uses: ./.github/workflows/actions/build_test_windows
+
+      # Authenticate to Azure via OIDC (using your App Registration)
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Install Microsoft's unified Sign tool
+      - name: Install .NET Sign CLI Tool
+        run: dotnet tool install -g --prerelease sign
+
+      # Sign the Windows MSI release artifact
+      - name: Sign MSI with Artifact Signing
+        run: |
+          sign code artifact-signing `
+            --artifact-signing-endpoint "${{ vars.AZURE_SIGNING_ENDPOINT }}" `
+            --artifact-signing-account "${{ vars.AZURE_SIGNING_ACCOUNT }}" `
+            --artifact-signing-certificate-profile "${{ vars.AZURE_SIGNING_PROFILE }}" `
+            --timestamp-url "http://timestamp.acs.microsoft.com" `
+            "wininstall\singlestore-connector-odbc-${{ env.PACKAGE_VERSION }}-win${{ matrix.arch_bits }}.msi"
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -263,12 +289,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-      
+
       - name: Create Pre-release with Assets
         uses: softprops/action-gh-release@v2
         with:
