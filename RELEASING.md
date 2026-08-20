@@ -7,6 +7,7 @@ Pushing a version tag to GitHub triggers an automated release build.
 - Changes for the release are merged to `master`
 - CI tests on `master` are passing
 - You have permission to push tags to the repository
+- Azure Artifact Signing is configured for this repository (see [Code signing](#code-signing) below)
 
 ## Version format
 
@@ -52,11 +53,32 @@ git push origin v1.2.2
 
 The [Publish installers](.github/workflows/publish.yml) workflow runs on every `v*` tag push and:
 
-1. Builds and tests installers on Ubuntu, CentOS/RHEL, macOS, and Windows
-2. Packages platform artifacts
-3. Creates a GitHub **Pre-release** with those artifacts attached
+1. Builds and tests installers on Ubuntu, CentOS/RHEL, macOS, and Windows.
+2. Signs Windows MSI installers with Azure Artifact Signing.
+3. Packages platform artifacts.
+4. Creates a GitHub **Pre-release** with those artifacts attached.
 
 The workflow first checks that the tag matches the version in `CMakeLists.txt`. A mismatch fails the job before builds start.
+
+## Code signing
+
+Windows release MSIs are signed via Azure Artifact Signing (Trusted Signing) using Workload Identity Federation.
+
+### Required GitHub Actions secrets
+
+| Secret | Description |
+| --- | --- |
+| `AZURE_CLIENT_ID` | Application (client) ID of `github-singlestore-signing` |
+| `AZURE_TENANT_ID` | Directory (tenant) ID |
+| `AZURE_SUBSCRIPTION_ID` | Azure subscription ID used for signing |
+
+### Required GitHub Actions variables
+
+| Variable | Example value |
+| --- | --- |
+| `AZURE_SIGNING_ENDPOINT` | `https://eus.codesigning.azure.net` |
+| `AZURE_SIGNING_ACCOUNT`  | `SingleStore` |
+| `AZURE_SIGNING_PROFILE`  | `ConnectorsReleaseProfile` |
 
 ## Finalize the release
 
