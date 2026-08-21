@@ -54,7 +54,7 @@ git push origin v1.2.2
 The [Publish installers](.github/workflows/publish.yml) workflow runs on every `v*` tag push and:
 
 1. Builds and tests installers on Ubuntu, CentOS/RHEL, macOS, and Windows.
-2. Signs Windows MSI installers with Azure Artifact Signing.
+2. Signs the Windows driver and plugin DLLs and the MSI installers with Azure Artifact Signing.
 3. Packages platform artifacts.
 4. Creates a GitHub **Pre-release** with those artifacts attached.
 
@@ -62,7 +62,9 @@ The workflow first checks that the tag matches the version in `CMakeLists.txt`. 
 
 ## Code signing
 
-Windows release MSIs are signed via Azure Artifact Signing (Trusted Signing) using Workload Identity Federation.
+Windows release artifacts are signed via Azure Artifact Signing (Trusted Signing) using Workload Identity Federation.
+
+An MSI signature does not cover the files the installer puts on disk, so `.github/scripts/build-windows.ps1` signs the driver and plugin DLLs before WiX packages them, and signs the MSI once it is built. The DLL list comes from the WiX sources, so files added to the installer are signed automatically. Signing runs only when `SIGN_WINDOWS_ARTIFACTS` is `true`, which the release workflow sets; the [Run tests](.github/workflows/test.yml) workflow leaves it off because it has no Azure credentials.
 
 ### Required GitHub Actions secrets
 

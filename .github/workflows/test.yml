@@ -130,6 +130,8 @@ jobs:
       ARCH_BITS: ${{ matrix.arch_bits }}
       MEMSQL_PORT: 3306
       MEMSQL_USER: admin
+      # Code signing needs Azure credentials and only runs for releases
+      SIGN_WINDOWS_ARTIFACTS: 'false'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
