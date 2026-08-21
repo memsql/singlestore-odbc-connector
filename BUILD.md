@@ -16,13 +16,13 @@ git clone https://github.com/memsql/singlestore-odbc-connector.git
 cd singlestore-odbc-connector
 cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCONC_WITH_MSI=OFF -DWITH_SSL=SCHANNEL .
 cmake --build . --config RelWithDebInfo
-msiexec.exe /i ${SINGLESTORE_ODBC_ROOT}\wininstall\singestore-connector-odbc-${CURRENT_VERSION}-win64.msi
+msiexec.exe /i ${SINGLESTORE_ODBC_ROOT}\wininstall\singlestore-connector-odbc-${CURRENT_VERSION}-win64.msi /qn /norestart
 
-The driver will be installed in the C:\Program Files\... directory.
-To override the installation dir use the following:
-msiexec.exe /i ${SINGLESTORE_ODBC_ROOT}\wininstall\singestore-connector-odbc-${CURRENT_VERSION}-win64.msi TARGETDIR="C:\path\to\dir"
+The driver is installed under `C:\Program Files\SingleStore\...` by default.
+See [wininstall/README.md](wininstall/README.md) for silent-install properties
+(including `INSTALLFOLDER`) and optional features.
 
-To run the tests add the path to the ssodbc.dll to PATH and refresh your cmd and reopen the programs
+To run the tests add the path to the driver DLLs to PATH and refresh your cmd and reopen the programs
 to load the new env (or simply reboot).
 ```
 
