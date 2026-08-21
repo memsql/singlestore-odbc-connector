@@ -59,7 +59,7 @@ $Files | ForEach-Object { Write-Host "  $_" }
     --artifact-signing-endpoint "$ENV:AZURE_SIGNING_ENDPOINT" `
     --artifact-signing-account "$ENV:AZURE_SIGNING_ACCOUNT" `
     --artifact-signing-certificate-profile "$ENV:AZURE_SIGNING_PROFILE" `
-    --timestamp-url "https://timestamp.acs.microsoft.com" `
+    --timestamp-url "http://timestamp.acs.microsoft.com" `
     @Files
 
 if ($LASTEXITCODE -ne 0)
