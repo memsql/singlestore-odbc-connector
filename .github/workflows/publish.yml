@@ -242,11 +242,14 @@ jobs:
       PACKAGE_VERSION: ${{ needs.derive-version.outputs.package_version }}
       MEMSQL_PORT: 3306
       MEMSQL_USER: admin
+      # The build signs the driver and plugin DLLs before packaging them, then signs the MSI
+      SIGN_WINDOWS_ARTIFACTS: 'true'
+      AZURE_SIGNING_ENDPOINT: ${{ vars.AZURE_SIGNING_ENDPOINT }}
+      AZURE_SIGNING_ACCOUNT: ${{ vars.AZURE_SIGNING_ACCOUNT }}
+      AZURE_SIGNING_PROFILE: ${{ vars.AZURE_SIGNING_PROFILE }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Run build and test on Windows
-        uses: ./.github/workflows/actions/build_test_windows
 
       # Authenticate to Azure via OIDC (using your App Registration)
       - name: Azure Login
@@ -256,19 +259,12 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # Install Microsoft's unified Sign tool
+      # Install Microsoft's unified Sign tool, used by the build to sign the MSI and its contents
       - name: Install .NET Sign CLI Tool
         run: dotnet tool install -g --prerelease sign
 
-      # Sign the Windows MSI release artifact
-      - name: Sign MSI with Artifact Signing
-        run: |
-          sign code artifact-signing `
-            --artifact-signing-endpoint "${{ vars.AZURE_SIGNING_ENDPOINT }}" `
-            --artifact-signing-account "${{ vars.AZURE_SIGNING_ACCOUNT }}" `
-            --artifact-signing-certificate-profile "${{ vars.AZURE_SIGNING_PROFILE }}" `
-            --timestamp-url "http://timestamp.acs.microsoft.com" `
-            "wininstall\singlestore-connector-odbc-${{ env.PACKAGE_VERSION }}-win${{ matrix.arch_bits }}.msi"
+      - name: Run build and test on Windows
+        uses: ./.github/workflows/actions/build_test_windows
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
