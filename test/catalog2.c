@@ -1420,6 +1420,46 @@ ODBC_TEST(odbc231)
 }
 
 
+/* SQLColumns and SQLPrimaryKeys with a NULL catalog on a connection opened without DATABASE=: the client library's
+   current-database field is NULL there (USE does not set it), and TABLE_CAT used to be strdup(NULL). */
+ODBC_TEST(t_columns_no_connect_db)
+{
+  SQLHANDLE Env1= NULL, Dbc1= NULL, Stmt1= NULL;
+  SQLCHAR   name[64], use_stmt[128];
+  SQLLEN    cat_ind= 0;
+
+  IS(AllocEnvConn(&Env1, &Dbc1));
+  Stmt1= DoConnect(Dbc1, FALSE, NULL, NULL, NULL, 0, "", NULL, NULL, NULL);
+  FAIL_IF(Stmt1 == NULL, "Could not connect without a database");
+
+  _snprintf((char *)use_stmt, sizeof(use_stmt), "USE %s", my_schema);
+  OK_SIMPLE_STMT(Stmt1, use_stmt);
+  OK_SIMPLE_STMT(Stmt1, "DROP TABLE IF EXISTS t_columns_no_connect_db");
+  OK_SIMPLE_STMT(Stmt1, "CREATE TABLE t_columns_no_connect_db (id INT PRIMARY KEY)");
+
+  CHECK_STMT_RC(Stmt1, SQLColumns(Stmt1, NULL, 0, NULL, 0, (SQLCHAR *)"t_columns_no_connect_db", SQL_NTS, NULL, 0));
+  CHECK_STMT_RC(Stmt1, SQLFetch(Stmt1));
+  CHECK_STMT_RC(Stmt1, SQLGetData(Stmt1, 1, SQL_C_CHAR, name, sizeof(name), &cat_ind));
+  is_num(cat_ind, SQL_NULL_DATA);
+  IS_STR(my_fetch_str(Stmt1, name, 4), "id", 2);
+  FAIL_IF(SQLFetch(Stmt1) != SQL_NO_DATA_FOUND, "expected one column");
+  CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
+
+  CHECK_STMT_RC(Stmt1, SQLPrimaryKeys(Stmt1, NULL, 0, NULL, 0, (SQLCHAR *)"t_columns_no_connect_db", SQL_NTS));
+  CHECK_STMT_RC(Stmt1, SQLFetch(Stmt1));
+  IS_STR(my_fetch_str(Stmt1, name, 4), "id", 2);
+  CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
+
+  OK_SIMPLE_STMT(Stmt1, "DROP TABLE t_columns_no_connect_db");
+  CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_DROP));
+  CHECK_DBC_RC(Dbc1, SQLDisconnect(Dbc1));
+  CHECK_DBC_RC(Dbc1, SQLFreeConnect(Dbc1));
+  CHECK_ENV_RC(Env1, SQLFreeEnv(Env1));
+
+  return OK;
+}
+
+
 MA_ODBC_TESTS my_tests[]=
 {
 //   {t_bug37621, "t_bug37621", NORMAL, ALL_DRIVERS},
@@ -1446,6 +1486,7 @@ MA_ODBC_TESTS my_tests[]=
 //   {odbc185_w, "odbc185_sqlcolumns_wtypes",     NORMAL, UNICODE_DRIVER},
 //   {odbc152, "odbc152_sqlcolumns_sql_data_type",   NORMAL, ALL_DRIVERS},
 //   {odbc231, "odbc231_sqlcolumns_longtext",   NORMAL, ALL_DRIVERS},
+  {t_columns_no_connect_db, "t_columns_no_connect_db", NORMAL, ALL_DRIVERS},
   {NULL, NULL, NORMAL, ALL_DRIVERS}
 };
 
