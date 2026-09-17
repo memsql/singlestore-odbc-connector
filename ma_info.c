@@ -187,6 +187,25 @@ const MADB_TypeInfo* GetTypeInfo(SQLSMALLINT SqlType, MYSQL_FIELD *Field)
   return NULL;
 }
 
+/* {{{ MADB_SqlLiteral
+   Copies Src with every single quote doubled, so that it can stand inside a single-quoted SQL literal. Unlike a
+   double-quoted one, that is a string in every sql_mode: ANSI_QUOTES turns "..." into an identifier. */
+static const char *MADB_SqlLiteral(const char *Src, char *Dst, size_t DstLen)
+{
+  size_t i= 0;
+  for (; Src && *Src && i + 2 < DstLen; ++Src)
+  {
+    if (*Src == '\'')
+    {
+      Dst[i++]= '\'';
+    }
+    Dst[i++]= *Src;
+  }
+  Dst[i]= 0;
+  return Dst;
+}
+/* }}} */
+
 /* {{{ MADB_GetTypeInfo */
 SQLRETURN MADB_GetTypeInfo(SQLHSTMT StatementHandle,
                            SQLSMALLINT DataType)
@@ -195,6 +214,7 @@ SQLRETURN MADB_GetTypeInfo(SQLHSTMT StatementHandle,
   SQLRETURN ret;
   my_bool   isFirst= TRUE;
   char      StmtStr[10000];
+  char      TypeNameLit[128], PrefixLit[32], SuffixLit[32], LocalNameLit[128];
   char      *p= StmtStr;
   int       i;
   const MADB_TypeInfo *TypeInfo= (Stmt->Connection->Environment->OdbcVersion == SQL_OV_ODBC2) ? TypeInfoV2 : TypeInfoV3;
@@ -215,31 +235,37 @@ SQLRETURN MADB_GetTypeInfo(SQLHSTMT StatementHandle,
       {
         isFirst= FALSE;
         p+= _snprintf(p, 10000 - strlen(StmtStr),
-                      "SELECT \"%s\" AS TYPE_NAME, %d AS DATA_TYPE, %lu AS COLUMN_SIZE, \"%s\" AS LITERAL_PREFIX, "
-                      "\"%s\" AS LITERAL_SUFFIX, %s AS CREATE_PARAMS, %d AS NULLABLE, %d AS CASE_SENSITIVE, "
+                      "SELECT '%s' AS TYPE_NAME, %d AS DATA_TYPE, %lu AS COLUMN_SIZE, '%s' AS LITERAL_PREFIX, "
+                      "'%s' AS LITERAL_SUFFIX, %s AS CREATE_PARAMS, %d AS NULLABLE, %d AS CASE_SENSITIVE, "
                       "%d AS SEARCHABLE, %d AS UNSIGNED_ATTRIBUTE, %d AS FIXED_PREC_SCALE, %d AS AUTO_UNIQUE_VALUE, "
-                      "\"%s\" AS LOCAL_TYPE_NAME, %d AS MINIMUM_SCALE, %d AS MAXIMUM_SCALE, "
+                      "'%s' AS LOCAL_TYPE_NAME, %d AS MINIMUM_SCALE, %d AS MAXIMUM_SCALE, "
                       "%d AS SQL_DATA_TYPE, "
                       "%d AS SQL_DATETIME_SUB, %d AS NUM_PREC_RADIX, %d AS INTERVAL_PRECISION ",
-                      TypeInfo[i].TypeName,TypeInfo[i].DataType,TypeInfo[i].ColumnSize,TypeInfo[i].LiteralPrefix,
-                      TypeInfo[i].LiteralSuffix,TypeInfo[i].CreateParams,TypeInfo[i].Nullable,TypeInfo[i].CaseSensitive,
+                      MADB_SqlLiteral(TypeInfo[i].TypeName, TypeNameLit, sizeof(TypeNameLit)),TypeInfo[i].DataType,
+                      TypeInfo[i].ColumnSize,MADB_SqlLiteral(TypeInfo[i].LiteralPrefix, PrefixLit, sizeof(PrefixLit)),
+                      MADB_SqlLiteral(TypeInfo[i].LiteralSuffix, SuffixLit, sizeof(SuffixLit)),TypeInfo[i].CreateParams,
+                      TypeInfo[i].Nullable,TypeInfo[i].CaseSensitive,
                       TypeInfo[i].Searchable,TypeInfo[i].Unsigned,TypeInfo[i].FixedPrecScale,TypeInfo[i].AutoUniqueValue,
-                      TypeInfo[i].LocalTypeName,TypeInfo[i].MinimumScale,TypeInfo[i].MaximumScale,
+                      MADB_SqlLiteral(TypeInfo[i].LocalTypeName, LocalNameLit, sizeof(LocalNameLit)),TypeInfo[i].MinimumScale,
+                      TypeInfo[i].MaximumScale,
                       TypeInfo[i].SqlDataType,
                       TypeInfo[i].SqlDateTimeSub,TypeInfo[i].NumPrecRadix, TypeInfo[i].IntervalPrecision);
       }
       else
         p+= _snprintf(p, 10000 - strlen(StmtStr),
-                      "UNION ALL SELECT \"%s\", %d, %lu , \"%s\", "
-                      "\"%s\", %s, %d, %d, "
+                      "UNION ALL SELECT '%s', %d, %lu , '%s', "
+                      "'%s', %s, %d, %d, "
                       "%d, %d, %d, %d, "
-                      "\"%s\", %d, %d, "
+                      "'%s', %d, %d, "
                       "%d, "
                       "%d, %d, %d ",
-                      TypeInfo[i].TypeName,TypeInfo[i].DataType,TypeInfo[i].ColumnSize,TypeInfo[i].LiteralPrefix,
-                      TypeInfo[i].LiteralSuffix,TypeInfo[i].CreateParams,TypeInfo[i].Nullable,TypeInfo[i].CaseSensitive,
+                      MADB_SqlLiteral(TypeInfo[i].TypeName, TypeNameLit, sizeof(TypeNameLit)),TypeInfo[i].DataType,
+                      TypeInfo[i].ColumnSize,MADB_SqlLiteral(TypeInfo[i].LiteralPrefix, PrefixLit, sizeof(PrefixLit)),
+                      MADB_SqlLiteral(TypeInfo[i].LiteralSuffix, SuffixLit, sizeof(SuffixLit)),TypeInfo[i].CreateParams,
+                      TypeInfo[i].Nullable,TypeInfo[i].CaseSensitive,
                       TypeInfo[i].Searchable,TypeInfo[i].Unsigned,TypeInfo[i].FixedPrecScale,TypeInfo[i].AutoUniqueValue,
-                      TypeInfo[i].LocalTypeName,TypeInfo[i].MinimumScale,TypeInfo[i].MaximumScale,
+                      MADB_SqlLiteral(TypeInfo[i].LocalTypeName, LocalNameLit, sizeof(LocalNameLit)),TypeInfo[i].MinimumScale,
+                      TypeInfo[i].MaximumScale,
                       TypeInfo[i].SqlDataType,
                       TypeInfo[i].SqlDateTimeSub,TypeInfo[i].NumPrecRadix, TypeInfo[i].IntervalPrecision);
     }
@@ -249,10 +275,10 @@ SQLRETURN MADB_GetTypeInfo(SQLHSTMT StatementHandle,
   if (!StmtStr[0])
   {
     p+= _snprintf(p, 10000 - strlen(StmtStr),
-                  "SELECT \"\" AS TYPE_NAME, 0 AS DATA_TYPE, 0 AS COLUMN_SIZE, \"\" AS LITERAL_PREFIX, "
-                  "\"\" AS LITERAL_SUFFIX, NULL AS CREATE_PARAMS, 0 AS NULLABLE, 0 AS CASE_SENSITIVE, "
+                  "SELECT '' AS TYPE_NAME, 0 AS DATA_TYPE, 0 AS COLUMN_SIZE, '' AS LITERAL_PREFIX, "
+                  "'' AS LITERAL_SUFFIX, NULL AS CREATE_PARAMS, 0 AS NULLABLE, 0 AS CASE_SENSITIVE, "
                   "0 AS SEARCHABLE, 0 AS UNSIGNED_ATTRIBUTE, 0 AS FIXED_PREC_SCALE, 0 AS AUTO_UNIQUE_VALUE, "
-                  "\"\" AS LOCAL_TYPE_NAME, 0 AS MINIMUM_SCALE, 0 AS MAXIMUM_SCALE, "
+                  "'' AS LOCAL_TYPE_NAME, 0 AS MINIMUM_SCALE, 0 AS MAXIMUM_SCALE, "
                   "0 AS SQL_DATA_TYPE, "
                   "0 AS SQL_DATETIME_SUB, 0 AS NUM_PREC_RADIX, 0 AS INTERVAL_PRECISION LIMIT 0");
   }

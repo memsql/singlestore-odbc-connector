@@ -811,8 +811,45 @@ ODBC_TEST(t_scalarfunctions)
     return OK;
 }
 
+/* SQLGetTypeInfo builds its result set from a SQL template. With double-quoted literals that template stopped
+   working as soon as sql_mode had ANSI_QUOTES, where "json" is an identifier: 42S22 Unknown column 'json'. */
+ODBC_TEST(t_gettypeinfo_ansi_quotes)
+{
+  SQLCHAR prefix[8], type_name[64];
+  SQLLEN  rows= 0;
+
+  OK_SIMPLE_STMT(Stmt, "SET SESSION sql_mode = CONCAT(@@sql_mode, ',ANSI_QUOTES')");
+
+  CHECK_STMT_RC(Stmt, SQLGetTypeInfo(Stmt, SQL_ALL_TYPES));
+  while (SQL_SUCCEEDED(SQLFetch(Stmt)))
+  {
+    ++rows;
+  }
+  FAIL_IF(rows == 0, "SQLGetTypeInfo(SQL_ALL_TYPES) returned no rows with ANSI_QUOTES");
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+
+  /* a literal prefix that is itself a single quote has to survive the quoting */
+  CHECK_STMT_RC(Stmt, SQLGetTypeInfo(Stmt, SQL_WVARCHAR));
+  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+  my_fetch_str(Stmt, type_name, 1);
+  IS_STR(my_fetch_str(Stmt, prefix, 4), "'", 2);
+  IS_STR(my_fetch_str(Stmt, prefix, 5), "'", 2);
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+
+  /* a type the driver does not support still yields an empty result set, not an error */
+  CHECK_STMT_RC(Stmt, SQLGetTypeInfo(Stmt, SQL_INTERVAL_YEAR));
+  FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "expected an empty result set");
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+
+  OK_SIMPLE_STMT(Stmt, "SET SESSION sql_mode = REPLACE(@@sql_mode, 'ANSI_QUOTES', '')");
+
+  return OK;
+}
+
+
 MA_ODBC_TESTS my_tests[]=
 {
+  { t_gettypeinfo_ansi_quotes, "t_gettypeinfo_ansi_quotes", NORMAL, ALL_DRIVERS},
   { t_gettypeinfo, "t_gettypeinfo", KNOWN_FAILURE, ALL_DRIVERS},
   { sqlgetinfo, "sqlgetinfo", NORMAL , ALL_DRIVERS},
   { t_stmt_attr_status, "t_stmt_attr_status", NORMAL , ALL_DRIVERS},
