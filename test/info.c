@@ -812,36 +812,54 @@ ODBC_TEST(t_scalarfunctions)
 }
 
 /* SQLGetTypeInfo builds its result set from a SQL template. With double-quoted literals that template stopped
-   working as soon as sql_mode had ANSI_QUOTES, where "json" is an identifier: 42S22 Unknown column 'json'. */
+   working as soon as sql_mode had ANSI_QUOTES, where "json" is an identifier: 42S22 Unknown column 'json'.
+   Runs on a connection of its own so that no other test sees the sql_mode change, and puts sql_mode back
+   before it disconnects. */
 ODBC_TEST(t_gettypeinfo_ansi_quotes)
 {
-  SQLCHAR prefix[8], type_name[64];
-  SQLLEN  rows= 0;
+  SQLHANDLE Hdbc1, Stmt1;
+  SQLCHAR   prefix[8], type_name[64], initial_sql_mode[1024];
+  char      restore_sql_mode[1100];
+  SQLLEN    rows= 0;
 
-  OK_SIMPLE_STMT(Stmt, "SET SESSION sql_mode = CONCAT(@@sql_mode, ',ANSI_QUOTES')");
+  AllocEnvConn(&Env, &Hdbc1);
+  Stmt1= DoConnect(Hdbc1, FALSE, NULL, NULL, NULL, 0, NULL, 0, NULL, NULL);
+  FAIL_IF(Stmt1 == NULL, "Could not connect and/or allocate");
 
-  CHECK_STMT_RC(Stmt, SQLGetTypeInfo(Stmt, SQL_ALL_TYPES));
-  while (SQL_SUCCEEDED(SQLFetch(Stmt)))
+  OK_SIMPLE_STMT(Stmt1, "SELECT @@sql_mode");
+  CHECK_STMT_RC(Stmt1, SQLFetch(Stmt1));
+  my_fetch_str(Stmt1, initial_sql_mode, 1);
+  CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
+
+  OK_SIMPLE_STMT(Stmt1, "SET SESSION sql_mode = CONCAT(@@sql_mode, ',ANSI_QUOTES')");
+
+  CHECK_STMT_RC(Stmt1, SQLGetTypeInfo(Stmt1, SQL_ALL_TYPES));
+  while (SQL_SUCCEEDED(SQLFetch(Stmt1)))
   {
     ++rows;
   }
   FAIL_IF(rows == 0, "SQLGetTypeInfo(SQL_ALL_TYPES) returned no rows with ANSI_QUOTES");
-  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+  CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
 
   /* a literal prefix that is itself a single quote has to survive the quoting */
-  CHECK_STMT_RC(Stmt, SQLGetTypeInfo(Stmt, SQL_WVARCHAR));
-  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  my_fetch_str(Stmt, type_name, 1);
-  IS_STR(my_fetch_str(Stmt, prefix, 4), "'", 2);
-  IS_STR(my_fetch_str(Stmt, prefix, 5), "'", 2);
-  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+  CHECK_STMT_RC(Stmt1, SQLGetTypeInfo(Stmt1, SQL_WVARCHAR));
+  CHECK_STMT_RC(Stmt1, SQLFetch(Stmt1));
+  my_fetch_str(Stmt1, type_name, 1);
+  IS_STR(my_fetch_str(Stmt1, prefix, 4), "'", 2);
+  IS_STR(my_fetch_str(Stmt1, prefix, 5), "'", 2);
+  CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
 
   /* a type the driver does not support still yields an empty result set, not an error */
-  CHECK_STMT_RC(Stmt, SQLGetTypeInfo(Stmt, SQL_INTERVAL_YEAR));
-  FAIL_IF(SQLFetch(Stmt) != SQL_NO_DATA_FOUND, "expected an empty result set");
-  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+  CHECK_STMT_RC(Stmt1, SQLGetTypeInfo(Stmt1, SQL_INTERVAL_YEAR));
+  FAIL_IF(SQLFetch(Stmt1) != SQL_NO_DATA_FOUND, "expected an empty result set");
+  CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_CLOSE));
 
-  OK_SIMPLE_STMT(Stmt, "SET SESSION sql_mode = REPLACE(@@sql_mode, 'ANSI_QUOTES', '')");
+  _snprintf(restore_sql_mode, sizeof(restore_sql_mode), "SET SESSION sql_mode = '%s'", initial_sql_mode);
+  OK_SIMPLE_STMT(Stmt1, restore_sql_mode);
+
+  CHECK_STMT_RC(Stmt1, SQLFreeStmt(Stmt1, SQL_DROP));
+  CHECK_DBC_RC(Hdbc1, SQLDisconnect(Hdbc1));
+  CHECK_DBC_RC(Hdbc1, SQLFreeConnect(Hdbc1));
 
   return OK;
 }
