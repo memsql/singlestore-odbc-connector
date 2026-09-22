@@ -132,6 +132,10 @@ cmake-build-relwithdebinfo/
 CMakeFiles
 CMakeCache.txt
 cmake_install.cmake
+compile_commands.json
+
+# clangd cache
+.cache/clangd/*
 
 Testing
 CTestTestfile.cmake
