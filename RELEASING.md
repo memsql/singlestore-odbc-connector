@@ -53,10 +53,10 @@ git push origin v1.2.2
 
 The [Publish installers](.github/workflows/publish.yml) workflow runs on every `v*` tag push and:
 
-1. Builds and tests installers on Ubuntu, CentOS/RHEL, macOS, and Windows.
+1. Builds and tests installers on Ubuntu, CentOS/RHEL, macOS, and Windows. Ubuntu tests run against every currently supported SingleStore engine version.
 2. Signs the Windows driver and plugin DLLs and the MSI installers with Azure Artifact Signing.
 3. Packages platform artifacts.
-4. Creates a GitHub **Pre-release** with those artifacts attached.
+4. Creates a GitHub **Pre-release** with those artifacts attached. The release notes include the engine versions that were tested and a matrix row to copy into this file.
 
 The workflow first checks that the tag matches the version in `CMakeLists.txt`. A mismatch fails the job before builds start.
 
@@ -88,6 +88,7 @@ An MSI signature does not cover the files the installer puts on disk, so `.githu
 2. Edit the release description as needed
 3. Uncheck **Set as a pre-release** and check **Set as the latest release**
 4. Save the release
+5. Copy the Driver-Server compatibility row from the release notes into the matrix below, then commit that change on `master`
 
 ## Artifacts
 
@@ -104,7 +105,7 @@ Installation instructions: [SingleStore ODBC Driver docs](https://docs.singlesto
 
 ### Driver-Server Version Compatibility Matrix
 
-After each release, add a row for the new version rather than copying an older row's engine list. While CI has no pinned engine matrix, take the list from the [EOL policy](https://docs.singlestore.com/db/v9.1/support/singlestore-software-end-of-life-eol-policy/) as of the new tag's date.
+After each release, copy the matrix row from the GitHub release notes into the table below (newest first) and commit it. You can check [EOL policy](https://docs.singlestore.com/db/v9.1/support/singlestore-software-end-of-life-eol-policy/) to find what versions are supported on the date of release.
 
 | Driver Version | Release date | Supported engine versions |
 | -------------- | ------------ | ------------------------- |
