@@ -61,15 +61,28 @@ jobs:
           echo "Release version: $VERSION (package version: $PACKAGE_VERSION, quality: $TAG_QUALITY)"
           echo "Validated against CMakeLists.txt: $CMAKE_VERSION ($CMAKE_QUALITY)"
 
+  fetch-s2-versions:
+    name: Fetch supported SingleStore versions
+    runs-on: ubuntu-latest
+    outputs:
+      versions: ${{ steps.get_versions.outputs.versions }}
+    steps:
+      - name: Get supported versions of SingleStore
+        id: get_versions
+        uses: singlestore-labs/singlestore-supported-versions@main
+        with:
+          include_rc: true
+
   build-test-ubuntu:
-    name: Build & Test (Ubuntu)
-    needs: [derive-version]
+    name: Build & Test (Ubuntu) ${{ matrix.singlestore_version }}
+    needs: [derive-version, fetch-s2-versions]
     strategy:
       fail-fast: false
       matrix:
         build_type: [RelWithDebInfo]
         driver_type: [unicode, ansi]
         os_name: [ubuntu]
+        singlestore_version: ${{ fromJson(needs.fetch-s2-versions.outputs.versions) }}
         include:
           - build_type: RelWithDebInfo
             driver_type: unicode
@@ -89,6 +102,7 @@ jobs:
       TEST_DSN: ${{ matrix.test_dsn }}
       TEST_DRIVER: ${{ matrix.test_driver }}
       DRIVER_VERSION: ${{ needs.derive-version.outputs.driver_version }}
+      SINGLESTORE_VERSION: ${{ matrix.singlestore_version }}
       MEMSQL_PORT: 5506
       MEMSQL_USER: root
     steps:
@@ -106,7 +120,7 @@ jobs:
             cp build/libmariadb/auth_gssapi_client.so singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}/plugins
             tar -zcvf singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}.tar.gz singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-${{ matrix.os_name }}-${{ matrix.arch }}
       - name: Upload artifacts
-        if: matrix.driver_type == 'unicode'
+        if: matrix.driver_type == 'unicode' && matrix.singlestore_version == fromJson(needs.fetch-s2-versions.outputs.versions)[0]
         uses: actions/upload-artifact@v4
         with:
           name: singlestore-odbc-${{ matrix.os_name }}
