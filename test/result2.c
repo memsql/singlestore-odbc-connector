@@ -1376,7 +1376,10 @@ ODBC_TEST(t_odbc274)
   SQLCHAR buffer[32];
 
   /* SingleStore supports DELETE/UPDATE ... RETURNING since 9.1 (aka 10.x).
-     INSERT/REPLACE ... RETURNING remain unsupported (MariaDB-only). */
+     INSERT/REPLACE ... RETURNING remain unsupported (MariaDB-only).
+     CSPS works. SSPS currently mis-fetches RETURNING columns (SQLGetData on
+     col 1 returns length-prefixed "updated" wire bytes as an int) — tracked
+     as SSPS_TO_FIX in the test table. */
   if (ServerNotOlderThan(Connection, 9, 1, 0) == FALSE)
   {
     skip("DELETE/UPDATE ... RETURNING requires SingleStore 9.1+")
