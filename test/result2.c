@@ -1373,11 +1373,34 @@ ODBC_TEST(t_odbc232)
 
 ODBC_TEST(t_odbc274)
 {
-  /* MariaDB-specific: INSERT/REPLACE/DELETE ... RETURNING (ODBC-274).
-     SingleStore does not support RETURNING. This used to be gated on
-     ServerNotOlderThan(10,5,0), but S2MS can report @@memsql_version as
-     10.5.0, which incorrectly enabled the test and failed with SQL 1064. */
-  skip("SingleStore does not support INSERT/REPLACE/DELETE ... RETURNING")
+  SQLCHAR buffer[32];
+
+  /* SingleStore supports DELETE/UPDATE ... RETURNING since 9.1 (aka 10.x).
+     INSERT/REPLACE ... RETURNING remain unsupported (MariaDB-only). */
+  if (ServerNotOlderThan(Connection, 9, 1, 0) == FALSE)
+  {
+    skip("DELETE/UPDATE ... RETURNING requires SingleStore 9.1+")
+  }
+
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_odbc274");
+  OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_odbc274 (id INT UNSIGNED NOT NULL PRIMARY KEY auto_increment, value varchar(32) not null)");
+  OK_SIMPLE_STMT(Stmt, "INSERT INTO t_odbc274(value) VALUES('first'), ('second'), ('third')");
+
+  OK_SIMPLE_STMT(Stmt, "UPDATE t_odbc274 SET value='updated' WHERE value='second' RETURNING id, value");
+  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+  is_num(my_fetch_int(Stmt, 1), 2);
+  IS_STR(my_fetch_str(Stmt, buffer, 2), "updated", sizeof("updated"));
+  EXPECT_STMT(Stmt, SQLFetch(Stmt), SQL_NO_DATA);
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+
+  OK_SIMPLE_STMT(Stmt, "DELETE FROM t_odbc274 WHERE value='updated' RETURNING id");
+  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+  is_num(my_fetch_int(Stmt, 1), 2);
+  EXPECT_STMT(Stmt, SQLFetch(Stmt), SQL_NO_DATA);
+  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
+
+  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_odbc274");
+  return OK;
 }
 
 /* The testcase doesn't really recreate the reported issue, but just test
@@ -1472,7 +1495,7 @@ MA_ODBC_TESTS my_tests[]=
   { t_odbc194, "t_odbc194_null_date", NORMAL, ALL_DRIVERS},
   {t_odbc192, "t_odbc192", NORMAL, ALL_DRIVERS},
   {t_odbc232, "t_odbc232", NORMAL, ALL_DRIVERS},
-  {t_odbc274, "t_odbc274_InsDelReplace_returning", NORMAL, ALL_DRIVERS},
+  {t_odbc274, "t_odbc274_DelUpdate_returning", NORMAL, ALL_DRIVERS},
   {t_odbc214, "t_odbc214_medium", NORMAL, ALL_DRIVERS},
   {t_desccol_before_exec, "t_desccol_before_exec", CSPS_FAIL | SSPS_OK, ALL_DRIVERS}, // TODO PLAT-5665
   {NULL, NULL, NORMAL, ALL_DRIVERS}
