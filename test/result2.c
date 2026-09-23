@@ -1383,8 +1383,10 @@ ODBC_TEST(t_odbc274)
   }
 
   OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_odbc274");
-  OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_odbc274 (id INT UNSIGNED NOT NULL PRIMARY KEY auto_increment, value varchar(32) not null)");
-  OK_SIMPLE_STMT(Stmt, "INSERT INTO t_odbc274(value) VALUES('first'), ('second'), ('third')");
+  /* Explicit primary keys: SingleStore AUTO_INCREMENT values are not
+     guaranteed to be small/sequential across CSPS/SSPS runs. */
+  OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_odbc274 (id INT UNSIGNED NOT NULL PRIMARY KEY, value varchar(32) not null)");
+  OK_SIMPLE_STMT(Stmt, "INSERT INTO t_odbc274(id, value) VALUES(1, 'first'), (2, 'second'), (3, 'third')");
 
   OK_SIMPLE_STMT(Stmt, "UPDATE t_odbc274 SET value='updated' WHERE value='second' RETURNING id, value");
   CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
