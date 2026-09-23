@@ -1373,40 +1373,11 @@ ODBC_TEST(t_odbc232)
 
 ODBC_TEST(t_odbc274)
 {
-  SQLCHAR buffer[32];
-
-  if (ServerNotOlderThan(Connection, 10, 5, 0) == FALSE)
-  {
-    skip("The test requires min 10.5.0 version")
-  }
-  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_odbc274");
-  OK_SIMPLE_STMT(Stmt, "CREATE TABLE t_odbc274 (id INT UNSIGNED NOT NULL PRIMARY KEY auto_increment, value varchar(32) not null)");
-  OK_SIMPLE_STMT(Stmt, "INSERT INTO t_odbc274(value) VALUES('first')");
-
-  OK_SIMPLE_STMT(Stmt, "INSERT INTO t_odbc274(value) VALUES('INSERT'), ('RETURNING') RETURNING id");
-
-  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  is_num(my_fetch_int(Stmt, 1), 2);
-  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  is_num(my_fetch_int(Stmt, 1), 3);
-
-  EXPECT_STMT(Stmt, SQLFetch(Stmt), SQL_NO_DATA);
-  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
-
-  OK_SIMPLE_STMT(Stmt, "REPLACE INTO t_odbc274(id, value) VALUES(2, 'REPLACE') RETURNING value");
-  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  IS_STR(my_fetch_str(Stmt, buffer, 1), "REPLACE", sizeof("REPLACE"));
-  EXPECT_STMT(Stmt, SQLFetch(Stmt), SQL_NO_DATA);
-  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
-
-  OK_SIMPLE_STMT(Stmt, "DELETE FROM t_odbc274 WHERE value='REPLACE' RETURNING id");
-  CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
-  is_num(my_fetch_int(Stmt, 1), 2);
-  EXPECT_STMT(Stmt, SQLFetch(Stmt), SQL_NO_DATA);
-  CHECK_STMT_RC(Stmt, SQLFreeStmt(Stmt, SQL_CLOSE));
-
-  OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS t_odbc274");
-  return OK;
+  /* MariaDB-specific: INSERT/REPLACE/DELETE ... RETURNING (ODBC-274).
+     SingleStore does not support RETURNING. This used to be gated on
+     ServerNotOlderThan(10,5,0), but S2MS can report @@memsql_version as
+     10.5.0, which incorrectly enabled the test and failed with SQL 1064. */
+  skip("SingleStore does not support INSERT/REPLACE/DELETE ... RETURNING")
 }
 
 /* The testcase doesn't really recreate the reported issue, but just test
