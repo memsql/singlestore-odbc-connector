@@ -5060,7 +5060,13 @@ SQLRETURN MADB_StmtColumnsNoInfoSchema(MADB_Stmt *Stmt,
         continue;
       }
       // TABLE_CAT
-      is_alloc_fail |= !(uintptr_t)(current_row_ptr[0] = strdup(NameLength1 > 0 ? CatalogName : Stmt->Connection->mariadb->db));
+      {
+        /* mariadb->db is only set by the connect-time database: on a connection opened without one it stays NULL,
+           even after USE. TABLE_CAT is then NULL rather than strdup(NULL). */
+        const char *table_cat = NameLength1 > 0 ? CatalogName : Stmt->Connection->mariadb->db;
+        current_row_ptr[0] = table_cat ? strdup(table_cat) : NULL;
+        is_alloc_fail |= (table_cat != NULL && current_row_ptr[0] == NULL);
+      }
       // TABLE_SCHEM
       current_row_ptr[1] = NULL;
       // TABLE_NAME
@@ -5582,7 +5588,13 @@ SQLRETURN MADB_StmtPrimaryKeysNoInfoSchema(MADB_Stmt *Stmt, char *CatalogName, S
       current_row_ptr = formatted_table_ptr[n_rows] = (char**)calloc(SQL_PRIMARY_KEYS_FIELD_COUNT, sizeof(char*));
       ++n_rows;
        // TABLE_CAT
-      is_alloc_fail |= !(uintptr_t)(current_row_ptr[0] = strdup(NameLength1 > 0 ? CatalogName : Stmt->Connection->mariadb->db));
+      {
+        /* mariadb->db is only set by the connect-time database: on a connection opened without one it stays NULL,
+           even after USE. TABLE_CAT is then NULL rather than strdup(NULL). */
+        const char *table_cat = NameLength1 > 0 ? CatalogName : Stmt->Connection->mariadb->db;
+        current_row_ptr[0] = table_cat ? strdup(table_cat) : NULL;
+        is_alloc_fail |= (table_cat != NULL && current_row_ptr[0] == NULL);
+      }
       // TABLE_SCHEM
       current_row_ptr[1] = NULL;
       // TABLE_NAME
