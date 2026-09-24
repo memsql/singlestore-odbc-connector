@@ -527,6 +527,7 @@ void MADB_StmtReset(MADB_Stmt *Stmt)
 
   default:
     Stmt->PositionedCommand= 0;
+    Stmt->ForceCsps= FALSE;
     Stmt->State= MADB_SS_INITED;
     MADB_CLEAR_ERROR(&Stmt->Error);
   }
@@ -628,6 +629,11 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
     && MADB_FindToken(&Stmt->Query, "RETURNING"))
   {
     Stmt->Query.ReturnsResult= '\1';
+    /* SingleStore returns text-protocol rows for prepared DML RETURNING
+       (COM_STMT_PREPARE reports field_count=0; execute then returns a text
+       result). Connector/C unpacks those as binary and corrupts values
+       (e.g. INT reads length-prefixed string bytes). Use CSPS/text instead. */
+    Stmt->ForceCsps= TRUE;
   }
 
   if (QUERY_IS_MULTISTMT(Stmt->Query) && NO_CACHE(Stmt))

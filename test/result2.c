@@ -1377,9 +1377,8 @@ ODBC_TEST(t_odbc274)
 
   /* SingleStore supports DELETE/UPDATE ... RETURNING since 9.1 (aka 10.x).
      INSERT/REPLACE ... RETURNING remain unsupported (MariaDB-only).
-     CSPS works. SSPS currently mis-fetches RETURNING columns (SQLGetData on
-     col 1 returns length-prefixed "updated" wire bytes as an int) — tracked
-     as SSPS_TO_FIX in the test table. */
+     Prepared RETURNING uses text-protocol result rows; the driver forces
+     CSPS for these statements so fetch works under NO_SSPS=0 as well. */
   if (ServerNotOlderThan(Connection, 9, 1, 0) == FALSE)
   {
     skip("DELETE/UPDATE ... RETURNING requires SingleStore 9.1+")
@@ -1500,7 +1499,7 @@ MA_ODBC_TESTS my_tests[]=
   { t_odbc194, "t_odbc194_null_date", NORMAL, ALL_DRIVERS},
   {t_odbc192, "t_odbc192", NORMAL, ALL_DRIVERS},
   {t_odbc232, "t_odbc232", NORMAL, ALL_DRIVERS},
-  {t_odbc274, "t_odbc274_DelUpdate_returning", CSPS_OK | SSPS_TO_FIX, ALL_DRIVERS}, // TODO: SSPS GetData on RETURNING misreads string column wire bytes as int
+  {t_odbc274, "t_odbc274_DelUpdate_returning", NORMAL, ALL_DRIVERS},
   {t_odbc214, "t_odbc214_medium", NORMAL, ALL_DRIVERS},
   {t_desccol_before_exec, "t_desccol_before_exec", CSPS_FAIL | SSPS_OK, ALL_DRIVERS}, // TODO PLAT-5665
   {NULL, NULL, NORMAL, ALL_DRIVERS}
