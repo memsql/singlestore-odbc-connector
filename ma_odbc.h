@@ -320,9 +320,10 @@ struct st_ma_odbc_stmt
   int                       LastSQLGetDataColumn;
   my_bool                   RebindParams;
   my_bool                   bind_done;
-  /* Force client-side (text) protocol for this statement. Used for DML
-     ... RETURNING: SingleStore sends text-protocol result rows for prepared
-     RETURNING, while Connector/C expects binary rows. */
+  /* Force client-side (text) protocol for this statement when
+     FORCE_CSPS_STMT is set: DML ... RETURNING and other commands that
+     SingleStore cannot run as binary prepared statements (SHOW, DESCRIBE,
+     EXPLAIN, ANALYZE, CHECK, OPTIMIZE, EXECUTE). */
   my_bool                   ForceCsps;
   long long                 AffectedRows;
   unsigned long             *CharOffset;

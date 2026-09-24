@@ -626,15 +626,26 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
   }
   MADB_ParseQuery(&Stmt->Query, Stmt->Connection->Dsn->RewriteCallSP);
 
-  if ((Stmt->Query.QueryType == MADB_QUERY_INSERT || Stmt->Query.QueryType == MADB_QUERY_UPDATE || Stmt->Query.QueryType == MADB_QUERY_DELETE)
-    && MADB_FindToken(&Stmt->Query, "RETURNING"))
   {
-    Stmt->Query.ReturnsResult= '\1';
-    /* SingleStore returns text-protocol rows for prepared DML RETURNING
-       (COM_STMT_PREPARE reports field_count=0; execute then returns a text
-       result). Connector/C unpacks those as binary and corrupts values
-       (e.g. INT reads length-prefixed string bytes). Use CSPS/text instead. */
-    Stmt->ForceCsps= TRUE;
+    my_bool DmlReturning= (Stmt->Query.QueryType == MADB_QUERY_INSERT || Stmt->Query.QueryType == MADB_QUERY_UPDATE || Stmt->Query.QueryType == MADB_QUERY_DELETE)
+                          && MADB_FindToken(&Stmt->Query, "RETURNING");
+
+    if (DmlReturning)
+    {
+      /* SingleStore returns text-protocol rows for prepared DML RETURNING
+         (COM_STMT_PREPARE reports field_count=0; execute then returns a text
+         result). Connector/C unpacks those as binary and corrupts values. */
+      Stmt->Query.ReturnsResult= '\1';
+    }
+
+    /* Opt in to CSPS/text for statements the binary protocol cannot handle:
+       DML ... RETURNING, SHOW, DESCRIBE, EXPLAIN, ANALYZE, CHECK, OPTIMIZE,
+       EXECUTE. */
+    if (Stmt->Connection->Dsn->ForceCspsStmt &&
+        (DmlReturning || MADB_QueryTypeUnsupportedBySsps(Stmt->Query.QueryType)))
+    {
+      Stmt->ForceCsps= TRUE;
+    }
   }
 
   if (QUERY_IS_MULTISTMT(Stmt->Query) && NO_CACHE(Stmt))

@@ -442,6 +442,23 @@ enum enum_madb_query_type MADB_GetQueryType(const char *Token1, const char *Toke
   return MADB_QUERY_NO_RESULT;
 }
 
+my_bool MADB_QueryTypeUnsupportedBySsps(enum enum_madb_query_type QueryType)
+{
+  switch (QueryType)
+  {
+  case MADB_QUERY_SHOW:
+  case MADB_QUERY_ANALYZE:
+  case MADB_QUERY_EXPLAIN:
+  case MADB_QUERY_CHECK:
+  case MADB_QUERY_OPTIMIZE:
+  case MADB_QUERY_DESCRIBE:
+  case MADB_QUERY_EXECUTE:
+    return TRUE;
+  default:
+    return FALSE;
+  }
+}
+
 /* -------------------- Tokens - End ----------------- */
 
 /* Not used - rather a placeholder in case we need it */
