@@ -18,112 +18,51 @@ WORKSPACE_GROUP_ID_FILE = "WORKSPACE_GROUP_ID_FILE"
 # transient "could not acquire lock" 500s or connect timeouts.
 CREATE_GROUP_ATTEMPTS = 8
 CREATE_GROUP_BASE_DELAY_SEC = 5
-WORKSPACE_WAIT_TIMEOUT_SEC = 1200
-WORKSPACE_WAIT_INTERVAL_SEC = 10
+CONNECT_ATTEMPTS = 8
+CONNECT_BASE_DELAY_SEC = 5
+
+# Allowlists of required substrings (case-insensitive). Add newly observed
+# flaky messages here.
+# Example: ManagementError: 500 (... could not acquire lock within duration)
+RETRYABLE_CREATE_WORKSPACE_GROUP = (
+    "could not acquire lock",
+)
+# Example: Can't connect to MySQL server on 'svc-....svc.singlestore.com' (timed out)
+RETRYABLE_CONNECT = (
+    "can't connect to mysql server",
+)
 
 
-def _exc_msg(exc):
-    return str(exc).lower()
-
-
-def _is_transient_network_error(exc):
-    """Connection drops / timeouts talking to the S2MS API or workspace host."""
-    if isinstance(exc, (ConnectionError, TimeoutError)):
-        return True
-    msg = _exc_msg(exc)
-    return (
-        "timed out" in msg
-        or "timeout" in msg
-        or "connection reset" in msg
-        or "connection aborted" in msg
-        or "connection error" in msg
-    )
-
-
-def _is_lock_contention_error(exc):
-    return "could not acquire lock" in _exc_msg(exc)
-
-
-def _is_workspace_name_conflict(exc):
-    msg = _exc_msg(exc)
-    return (
-        "already exists" in msg
-        or "name conflict" in msg
-        or "duplicate" in msg
-        or "conflict" in msg and "workspace" in msg
-    )
+def _matches_known_errors(exc, known_errors):
+    return any(err in str(exc).lower() for err in known_errors)
 
 
 def _is_retryable_create_group(exc):
-    # Group names are unique per attempt (uuid); only lock races and transport flakes.
-    return _is_lock_contention_error(exc) or _is_transient_network_error(exc)
-
-
-def _is_retryable_create_workspace(exc):
-    # Fixed workspace name "tests": resume an in-flight workspace on retry rather
-    # than treating name conflicts as fatal. Do not retry lock contention here —
-    # the group already exists.
-    return _is_transient_network_error(exc)
+    return _matches_known_errors(exc, RETRYABLE_CREATE_WORKSPACE_GROUP)
 
 
 def _is_retryable_connect(exc):
-    # DB connect to a freshly Active workspace: network / handshake flakes only.
-    return _is_transient_network_error(exc)
+    return _matches_known_errors(exc, RETRYABLE_CONNECT)
 
 
-def _retry(operation_name, fn, is_retryable):
+def _retry(operation_name, operation_fn, is_retryable_fn, attempts, base_delay_sec):
     last_error = None
-    for attempt in range(1, CREATE_GROUP_ATTEMPTS + 1):
+    for attempt in range(1, attempts + 1):
         try:
-            return fn()
+            return operation_fn()
         except Exception as exc:
             last_error = exc
-            if attempt == CREATE_GROUP_ATTEMPTS or not is_retryable(exc):
+            if attempt == attempts or not is_retryable_fn(exc):
                 raise
-            delay = CREATE_GROUP_BASE_DELAY_SEC * (2 ** (attempt - 1))
+            delay = base_delay_sec * (2 ** (attempt - 1))
             print(
                 "Retryable S2MS error during {} "
                 "(attempt {}/{}): {}; sleeping {}s".format(
-                    operation_name, attempt, CREATE_GROUP_ATTEMPTS, exc, delay
+                    operation_name, attempt, attempts, exc, delay
                 )
             )
             time.sleep(delay)
     raise last_error
-
-
-def _reusable_workspace(workspace_group):
-    # Terminated names can be reused. Anything else still owns the name.
-    workspaces = getattr(workspace_group, "workspaces", None) or []
-    for workspace in workspaces:
-        if workspace.name != WORKSPACE_NAME:
-            continue
-        if (workspace.state or "").lower() == "terminated":
-            continue
-        return workspace
-    return None
-
-
-def _wait_for_active_workspace(workspace):
-    # Same bound as create_workspace(wait_on_active=True). A hard wait timeout
-    # raises RuntimeError (not retryable) so we do not stack 8x full waits.
-    # Transient refresh/network errors propagate and may be retried by the caller.
-    deadline = time.monotonic() + WORKSPACE_WAIT_TIMEOUT_SEC
-    while True:
-        state = (workspace.state or "").lower()
-        if state == "active":
-            return workspace
-        if state in ("failed", "terminated"):
-            raise RuntimeError(
-                "Workspace {} entered state {}".format(workspace.name, workspace.state)
-            )
-        remaining = deadline - time.monotonic()
-        if remaining <= 0:
-            raise RuntimeError(
-                "Exceeded waiting time for workspace {} to become Active "
-                "(state {})".format(workspace.name, workspace.state)
-            )
-        time.sleep(min(WORKSPACE_WAIT_INTERVAL_SEC, remaining))
-        workspace.refresh()
 
 
 def cmd_start(workspace_manager, db_name=None):
@@ -148,45 +87,17 @@ def cmd_start(workspace_manager, db_name=None):
         return workspace_group
 
     workspace_group = _retry(
-        "create_workspace_group", create_group, _is_retryable_create_group
+        "create_workspace_group",
+        create_group,
+        _is_retryable_create_group,
+        CREATE_GROUP_ATTEMPTS,
+        CREATE_GROUP_BASE_DELAY_SEC,
     )
     with open(WORKSPACE_GROUP_ID_FILE, "w") as f:
         f.write(workspace_group.id)
 
-    def create_workspace():
-        # create_workspace is not idempotent. A reset or timeout while
-        # wait_on_active is polling leaves the fixed name "tests" in place,
-        # and a blind recreate fails with a name conflict. Resume that workspace.
-        existing = _reusable_workspace(workspace_group)
-        if existing is not None:
-            print(
-                "Workspace {} already exists (state {}); waiting for Active".format(
-                    WORKSPACE_NAME, existing.state
-                )
-            )
-            return _wait_for_active_workspace(existing)
-        try:
-            return workspace_group.create_workspace(
-                name=WORKSPACE_NAME,
-                size="S-00",
-                wait_on_active=True,
-                wait_timeout=WORKSPACE_WAIT_TIMEOUT_SEC,
-            )
-        except Exception as exc:
-            if not _is_workspace_name_conflict(exc):
-                raise
-            existing = _reusable_workspace(workspace_group)
-            if existing is None:
-                raise
-            print(
-                "Workspace {} create conflict (state {}); waiting for Active".format(
-                    WORKSPACE_NAME, existing.state
-                )
-            )
-            return _wait_for_active_workspace(existing)
-
-    workspace = _retry(
-        "create_workspace", create_workspace, _is_retryable_create_workspace
+    workspace = workspace_group.create_workspace(
+        name=WORKSPACE_NAME, size="S-00", wait_on_active=True, wait_timeout=1200
     )
     with open(WORKSPACE_ENDPOINT_FILE, "w") as f:
         f.write(workspace.endpoint)
@@ -195,6 +106,8 @@ def cmd_start(workspace_manager, db_name=None):
         "workspace.connect",
         lambda: workspace.connect(user="admin", port=3306, password=SQL_USER_PASSWORD),
         _is_retryable_connect,
+        CONNECT_ATTEMPTS,
+        CONNECT_BASE_DELAY_SEC,
     )
 
     cursor = conn.cursor()
