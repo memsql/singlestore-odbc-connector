@@ -59,6 +59,7 @@ SQLRETURN MADB_StmtInit(MADB_Dbc *Connection, SQLHANDLE *pHStmt)
   Stmt->Options.CursorType= SQL_CURSOR_FORWARD_ONLY;
   Stmt->Options.UseBookmarks= SQL_UB_OFF;
   Stmt->Options.MetadataId= Connection->MetadataId;
+  Stmt->ForceCsps= FALSE;
 
   Stmt->Apd= Stmt->IApd;
   Stmt->Ard= Stmt->IArd;
