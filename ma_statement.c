@@ -59,6 +59,7 @@ SQLRETURN MADB_StmtInit(MADB_Dbc *Connection, SQLHANDLE *pHStmt)
   Stmt->Options.CursorType= SQL_CURSOR_FORWARD_ONLY;
   Stmt->Options.UseBookmarks= SQL_UB_OFF;
   Stmt->Options.MetadataId= Connection->MetadataId;
+  Stmt->ForceCsps= FALSE;
 
   Stmt->Apd= Stmt->IApd;
   Stmt->Ard= Stmt->IArd;
@@ -527,6 +528,7 @@ void MADB_StmtReset(MADB_Stmt *Stmt)
 
   default:
     Stmt->PositionedCommand= 0;
+    Stmt->ForceCsps= FALSE;
     Stmt->State= MADB_SS_INITED;
     MADB_CLEAR_ERROR(&Stmt->Error);
   }
@@ -624,10 +626,26 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
   }
   MADB_ParseQuery(&Stmt->Query, Stmt->Connection->Dsn->RewriteCallSP);
 
-  if ((Stmt->Query.QueryType == MADB_QUERY_INSERT || Stmt->Query.QueryType == MADB_QUERY_UPDATE || Stmt->Query.QueryType == MADB_QUERY_DELETE)
-    && MADB_FindToken(&Stmt->Query, "RETURNING"))
   {
-    Stmt->Query.ReturnsResult= '\1';
+    my_bool DmlReturning= (Stmt->Query.QueryType == MADB_QUERY_INSERT || Stmt->Query.QueryType == MADB_QUERY_UPDATE || Stmt->Query.QueryType == MADB_QUERY_DELETE)
+                          && MADB_FindToken(&Stmt->Query, "RETURNING");
+
+    if (DmlReturning)
+    {
+      /* SingleStore returns text-protocol rows for prepared DML RETURNING
+         (COM_STMT_PREPARE reports field_count=0; execute then returns a text
+         result). Connector/C unpacks those as binary and corrupts values. */
+      Stmt->Query.ReturnsResult= '\1';
+    }
+
+    /* Fall back to CSPS/text for statements the binary protocol cannot handle:
+       DML ... RETURNING, SHOW, DESCRIBE, EXPLAIN, ANALYZE, CHECK, OPTIMIZE,
+       EXECUTE. Other statements stay on SSPS. */
+    if (Stmt->Connection->Dsn->FallbackCspsStmt &&
+        (DmlReturning || MADB_QueryTypeUnsupportedBySsps(Stmt->Query.QueryType)))
+    {
+      Stmt->ForceCsps= TRUE;
+    }
   }
 
   if (QUERY_IS_MULTISTMT(Stmt->Query) && NO_CACHE(Stmt))
