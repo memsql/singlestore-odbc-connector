@@ -22,10 +22,20 @@ if (-not (Get-Command ctest -ErrorAction SilentlyContinue)) {
     New-Alias -Name ctest -Value "$Env:ProgramFiles\CMake\bin\ctest.exe"
 }
 
-New-Item -Path "HKCU:\Software\ODBC" -Force
-New-Item -Path "HKCU:\Software\ODBC\ODBC.INI" -Force
+# Fail early with a clear error instead of IM002 on every suite if MSI
+# registration did not stick (see build-windows.ps1 msiexec wait/verify).
+$driverRegPath = "HKLM:\SOFTWARE\ODBC\ODBCINST.INI\$ENV:TEST_DRIVER"
+if (-not (Test-Path $driverRegPath)) {
+    Write-Host "Registered ODBC drivers:"
+    Get-OdbcDriver | Format-Table -AutoSize | Out-String | Write-Host
+    throw "TEST_DRIVER '$ENV:TEST_DRIVER' is not registered in ODBCINST.INI"
+}
+Write-Host "Using ODBC driver '$ENV:TEST_DRIVER' -> $((Get-ItemProperty $driverRegPath).Driver)"
+
+New-Item -Path "HKCU:\Software\ODBC" -Force | Out-Null
+New-Item -Path "HKCU:\Software\ODBC\ODBC.INI" -Force | Out-Null
 $regPath = "HKCU:\Software\ODBC\ODBC.INI\$ENV:TEST_DSN"
-New-Item -Path $regPath -Force
+New-Item -Path $regPath -Force | Out-Null
 Set-ItemProperty -Path $regPath -Name "CONN_TIMEOUT" -Value "0"
 Set-ItemProperty -Path $regPath -Name "DATABASE" -Value "odbc_test"
 Set-ItemProperty -Path $regPath -Name "DESCRIPTION" -Value "SingleStore ODBC test"
@@ -36,7 +46,7 @@ Set-ItemProperty -Path $regPath -Name "PWD" -Value $ENV:MEMSQL_PASSWORD
 Set-ItemProperty -Path $regPath -Name "SSLVERIFY" -Value "0"
 Set-ItemProperty -Path $regPath -Name "TCPIP" -Value "1"
 Set-ItemProperty -Path $regPath -Name "UID" -Value $ENV:MEMSQL_USER
-New-Item -Path "HKCU:\Software\ODBC\ODBC.INI\ODBC Data Sources" -Force
+New-Item -Path "HKCU:\Software\ODBC\ODBC.INI\ODBC Data Sources" -Force | Out-Null
 Set-ItemProperty -Path "HKCU:\Software\ODBC\ODBC.INI\ODBC Data Sources" -Name $ENV:TEST_DSN -Value $ENV:TEST_DRIVER
 
 $env:TEST_SCHEMA="odbc_test"
