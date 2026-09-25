@@ -638,10 +638,10 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
       Stmt->Query.ReturnsResult= '\1';
     }
 
-    /* Opt in to CSPS/text for statements the binary protocol cannot handle:
+    /* Fall back to CSPS/text for statements the binary protocol cannot handle:
        DML ... RETURNING, SHOW, DESCRIBE, EXPLAIN, ANALYZE, CHECK, OPTIMIZE,
-       EXECUTE. */
-    if (Stmt->Connection->Dsn->ForceCspsStmt &&
+       EXECUTE. Other statements stay on SSPS. */
+    if (Stmt->Connection->Dsn->FallbackCspsStmt &&
         (DmlReturning || MADB_QueryTypeUnsupportedBySsps(Stmt->Query.QueryType)))
     {
       Stmt->ForceCsps= TRUE;

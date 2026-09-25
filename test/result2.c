@@ -991,7 +991,7 @@ ODBC_TEST(t_odbc58)
 
 
 /* Also contains test for ODBC-150(same problem with DESCRIBE statement).
-   Under SSPS these commands need FORCE_CSPS_STMT=1. */
+   Under SSPS these commands need FALLBACK_CSPS_STMT=1. */
 ODBC_TEST(t_odbc77)
 {
   SQLHSTMT hstmt= Stmt;
@@ -1002,8 +1002,8 @@ ODBC_TEST(t_odbc77)
   {
     CHECK_ENV_RC(Env, SQLAllocConnect(Env, &extra_dbc));
     extra_stmt= DoConnect(extra_dbc, FALSE, my_dsn, my_uid, my_pwd, my_port, my_schema, 0, my_servername,
-                          "FORCE_CSPS_STMT=1");
-    FAIL_IF(extra_stmt == NULL, "Couldn't connect with FORCE_CSPS_STMT=1");
+                          "FALLBACK_CSPS_STMT=1");
+    FAIL_IF(extra_stmt == NULL, "Couldn't connect with FALLBACK_CSPS_STMT=1");
     hstmt= extra_stmt;
   }
 
@@ -1050,9 +1050,11 @@ ODBC_TEST(t_odbc77)
 }
 
 
-/* SHOW is not supported by the binary protocol. With NO_SSPS=0 the driver
-   still uses SSPS unless FORCE_CSPS_STMT=1 opts this statement into CSPS. */
-ODBC_TEST(t_show_tables_force_csps)
+/* SHOW and DELETE ... RETURNING are not usable through the binary protocol.
+   With NO_SSPS=0 the driver still uses SSPS. FALLBACK_CSPS_STMT=1 falls these
+   statements back to CSPS. SQLExecDirect is the path that sets ForceCsps.
+   DELETE ... RETURNING requires SingleStore 9.1+. */
+ODBC_TEST(t_execdirect_force_csps)
 {
   SQLHDBC  extra_dbc= NULL;
   SQLHSTMT extra_stmt= NULL;
@@ -1062,11 +1064,12 @@ ODBC_TEST(t_show_tables_force_csps)
 
   CHECK_ENV_RC(Env, SQLAllocConnect(Env, &extra_dbc));
   extra_stmt= DoConnect(extra_dbc, FALSE, my_dsn, my_uid, my_pwd, my_port, my_schema, 0, my_servername,
-                        "NO_SSPS=0;FORCE_CSPS_STMT=1");
-  FAIL_IF(extra_stmt == NULL, "Couldn't connect with NO_SSPS=0;FORCE_CSPS_STMT=1");
+                        "NO_SSPS=0;FALLBACK_CSPS_STMT=1");
+  FAIL_IF(extra_stmt == NULL, "Couldn't connect with NO_SSPS=0;FALLBACK_CSPS_STMT=1");
 
-  OK_SIMPLE_STMT(extra_stmt, "DROP TABLE IF EXISTS t_show_tables_force_csps");
-  OK_SIMPLE_STMT(extra_stmt, "CREATE TABLE t_show_tables_force_csps (id INT)");
+  OK_SIMPLE_STMT(extra_stmt, "DROP TABLE IF EXISTS t_execdirect_force_csps");
+  OK_SIMPLE_STMT(extra_stmt, "CREATE TABLE t_execdirect_force_csps (id INT UNSIGNED NOT NULL PRIMARY KEY, value varchar(32) not null)");
+  OK_SIMPLE_STMT(extra_stmt, "INSERT INTO t_execdirect_force_csps(id, value) VALUES(1, 'keep'), (2, 'drop')");
   CHECK_STMT_RC(extra_stmt, SQLFreeStmt(extra_stmt, SQL_CLOSE));
 
   CHECK_STMT_RC(extra_stmt, SQLExecDirect(extra_stmt, (SQLCHAR*)"show tables", SQL_NTS));
@@ -1074,16 +1077,33 @@ ODBC_TEST(t_show_tables_force_csps)
 
   while (SQL_SUCCEEDED(SQLFetch(extra_stmt)))
   {
-    if (table_len > 0 && _stricmp((char*)table, "t_show_tables_force_csps") == 0)
+    if (table_len > 0 && _stricmp((char*)table, "t_execdirect_force_csps") == 0)
     {
       found= 1;
       break;
     }
   }
-  FAIL_IF(!found, "Expected t_show_tables_force_csps in SHOW TABLES");
+  FAIL_IF(!found, "Expected t_execdirect_force_csps in SHOW TABLES");
   CHECK_STMT_RC(extra_stmt, SQLFreeStmt(extra_stmt, SQL_CLOSE));
+  CHECK_STMT_RC(extra_stmt, SQLFreeStmt(extra_stmt, SQL_UNBIND));
 
-  OK_SIMPLE_STMT(extra_stmt, "DROP TABLE IF EXISTS t_show_tables_force_csps");
+  if (ServerNotOlderThan(Connection, 9, 1, 0))
+  {
+    CHECK_STMT_RC(extra_stmt, SQLExecDirect(extra_stmt,
+      (SQLCHAR*)"DELETE FROM t_execdirect_force_csps WHERE value='drop' RETURNING id", SQL_NTS));
+    CHECK_STMT_RC(extra_stmt, SQLFetch(extra_stmt));
+    is_num(my_fetch_int(extra_stmt, 1), 2);
+    EXPECT_STMT(extra_stmt, SQLFetch(extra_stmt), SQL_NO_DATA);
+    CHECK_STMT_RC(extra_stmt, SQLFreeStmt(extra_stmt, SQL_CLOSE));
+
+    OK_SIMPLE_STMT(extra_stmt, "SELECT id FROM t_execdirect_force_csps");
+    CHECK_STMT_RC(extra_stmt, SQLFetch(extra_stmt));
+    is_num(my_fetch_int(extra_stmt, 1), 1);
+    EXPECT_STMT(extra_stmt, SQLFetch(extra_stmt), SQL_NO_DATA);
+    CHECK_STMT_RC(extra_stmt, SQLFreeStmt(extra_stmt, SQL_CLOSE));
+  }
+
+  OK_SIMPLE_STMT(extra_stmt, "DROP TABLE IF EXISTS t_execdirect_force_csps");
 
   CHECK_STMT_RC(extra_stmt, SQLFreeStmt(extra_stmt, SQL_DROP));
   CHECK_DBC_RC(extra_dbc, SQLDisconnect(extra_dbc));
@@ -1447,7 +1467,7 @@ ODBC_TEST(t_odbc274)
   /* SingleStore supports DELETE/UPDATE ... RETURNING since 9.1 (aka 10.x).
      INSERT/REPLACE ... RETURNING remain unsupported (MariaDB-only).
      Prepared RETURNING uses text-protocol result rows; when
-     FORCE_CSPS_STMT=1 the driver forces CSPS so fetch
+     FALLBACK_CSPS_STMT=1 the driver falls back to CSPS so fetch
      works under NO_SSPS=0 as well. */
   if (ServerNotOlderThan(Connection, 9, 1, 0) == FALSE)
   {
@@ -1458,8 +1478,8 @@ ODBC_TEST(t_odbc274)
   {
     CHECK_ENV_RC(Env, SQLAllocConnect(Env, &extra_dbc));
     extra_stmt= DoConnect(extra_dbc, FALSE, my_dsn, my_uid, my_pwd, my_port, my_schema, 0, my_servername,
-                          "FORCE_CSPS_STMT=1");
-    FAIL_IF(extra_stmt == NULL, "Couldn't connect with FORCE_CSPS_STMT=1");
+                          "FALLBACK_CSPS_STMT=1");
+    FAIL_IF(extra_stmt == NULL, "Couldn't connect with FALLBACK_CSPS_STMT=1");
     hstmt= extra_stmt;
   }
 
@@ -1492,6 +1512,7 @@ ODBC_TEST(t_odbc274)
   }
   return OK;
 }
+
 
 /* The testcase doesn't really recreate the reported issue, but just test
    things around mediumint column type */
@@ -1577,7 +1598,7 @@ MA_ODBC_TESTS my_tests[]=
   {t_odbc41, "t_odbc-41-nors_after_rs", NORMAL, ALL_DRIVERS},
   {t_odbc58, "t_odbc-58-numeric_after_blob", NORMAL, ALL_DRIVERS},
   {t_odbc77, "t_odbc-77_150-analyze_table_desc_table", NORMAL, ALL_DRIVERS},
-  {t_show_tables_force_csps, "t_show_tables_force_csps", NORMAL, ALL_DRIVERS},
+  {t_execdirect_force_csps, "t_execdirect_force_csps", NORMAL, ALL_DRIVERS},
   {t_odbc78, "t_odbc-78-sql_no_data", NORMAL, ALL_DRIVERS},
   {t_odbc73, "t_odbc-73-bin_collation", NORMAL, ALL_DRIVERS},
   {t_odbc134, "t_odbc-134-fetch_unbound_null", NORMAL, ALL_DRIVERS},

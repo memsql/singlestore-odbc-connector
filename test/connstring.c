@@ -619,26 +619,26 @@ ODBC_TEST(auth_options)
   return OK;
 }
 
-ODBC_TEST(force_csps_stmt)
+ODBC_TEST(fallback_csps_stmt)
 {
   char connstr4dsn[512];
 
   RESET_DSN(Dsn);
   _snprintf(connstr4dsn, sizeof(connstr4dsn), "DRIVER=%s;SERVER=localhost", my_drivername);
   IS(MADB_ParseConnString(Dsn, connstr4dsn, SQL_NTS, ';'));
-  is_num(Dsn->ForceCspsStmt, 0);
+  is_num(Dsn->FallbackCspsStmt, 0);
 
   RESET_DSN(Dsn);
   _snprintf(connstr4dsn, sizeof(connstr4dsn),
-    "DRIVER=%s;SERVER=localhost;FORCE_CSPS_STMT=1", my_drivername);
+    "DRIVER=%s;SERVER=localhost;FALLBACK_CSPS_STMT=1", my_drivername);
   IS(MADB_ParseConnString(Dsn, connstr4dsn, SQL_NTS, ';'));
-  is_num(Dsn->ForceCspsStmt, 1);
+  is_num(Dsn->FallbackCspsStmt, 1);
 
   RESET_DSN(Dsn);
   _snprintf(connstr4dsn, sizeof(connstr4dsn),
-    "DRIVER=%s;SERVER=localhost;FORCE_CSPS_STMT=0", my_drivername);
+    "DRIVER=%s;SERVER=localhost;FALLBACK_CSPS_STMT=0", my_drivername);
   IS(MADB_ParseConnString(Dsn, connstr4dsn, SQL_NTS, ';'));
-  is_num(Dsn->ForceCspsStmt, 0);
+  is_num(Dsn->FallbackCspsStmt, 0);
 
   return OK;
 }
@@ -656,7 +656,7 @@ MA_ODBC_TESTS my_tests[]=
   {odbc_284,              "odbc284_escapebrace",     NORMAL, ALL_DRIVERS},
   {odbc_290,              "odbc290_forwardonly",     NORMAL, ALL_DRIVERS},
   {auth_options,          "auth_options",            NORMAL, ALL_DRIVERS},
-  {force_csps_stmt,       "force_csps_stmt",         NORMAL, ALL_DRIVERS},
+  {fallback_csps_stmt,    "fallback_csps_stmt",      NORMAL, ALL_DRIVERS},
   {NULL, NULL, 0, ALL_DRIVERS}
 };
 
