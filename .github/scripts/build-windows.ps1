@@ -84,6 +84,9 @@ if ($SignArtifacts)
 Invoke-Executable -ScriptBlock { cmake --build . --config $ENV:BUILD_TYPE --parallel 2 } -ErrorAction Stop
 
 $msifile = Get-ChildItem "wininstall\singlestore-connector-odbc*.msi" | Select-Object -First 1
+if (-not $msifile) {
+    throw "No MSI found under wininstall\singlestore-connector-odbc*.msi"
+}
 
 if ($SignArtifacts)
 {
@@ -96,9 +99,65 @@ if ($SignArtifacts)
     & .github\scripts\sign-windows.ps1 -Files $msifile.FullName
 }
 
-Invoke-Executable -ScriptBlock { msiexec.exe /i $msifile INSTALLDIR="C:\singlestore-odbc" /qn } -ErrorAction Stop
+# msiexec must be waited on via Start-Process: calling it with & / Invoke-Executable
+# can return before Windows Installer finishes, leaving ODBC drivers unregistered
+# and causing IM002 ("Data source name not found and no default driver specified").
+#
+# Use INSTALLFOLDER (not INSTALLDIR/TARGETDIR): it is the final driver directory
+# where ssodbca.dll / ssodbcw.dll are placed. See wininstall/README.md.
+$driverDir = "C:\singlestore-odbc"
+$msiLog = Join-Path $PWD "msiexec-install.log"
+$msiArgs = @(
+    "/i", $msifile.FullName,
+    "INSTALLFOLDER=$driverDir",
+    "/qn",
+    "/norestart",
+    "/l*v", $msiLog
+)
+Write-Host "Installing $($msifile.FullName) -> INSTALLFOLDER=$driverDir"
+$msi = Start-Process -FilePath "msiexec.exe" -ArgumentList $msiArgs -Wait -PassThru
+if ($msi.ExitCode -ne 0 -and $msi.ExitCode -ne 3010) {
+    if (Test-Path $msiLog) {
+        Write-Host "--- msiexec log (last 80 lines) ---"
+        Get-Content $msiLog -Tail 80
+    }
+    throw "msiexec failed with exit code $($msi.ExitCode)"
+}
+Write-Host "msiexec finished with exit code $($msi.ExitCode)"
+
+function Show-MsiInstallDiagnostics {
+    if (Test-Path $msiLog) {
+        Write-Host "--- msiexec log (last 80 lines) ---"
+        Get-Content $msiLog -Tail 80
+    }
+    Write-Host "--- install dir listing ($driverDir) ---"
+    if (Test-Path $driverDir) {
+        Get-ChildItem -Recurse $driverDir | Select-Object -First 50 FullName | ForEach-Object { Write-Host $_ }
+    } else {
+        Write-Host "(missing)"
+    }
+    Write-Host "--- registered ODBC drivers ---"
+    Get-OdbcDriver | Format-Table -AutoSize | Out-String | Write-Host
+}
+
+foreach ($dll in @("ssodbca.dll", "ssodbcw.dll", "ssodbcs.dll")) {
+    $path = Join-Path $driverDir $dll
+    if (-not (Test-Path $path)) {
+        Show-MsiInstallDiagnostics
+        throw "MSI install missing expected file: $path"
+    }
+}
+
+foreach ($driverName in @("SingleStore ODBC ANSI Driver", "SingleStore ODBC Unicode Driver")) {
+    $regPath = "HKLM:\SOFTWARE\ODBC\ODBCINST.INI\$driverName"
+    if (-not (Test-Path $regPath)) {
+        Show-MsiInstallDiagnostics
+        throw "ODBC driver not registered after MSI install: $driverName"
+    }
+    Write-Host "Registered driver: $driverName -> $((Get-ItemProperty $regPath).Driver)"
+}
 
 $oldpath = (Get-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).path
-$newpath = "$oldpath;C:\singlestore-odbc\SingleStore\SingleStore ODBC Driver 64-bit"
+$newpath = "$oldpath;$driverDir"
 Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value $newPath
 (Get-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).Path
