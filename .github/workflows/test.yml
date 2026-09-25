@@ -107,6 +107,7 @@ jobs:
     name: Build & Test (Windows)
     runs-on: windows-latest
     strategy:
+      fail-fast: false
       matrix:
         build_type: [RelWithDebInfo]
         driver_type: [unicode, ansi]
