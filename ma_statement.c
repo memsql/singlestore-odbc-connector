@@ -59,6 +59,7 @@ SQLRETURN MADB_StmtInit(MADB_Dbc *Connection, SQLHANDLE *pHStmt)
   Stmt->Options.CursorType= SQL_CURSOR_FORWARD_ONLY;
   Stmt->Options.UseBookmarks= SQL_UB_OFF;
   Stmt->Options.MetadataId= Connection->MetadataId;
+  Stmt->ForceCsps= FALSE;
 
   Stmt->Apd= Stmt->IApd;
   Stmt->Ard= Stmt->IArd;
@@ -295,11 +296,9 @@ SQLRETURN MADB_StmtFree(MADB_Stmt *Stmt, SQLUSMALLINT Option)
     break;
   case SQL_RESET_PARAMS:
     MADB_FREE(Stmt->params);
-    if (MADB_SSPS_DISABLED(Stmt))
-    {
-        // Release the memory allocated for the DAE params.
-        MADB_CspsFreeDAE(Stmt);
-    }
+    /* Not guarded by MADB_SSPS_DISABLED: ForceCsps is per-statement and may have been
+       reset since SQLPutData ran in CSPS mode. Ipd DataPtr is NULL otherwise. */
+    MADB_CspsFreeDAE(Stmt);
     MADB_DescFree(Stmt->Apd, TRUE);
     RESET_DAE_STATUS(Stmt);
     break;
@@ -335,11 +334,9 @@ SQLRETURN MADB_StmtFree(MADB_Stmt *Stmt, SQLUSMALLINT Option)
       MADB_DescFree(Stmt->Ard, FALSE);
     }
 
-    if (MADB_SSPS_DISABLED(Stmt))
-    {
-        // Release the memory allocated for the DAE params.
-        MADB_CspsFreeDAE(Stmt);
-    }
+    /* Not guarded by MADB_SSPS_DISABLED: ForceCsps is per-statement and may have been
+       reset since SQLPutData ran in CSPS mode. Ipd DataPtr is NULL otherwise. */
+    MADB_CspsFreeDAE(Stmt);
     MADB_DescFree(Stmt->Ipd, FALSE);
     MADB_DescFree(Stmt->Ird, FALSE);
 
@@ -527,6 +524,7 @@ void MADB_StmtReset(MADB_Stmt *Stmt)
 
   default:
     Stmt->PositionedCommand= 0;
+    Stmt->ForceCsps= FALSE;
     Stmt->State= MADB_SS_INITED;
     MADB_CLEAR_ERROR(&Stmt->Error);
   }
@@ -624,10 +622,38 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
   }
   MADB_ParseQuery(&Stmt->Query, Stmt->Connection->Dsn->RewriteCallSP);
 
-  if ((Stmt->Query.QueryType == MADB_QUERY_INSERT || Stmt->Query.QueryType == MADB_QUERY_UPDATE || Stmt->Query.QueryType == MADB_QUERY_DELETE)
-    && MADB_FindToken(&Stmt->Query, "RETURNING"))
   {
-    Stmt->Query.ReturnsResult= '\1';
+    my_bool HasDml= FALSE, HasUnsupportedBySsps= FALSE, DmlReturning;
+    unsigned int i;
+
+    /* Check every statement of a multi-statement batch, not only the first one */
+    for (i= 0; i < STMT_COUNT(Stmt->Query); ++i)
+    {
+      SINGLE_QUERY SubQuery;
+      MADB_GetDynamic(&Stmt->Query.SubQuery, (char *)&SubQuery, i);
+
+      HasDml= HasDml || SubQuery.QueryType == MADB_QUERY_INSERT || SubQuery.QueryType == MADB_QUERY_UPDATE
+                     || SubQuery.QueryType == MADB_QUERY_DELETE;
+      HasUnsupportedBySsps= HasUnsupportedBySsps || MADB_QueryTypeUnsupportedBySsps(SubQuery.QueryType);
+    }
+    DmlReturning= HasDml && MADB_FindToken(&Stmt->Query, "RETURNING");
+
+    if (DmlReturning)
+    {
+      /* SingleStore returns text-protocol rows for prepared DML RETURNING
+         (COM_STMT_PREPARE reports field_count=0; execute then returns a text
+         result). Connector/C unpacks those as binary and corrupts values. */
+      Stmt->Query.ReturnsResult= '\1';
+    }
+
+    /* Fall back to CSPS/text for statements the binary protocol cannot handle:
+       DML ... RETURNING, SHOW, DESCRIBE, EXPLAIN, ANALYZE, CHECK, OPTIMIZE,
+       EXECUTE. Other statements stay on SSPS. For a multi-statement batch,
+       one such statement makes the whole batch fall back. */
+    if (Stmt->Connection->Dsn->FallbackCspsStmt && (DmlReturning || HasUnsupportedBySsps))
+    {
+      Stmt->ForceCsps= TRUE;
+    }
   }
 
   if (QUERY_IS_MULTISTMT(Stmt->Query) && NO_CACHE(Stmt))
@@ -846,11 +872,9 @@ SQLRETURN MADB_StmtParamData(MADB_Stmt *Stmt, SQLPOINTER *ValuePtrPtr)
   }
   /* Interesting should we reset if execution failed? */
 
-  // Clear the Ipd record data that was used to construct the query in the CSPS.
-  if (MADB_SSPS_DISABLED(Stmt))
-  {
-      MADB_CspsFreeDAE(Stmt);
-  }
+  /* Not guarded by MADB_SSPS_DISABLED: ForceCsps is per-statement and may have been
+     reset since SQLPutData ran in CSPS mode. Ipd DataPtr is NULL otherwise. */
+  MADB_CspsFreeDAE(Stmt);
 
   return ret;
 }

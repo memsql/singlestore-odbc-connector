@@ -89,6 +89,9 @@ unsigned int MADB_FindToken(MADB_QUERY *Query, char *Compare);
 my_bool      MADB_CompareToken(MADB_QUERY *Query, unsigned int Idx, char *Compare, size_t Length, unsigned int *Offset);
 
 enum enum_madb_query_type MADB_GetQueryType(const char *Token1, const char *Token2);
+/* Commands that SingleStore cannot execute via the binary prepared-statement
+   protocol (SHOW, DESCRIBE, EXPLAIN, ANALYZE, CHECK, OPTIMIZE, EXECUTE). */
+my_bool MADB_QueryTypeUnsupportedBySsps(enum enum_madb_query_type QueryType);
 
 const char * MADB_FindParamPlaceholder(MADB_Stmt *Stmt);
 char *       FixIsoFormat(char * StmtString, size_t *Length);

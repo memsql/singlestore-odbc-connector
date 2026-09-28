@@ -320,6 +320,11 @@ struct st_ma_odbc_stmt
   int                       LastSQLGetDataColumn;
   my_bool                   RebindParams;
   my_bool                   bind_done;
+  /* This statement fell back to the client-side (text) protocol because
+     FALLBACK_CSPS_STMT is set and SingleStore cannot run it as a binary
+     prepared statement (DML ... RETURNING, SHOW, DESCRIBE, EXPLAIN,
+     ANALYZE, CHECK, OPTIMIZE, EXECUTE). */
+  my_bool                   ForceCsps;
   long long                 AffectedRows;
   unsigned long             *CharOffset;
   unsigned long             *Lengths;
