@@ -126,7 +126,7 @@ void         MADB_CspsFreeDAE(MADB_Stmt *Stmt);
 #define MADB_STMT_FORGET_NEXT_POS(aStmt) (aStmt)->Cursor.Next= NULL
 #define MADB_STMT_RESET_CURSOR(aStmt) (aStmt)->Cursor.Position= -1; MADB_STMT_FORGET_NEXT_POS(aStmt)
 #define MADB_STMT_CLOSE_STMT(aStmt)   mysql_stmt_close((aStmt)->stmt);(aStmt)->stmt= NULL
-#define MADB_SSPS_ENABLED(aStmt) (aStmt)->Connection->Dsn->NoSsps == FALSE
+#define MADB_SSPS_ENABLED(aStmt) ((aStmt)->Connection->Dsn->NoSsps == FALSE && !(aStmt)->ForceCsps)
 #define MADB_SSPS_DISABLED(aStmt) !(MADB_SSPS_ENABLED(aStmt))
 #define NO_CACHE(aStmt) ((aStmt)->Options.CursorType == SQL_CURSOR_FORWARD_ONLY && (aStmt)->Connection->Dsn->NoCache)
 /************** SQLColumns       *************/

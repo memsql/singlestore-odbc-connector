@@ -92,6 +92,8 @@ MADB_DsnKey DsnKeys[]=
   /* Paramaters for specific scenarios */
   {"REWRITE_CALL_SP", offsetof(MADB_Dsn, RewriteCallSP),    DSN_TYPE_BOOL  , 0, 0},
   {"USE_WCHAR_TYPES", offsetof(MADB_Dsn, UseWcharTypes),    DSN_TYPE_BOOL  , 0, 0},
+  /* TODO: PLAT-8156 add FALLBACK_CSPS_STMT checkbox to the Windows DSN dialog */
+  {"FALLBACK_CSPS_STMT", offsetof(MADB_Dsn, FallbackCspsStmt), DSN_TYPE_BOOL  , 0, 0},
 
   {"TEST_MODE",      offsetof(MADB_Dsn, TestMode),          DSN_TYPE_INT,    0, 0}, /* Use some mock functions for testing */
   /* Aliases. Here offset is index of aliased key */
