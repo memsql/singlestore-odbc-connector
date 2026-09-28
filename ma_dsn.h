@@ -150,6 +150,11 @@ typedef struct st_madb_dsn
   char *JWT;
   my_bool RewriteCallSP;
   my_bool UseWcharTypes;
+  /* If TRUE, fall back to the client-side protocol for statements the server
+     cannot execute as binary prepared statements (SHOW, DESCRIBE, EXPLAIN,
+     ANALYZE, CHECK, OPTIMIZE, EXECUTE, DML ... RETURNING). Other statements
+     stay on SSPS. */
+  my_bool FallbackCspsStmt;
   int TestMode;
   /* --- Internal --- */
   int isPrompt;
