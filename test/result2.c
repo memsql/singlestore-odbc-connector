@@ -1112,6 +1112,139 @@ ODBC_TEST(t_execdirect_force_csps)
 }
 
 
+/* Same as t_execdirect_force_csps, but the statement that needs CSPS is not
+   the first one of a multi-statement batch. The whole batch must fall back. */
+ODBC_TEST(t_execdirect_force_csps_multistmt)
+{
+  SQLHDBC  extra_dbc= NULL;
+  SQLHSTMT extra_stmt= NULL;
+  SQLCHAR  table[64];
+  SQLLEN   table_len;
+  int      found= 0;
+
+  CHECK_ENV_RC(Env, SQLAllocConnect(Env, &extra_dbc));
+  extra_stmt= DoConnect(extra_dbc, FALSE, my_dsn, my_uid, my_pwd, my_port, my_schema, 0, my_servername,
+                        "NO_SSPS=0;FALLBACK_CSPS_STMT=1");
+  FAIL_IF(extra_stmt == NULL, "Couldn't connect with NO_SSPS=0;FALLBACK_CSPS_STMT=1");
+
+  OK_SIMPLE_STMT(extra_stmt, "DROP TABLE IF EXISTS t_force_csps_multi");
+  OK_SIMPLE_STMT(extra_stmt, "CREATE TABLE t_force_csps_multi (id INT UNSIGNED NOT NULL PRIMARY KEY, value varchar(32) not null)");
+  OK_SIMPLE_STMT(extra_stmt, "INSERT INTO t_force_csps_multi(id, value) VALUES(1, 'keep'), (2, 'drop')");
+  CHECK_STMT_RC(extra_stmt, SQLFreeStmt(extra_stmt, SQL_CLOSE));
+
+  CHECK_STMT_RC(extra_stmt, SQLExecDirect(extra_stmt, (SQLCHAR*)"SELECT 1; SHOW TABLES", SQL_NTS));
+  CHECK_STMT_RC(extra_stmt, SQLFetch(extra_stmt));
+  is_num(my_fetch_int(extra_stmt, 1), 1);
+  EXPECT_STMT(extra_stmt, SQLFetch(extra_stmt), SQL_NO_DATA);
+
+  CHECK_STMT_RC(extra_stmt, SQLMoreResults(extra_stmt));
+  CHECK_STMT_RC(extra_stmt, SQLBindCol(extra_stmt, 1, SQL_C_CHAR, table, sizeof(table), &table_len));
+  while (SQL_SUCCEEDED(SQLFetch(extra_stmt)))
+  {
+    if (table_len > 0 && _stricmp((char*)table, "t_force_csps_multi") == 0)
+    {
+      found= 1;
+    }
+  }
+  FAIL_IF(!found, "Expected t_force_csps_multi in SHOW TABLES");
+  EXPECT_STMT(extra_stmt, SQLMoreResults(extra_stmt), SQL_NO_DATA);
+  CHECK_STMT_RC(extra_stmt, SQLFreeStmt(extra_stmt, SQL_CLOSE));
+  CHECK_STMT_RC(extra_stmt, SQLFreeStmt(extra_stmt, SQL_UNBIND));
+
+  if (ServerNotOlderThan(Connection, 9, 1, 0))
+  {
+    CHECK_STMT_RC(extra_stmt, SQLExecDirect(extra_stmt,
+      (SQLCHAR*)"SELECT COUNT(*) FROM t_force_csps_multi; DELETE FROM t_force_csps_multi WHERE value='drop' RETURNING id", SQL_NTS));
+    CHECK_STMT_RC(extra_stmt, SQLFetch(extra_stmt));
+    is_num(my_fetch_int(extra_stmt, 1), 2);
+    EXPECT_STMT(extra_stmt, SQLFetch(extra_stmt), SQL_NO_DATA);
+
+    CHECK_STMT_RC(extra_stmt, SQLMoreResults(extra_stmt));
+    CHECK_STMT_RC(extra_stmt, SQLFetch(extra_stmt));
+    is_num(my_fetch_int(extra_stmt, 1), 2);
+    EXPECT_STMT(extra_stmt, SQLFetch(extra_stmt), SQL_NO_DATA);
+    EXPECT_STMT(extra_stmt, SQLMoreResults(extra_stmt), SQL_NO_DATA);
+    CHECK_STMT_RC(extra_stmt, SQLFreeStmt(extra_stmt, SQL_CLOSE));
+  }
+
+  /* ForceCsps must not stick to the handle - a plain SELECT goes back to SSPS */
+  OK_SIMPLE_STMT(extra_stmt, "SELECT id FROM t_force_csps_multi WHERE id=1");
+  CHECK_STMT_RC(extra_stmt, SQLFetch(extra_stmt));
+  is_num(my_fetch_int(extra_stmt, 1), 1);
+  EXPECT_STMT(extra_stmt, SQLFetch(extra_stmt), SQL_NO_DATA);
+  CHECK_STMT_RC(extra_stmt, SQLFreeStmt(extra_stmt, SQL_CLOSE));
+
+  OK_SIMPLE_STMT(extra_stmt, "DROP TABLE IF EXISTS t_force_csps_multi");
+
+  CHECK_STMT_RC(extra_stmt, SQLFreeStmt(extra_stmt, SQL_DROP));
+  CHECK_DBC_RC(extra_dbc, SQLDisconnect(extra_dbc));
+  CHECK_DBC_RC(extra_dbc, SQLFreeConnect(extra_dbc));
+  return OK;
+}
+
+
+/* Streamed SQLPutData values are stored on the IPD. SQLCancel leaves them
+   there, and the next prepare clears ForceCsps. Dropping the handle must
+   still release those buffers. Leak sanitizer covers the free. */
+ODBC_TEST(t_putdata_cancel_reprepare)
+{
+  SQLHDBC    extra_dbc= NULL;
+  SQLHSTMT   hstmt= Stmt;
+  SQLLEN     ind= SQL_DATA_AT_EXEC;
+  SQLPOINTER token= NULL;
+  SQLCHAR    chunk[]= "streamed";
+
+  if (ServerNotOlderThan(Connection, 9, 1, 0) == FALSE)
+  {
+    skip("UPDATE ... RETURNING requires SingleStore 9.1+")
+  }
+
+  if (NoSsps == 0)
+  {
+    CHECK_ENV_RC(Env, SQLAllocConnect(Env, &extra_dbc));
+    hstmt= DoConnect(extra_dbc, FALSE, my_dsn, my_uid, my_pwd, my_port, my_schema, 0, my_servername,
+                     "NO_SSPS=0;FALLBACK_CSPS_STMT=1");
+    FAIL_IF(hstmt == NULL, "Couldn't connect with NO_SSPS=0;FALLBACK_CSPS_STMT=1");
+  }
+
+  OK_SIMPLE_STMT(hstmt, "DROP TABLE IF EXISTS t_putdata_cancel_reprepare");
+  OK_SIMPLE_STMT(hstmt, "CREATE TABLE t_putdata_cancel_reprepare (id INT UNSIGNED NOT NULL PRIMARY KEY, value varchar(32) not null)");
+  OK_SIMPLE_STMT(hstmt, "INSERT INTO t_putdata_cancel_reprepare(id, value) VALUES(1, 'old')");
+  CHECK_STMT_RC(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  CHECK_STMT_RC(hstmt, SQLPrepare(hstmt,
+    (SQLCHAR *)"UPDATE t_putdata_cancel_reprepare SET value=? WHERE id=1 RETURNING id", SQL_NTS));
+  CHECK_STMT_RC(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, 32, 0,
+                                        (SQLPOINTER)1, 0, &ind));
+  EXPECT_STMT(hstmt, SQLExecute(hstmt), SQL_NEED_DATA);
+  EXPECT_STMT(hstmt, SQLParamData(hstmt, &token), SQL_NEED_DATA);
+  CHECK_STMT_RC(hstmt, SQLPutData(hstmt, chunk, sizeof(chunk) - 1));
+  CHECK_STMT_RC(hstmt, SQLCancel(hstmt));
+
+  CHECK_STMT_RC(hstmt, SQLPrepare(hstmt,
+    (SQLCHAR *)"SELECT id FROM t_putdata_cancel_reprepare WHERE id=1", SQL_NTS));
+  CHECK_STMT_RC(hstmt, SQLExecute(hstmt));
+  CHECK_STMT_RC(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 1);
+  EXPECT_STMT(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+  CHECK_STMT_RC(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  OK_SIMPLE_STMT(hstmt, "DROP TABLE IF EXISTS t_putdata_cancel_reprepare");
+
+  if (extra_dbc)
+  {
+    CHECK_STMT_RC(hstmt, SQLFreeStmt(hstmt, SQL_DROP));
+    CHECK_DBC_RC(extra_dbc, SQLDisconnect(extra_dbc));
+    CHECK_DBC_RC(extra_dbc, SQLFreeConnect(extra_dbc));
+  }
+  else
+  {
+    CHECK_STMT_RC(hstmt, SQLFreeStmt(hstmt, SQL_RESET_PARAMS));
+  }
+  return OK;
+}
+
+
 ODBC_TEST(t_odbc78)
 {
   SQLLEN      len;
@@ -1599,6 +1732,8 @@ MA_ODBC_TESTS my_tests[]=
   {t_odbc58, "t_odbc-58-numeric_after_blob", NORMAL, ALL_DRIVERS},
   {t_odbc77, "t_odbc-77_150-analyze_table_desc_table", NORMAL, ALL_DRIVERS},
   {t_execdirect_force_csps, "t_execdirect_force_csps", NORMAL, ALL_DRIVERS},
+  {t_execdirect_force_csps_multistmt, "t_execdirect_force_csps_multistmt", NORMAL, ALL_DRIVERS},
+  {t_putdata_cancel_reprepare, "t_putdata_cancel_reprepare", NORMAL, ALL_DRIVERS},
   {t_odbc78, "t_odbc-78-sql_no_data", NORMAL, ALL_DRIVERS},
   {t_odbc73, "t_odbc-73-bin_collation", NORMAL, ALL_DRIVERS},
   {t_odbc134, "t_odbc-134-fetch_unbound_null", NORMAL, ALL_DRIVERS},

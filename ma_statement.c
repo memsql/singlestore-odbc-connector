@@ -296,11 +296,9 @@ SQLRETURN MADB_StmtFree(MADB_Stmt *Stmt, SQLUSMALLINT Option)
     break;
   case SQL_RESET_PARAMS:
     MADB_FREE(Stmt->params);
-    if (MADB_SSPS_DISABLED(Stmt))
-    {
-        // Release the memory allocated for the DAE params.
-        MADB_CspsFreeDAE(Stmt);
-    }
+    /* Not guarded by MADB_SSPS_DISABLED: ForceCsps is per-statement and may have been
+       reset since SQLPutData ran in CSPS mode. Ipd DataPtr is NULL otherwise. */
+    MADB_CspsFreeDAE(Stmt);
     MADB_DescFree(Stmt->Apd, TRUE);
     RESET_DAE_STATUS(Stmt);
     break;
@@ -336,11 +334,9 @@ SQLRETURN MADB_StmtFree(MADB_Stmt *Stmt, SQLUSMALLINT Option)
       MADB_DescFree(Stmt->Ard, FALSE);
     }
 
-    if (MADB_SSPS_DISABLED(Stmt))
-    {
-        // Release the memory allocated for the DAE params.
-        MADB_CspsFreeDAE(Stmt);
-    }
+    /* Not guarded by MADB_SSPS_DISABLED: ForceCsps is per-statement and may have been
+       reset since SQLPutData ran in CSPS mode. Ipd DataPtr is NULL otherwise. */
+    MADB_CspsFreeDAE(Stmt);
     MADB_DescFree(Stmt->Ipd, FALSE);
     MADB_DescFree(Stmt->Ird, FALSE);
 
@@ -627,8 +623,20 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
   MADB_ParseQuery(&Stmt->Query, Stmt->Connection->Dsn->RewriteCallSP);
 
   {
-    my_bool DmlReturning= (Stmt->Query.QueryType == MADB_QUERY_INSERT || Stmt->Query.QueryType == MADB_QUERY_UPDATE || Stmt->Query.QueryType == MADB_QUERY_DELETE)
-                          && MADB_FindToken(&Stmt->Query, "RETURNING");
+    my_bool HasDml= FALSE, HasUnsupportedBySsps= FALSE, DmlReturning;
+    unsigned int i;
+
+    /* Check every statement of a multi-statement batch, not only the first one */
+    for (i= 0; i < STMT_COUNT(Stmt->Query); ++i)
+    {
+      SINGLE_QUERY SubQuery;
+      MADB_GetDynamic(&Stmt->Query.SubQuery, (char *)&SubQuery, i);
+
+      HasDml= HasDml || SubQuery.QueryType == MADB_QUERY_INSERT || SubQuery.QueryType == MADB_QUERY_UPDATE
+                     || SubQuery.QueryType == MADB_QUERY_DELETE;
+      HasUnsupportedBySsps= HasUnsupportedBySsps || MADB_QueryTypeUnsupportedBySsps(SubQuery.QueryType);
+    }
+    DmlReturning= HasDml && MADB_FindToken(&Stmt->Query, "RETURNING");
 
     if (DmlReturning)
     {
@@ -640,9 +648,9 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
 
     /* Fall back to CSPS/text for statements the binary protocol cannot handle:
        DML ... RETURNING, SHOW, DESCRIBE, EXPLAIN, ANALYZE, CHECK, OPTIMIZE,
-       EXECUTE. Other statements stay on SSPS. */
-    if (Stmt->Connection->Dsn->FallbackCspsStmt &&
-        (DmlReturning || MADB_QueryTypeUnsupportedBySsps(Stmt->Query.QueryType)))
+       EXECUTE. Other statements stay on SSPS. For a multi-statement batch,
+       one such statement makes the whole batch fall back. */
+    if (Stmt->Connection->Dsn->FallbackCspsStmt && (DmlReturning || HasUnsupportedBySsps))
     {
       Stmt->ForceCsps= TRUE;
     }
@@ -864,11 +872,9 @@ SQLRETURN MADB_StmtParamData(MADB_Stmt *Stmt, SQLPOINTER *ValuePtrPtr)
   }
   /* Interesting should we reset if execution failed? */
 
-  // Clear the Ipd record data that was used to construct the query in the CSPS.
-  if (MADB_SSPS_DISABLED(Stmt))
-  {
-      MADB_CspsFreeDAE(Stmt);
-  }
+  /* Not guarded by MADB_SSPS_DISABLED: ForceCsps is per-statement and may have been
+     reset since SQLPutData ran in CSPS mode. Ipd DataPtr is NULL otherwise. */
+  MADB_CspsFreeDAE(Stmt);
 
   return ret;
 }
