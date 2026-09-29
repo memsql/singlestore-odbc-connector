@@ -77,6 +77,12 @@ void          MADB_InstallStmt  (MADB_Stmt *Stmt, MYSQL_STMT *stmt);
 
 int SetDBCharsetnr(MADB_Dbc *Connection);
 
+/* Apply effective network read timeout for the next server round-trip.
+   Prefer SQL_ATTR_QUERY_TIMEOUT; fall back to DSN READ_TIMEOUT; 0 = wait forever. */
+void MADB_ApplyStmtReadTimeout(MADB_Stmt *Stmt);
+/* If a configured query timeout caused CR_SERVER_LOST, surface HYT00 instead of 08S01. */
+void MADB_MapQueryTimeoutError(MADB_Stmt *Stmt);
+
 /* for dummy binding */
 extern my_bool DummyError;
 
