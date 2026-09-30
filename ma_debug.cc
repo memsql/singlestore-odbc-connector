@@ -21,7 +21,7 @@
 
 extern char LogFile[];
 
-void ma_debug_print(my_bool ident, char *format, ...)
+void ma_debug_print(my_bool ident, const char *format, ...)
 {
   FILE *fp= fopen(LogFile, "a");
   if (fp)
@@ -37,7 +37,7 @@ void ma_debug_print(my_bool ident, char *format, ...)
   }
 }
 
-void ma_debug_print_bytes(char *name, char *ptr, int len)
+void ma_debug_print_bytes(const char *name, const char *ptr, int len)
 {
   FILE *fp= fopen(LogFile, "a");
   int i;
@@ -53,7 +53,7 @@ void ma_debug_print_bytes(char *name, char *ptr, int len)
   }
 }
 
-void ma_debug_printw(wchar_t *format, ...)
+extern "C" void ma_debug_printw(const wchar_t *format, ...)
 {
   FILE *fp= fopen(LogFile, "a");
   if (fp)
@@ -67,7 +67,7 @@ void ma_debug_printw(wchar_t *format, ...)
   }
 }
 
-void ma_debug_printv(char *format, va_list args)
+extern "C" void ma_debug_printv(const char *format, va_list args)
 {
   FILE *fp= fopen(LogFile, "a");
   if (fp)
@@ -94,7 +94,7 @@ void ma_debug_print_error(MADB_Error *err)
 }
 
 
-void ma_print_value(SQLSMALLINT OdbcType, SQLPOINTER Value, SQLLEN octets)
+extern "C" void ma_print_value(SQLSMALLINT OdbcType, SQLPOINTER Value, SQLLEN octets)
 {
   if (Value == 0)
   {
