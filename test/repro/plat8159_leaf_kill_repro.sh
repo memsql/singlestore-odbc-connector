@@ -223,17 +223,12 @@ kill_leaf() {
 
 run_scenario() {
   local conn client_rc=0 elapsed=0 start_ts now
-  local -a timeout_args=()
 
   SYNC_DIR="$(mktemp -d /tmp/plat8159-sync.XXXXXX)"
   ODBC_OUT="${SYNC_DIR}/odbc.out"
   rm -f "${SYNC_DIR}/ready" "${SYNC_DIR}/go"
 
   conn="DRIVER=${DRIVER_SO};SERVER=127.0.0.1;PORT=${HOST_PORT};UID=root;PWD=${MEMSQL_PASSWORD};DATABASE=odbc_test;NO_SSPS=1;"
-
-  if [[ "${QUERY_TIMEOUT}" -gt 0 ]]; then
-    timeout_args=(--query-timeout "${QUERY_TIMEOUT}")
-  fi
 
   log "Starting ODBC client (rows=${ROWS}, query_timeout=${QUERY_TIMEOUT})"
   if [[ "${QUERY_TIMEOUT}" -gt 0 ]]; then
