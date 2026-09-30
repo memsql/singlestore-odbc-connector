@@ -58,8 +58,12 @@
 
 #define _i64toa(a,b,c) longlong2str((a),(b),(c))
 
+#include "ma_c_api.h"
+
 /* Mimicking of VS' _snprintf */
+MADB_C_BEGIN
 int _snprintf(char *buffer, size_t count, const char *format, ...);
+MADB_C_END
 
 /* Error codes fo strcpy_s */
 #ifndef EINVAL
@@ -68,7 +72,9 @@ int _snprintf(char *buffer, size_t count, const char *format, ...);
 #ifndef ERANGE
 # define ERANGE 34
 #endif
+MADB_C_BEGIN
 int strcpy_s(char *dest, size_t buffer_size, const char *src);
+MADB_C_END
 
 #define strncpy_s(a,b,c,d) strncpy((a),(c),(b))
 
@@ -85,7 +91,9 @@ int strcpy_s(char *dest, size_t buffer_size, const char *src);
 # define TryEnterCriticalSection !pthread_mutex_trylock
 #endif
 
+MADB_C_BEGIN
 void InitializeCriticalSection(CRITICAL_SECTION *cs);
+MADB_C_END
 
 #endif /*_ma_platform_x_h_ */
 

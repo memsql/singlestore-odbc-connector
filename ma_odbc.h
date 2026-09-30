@@ -33,7 +33,10 @@
 
 #include <mysql.h>
 
+#include "ma_c_api.h"
+MADB_C_BEGIN
 #include <ma_legacy_helpers.h>
+MADB_C_END
 
 #include <sql.h>
 #include <sqlext.h>
@@ -485,6 +488,7 @@ case SQL_TYPE_DATE
 /* SQLFunction calls inside MariaDB Connector/ODBC needs to be mapped,
  * on non Windows platforms these function calls will call the driver
  * manager function instead of our own function */
+MADB_C_BEGIN
 SQLRETURN MA_SQLAllocHandle(SQLSMALLINT HandleType,
     SQLHANDLE InputHandle,
     SQLHANDLE *OutputHandlePtr);
@@ -554,4 +558,5 @@ SQLRETURN MADB_StmtColAttribute(MADB_Stmt *Stmt, SQLUSMALLINT ColumnNumber, SQLU
 
 SQLRETURN MADB_StmtColAttribute(MADB_Stmt *Stmt, SQLUSMALLINT ColumnNumber, SQLUSMALLINT FieldIdentifier, SQLPOINTER CharacterAttributePtr,
              SQLSMALLINT BufferLength, SQLSMALLINT *StringLengthPtr, SQLLEN *NumericAttributePtr, my_bool IsWchar);
+MADB_C_END
 #endif /* _ma_odbc_h_ */

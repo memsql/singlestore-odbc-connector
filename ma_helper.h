@@ -19,6 +19,9 @@
 #ifndef _ma_helper_h_
 #define _ma_helper_h_
 
+#include "ma_c_api.h"
+MADB_C_BEGIN
+
 void CloseMultiStatements(MADB_Stmt *Stmt);
 MYSQL_STMT* MADB_NewStmtHandle(MADB_Stmt *Stmt);
 BOOL QueryIsPossiblyMultistmt(MADB_QUERY *Query);
@@ -200,4 +203,5 @@ void EmulatedCleanup(MYSQL *mysql);
 #define is_datetime_sql_type(type) \
   ((type) == SQL_TYPE_DATE || (type) == SQL_TYPE_TIME || (type) == SQL_TYPE_TIMESTAMP)
 
+MADB_C_END
 #endif

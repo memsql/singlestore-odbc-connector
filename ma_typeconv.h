@@ -22,6 +22,9 @@
 #ifndef _ma_typeconv_h
 #define _ma_typeconv_h
 
+#include "ma_c_api.h"
+MADB_C_BEGIN
+
 /* Argument should be pointer to SQL_TIMESTAMP_STRUCT or MYSQL_TIME */
 #define VALID_TIME(PTR2TM_OR_TS) (PTR2TM_OR_TS->hour < 24 && PTR2TM_OR_TS->minute < 60 && PTR2TM_OR_TS->second < 60)
 #define MADB_CHARSIZE_FOR_NUMERIC 80
@@ -57,4 +60,5 @@ SQLRETURN MADB_ConvertDatetimeToChar(MADB_Stmt *Stmt, int SourceType, int SqlTyp
 SQLRETURN MADB_ConvertCharToInteger(MYSQL_BIND* const Dest, const char* const Src, const unsigned int fieldLen);
 SQLRETURN MADB_ConvertBinaryToInteger(MYSQL_BIND* Dest, char* Src, unsigned int fieldLen);
 
+MADB_C_END
 #endif

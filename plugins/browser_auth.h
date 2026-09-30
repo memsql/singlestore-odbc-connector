@@ -104,9 +104,12 @@ struct libglib_functions
 };
 #endif
 
+#include "ma_c_api.h"
+MADB_C_BEGIN
 int PutCachedCredentials(MADB_Dbc *Dbc, BrowserAuthCredentials *bac);
 int GetCachedCredentials(MADB_Dbc *Dbc, const char *username, BrowserAuthCredentials *bac /*out*/);
 int GetCredentialsBrowserSSO(MADB_Dbc *Dbc, MADB_Dsn *Dsn /*out*/, const char* email, my_bool readCached);
+MADB_C_END
 
 #define BROWSER_AUTH_FLAG_TEST_FIRST_CALL (1 << 1)
 #define BROWSER_AUTH_FLAG_TEST_SECOND_CALL (1 << 2)

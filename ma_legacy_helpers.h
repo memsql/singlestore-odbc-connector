@@ -19,6 +19,9 @@
 #ifndef _MA_LEGACY_HELPERS_H
 #define _MA_LEGACY_HELPERS_H
 
+#include "ma_c_api.h"
+MADB_C_BEGIN
+
 /********
  *
  * Function definitions, types, macros for MADB_List, MADB_DynArray, and MADB_DynString copied from C/C
@@ -84,5 +87,6 @@ void MADB_GetDynamic(MADB_DynArray *array, void * element, unsigned int idx);
 void MADB_DeleteDynamic(MADB_DynArray *array);
 void MADB_DeleteDynamicElement(MADB_DynArray *array, unsigned int idx);
 void MADB_FreezeSizeDynamic(MADB_DynArray *array);
+MADB_C_END
 
 #endif /* #ifndef _MA_LEGACY_HELPERS_H */

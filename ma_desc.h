@@ -19,6 +19,9 @@
 #ifndef _ma_desc_h_
 #define _ma_desc_h_
 
+#include "ma_c_api.h"
+MADB_C_BEGIN
+
 #define MADB_DESC_NONE 0
 #define MADB_DESC_READ 1
 #define MADB_DESC_WRITE 2
@@ -64,4 +67,5 @@ SQLRETURN MADB_DescGetRec(MADB_Desc *Desc,
 
 my_bool MADB_FixColumnDataTypes(MADB_Stmt *Stmt, const MADB_ShortTypeInfo *ColTypesArr);
 
+MADB_C_END
 #endif /* _ma_desc_h_ */

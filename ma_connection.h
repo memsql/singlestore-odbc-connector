@@ -20,6 +20,9 @@
 #ifndef _ma_connection_h_
 #define _ma_connection_h_
 
+#include "ma_c_api.h"
+MADB_C_BEGIN
+
 #define MADB_CONN_OPT_NOT_SUPPORTED 0
 #define MADB_CONN_OPT_BEFORE        1
 #define MADB_CONN_OPT_AFTER         2
@@ -74,4 +77,5 @@ char* MADB_GetDefaultPluginsDir(char* Buffer, size_t Size);
 (a) && (a)->Dsn  
 
 #define MADB_CONNECTED(DbConnHandler) (DbConnHandler->mariadb && mysql_get_socket(DbConnHandler->mariadb) != MARIADB_INVALID_SOCKET)
+MADB_C_END
 #endif /* _ma_connection_h */

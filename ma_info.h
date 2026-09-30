@@ -19,6 +19,9 @@
 #ifndef _ma_info_h_
 #define _ma_info_h_
 
+#include "ma_c_api.h"
+MADB_C_BEGIN
+
 typedef struct
 {
   char *TypeName;
@@ -48,4 +51,5 @@ const MADB_TypeInfo* GetTypeInfo(SQLSMALLINT SqlType, MYSQL_FIELD *Field);
 SQLRETURN MADB_GetTypeInfo(SQLHSTMT StatementHandle,
                            SQLSMALLINT DataType);
 
+MADB_C_END
 #endif /* _ma_info_h_ */

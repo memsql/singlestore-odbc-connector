@@ -20,6 +20,9 @@
 #ifndef _ma_error_h_
 #define _ma_error_h_
 
+#include "ma_c_api.h"
+MADB_C_BEGIN
+
 extern MADB_ERROR MADB_ErrorList[];
 
 typedef enum enum_madb_error {
@@ -202,4 +205,5 @@ SQLRETURN MADB_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
   }\
 }
 
+MADB_C_END
 #endif /* _ma_error_h_ */
