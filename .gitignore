@@ -238,6 +238,7 @@ test/tran
 test/types
 test/unicode
 test/use_result
+test/repro/plat8159_leaf_kill_txn
 
 # Files with S2MS workspace information
 */WORKSPACE_GROUP_ID_FILE
