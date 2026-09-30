@@ -125,7 +125,7 @@ ODBC_TEST(t_read_timeout_dsn)
 }
 
 /**
-  Reproduce the GS Helios shape: multi-statement transaction with
+  Reproduce the reported shape: multi-statement transaction with
   CREATE TEMPORARY TABLE ... AS SELECT. Kill the connection from another
   session while the statement is about to run / is in flight, and assert
   SQLExecute returns SQL_ERROR (does not hang).
