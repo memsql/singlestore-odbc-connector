@@ -60,7 +60,7 @@ SET (SS_ODBC_SOURCES odbc_3_api.c
         ma_error.c
         ma_connection.c
         ma_helper.c
-        ma_debug.c
+        ma_debug.cc
         ma_dsn.c
         ma_driver.cc
         ma_abi_layout.cc

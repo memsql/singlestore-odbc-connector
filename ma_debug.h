@@ -28,9 +28,9 @@
 #include "ma_c_api.h"
 MADB_C_BEGIN
 
-void ma_debug_print(my_bool ident, char *format, ...);
+void ma_debug_print(my_bool ident, const char *format, ...);
 void ma_debug_print_error(MADB_Error *err);
-void ma_debug_print_bytes(char *name, char *ptr, int len);
+void ma_debug_print_bytes(const char *name, const char *ptr, int len);
 
 /* Debug is on for connection */
 #define MDBUG_C_IS_ON(C) ((C) && (((MADB_Dbc*)(C))->Options & MA_DEBUG_FLAG))
