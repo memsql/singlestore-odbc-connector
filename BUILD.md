@@ -36,7 +36,7 @@ go to File->Settings->CMake and for the build target put the following in CMake 
 ## CentOS
 
 ```
-sudo yum -y install git cmake make gcc openssl-devel unixODBC unixODBC-devel
+sudo yum -y install git cmake make gcc gcc-c++ openssl-devel unixODBC unixODBC-devel
 git clone https://github.com/memsql/singlestore-odbc-connector.git
 mkdir -p build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_SSL=OPENSSL
@@ -48,7 +48,7 @@ sudo make install
 
 ```
 sudo apt-get update
-sudo apt-get install -y git cmake make gcc libssl-dev unixodbc-dev
+sudo apt-get install -y git cmake make gcc g++ libssl-dev unixodbc-dev
 git clone https://github.com/memsql/singlestore-odbc-connector.git
 mkdir -p build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_SSL=OPENSSL

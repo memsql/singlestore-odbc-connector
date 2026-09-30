@@ -36,8 +36,16 @@ typedef struct {
   char *SetupLibrary;
 } MADB_Drv;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 MADB_Drv * MADB_DriverGet(char *DriverName);
 void MADB_DriverFree(MADB_Drv *Drv);
 MADB_Drv *MADB_DriverInit(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ma_driver_h_ */

@@ -21,7 +21,7 @@
 /* {{{ MADB_DriverInit */
 MADB_Drv *MADB_DriverInit(void)
 {
-  return (MADB_Drv* )MADB_CALLOC(sizeof(MADB_Drv));
+  return static_cast<MADB_Drv *>(MADB_CALLOC(sizeof(MADB_Drv)));
 }
 
 void MADB_DriverFree(MADB_Drv *Drv)
