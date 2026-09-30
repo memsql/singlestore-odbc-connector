@@ -15,6 +15,12 @@ License information can be found in the LICENSE file.
 
 See [BUILD.md](BUILD.md) for build instructions.
 
+## Development
+
+See [docs/CPP_DRIVER_MIGRATION.md](docs/CPP_DRIVER_MIGRATION.md) for the
+incremental plan to migrate the driver implementation from C to C++ while
+preserving its C ABI.
+
 ## Releasing
 
 Pushing a `v*` version tag triggers an automated GitHub Pre-release with installers for Linux, macOS, and Windows. See [RELEASING.md](RELEASING.md) for the full process.

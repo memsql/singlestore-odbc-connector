@@ -17,7 +17,7 @@
 #   or write to the Free Software Foundation, Inc., 
 #   51 Franklin St., Fifth Floor, Boston, MA 02110, USA
 # *************************************************************************************/
-PROJECT(singlestore_connector_odbc C)
+PROJECT(singlestore_connector_odbc C CXX)
 
 CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
 SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version" FORCE)
@@ -62,7 +62,7 @@ SET (SS_ODBC_SOURCES odbc_3_api.c
         ma_helper.c
         ma_debug.c
         ma_dsn.c
-        ma_driver.c
+        ma_driver.cc
         ma_info.c
         ma_environment.c
         ma_parse.c
@@ -339,10 +339,14 @@ SET(CPACK_COMPONENTS_ALL_IN_ONE_PACKAGE 1)
 #SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -DDBUG_OFF")
 IF (WITH_SANITIZER)
   SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined -fsanitize=leak -fsanitize=address")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined -fsanitize=leak -fsanitize=address")
 ENDIF(WITH_SANITIZER)
 
 IF(APPLE)
   SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-implicit-function-declaration")
+  # Apple's CF_ENUM macro is valid Objective-C but ill-formed C++. Clang reports
+  # it as -Welaborated-enum-base, which is an error by default.
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-elaborated-enum-base")
 ENDIF(APPLE)
 
 # We need to determine the last parameter for SQLColAttribute:
@@ -421,8 +425,11 @@ WHILE(${DRIVER_INDEX} LESS ${DRIVERS_COUNT})
     SET_TARGET_PROPERTIES(${LIBRARY_NAME} PROPERTIES
             COMPILE_DEFINITIONS MAODBC_UNICODEDRIVER)
   ENDIF(UNICODE)
-  SET_TARGET_PROPERTIES(${LIBRARY_NAME} PROPERTIES LANGUAGE C)
-  SET_TARGET_PROPERTIES(${LIBRARY_NAME} PROPERTIES C_STANDARD 90)
+  SET_TARGET_PROPERTIES(${LIBRARY_NAME} PROPERTIES
+          C_STANDARD 90
+          CXX_STANDARD 14
+          CXX_STANDARD_REQUIRED YES
+          CXX_EXTENSIONS NO)
   SET(PLATFORM_DEPENDENCIES ${PLATFORM_DEPENDENCIES} ${GLIB_LIBRARIES})
   MESSAGE(STATUS "All linked targets/external dependencies: ${MARIADB_CLIENT_TARGET_NAME} ${ODBC_INSTLIBS} ${PLATFORM_DEPENDENCIES}")
   TARGET_LINK_LIBRARIES(${LIBRARY_NAME} ${MARIADB_CLIENT_TARGET_NAME} ${ODBC_INSTLIBS} ${PLATFORM_DEPENDENCIES} ${VENDOR_DEPS})
