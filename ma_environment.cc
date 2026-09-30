@@ -32,7 +32,7 @@ char* DefaultPluginLocation= NULL;
 #endif
 static char PluginLocationBuf[_MAX_PATH];
 
-MARIADB_CHARSET_INFO * mysql_find_charset_name(const char *name);
+extern "C" MARIADB_CHARSET_INFO * mysql_find_charset_name(const char *name);
 
 #ifdef _WIN32
 # pragma comment(lib, "ws2_32.lib")
@@ -64,8 +64,8 @@ SQLRETURN MADB_EnvFree(MADB_Env *Env)
 }
 /* }}} */
 
-const char* GetDefaultLogDir();
-int         GetSourceAnsiCs(Client_Charset *cc);
+extern "C" const char* GetDefaultLogDir();
+extern "C" int GetSourceAnsiCs(Client_Charset *cc);
 
 /* {{{ MADB_EnvInit */
 MADB_Env *MADB_EnvInit()
@@ -97,7 +97,7 @@ MADB_Env *MADB_EnvInit()
   }
 #endif
   mysql_library_init(0, NULL, NULL);
-  if (!(Env= (MADB_Env *)MADB_CALLOC(sizeof(MADB_Env))))
+  if (!(Env= static_cast<MADB_Env *>(MADB_CALLOC(sizeof(MADB_Env)))))
   {
     /* todo: optional debug output */
     goto cleanup;

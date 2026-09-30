@@ -65,7 +65,7 @@ SET (SS_ODBC_SOURCES odbc_3_api.c
         ma_driver.cc
         ma_abi_layout.cc
         ma_info.c
-        ma_environment.c
+        ma_environment.cc
         ma_parse.c
         ma_statement.c
         ma_desc.c

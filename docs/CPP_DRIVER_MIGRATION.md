@@ -16,7 +16,7 @@ surface and allows upstream code to be updated independently.
 
 * Phase 0 established the mixed C/C++ build and migrated `ma_driver`.
 * The C linkage macros and layout checks are the next boundary pull request.
-* `ma_debug` is migrated in the next language-only pull request, followed by `ma_environment`.
+* `ma_debug` and `ma_environment` are migrated as separate language-only pull requests.
 
 ## Compatibility contract
 
