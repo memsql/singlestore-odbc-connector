@@ -344,6 +344,9 @@ ENDIF(WITH_SANITIZER)
 
 IF(APPLE)
   SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-implicit-function-declaration")
+  # Apple's CF_ENUM macro is valid Objective-C but ill-formed C++. Clang reports
+  # it as -Welaborated-enum-base, which is an error by default.
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-elaborated-enum-base")
 ENDIF(APPLE)
 
 # We need to determine the last parameter for SQLColAttribute:
