@@ -20,10 +20,14 @@
  #ifndef _ma_result_h_
  #define _ma_result_h_
 
+#include "ma_c_api.h"
+MADB_C_BEGIN
+
 void MADB_StmtResetResultStructures(MADB_Stmt *Stmt);
 SQLRETURN MoveNext(MADB_Stmt *Stmt, unsigned long long Offset);
 SQLRETURN MADB_StmtDataSeek   (MADB_Stmt *Stmt, my_ulonglong FetchOffset);
 SQLRETURN MADB_StmtMoreResults(MADB_Stmt *Stmt);
 SQLULEN   MADB_RowsToFetch(MADB_Cursor *Cursor, unsigned long long RowsInResultst);
 
- #endif /* _ma_result_h_ */
+ MADB_C_END
+#endif /* _ma_result_h_ */

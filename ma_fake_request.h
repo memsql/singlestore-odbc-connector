@@ -19,7 +19,11 @@
 #ifndef MARIADB_CONNECTOR_ODBC_MA_FAKE_REQUEST_H
 #define MARIADB_CONNECTOR_ODBC_MA_FAKE_REQUEST_H
 
+#include "ma_c_api.h"
+MADB_C_BEGIN
+
 SQLRETURN MADB_FakeRequest(MADB_Stmt *Stmt, const char * const *fields, const enum enum_field_types *fieldTypes,
                            unsigned long fieldsLength, char ***data, unsigned long dataLength);
 
+MADB_C_END
 #endif //MARIADB_CONNECTOR_ODBC_MA_FAKE_REQUEST_H

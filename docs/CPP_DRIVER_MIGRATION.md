@@ -12,6 +12,12 @@ programs, and generated flex/bison sources remain C unless a concrete need to
 change them is identified. Keeping these boundaries in C limits the review
 surface and allows upstream code to be updated independently.
 
+## Implementation status
+
+* Phase 0 established the mixed C/C++ build and migrated `ma_driver`.
+* The C linkage macros and layout checks are the next boundary pull request.
+* `ma_debug` and `ma_environment` follow as separate language-only conversions.
+
 ## Compatibility contract
 
 Every migration PR must preserve these invariants:

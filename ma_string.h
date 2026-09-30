@@ -19,6 +19,9 @@
 #ifndef _ma_string_h_
 #define _ma_string_h_
 
+#include "ma_c_api.h"
+MADB_C_BEGIN
+
 #define IN
 #define OUT
 #define INOUT
@@ -61,4 +64,5 @@ my_bool ProcessIdentifierString(INOUT char* out, const char* in, const size_t le
 /* Fix SQLWCHAR buffer length to be multiple of sizeof(SQLWCHAR) */
 #define ALIGN_WCHAR_LENGTH(len) ((len) &= ~(sizeof(SQLWCHAR) == 2 ? 0x01ul : 0x03ul))
 
+MADB_C_END
 #endif

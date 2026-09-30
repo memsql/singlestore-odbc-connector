@@ -22,6 +22,9 @@
 
 #include <odbcinst.h>
 
+#include "ma_c_api.h"
+MADB_C_BEGIN
+
 /* MySQL ODBC compatibility options */
 #define MADB_OPT_FLAG_FIELD_LENGTH                      1
 #define MADB_OPT_FLAG_FOUND_ROWS                        2
@@ -206,4 +209,5 @@ BOOL        MADB_DSN_PossibleConnect    (MADB_Dsn *Dsn);
     memcpy((dsn)->item, (value),(len));\
   }
 
+MADB_C_END
 #endif /* _ma_dsn_h_ */

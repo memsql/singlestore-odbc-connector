@@ -30,22 +30,18 @@
 #ifndef _ma_driver_h_
 #define _ma_driver_h_
 
+#include "ma_c_api.h"
+
 typedef struct {
   char *DriverName;
   char *OdbcLibrary;
   char *SetupLibrary;
 } MADB_Drv;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
+MADB_C_BEGIN
 MADB_Drv * MADB_DriverGet(char *DriverName);
 void MADB_DriverFree(MADB_Drv *Drv);
 MADB_Drv *MADB_DriverInit(void);
-
-#ifdef __cplusplus
-}
-#endif
+MADB_C_END
 
 #endif /* _ma_driver_h_ */

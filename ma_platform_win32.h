@@ -53,7 +53,10 @@
     #define MADB_DRIVER_NAME "ssodbca.dll"
 #endif
 
+#include "ma_c_api.h"
+MADB_C_BEGIN
 char *strndup(const char *s, size_t n);
 char* strcasestr(const char* HayStack, const char* Needle);
+MADB_C_END
 
 #endif /*_ma_platform_x_h_ */

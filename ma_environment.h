@@ -19,6 +19,9 @@
 #ifndef _ma_environment_h_
 #define _ma_environment_h_
 
+#include "ma_c_api.h"
+MADB_C_BEGIN
+
 MADB_Env *MADB_EnvInit();
 SQLRETURN MADB_EnvFree(MADB_Env *Env);
 
@@ -28,4 +31,5 @@ SQLRETURN MADB_EnvGetAttr(MADB_Env *Env, SQLINTEGER Attribute, SQLPOINTER ValueP
 
 extern Client_Charset SourceAnsiCs;
 
+MADB_C_END
 #endif /* _ma_environment_h_ */

@@ -20,6 +20,9 @@
 #ifndef _ma_statement_h_
 #define _ma_statement_h_
 
+#include "ma_c_api.h"
+MADB_C_BEGIN
+
 struct st_ma_stmt_methods
 {
   SQLRETURN (*Prepare)(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER TextLength, BOOL ExecDirect);
@@ -438,4 +441,5 @@ void         MADB_CspsFreeDAE(MADB_Stmt *Stmt);
 
 /********** End of SQLSpecialColumns *********/
 
+MADB_C_END
 #endif  // _ma_statement_h_
