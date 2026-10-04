@@ -4,13 +4,9 @@ description: "Composite action to build and test the ODBC connector on MacOS"
 runs:
   using: "composite"
   steps:
-    - name: Start S2MS cluster
-      shell: bash
-      run: |
-        python3 -m venv .venv
-        source .venv/bin/activate
-        python -m pip install singlestoredb
-        python ./.github/scripts/setup_s2ms_cluster.py start odbc_test
+    # Start S2MS after brew/build. Homebrew on macos-15-intel often builds
+    # from source (no bottles as of 2026), which can take >1h30m and outlive
+    # the cluster expires_at window if we create it first.
     - name: Setup Environment on MacOS
       shell: bash
       run: |
@@ -24,6 +20,13 @@ runs:
     - name: Build project
       shell: bash
       run: ./.github/scripts/build-macos.sh
+    - name: Start S2MS cluster
+      shell: bash
+      run: |
+        python3 -m venv .venv
+        source .venv/bin/activate
+        python -m pip install singlestoredb
+        python ./.github/scripts/setup_s2ms_cluster.py start odbc_test
     - name: Run tests
       shell: bash
       if: env.NEED_RUN_TESTS != 'false'
@@ -34,6 +37,10 @@ runs:
       shell: bash
       if: always()
       run: |
+          if [ ! -f .venv/bin/activate ]; then
+            echo "No Python venv; cluster was never started"
+            exit 0
+          fi
           source .venv/bin/activate
           python -m pip install singlestoredb
           python ./.github/scripts/setup_s2ms_cluster.py terminate || true
