@@ -49,10 +49,32 @@ export OPENSSL_ROOT_DIR
 # the build so the expiry window is not burned by brew/compile.
 export BUILD_TYPE="${BUILD_TYPE:-RelWithDebInfo}"
 
+# Kill the log spam that comes from Apple SDK headers / ld, not our code:
+# nullability (~50k), visionos availability (~3k), typedef redefs, dup libs.
+MACOS_C_FLAGS="-Wno-pointer-sign -Wno-nullability-completeness -Wno-availability -Wno-typedef-redefinition -Wno-implicit-function-declaration"
+MACOS_LD_FLAGS="-Wl,-no_warn_duplicate_libraries"
+
 cd libmariadb
-cmake -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_SSL=OPENSSL -DOPENSSL_ROOT_DIR="${OPENSSL_ROOT_DIR}"
+cmake -S . \
+  -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+  -DWITH_SSL=OPENSSL \
+  -DOPENSSL_ROOT_DIR="${OPENSSL_ROOT_DIR}" \
+  -DCMAKE_C_FLAGS="${MACOS_C_FLAGS}" \
+  -DCMAKE_EXE_LINKER_FLAGS="${MACOS_LD_FLAGS}" \
+  -DCMAKE_SHARED_LINKER_FLAGS="${MACOS_LD_FLAGS}" \
+  -DCMAKE_MODULE_LINKER_FLAGS="${MACOS_LD_FLAGS}"
 cmake --build . --config ${BUILD_TYPE}
 cd ..
 
-cmake -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL -DWITH_IODBC=ON -DIS_ON_S2MS=1 -DCMAKE_C_FLAGS="-Wno-pointer-sign" -DOPENSSL_ROOT_DIR="${OPENSSL_ROOT_DIR}"
+cmake -S . \
+  -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+  -DWITH_OPENSSL=ON \
+  -DWITH_SSL=OPENSSL \
+  -DWITH_IODBC=ON \
+  -DIS_ON_S2MS=1 \
+  -DOPENSSL_ROOT_DIR="${OPENSSL_ROOT_DIR}" \
+  -DCMAKE_C_FLAGS="${MACOS_C_FLAGS}" \
+  -DCMAKE_EXE_LINKER_FLAGS="${MACOS_LD_FLAGS}" \
+  -DCMAKE_SHARED_LINKER_FLAGS="${MACOS_LD_FLAGS}" \
+  -DCMAKE_MODULE_LINKER_FLAGS="${MACOS_LD_FLAGS}"
 cmake --build . --config ${BUILD_TYPE}

@@ -137,6 +137,14 @@ IF(CMAKE_COMPILER_IS_GNUCC)
   ENDFOREACH()
 ENDIF()
 
+IF(APPLE)
+  # Same SDK/toolchain spam suppressions as the top-level Apple build.
+  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-nullability-completeness -Wno-availability -Wno-typedef-redefinition")
+  SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-no_warn_duplicate_libraries")
+  SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-no_warn_duplicate_libraries")
+  SET(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,-no_warn_duplicate_libraries")
+ENDIF()
+
 # If the build type isn't specified, set to Relwithdebinfo as default.
 IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE "RelWithDebInfo")
