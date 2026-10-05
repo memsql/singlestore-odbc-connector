@@ -25,8 +25,14 @@ export TEST_UID="${MEMSQL_USER}"
 export TEST_PORT="${MEMSQL_PORT}"
 export TEST_PASSWORD="${MEMSQL_PASSWORD}"
 
-# set variables for odbc.ini and odbcinst.ini
+# odbc.ini is generated at build time (before the S2MS endpoint exists) with a
+# placeholder SERVER. Rewrite it now so DSN-only connections hit the real host.
+# Runtime env (TEST_SERVER) also covers tests that build the connect string.
 export ODBCINI="$PWD/test/odbc.ini"
+if [ -f "${ODBCINI}" ]; then
+  sed -i.bak -E "s/^SERVER[[:space:]]*=.*/SERVER      = ${TEST_SERVER}/" "${ODBCINI}"
+  rm -f "${ODBCINI}.bak"
+fi
 cat ${ODBCINI}
 export ODBCINSTINI="$PWD/test/odbcinst.ini"
 cat ${ODBCINSTINI}

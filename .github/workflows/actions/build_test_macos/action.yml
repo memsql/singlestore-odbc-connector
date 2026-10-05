@@ -4,19 +4,31 @@ description: "Composite action to build and test the ODBC connector on MacOS"
 runs:
   using: "composite"
   steps:
-    # Start S2MS after brew/build. Homebrew on macos-15-intel often builds
-    # from source (no bottles as of 2026), which can take >1h30m and outlive
-    # the cluster expires_at window if we create it first.
+    # Keep brew work minimal. On macos-*-intel Homebrew no longer ships bottles
+    # (as of Sep 2026), so any upgrade/install from source dominates the job
+    # (cmake alone was ~55m). Runner images already provide cmake/curl/clang.
     - name: Setup Environment on MacOS
       shell: bash
+      env:
+        HOMEBREW_NO_AUTO_UPDATE: "1"
+        HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: "1"
+        HOMEBREW_NO_INSTALL_CLEANUP: "1"
       run: |
-          rm -rf $(brew --caskroom)/adoptopenjdk11
-          brew update
-          brew install openssl curl mysql-client cmake bind
-          brew install libiodbc
-          brew unlink unixodbc
+          set -euo pipefail
+          # iODBC is required (WITH_IODBC=ON). Prefer a bottle when available;
+          # do not brew update / upgrade — that triggers Intel source builds.
+          if ! brew list --versions libiodbc >/dev/null 2>&1; then
+            brew install libiodbc
+          fi
+          brew unlink unixodbc 2>/dev/null || true
           brew link libiodbc --force
-          brew cleanup
+
+          # OpenSSL 3 is required (FindOpenSSL). Install only if missing; never upgrade.
+          if ! brew list --versions openssl@3 >/dev/null 2>&1; then
+            brew install openssl@3
+          fi
+    # Start S2MS after brew/build so the expires_at=1h30m window covers tests,
+    # not multi-hour brew source builds on Intel.
     - name: Build project
       shell: bash
       run: ./.github/scripts/build-macos.sh
