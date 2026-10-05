@@ -25,8 +25,28 @@ export TEST_UID="${MEMSQL_USER}"
 export TEST_PORT="${MEMSQL_PORT}"
 export TEST_PASSWORD="${MEMSQL_PASSWORD}"
 
-# set variables for odbc.ini and odbcinst.ini
+# odbc.ini is generated at build time (before the S2MS endpoint exists) with
+# cmake defaults (SERVER 127.0.0.1, PORT 5506, UID root, empty PASSWORD).
+# SQLConnect and DSN connection strings that omit those keys use the file, so
+# rewrite them to the workspace values. Runtime env covers tests that put
+# PORT/UID/PWD in the connect string themselves.
 export ODBCINI="$PWD/test/odbc.ini"
+if [ -f "${ODBCINI}" ]; then
+  awk '
+    BEGIN {
+      server = ENVIRON["TEST_SERVER"]
+      port = ENVIRON["TEST_PORT"]
+      uid = ENVIRON["TEST_UID"]
+      password = ENVIRON["TEST_PASSWORD"]
+    }
+    /^SERVER[[:space:]]*=/   { print "SERVER      = " server; next }
+    /^PORT[[:space:]]*=/     { print "PORT        = " port; next }
+    /^UID[[:space:]]*=/      { print "UID         = " uid; next }
+    /^PASSWORD[[:space:]]*=/ { print "PASSWORD    = " password; next }
+    { print }
+  ' "${ODBCINI}" > "${ODBCINI}.tmp"
+  mv "${ODBCINI}.tmp" "${ODBCINI}"
+fi
 cat ${ODBCINI}
 export ODBCINSTINI="$PWD/test/odbcinst.ini"
 cat ${ODBCINSTINI}

@@ -20,28 +20,61 @@
 
 set -eo pipefail
 
-# newer versions of macOS require older llvm because of zlib compatibility
-brew install llvm@16 || true
-brew link llvm@16 --force
+# Use the runner / Xcode Apple Clang. Avoid brew install llvm@*: on Intel that
+# pulls python from source (~10m+) and Homebrew has dropped Intel bottles.
+if ! command -v clang >/dev/null 2>&1; then
+  echo "clang not found on PATH; install Xcode CLT or set CC/CXX" >&2
+  exit 1
+fi
+export CC="${CC:-$(command -v clang)}"
+export CXX="${CXX:-$(command -v clang++)}"
 
-export LLVM_PATH=$(brew --prefix llvm@16)
-export PATH="$LLVM_PATH/bin:$PATH"
-export CC="$LLVM_PATH/bin/clang"
-export CXX="$CC++"
-export LDFLAGS="$LDFLAGS -L$LLVM_PATH/lib"
-export CPPFLAGS="$CPPFLAGS -I$LLVM_PATH/include"
+# FindOpenSSL does not search Homebrew kegs on its own (see build-local.sh).
+if [ -z "${OPENSSL_ROOT_DIR:-}" ]; then
+  for candidate in "$(brew --prefix openssl@3 2>/dev/null)" /usr/local/opt/openssl@3 /opt/homebrew/opt/openssl@3; do
+    if [ -n "$candidate" ] && [ -f "$candidate/include/openssl/opensslv.h" ]; then
+      OPENSSL_ROOT_DIR="$candidate"
+      break
+    fi
+  done
+fi
+if [ -z "${OPENSSL_ROOT_DIR:-}" ]; then
+  echo "OpenSSL 3 not found; install openssl@3 (brew) or set OPENSSL_ROOT_DIR" >&2
+  exit 1
+fi
+export OPENSSL_ROOT_DIR
 
-# set variables for Connector/ODBC test binaries
-export TEST_SERVER="$(cat WORKSPACE_ENDPOINT_FILE)"
-export TEST_UID="${MEMSQL_USER}"
-export TEST_PORT="${MEMSQL_PORT}"
-export TEST_PASSWORD="${MEMSQL_PASSWORD}"
+# Test connection details are supplied at test time via env (run-tests-macos.sh).
+# Do not require WORKSPACE_ENDPOINT_FILE here — the S2MS cluster is started after
+# the build so the expiry window is not burned by brew/compile.
 export BUILD_TYPE="${BUILD_TYPE:-RelWithDebInfo}"
 
+# Kill the log spam that comes from Apple SDK headers / ld, not our code:
+# nullability (~50k), visionos availability (~3k), typedef redefs, dup libs.
+MACOS_C_FLAGS="-Wno-pointer-sign -Wno-nullability-completeness -Wno-availability -Wno-typedef-redefinition -Wno-implicit-function-declaration"
+MACOS_LD_FLAGS="-Wl,-no_warn_duplicate_libraries"
+
 cd libmariadb
-cmake -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_SSL=OPENSSL
+cmake -S . \
+  -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+  -DWITH_SSL=OPENSSL \
+  -DOPENSSL_ROOT_DIR="${OPENSSL_ROOT_DIR}" \
+  -DCMAKE_C_FLAGS="${MACOS_C_FLAGS}" \
+  -DCMAKE_EXE_LINKER_FLAGS="${MACOS_LD_FLAGS}" \
+  -DCMAKE_SHARED_LINKER_FLAGS="${MACOS_LD_FLAGS}" \
+  -DCMAKE_MODULE_LINKER_FLAGS="${MACOS_LD_FLAGS}"
 cmake --build . --config ${BUILD_TYPE}
 cd ..
 
-cmake -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL -DWITH_IODBC=ON -DIS_ON_S2MS=1 -DCMAKE_C_FLAGS="-Wno-pointer-sign"
+cmake -S . \
+  -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+  -DWITH_OPENSSL=ON \
+  -DWITH_SSL=OPENSSL \
+  -DWITH_IODBC=ON \
+  -DIS_ON_S2MS=1 \
+  -DOPENSSL_ROOT_DIR="${OPENSSL_ROOT_DIR}" \
+  -DCMAKE_C_FLAGS="${MACOS_C_FLAGS}" \
+  -DCMAKE_EXE_LINKER_FLAGS="${MACOS_LD_FLAGS}" \
+  -DCMAKE_SHARED_LINKER_FLAGS="${MACOS_LD_FLAGS}" \
+  -DCMAKE_MODULE_LINKER_FLAGS="${MACOS_LD_FLAGS}"
 cmake --build . --config ${BUILD_TYPE}

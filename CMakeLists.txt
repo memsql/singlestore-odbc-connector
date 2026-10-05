@@ -342,7 +342,12 @@ IF (WITH_SANITIZER)
 ENDIF(WITH_SANITIZER)
 
 IF(APPLE)
-  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-implicit-function-declaration")
+  # Silence high-volume Apple SDK / toolchain noise that drowns real warnings
+  # in CI logs (nullability alone was ~50k lines with older Homebrew clang).
+  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-implicit-function-declaration -Wno-nullability-completeness -Wno-availability -Wno-typedef-redefinition -Wno-pointer-sign")
+  SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-no_warn_duplicate_libraries")
+  SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-no_warn_duplicate_libraries")
+  SET(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,-no_warn_duplicate_libraries")
 ENDIF(APPLE)
 
 # We need to determine the last parameter for SQLColAttribute:
