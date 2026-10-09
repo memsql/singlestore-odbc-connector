@@ -35,23 +35,31 @@ go to File->Settings->CMake and for the build target put the following in CMake 
 
 ## CentOS
 
+This branch must be built with OpenSSL 1.1. CentOS Stream 9 and RHEL 9 ship OpenSSL 3, and CMake rejects that. `openssl-devel` on those systems is the wrong library. The helper below builds OpenSSL 1.1.1w into `./openssl-1.1`. On CentOS Stream the base image already provides `curl` via `curl-minimal`; do not install the `curl` package, which conflicts with it.
+
 ```
-sudo yum -y install git cmake make gcc openssl-devel unixODBC unixODBC-devel
+sudo yum -y install git cmake make gcc perl unixODBC unixODBC-devel
 git clone https://github.com/memsql/singlestore-odbc-connector.git
+cd singlestore-odbc-connector
+. .github/scripts/install-openssl-1.1.sh
 mkdir -p build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_SSL=OPENSSL
+cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_SSL=OPENSSL -DOPENSSL_ROOT_DIR="${OPENSSL_ROOT_DIR}" -DOPENSSL_INCLUDE_DIR="${OPENSSL_ROOT_DIR}/include" -DOPENSSL_SSL_LIBRARY="${OPENSSL_ROOT_DIR}/lib/libssl.so" -DOPENSSL_CRYPTO_LIBRARY="${OPENSSL_ROOT_DIR}/lib/libcrypto.so"
 cmake --build . --config RelWithDebInfo
 sudo make install
 ```
 
 ## Debian & Ubuntu
 
+Current Ubuntu and Debian images also ship OpenSSL 3. Use the same OpenSSL 1.1 prefix instead of `libssl-dev`.
+
 ```
 sudo apt-get update
-sudo apt-get install -y git cmake make gcc libssl-dev unixodbc-dev
+sudo apt-get install -y git cmake make gcc g++ perl curl unixodbc-dev
 git clone https://github.com/memsql/singlestore-odbc-connector.git
+cd singlestore-odbc-connector
+. .github/scripts/install-openssl-1.1.sh
 mkdir -p build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_SSL=OPENSSL
+cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_SSL=OPENSSL -DOPENSSL_ROOT_DIR="${OPENSSL_ROOT_DIR}" -DOPENSSL_INCLUDE_DIR="${OPENSSL_ROOT_DIR}/include" -DOPENSSL_SSL_LIBRARY="${OPENSSL_ROOT_DIR}/lib/libssl.so" -DOPENSSL_CRYPTO_LIBRARY="${OPENSSL_ROOT_DIR}/lib/libcrypto.so"
 cmake --build . --config RelWithDebInfo
 sudo make install
 ```
