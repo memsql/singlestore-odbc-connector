@@ -1741,3 +1741,43 @@ void EmulatedCleanup(MYSQL* mysql)
     mysql->status= MYSQL_STATUS_READY;
   }
 }
+
+/* {{{ MADB_ApplyStmtReadTimeout */
+void MADB_ApplyStmtReadTimeout(MADB_Stmt *Stmt)
+{
+  unsigned int timeout= 0;
+
+  if (!Stmt || !Stmt->Connection || !Stmt->Connection->mariadb)
+    return;
+
+  if (Stmt->Options.QueryTimeout)
+    timeout= (unsigned int)Stmt->Options.QueryTimeout;
+  else if (Stmt->Connection->Dsn)
+    timeout= Stmt->Connection->Dsn->ReadTimeout;
+
+  mysql_optionsv(Stmt->Connection->mariadb, MYSQL_OPT_READ_TIMEOUT, (const char *)&timeout);
+}
+/* }}} */
+
+/* {{{ MADB_MapQueryTimeoutError */
+void MADB_MapQueryTimeoutError(MADB_Stmt *Stmt)
+{
+  if (!Stmt || Stmt->Options.QueryTimeout == 0)
+    return;
+
+  /* Connector/C reports a timed-out read as CR_SERVER_LOST (2013) or
+     CR_SERVER_GONE_ERROR (2006) with 08S01. When the application asked for a
+     query timeout, report HYT00 instead. */
+  if (Stmt->Error.ReturnValue == SQL_ERROR &&
+      (Stmt->Error.NativeError == CR_SERVER_LOST ||
+       Stmt->Error.NativeError == CR_SERVER_LOST_EXTENDED ||
+       Stmt->Error.NativeError == CR_SERVER_GONE_ERROR) &&
+      (strcmp(Stmt->Error.SqlState, "08S01") == 0 ||
+       strcmp(Stmt->Error.SqlState, "HY000") == 0 ||
+       strcmp(Stmt->Error.SqlState, "00000") == 0))
+  {
+    MADB_SetError(&Stmt->Error, MADB_ERR_HYT00, "Query timeout expired",
+                  Stmt->Error.NativeError);
+  }
+}
+/* }}} */
