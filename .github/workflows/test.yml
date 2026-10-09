@@ -1,6 +1,7 @@
 name: Run tests
 
 on:
+  workflow_dispatch:
   pull_request:
     branches:
       - master
@@ -11,7 +12,7 @@ env:
   S2MS_API_KEY: ${{ secrets.S2MS_API_KEY }}
   SINGLESTORE_LICENSE: ${{ secrets.SINGLESTORE_LICENSE }}
   MEMSQL_PASSWORD: ${{ secrets.SINGLESTORE_PASSWORD }}
-  NEED_RUN_TESTS: 'true'  
+  NEED_RUN_TESTS: 'true'
 
 jobs:
   build-test-ubuntu:
