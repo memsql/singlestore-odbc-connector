@@ -28,7 +28,14 @@ SET (ODBC_TESTS
         "error" "escape_sequences" "param" "result1" "result2" "multistatement"
         "sqlcolumns" "sql_procedure_columns" "sql_get_type_info" "sql_special_columns"
         "client_side" "sql_get_info" "sql_row_count" "sql_get_functions"
-        "sql_get_diag_field" "sql_get_diag_rec" "sql_execute" "sql_buffers" "connect")
+        "sql_get_diag_field" "sql_get_diag_rec" "sql_execute" "sql_buffers" "connect"
+        "read_timeout")
+# TODO: PLAT-6326 Some tests become slower after we started running them on S2MS.
+# Every test executable runs the whole suite twice (client- and server-side
+# prepared statements modes) within a single ctest test, so these need more than
+# the default 240s budget when the tests run against a cloud cluster.
+SET (SLOW_ODBC_TESTS "basic" "bulk" "catalog1" "connect" "cursor")
+
 SET(COMMON_TEST_SOURCES tap.h)
 
 # Interactive makes sense on WIN32 only atm
@@ -62,8 +69,7 @@ FOREACH (ODBC_TEST ${ODBC_TESTS})
   IF (NOT ${ODBC_TEST} STREQUAL "interactive" OR USE_INTERACTIVE_TESTS)
     ADD_TEST(odbc_${ODBC_TEST} ${EXECUTABLE_OUTPUT_PATH}/odbc_${ODBC_TEST})
     SET_TESTS_PROPERTIES(odbc_${ODBC_TEST} PROPERTIES TIMEOUT 240)
-    # TODO: PLAT-6326 Some tests become slower after we started running them on S2MS
-    IF (${ODBC_TEST} STREQUAL "connect" OR ${ODBC_TEST} STREQUAL "bulk" OR ${ODBC_TEST} STREQUAL "basic" OR ${ODBC_TEST} STREQUAL "cursor" OR ${ODBC_TEST} STREQUAL "catalog1")
+    IF ("${ODBC_TEST}" IN_LIST SLOW_ODBC_TESTS)
       SET_TESTS_PROPERTIES(odbc_${ODBC_TEST} PROPERTIES TIMEOUT 480)
     ENDIF()
     IF(NOT WIN32)

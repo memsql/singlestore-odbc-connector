@@ -115,6 +115,9 @@ typedef struct st_madb_dsn
   char *InitCommand;
   char *TraceFile;
   unsigned int ConnectionTimeout;
+  /* Socket read/write timeouts in seconds, 0 = wait forever */
+  unsigned int ReadTimeout;
+  unsigned int WriteTimeout;
   my_bool Reconnect;
   my_bool MultiStatements;
   /* TRUE means "no prompt" */
