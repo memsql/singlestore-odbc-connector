@@ -116,6 +116,8 @@ libmariadb/RelWithDebInfo
 
 # ODBC connector .gitignore
 build
+# OpenSSL 1.1.1w prefix built by CI (see .github/scripts/install-openssl-1.1.sh)
+/openssl-1.1/
 .vscode
 .vs
 
@@ -132,6 +134,10 @@ cmake-build-relwithdebinfo/
 CMakeFiles
 CMakeCache.txt
 cmake_install.cmake
+compile_commands.json
+
+# clangd cache
+.cache/
 
 Testing
 CTestTestfile.cmake

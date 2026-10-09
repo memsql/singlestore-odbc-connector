@@ -16,7 +16,7 @@ runs:
 
         # Install build dependencies
         dnf groupinstall -y "Development Tools"
-        dnf install -y cmake gcc gcc-c++ glib2-devel libsecret-devel krb5-devel unixODBC unixODBC-devel openssl-devel git which docker
+        dnf install -y cmake gcc gcc-c++ make perl curl glib2-devel libsecret-devel krb5-devel unixODBC unixODBC-devel git which docker
 
     - name: Start S2MS cluster
       shell: bash

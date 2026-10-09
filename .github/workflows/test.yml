@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - master
+      - stable/1.1
   schedule:
     - cron: '12 10 * * 0'  # Runs at 10:12 UTC on Sunday (0 in day-of-week field represents Sunday)
 

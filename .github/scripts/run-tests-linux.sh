@@ -20,6 +20,18 @@
 
 set -eo pipefail
 
+# The driver is linked against the OpenSSL 1.1.1w prefix built by
+# install-openssl-1.1.sh. Tests need that lib dir; customer machines
+# supply libssl.so.1.1 themselves.
+REPO_ROOT="$(pwd)"
+SSL_LIB="${OPENSSL_ROOT_DIR:-${REPO_ROOT}/openssl-1.1}/lib"
+if [ -e "${SSL_LIB}/libssl.so.1.1" ]; then
+  case ":${LD_LIBRARY_PATH:-}:" in
+    *":${SSL_LIB}:"*) ;;
+    *) export LD_LIBRARY_PATH="${SSL_LIB}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" ;;
+  esac
+fi
+
 ## Export password, port and user if they are set
 if [ -n "$MEMSQL_PASSWORD" ]
 then
