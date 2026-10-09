@@ -619,6 +619,150 @@ ODBC_TEST(auth_options)
   return OK;
 }
 
+ODBC_TEST(fallback_csps_stmt)
+{
+  char connstr4dsn[512];
+
+  RESET_DSN(Dsn);
+  _snprintf(connstr4dsn, sizeof(connstr4dsn), "DRIVER=%s;SERVER=localhost", my_drivername);
+  IS(MADB_ParseConnString(Dsn, connstr4dsn, SQL_NTS, ';'));
+  is_num(Dsn->FallbackCspsStmt, 0);
+
+  RESET_DSN(Dsn);
+  _snprintf(connstr4dsn, sizeof(connstr4dsn),
+    "DRIVER=%s;SERVER=localhost;FALLBACK_CSPS_STMT=1", my_drivername);
+  IS(MADB_ParseConnString(Dsn, connstr4dsn, SQL_NTS, ';'));
+  is_num(Dsn->FallbackCspsStmt, 1);
+
+  RESET_DSN(Dsn);
+  _snprintf(connstr4dsn, sizeof(connstr4dsn),
+    "DRIVER=%s;SERVER=localhost;FALLBACK_CSPS_STMT=0", my_drivername);
+  IS(MADB_ParseConnString(Dsn, connstr4dsn, SQL_NTS, ';'));
+  is_num(Dsn->FallbackCspsStmt, 0);
+
+  return OK;
+}
+
+/* DsnMap in dsn/odbc_dsn.c and the alias offsets in ma_dsn.c refer to DsnKeys
+   entries by index. Inserting a key in front of one of these shifts every later
+   control and alias onto the wrong field. */
+ODBC_TEST(dsn_key_indexes)
+{
+  static const struct
+  {
+    unsigned int idx;
+    const char *name;
+  } expected[]=
+  {
+    {0,  "DSN"},
+    {1,  "DESCRIPTION"},
+    {5,  "NamedPipe"},
+    {6,  "TCPIP"},
+    {7,  "SERVER"},
+    {8,  "UID"},
+    {9,  "PWD"},
+    {10, "DATABASE"},
+    {11, "PORT"},
+    {12, "INITSTMT"},
+    {13, "CONN_TIMEOUT"},
+    {14, "AUTO_RECONNECT"},
+    {15, "NO_PROMPT"},
+    {16, "CHARSET"},
+    {18, "PLUGIN_DIR"},
+    {19, "SSLKEY"},
+    {20, "SSLCERT"},
+    {21, "SSLCA"},
+    {22, "SSLCAPATH"},
+    {23, "SSLCIPHER"},
+    {24, "SSLVERIFY"},
+    {25, "TLSPEERFP"},
+    {26, "TLSPEERFPLIST"},
+    {27, "SSLCRL"},
+    {32, "TLSVERSION"},
+    {33, "FORCETLS"},
+    {34, "SERVERKEY"},
+    {36, "INTERACTIVE"},
+    {39, "NO_SSPS"},
+    {43, "BROWSER_SSO"},
+    {47, "USE_WCHAR_TYPES"},
+  };
+  static const struct
+  {
+    const char *alias;
+    const char *target;
+  } aliases[]=
+  {
+    {"OPTION",    "OPTIONS"},
+    {"SERVERNAME","SERVER"},
+    {"USER",      "UID"},
+    {"PASSWORD",  "PWD"},
+    {"DB",        "DATABASE"},
+    {"SSLFP",     "TLSPEERFP"},
+    {"SSLFPLIST", "TLSPEERFPLIST"},
+  };
+  unsigned int i, j;
+  int found;
+  char connstr[512];
+  const char *fp= "7B:DD:F2:86:1B:7B:C5:71:66:2A:CD:A1:E9:9B:D4:6F:6B:F3:4D:A4";
+  const char *fplist= "ssl/wrongfplist.txt";
+
+  for (i= 0; i < sizeof(expected)/sizeof(expected[0]); ++i)
+  {
+    if (DsnKeys[expected[i].idx].DsnKey == NULL ||
+        strcmp(DsnKeys[expected[i].idx].DsnKey, expected[i].name) != 0)
+    {
+      diag("DsnKeys[%u] is \"%s\", expected \"%s\". "
+           "This index is hardcoded in dsn/odbc_dsn.c DsnMap or an alias offset",
+           expected[i].idx,
+           DsnKeys[expected[i].idx].DsnKey ? DsnKeys[expected[i].idx].DsnKey : "(null)",
+           expected[i].name);
+      return FAIL;
+    }
+  }
+
+  for (i= 0; i < sizeof(aliases)/sizeof(aliases[0]); ++i)
+  {
+    found= 0;
+    for (j= 0; DsnKeys[j].DsnKey != NULL; ++j)
+    {
+      if (strcmp(DsnKeys[j].DsnKey, aliases[i].alias) != 0)
+        continue;
+      found= 1;
+      if (!DsnKeys[j].IsAlias ||
+          DsnKeys[DsnKeys[j].DsnOffset].DsnKey == NULL ||
+          strcmp(DsnKeys[DsnKeys[j].DsnOffset].DsnKey, aliases[i].target) != 0)
+      {
+        diag("Alias %s points at \"%s\", expected \"%s\"",
+             aliases[i].alias,
+             (DsnKeys[j].IsAlias && DsnKeys[DsnKeys[j].DsnOffset].DsnKey) ?
+               DsnKeys[DsnKeys[j].DsnOffset].DsnKey : "(not an alias)",
+             aliases[i].target);
+        return FAIL;
+      }
+      break;
+    }
+    if (!found)
+    {
+      diag("Alias %s is missing from DsnKeys", aliases[i].alias);
+      return FAIL;
+    }
+  }
+
+  /* A wrong DSNKEY_FP_INDEX stores the fingerprint in another field, so
+     TlsPeerFp stays empty. SSLCIPHER and SSLVERIFY are the neighbors a
+     shift of two would land on. */
+  RESET_DSN(Dsn);
+  _snprintf(connstr, sizeof(connstr), "DRIVER=%s;SSLFP=%s;SSLFPLIST=%s",
+            my_drivername, fp, fplist);
+  IS(MADB_ParseConnString(Dsn, connstr, SQL_NTS, ';'));
+  IS_STR(Dsn->TlsPeerFp, fp, strlen(fp) + 1);
+  IS_STR(Dsn->TlsPeerFpList, fplist, strlen(fplist) + 1);
+  FAIL_IF(Dsn->SslCipher != NULL, "SSLFP was stored in SSLCIPHER");
+  is_num(Dsn->SslVerify, 0);
+
+  return OK;
+}
+
 MA_ODBC_TESTS my_tests[]=
 {
   {connstring_test,       "connstring_parsing_test", NORMAL, ALL_DRIVERS},
@@ -632,6 +776,8 @@ MA_ODBC_TESTS my_tests[]=
   {odbc_284,              "odbc284_escapebrace",     NORMAL, ALL_DRIVERS},
   {odbc_290,              "odbc290_forwardonly",     NORMAL, ALL_DRIVERS},
   {auth_options,          "auth_options",            NORMAL, ALL_DRIVERS},
+  {fallback_csps_stmt,    "fallback_csps_stmt",      NORMAL, ALL_DRIVERS},
+  {dsn_key_indexes,       "dsn_key_indexes",         NORMAL, ALL_DRIVERS},
   {NULL, NULL, 0, ALL_DRIVERS}
 };
 
