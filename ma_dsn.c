@@ -96,6 +96,9 @@ MADB_DsnKey DsnKeys[]=
   {"FALLBACK_CSPS_STMT", offsetof(MADB_Dsn, FallbackCspsStmt), DSN_TYPE_BOOL  , 0, 0},
 
   {"TEST_MODE",      offsetof(MADB_Dsn, TestMode),          DSN_TYPE_INT,    0, 0}, /* Use some mock functions for testing */
+  /* New keys must be appended here: DSNKEY_*_INDEX and DsnMap in dsn/odbc_dsn.c refer to keys by index */
+  {"READ_TIMEOUT",   offsetof(MADB_Dsn, ReadTimeout),       DSN_TYPE_INT,    0, 0}, /* 50 */
+  {"WRITE_TIMEOUT",  offsetof(MADB_Dsn, WriteTimeout),      DSN_TYPE_INT,    0, 0},
   /* Aliases. Here offset is index of aliased key */
   {"SERVERNAME",     DSNKEY_SERVER_INDEX,                   DSN_TYPE_STRING, 0, 1},
   {"USER",           DSNKEY_UID_INDEX,                      DSN_TYPE_STRING, 0, 1},
