@@ -240,8 +240,6 @@ typedef struct
   SQLSMALLINT BookmarkType;
   SQLULEN	MetadataId;
   SQLULEN SimulateCursor;
-  /* Seconds; 0 = no statement-level timeout (use DSN READ_TIMEOUT, or wait forever). */
-  SQLULEN QueryTimeout;
 } MADB_StmtOptions;
 
 /* TODO: To check is it 0 or 1 based? not quite clear from its usage */

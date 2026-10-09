@@ -2977,18 +2977,9 @@ mysql_optionsv(MYSQL *mysql,enum mysql_option option, ...)
 #endif
   case MYSQL_OPT_READ_TIMEOUT:
     mysql->options.read_timeout= *(uint *)arg1;
-    /* Apply to the live socket as well when already connected. Otherwise
-       the option only takes effect on the next connect, and statement-level
-       query timeouts cannot interrupt a hung read. */
-    if (mysql->net.pvio)
-      ma_pvio_set_timeout(mysql->net.pvio, PVIO_READ_TIMEOUT,
-                          (int)mysql->options.read_timeout);
     break;
   case MYSQL_OPT_WRITE_TIMEOUT:
     mysql->options.write_timeout= *(uint *)arg1;
-    if (mysql->net.pvio)
-      ma_pvio_set_timeout(mysql->net.pvio, PVIO_WRITE_TIMEOUT,
-                          (int)mysql->options.write_timeout);
     break;
   case MYSQL_REPORT_DATA_TRUNCATION:
     mysql->options.report_data_truncation= *(my_bool *)arg1;

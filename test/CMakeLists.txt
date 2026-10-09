@@ -29,7 +29,7 @@ SET (ODBC_TESTS
         "sqlcolumns" "sql_procedure_columns" "sql_get_type_info" "sql_special_columns"
         "client_side" "sql_get_info" "sql_row_count" "sql_get_functions"
         "sql_get_diag_field" "sql_get_diag_rec" "sql_execute" "sql_buffers" "connect"
-        "query_timeout")
+        "read_timeout")
 # TODO: PLAT-6326 Some tests become slower after we started running them on S2MS.
 # Every test executable runs the whole suite twice (client- and server-side
 # prepared statements modes) within a single ctest test, so these need more than

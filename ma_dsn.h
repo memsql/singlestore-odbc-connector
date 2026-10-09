@@ -115,10 +115,7 @@ typedef struct st_madb_dsn
   char *InitCommand;
   char *TraceFile;
   unsigned int ConnectionTimeout;
-  /* Socket read/write timeouts in seconds (0 = no timeout / wait forever).
-     These map to MYSQL_OPT_READ_TIMEOUT / MYSQL_OPT_WRITE_TIMEOUT. Without a
-     read timeout, SQLExecute can hang indefinitely if the server stops
-     responding mid-query (e.g. after ER_ROLLED_BACK_TRANSACTION / 1735). */
+  /* Socket read/write timeouts in seconds, 0 = wait forever */
   unsigned int ReadTimeout;
   unsigned int WriteTimeout;
   my_bool Reconnect;

@@ -95,7 +95,6 @@ SQLRETURN MADB_ExecuteQuery(MADB_Stmt * Stmt, char *StatementText, SQLINTEGER Te
   SQLRETURN ret= SQL_ERROR;
   
   LOCK_MARIADB(Stmt->Connection);
-  MADB_ApplyStmtReadTimeout(Stmt);
   if (StatementText)
   {
     MDBUG_C_PRINT(Stmt->Connection, "mysql_real_query(%0x,%s,%lu)", Stmt->Connection->mariadb, StatementText, TextLength);
@@ -109,8 +108,6 @@ SQLRETURN MADB_ExecuteQuery(MADB_Stmt * Stmt, char *StatementText, SQLINTEGER Te
     else
     {
       MADB_SetNativeError(&Stmt->Error, SQL_HANDLE_DBC, Stmt->Connection->mariadb);
-      MADB_MapQueryTimeoutError(Stmt);
-      ret= Stmt->Error.ReturnValue;
     }
   }
   else
@@ -1246,8 +1243,6 @@ SQLRETURN MADB_DoExecute(MADB_Stmt *Stmt)
   if (mysql_stmt_execute(Stmt->stmt))
   {
     ret= MADB_SetNativeError(&Stmt->Error, SQL_HANDLE_STMT, Stmt->stmt);
-    MADB_MapQueryTimeoutError(Stmt);
-    ret= Stmt->Error.ReturnValue;
     MDBUG_C_PRINT(Stmt->Connection, "mysql_stmt_execute:ERROR%s", "");
   }
   else
@@ -1803,8 +1798,6 @@ static int CspsRunStatementQuery(   MADB_Stmt* const Stmt,
     if (mysql_real_query(Stmt->stmt->mysql, query->str, query->length)) {
         ++*ErrorCount;
         ret = MADB_SetNativeError(&Stmt->Error, SQL_HANDLE_DBC, Stmt->stmt->mysql);
-        MADB_MapQueryTimeoutError(Stmt);
-        ret = Stmt->Error.ReturnValue;
     } else
     {
         // Update affected rows for queries which don't return results.
@@ -1946,7 +1939,6 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
   MDBUG_C_PRINT(Stmt->Connection, "%sMADB_StmtExecute", "\t->");
 
   MADB_CLEAR_ERROR(&Stmt->Error);
-  MADB_ApplyStmtReadTimeout(Stmt);
 
   if (Stmt->State == MADB_SS_EMULATED)
   {
@@ -2373,7 +2365,6 @@ end:
     return Stmt->Methods->Execute(Stmt, ExecDirect);
   }
 
-  MADB_MapQueryTimeoutError(Stmt);
   return ret;
 }
 /* }}} */
@@ -3564,7 +3555,7 @@ SQLRETURN MADB_StmtGetStmtAttr(MADB_Stmt *Stmt, SQLINTEGER Attribute, SQLPOINTER
     *(SQLULEN *)ValuePtr= SQL_NOSCAN_ON;
     break;
   case SQL_ATTR_QUERY_TIMEOUT:
-    *(SQLULEN *)ValuePtr= Stmt->Options.QueryTimeout;
+    *(SQLULEN *)ValuePtr= 0;
     break;
   case SQL_ATTR_RETRIEVE_DATA:
     *(SQLULEN *)ValuePtr= SQL_RD_ON;
@@ -3765,10 +3756,11 @@ SQLRETURN MADB_StmtSetStmtAttr(MADB_Stmt *Stmt, SQLINTEGER Attribute, SQLPOINTER
     }
     break;
   case SQL_ATTR_QUERY_TIMEOUT:
-    /* 0 disables the statement-level timeout (falls back to DSN READ_TIMEOUT).
-       Non-zero values are applied as MYSQL_OPT_READ_TIMEOUT around execute so
-       a hung server response cannot block SQLExecute forever (PLAT-8159). */
-    Stmt->Options.QueryTimeout= (SQLULEN)ValuePtr;
+    if ((SQLULEN)ValuePtr != 0)
+    {
+       MADB_SetError(&Stmt->Error, MADB_ERR_01S02, "Option value changed to default (no timeout)", 0);
+       ret= SQL_SUCCESS_WITH_INFO;
+    }
     break;
   case SQL_ATTR_RETRIEVE_DATA:
     if ((SQLULEN)ValuePtr != SQL_RD_ON)

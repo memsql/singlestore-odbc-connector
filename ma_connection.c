@@ -686,8 +686,6 @@ real_connect:
   if (Dsn->ConnectionTimeout)
     mysql_optionsv(Connection->mariadb, MYSQL_OPT_CONNECT_TIMEOUT, (const char *)&Dsn->ConnectionTimeout);
 
-  /* Socket I/O timeouts. Without READ_TIMEOUT, a hung server response leaves
-     SQLExecute blocked indefinitely (see PLAT-8159). */
   if (Dsn->ReadTimeout)
     mysql_optionsv(Connection->mariadb, MYSQL_OPT_READ_TIMEOUT, (const char *)&Dsn->ReadTimeout);
   if (Dsn->WriteTimeout)
