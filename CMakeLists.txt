@@ -156,7 +156,10 @@ ENDIF()
 
 IF(WIN32 OR WITH_OPENSSL OR "${WITH_SSL}" STREQUAL  "OPENSSL")
   IF(WITH_OPENSSL OR "${WITH_SSL}" STREQUAL  "OPENSSL")
-    FIND_PACKAGE(OpenSSL 3 REQUIRED)
+    FIND_PACKAGE(OpenSSL 1.1 REQUIRED)
+    IF(NOT OPENSSL_VERSION VERSION_LESS "3.0.0")
+      MESSAGE(FATAL_ERROR "This branch must be built with OpenSSL 1.1, but found OpenSSL ${OPENSSL_VERSION}")
+    ENDIF()
 
     IF(OPENSSL_FOUND)
       MESSAGE(STATUS "Configuring to build with OpenSSL ${OPENSSL_LIBRARIES}")
@@ -406,7 +409,7 @@ WHILE(${DRIVER_INDEX} LESS ${DRIVERS_COUNT})
     ADD_LIBRARY(${LIBRARY_NAME} SHARED ${SS_ODBC_SOURCES_TYPE} maodbc${CONNECTOR_DRIVER_TYPE_SHORT}.rc)
 
     IF(APPLE)
-      SET(MAODBC_INSTALL_RPATH "${ODBC_LIB_DIR}" "@loader_path" "/usr/local/opt/libiodbc" "/usr/local/opt/libiodbc/lib" "/usr/local/iODBC/lib" "/usr/local/opt/libressl/lib")
+      SET(MAODBC_INSTALL_RPATH "${ODBC_LIB_DIR}" "@loader_path" "/usr/local/opt/libiodbc" "/usr/local/opt/libiodbc/lib" "/usr/local/iODBC/lib" "/usr/local/opt/openssl@1.1/lib" "/usr/local/opt/libressl/lib")
       SET_TARGET_PROPERTIES(${LIBRARY_NAME}
               PROPERTIES LINK_FLAGS "-Wl"
               INSTALL_RPATH_USE_LINK_PATH 0

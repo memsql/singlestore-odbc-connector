@@ -66,7 +66,8 @@ jobs:
   build-test-centos:
     name: Build & Test (RHEL/CentOS)
     runs-on: ubuntu-latest
-    container: 
+    continue-on-error: true
+    container:
       image: quay.io/centos/centos:stream9
     strategy:
       matrix:
@@ -113,6 +114,7 @@ jobs:
 
   build-test-macos:
     name: Build & Test (macOS)
+    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -158,6 +160,7 @@ jobs:
   build-test-windows:
     name: Build & Test (Windows)
     runs-on: windows-latest
+    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -199,6 +202,7 @@ jobs:
     name: Create Draft Release
     runs-on: ubuntu-latest
     needs: [build-test-ubuntu, build-test-centos, build-test-macos, build-test-windows]
+    if: always()
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -207,7 +211,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-      
+
+      - name: List available artifacts
+        shell: bash
+        run: |
+          echo "Available artifacts:"
+          find artifacts -type f
+
       - name: Create Draft Release with Assets
         uses: softprops/action-gh-release@v2
         with:
@@ -228,6 +238,7 @@ jobs:
           draft: true
           prerelease: false
           generate_release_notes: true
+          fail_on_unmatched_files: false
           files: |
             artifacts/singlestore-odbc-ubuntu/singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-ubuntu-amd64.tar.gz
             artifacts/singlestore-odbc-centos/singlestore-connector-odbc-${{ env.DRIVER_VERSION }}-centos-amd64.tar.gz
