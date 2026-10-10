@@ -623,20 +623,45 @@ SQLRETURN MADB_StmtPrepare(MADB_Stmt *Stmt, char *StatementText, SQLINTEGER Text
   MADB_ParseQuery(&Stmt->Query, Stmt->Connection->Dsn->RewriteCallSP);
 
   {
-    my_bool HasDml= FALSE, HasUnsupportedBySsps= FALSE, DmlReturning;
+    my_bool HasUnsupportedBySsps= FALSE, DmlReturning= FALSE;
     unsigned int i;
 
-    /* Check every statement of a multi-statement batch, not only the first one */
+    /* Check every statement of a multi-statement batch, not only the first one.
+       RETURNING makes a statement return rows only when that DML statement
+       itself contains the keyword. A column named returning_value is a longer
+       token, and RETURNING in some other statement of the batch does not. */
     for (i= 0; i < STMT_COUNT(Stmt->Query); ++i)
     {
       SINGLE_QUERY SubQuery;
-      MADB_GetDynamic(&Stmt->Query.SubQuery, (char *)&SubQuery, i);
+      char *SubEnd;
 
-      HasDml= HasDml || SubQuery.QueryType == MADB_QUERY_INSERT || SubQuery.QueryType == MADB_QUERY_UPDATE
-                     || SubQuery.QueryType == MADB_QUERY_DELETE;
+      MADB_GetDynamic(&Stmt->Query.SubQuery, (char *)&SubQuery, i);
       HasUnsupportedBySsps= HasUnsupportedBySsps || MADB_QueryTypeUnsupportedBySsps(SubQuery.QueryType);
+
+      if (DmlReturning ||
+          (SubQuery.QueryType != MADB_QUERY_INSERT && SubQuery.QueryType != MADB_QUERY_UPDATE
+           && SubQuery.QueryType != MADB_QUERY_DELETE) ||
+          SubQuery.QueryText == NULL)
+      {
+        continue;
+      }
+
+      if (i + 1 < STMT_COUNT(Stmt->Query))
+      {
+        SINGLE_QUERY NextQuery;
+        MADB_GetDynamic(&Stmt->Query.SubQuery, (char *)&NextQuery, i + 1);
+        SubEnd= NextQuery.QueryText;
+      }
+      else
+      {
+        SubEnd= Stmt->Query.RefinedText + Stmt->Query.RefinedLength;
+      }
+      if (SubEnd != NULL &&
+          MADB_QueryRangeHasExactToken(&Stmt->Query, SubQuery.QueryText, SubEnd, "RETURNING"))
+      {
+        DmlReturning= TRUE;
+      }
     }
-    DmlReturning= HasDml && MADB_FindToken(&Stmt->Query, "RETURNING");
 
     if (DmlReturning)
     {
@@ -1965,15 +1990,26 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
       Stmt->AffectedRows = 0;
 
       /* Client-side prepared statements (CSPS) accumulate affected rows into
-         the underlying MYSQL_STMT's upsert_status via '+=' (see
+         each underlying MYSQL_STMT's upsert_status via '+=' (see
          CspsRunStatementQuery), and that field is never reset per execute.
-         mysql_stmt_affected_rows() reads it, so a re-executed statement whose
-         new run affects 0 rows would otherwise report the previous execute's
-         count. Reset it here at execute start so the count reflects only this
-         execution. */
-      if (Stmt->stmt)
+         mysql_stmt_affected_rows() reads it. A multi-statement batch keeps one
+         MYSQL_STMT per statement; resetting only the handle left current by
+         MADB_InstallStmt leaves the others with the previous execution's
+         total, which SQLRowCount reports after SQLMoreResults. */
+      if (Stmt->MultiStmts)
       {
-          Stmt->stmt->upsert_status.affected_rows = 0;
+        unsigned int StmtIdx;
+        for (StmtIdx= 0; StmtIdx < STMT_COUNT(Stmt->Query); ++StmtIdx)
+        {
+          if (Stmt->MultiStmts[StmtIdx] != NULL)
+          {
+            Stmt->MultiStmts[StmtIdx]->upsert_status.affected_rows= 0;
+          }
+        }
+      }
+      else if (Stmt->stmt)
+      {
+        Stmt->stmt->upsert_status.affected_rows= 0;
       }
 
       if (Stmt->Ipd->Header.RowsProcessedPtr)
@@ -1998,7 +2034,7 @@ SQLRETURN MADB_StmtExecute(MADB_Stmt *Stmt, BOOL ExecDirect)
           // TODO: allow QUERY_IS_MULTISTMT == true
           my_bool rewriteInsert = numParamRows > 1 && Stmt->Query.QueryType == MADB_QUERY_INSERT && \
             MADB_FindToken(&Stmt->Query, "VALUES") && \
-            !MADB_FindToken(&Stmt->Query, "RETURNING") && \
+            !MADB_QueryRangeHasExactToken(&Stmt->Query, NULL, NULL, "RETURNING") && \
             MADB_FindToken(&Stmt->Query, "VALUES") < MADB_FindToken(&Stmt->Query, "?") && \
             !MADB_FindToken(&Stmt->Query, "ON DUPLICATE KEY UPDATE") && \
             !QUERY_IS_MULTISTMT(Stmt->Query);
