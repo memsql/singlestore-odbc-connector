@@ -25,12 +25,19 @@
 _ss_build_openssl_11() {
   local prefix="$1"
   local tmp src
+  # Digest published with the OpenSSL 1.1.1w release on openssl.org and GitHub.
+  local sha256="cf3098950cb4d853ad95c0841f1f9c6d3dc102dccfcacd521d93925208b76ac8"
   tmp="$(mktemp -d)"
   src="${tmp}/openssl-1.1.1w"
   if ! curl -fsSL -o "${tmp}/openssl.tar.gz" \
       "https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1w/openssl-1.1.1w.tar.gz"; then
     curl -fsSL -o "${tmp}/openssl.tar.gz" \
       "https://www.openssl.org/source/openssl-1.1.1w.tar.gz"
+  fi
+  if ! echo "${sha256}  ${tmp}/openssl.tar.gz" | sha256sum -c -; then
+    echo "OpenSSL 1.1.1w archive checksum does not match ${sha256}" >&2
+    rm -rf "${tmp}"
+    exit 1
   fi
   tar -xzf "${tmp}/openssl.tar.gz" -C "${tmp}"
   (

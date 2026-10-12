@@ -157,8 +157,10 @@ ENDIF()
 IF(WIN32 OR WITH_OPENSSL OR "${WITH_SSL}" STREQUAL  "OPENSSL")
   IF(WITH_OPENSSL OR "${WITH_SSL}" STREQUAL  "OPENSSL")
     FIND_PACKAGE(OpenSSL 1.1 REQUIRED)
-    IF(NOT OPENSSL_VERSION VERSION_LESS "3.0.0")
-      MESSAGE(FATAL_ERROR "This branch must be built with OpenSSL 1.1, but found OpenSSL ${OPENSSL_VERSION}")
+    # Linux releases on this branch link OpenSSL 1.1. macOS build scripts
+    # still select OpenSSL 3 and stay outside that requirement.
+    IF(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT OPENSSL_VERSION VERSION_LESS "3.0.0")
+      MESSAGE(FATAL_ERROR "Linux builds on this branch require OpenSSL 1.1, but found OpenSSL ${OPENSSL_VERSION}")
     ENDIF()
 
     IF(OPENSSL_FOUND)
