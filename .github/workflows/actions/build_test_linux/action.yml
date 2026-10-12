@@ -26,7 +26,7 @@ runs:
       shell: bash
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake gcc g++ libglib2.0 libsecret-1-dev libkrb5-dev unixodbc unixodbc-dev odbcinst libodbc2
+        sudo apt-get install -y cmake gcc g++ make perl curl libglib2.0 libsecret-1-dev libkrb5-dev unixodbc unixodbc-dev odbcinst libodbc2
     - name: Setup test cluster
       shell: bash
       run: ./.github/scripts/setup-cluster.sh

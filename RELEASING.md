@@ -4,10 +4,9 @@ Pushing a version tag to GitHub triggers an automated release build.
 
 ## Prerequisites
 
-- Changes for the release are merged to `master`
-- CI tests on `master` are passing
+- Changes for the release are merged to `release/1.1`
+- CI tests on `release/1.1` are passing
 - You have permission to push tags to the repository
-- Azure Artifact Signing is configured for this repository (see [Code signing](#code-signing) below)
 
 ## Version format
 
@@ -24,7 +23,7 @@ The version in `CMakeLists.txt` must match the tag. Use `bump-version.sh` to kee
 
 ### Option 1: Helper script (recommended)
 
-From the repository root on `master`:
+From the repository root on `release/1.1`:
 
 ```bash
 ./bump-version.sh 1.2.2
@@ -43,7 +42,7 @@ For a version with a suffix:
 If the version in `CMakeLists.txt` is already correct:
 
 ```bash
-git checkout master
+git checkout release/1.1
 git pull
 git tag v1.2.2
 git push origin v1.2.2
@@ -51,36 +50,15 @@ git push origin v1.2.2
 
 ## What the workflow does
 
-The [Publish installers](.github/workflows/publish.yml) workflow runs on every `v*` tag push and:
+The [Publish installers](.github/workflows/publish.yml) workflow runs on every `v*` tag push on this branch and:
 
-1. Builds and tests installers on Ubuntu, CentOS/RHEL, macOS, and Windows. Ubuntu tests run against every currently supported SingleStore engine version.
-2. Signs the Windows driver and plugin DLLs and the MSI installers with Azure Artifact Signing.
-3. Packages platform artifacts.
-4. Creates a GitHub **Pre-release** with those artifacts attached. The release notes include the engine versions that were tested and a matrix row to copy into this file.
+1. Builds and tests Linux installers on Ubuntu and CentOS/RHEL, linked against OpenSSL 1.1. Ubuntu tests run against every currently supported SingleStore engine version.
+2. Packages those artifacts.
+3. Creates a GitHub **Pre-release** with those artifacts attached. The release notes include the engine versions that were tested and a matrix row to copy into this file.
+
+This branch does not publish macOS or Windows installers.
 
 The workflow first checks that the tag matches the version in `CMakeLists.txt`. A mismatch fails the job before builds start.
-
-## Code signing
-
-Windows release artifacts are signed via Azure Artifact Signing (Trusted Signing) using Workload Identity Federation.
-
-An MSI signature does not cover the files the installer puts on disk, so `.github/scripts/build-windows.ps1` signs the driver and plugin DLLs before WiX packages them, and signs the MSI once it is built. The DLL list comes from the WiX sources, so files added to the installer are signed automatically. Signing runs only when `SIGN_WINDOWS_ARTIFACTS` is `true`, which the release workflow sets; the [Run tests](.github/workflows/test.yml) workflow leaves it off because it has no Azure credentials.
-
-### Required GitHub Actions secrets
-
-| Secret | Description |
-| --- | --- |
-| `AZURE_CLIENT_ID` | Application (client) ID of `github-singlestore-signing` |
-| `AZURE_TENANT_ID` | Directory (tenant) ID |
-| `AZURE_SUBSCRIPTION_ID` | Azure subscription ID used for signing |
-
-### Required GitHub Actions variables
-
-| Variable | Example value |
-| --- | --- |
-| `AZURE_SIGNING_ENDPOINT` | `https://eus.codesigning.azure.net` |
-| `AZURE_SIGNING_ACCOUNT`  | `SingleStore` |
-| `AZURE_SIGNING_PROFILE`  | `ConnectorsReleaseProfile` |
 
 ## Finalize the release
 
@@ -96,9 +74,6 @@ An MSI signature does not cover the files the installer puts on disk, so `.githu
 | --- | --- |
 | Linux (Ubuntu) | `singlestore-connector-odbc-<version>-ubuntu-amd64.tar.gz` |
 | Linux (CentOS/RHEL) | `singlestore-connector-odbc-<version>-centos-amd64.tar.gz` |
-| macOS | `singlestore-connector-odbc-<version>-macos-x86_64.pkg` |
-| Windows (64-bit) | `singlestore-connector-odbc-<version>-win64.msi` |
-| Windows (32-bit) | `singlestore-connector-odbc-<version>-win32.msi` |
 
 Installation instructions: [SingleStore ODBC Driver docs](https://docs.singlestore.com/cloud/developer-resources/connect-with-application-development-tools/connect-with-odbc/the-singlestore-odbc-driver/).
 
