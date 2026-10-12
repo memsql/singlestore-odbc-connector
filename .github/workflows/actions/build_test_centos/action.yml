@@ -11,12 +11,34 @@ runs:
         dnf install -y epel-release
         dnf config-manager --set-enabled crb -y
 
-        # Update package lists
-        dnf update -y
+        # EPEL metalink mirrors often 404 a repodata checksum while mirrors
+        # catch up. Drop the cached metadata and retry the transaction.
+        dnf_with_retry() {
+          local attempt
+          for attempt in 1 2 3 4 5; do
+            if "$@"; then
+              return 0
+            fi
+            echo "dnf failed (attempt ${attempt}): $*" >&2
+            dnf clean all
+            sleep $((attempt * 5))
+          done
+          echo "dnf failed after retries: $*" >&2
+          return 1
+        }
 
-        # Install build dependencies
-        dnf groupinstall -y "Development Tools"
-        dnf install -y cmake gcc gcc-c++ glib2-devel libsecret-devel krb5-devel unixODBC unixODBC-devel openssl-devel git which docker
+        dnf_with_retry dnf update -y
+
+        # Install build dependencies.
+        # Do not install the curl package: CentOS Stream ships curl-minimal,
+        # and the two packages conflict. curl-minimal already provides /usr/bin/curl,
+        # which is enough to download the OpenSSL 1.1.1w source. perl and make are
+        # required to build that OpenSSL.
+        dnf_with_retry dnf groupinstall -y "Development Tools"
+        dnf_with_retry dnf install -y cmake gcc gcc-c++ make perl glib2-devel libsecret-devel krb5-devel unixODBC unixODBC-devel git which docker
+        if ! command -v curl >/dev/null 2>&1; then
+          dnf install -y --allowerasing curl
+        fi
 
     - name: Start S2MS cluster
       shell: bash
@@ -38,6 +60,10 @@ runs:
       shell: bash
       if: always()
       run: |
+          if [ ! -f .venv/bin/activate ]; then
+            echo "No cluster virtualenv; nothing to terminate"
+            exit 0
+          fi
           source .venv/bin/activate
           python -m pip install singlestoredb
           python ./.github/scripts/setup_s2ms_cluster.py terminate || true

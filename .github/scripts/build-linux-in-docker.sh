@@ -46,7 +46,10 @@ export TEST_UID="${MEMSQL_USER}"
 export TEST_PORT="${MEMSQL_PORT}"
 export TEST_PASSWORD="${MEMSQL_PASSWORD}"
 
+# Link libssl.so.1.1. Distro packages on current CI images are OpenSSL 3.
+. .github/scripts/install-openssl-1.1.sh
+
 mkdir -p build && cd build
 ## build odbc connector
-cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL -DWITH_SANITIZER=$SANITIZER_OPTION -DIS_ON_S2MS=1
+cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DWITH_OPENSSL=ON -DWITH_SSL=OPENSSL -DOPENSSL_ROOT_DIR="${OPENSSL_ROOT_DIR}" -DOPENSSL_INCLUDE_DIR="${OPENSSL_ROOT_DIR}/include" -DOPENSSL_SSL_LIBRARY="${OPENSSL_ROOT_DIR}/lib/libssl.so" -DOPENSSL_CRYPTO_LIBRARY="${OPENSSL_ROOT_DIR}/lib/libcrypto.so" -DWITH_SANITIZER=$SANITIZER_OPTION -DIS_ON_S2MS=1
 cmake --build . --config ${BUILD_TYPE}

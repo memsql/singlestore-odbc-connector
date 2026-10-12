@@ -8,13 +8,12 @@ License information can be found in the LICENSE file.
 
 ## Installing
 
-- **Windows:** download a versioned MSI from GitHub Releases (for example `https://github.com/memsql/singlestore-odbc-connector/releases/download/v1.2.2/singlestore-connector-odbc-1.2.2-win64.msi`) and install it interactively, or silently for scripted rollout. See [wininstall/README.md](wininstall/README.md) for download URLs, `msiexec` options, install directories, and features.
-- **Linux:** see [linuxinstall/README.md](linuxinstall/README.md) for UnixODBC setup.
+This branch publishes Linux builds linked against OpenSSL 1.1. See [linuxinstall/README.md](linuxinstall/README.md) for UnixODBC setup and the OpenSSL 1.1 runtime libraries.
 
 ## Building
 
-See [BUILD.md](BUILD.md) for build instructions.
+See [BUILD.md](BUILD.md) for build instructions. Linux builds must use OpenSSL 1.1.
 
 ## Releasing
 
-Pushing a `v*` version tag triggers an automated GitHub Pre-release with installers for Linux, macOS, and Windows. See [RELEASING.md](RELEASING.md) for the full process.
+Pushing a `v*` version tag on `release/1.1` triggers an automated GitHub Pre-release with Linux installers. See [RELEASING.md](RELEASING.md) for the full process.

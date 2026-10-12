@@ -7,21 +7,25 @@ Both kinds of drivers are provided in the same download package.
 To install Unicode driver, use libssodbcw.so in the father steps,
 otherwise use the libssodbca.so.
 
-1. Install UnixODBC and OpenSSL
+1. Install UnixODBC and OpenSSL 1.1
 
-The following command would install the UnixODBC package.
+This driver is linked against OpenSSL 1.1. The process that loads it must find
+`libssl.so.1.1` and `libcrypto.so.1.1`. On RHEL 8 those libraries come from
+`openssl-libs`. On RHEL 9 install `compat-openssl11`. On Ubuntu 20.04 install
+`libssl1.1`. OpenSSL 3 packages (`openssl-devel`, `libssl-dev`, `libssl3`) do
+not provide `libssl.so.1.1`.
+
+The following command installs the UnixODBC package.
 
 (Centos)
 ```
 sudo yum update
 sudo yum install unixODBC
-sudo yum install openssl-devel
 ```
 (Debian)
 ```
 sudo apt-get update
 sudo apt-get install unixodbc
-sudo apt-get install libssl-dev
 ```
 
 If you plan to compile an application from source against SingleStore ODBC Driver and UnixODBC,
