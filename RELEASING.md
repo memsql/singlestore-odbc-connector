@@ -2,6 +2,8 @@
 
 Pushing a version tag to GitHub triggers an automated release build.
 
+The `release/1.1` branch is maintained separately for 1.1.x Linux releases linked against OpenSSL 1.1. Follow the [release/1.1 releasing instructions](https://github.com/memsql/singlestore-odbc-connector/blob/release/1.1/RELEASING.md) when publishing that release line.
+
 ## Prerequisites
 
 - Changes for the release are merged to `master`

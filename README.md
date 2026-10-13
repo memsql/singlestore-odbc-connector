@@ -9,7 +9,7 @@ License information can be found in the LICENSE file.
 ## Installing
 
 - **Windows:** download a versioned MSI from GitHub Releases (for example `https://github.com/memsql/singlestore-odbc-connector/releases/download/v1.2.2/singlestore-connector-odbc-1.2.2-win64.msi`) and install it interactively, or silently for scripted rollout. See [wininstall/README.md](wininstall/README.md) for download URLs, `msiexec` options, install directories, and features.
-- **Linux:** see [linuxinstall/README.md](linuxinstall/README.md) for UnixODBC setup.
+- **Linux:** see [linuxinstall/README.md](linuxinstall/README.md) for UnixODBC setup. Linux artifacts for 1.1.x releases are built from the `release/1.1` branch and linked against OpenSSL 1.1.
 
 ## Building
 
