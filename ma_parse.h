@@ -87,6 +87,9 @@ char *       MADB_ParseCursorName(MADB_QUERY *Query, unsigned int *Offset);
 char *       MADB_Token(MADB_QUERY *Query, unsigned int Idx);
 unsigned int MADB_FindToken(MADB_QUERY *Query, char *Compare);
 my_bool      MADB_CompareToken(MADB_QUERY *Query, unsigned int Idx, char *Compare, size_t Length, unsigned int *Offset);
+/* Exact keyword in [From, To). Prefixes such as returning_value do not match.
+   From == NULL searches the whole query. */
+my_bool      MADB_QueryRangeHasExactToken(MADB_QUERY *Query, const char *From, const char *To, const char *Word);
 
 enum enum_madb_query_type MADB_GetQueryType(const char *Token1, const char *Token2);
 /* Commands that SingleStore cannot execute via the binary prepared-statement
