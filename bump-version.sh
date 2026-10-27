@@ -70,7 +70,7 @@ echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     # Commit changes
     git add CMakeLists.txt
-    git commit -m "Bump version to $NEW_VERSION"
+    git commit -m "chore: bump version to $NEW_VERSION"
 
     # Create tag
     git tag "v$NEW_VERSION"
