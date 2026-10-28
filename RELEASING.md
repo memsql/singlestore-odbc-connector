@@ -111,6 +111,7 @@ After each release, copy the matrix row from the GitHub release notes into the t
 
 | Driver Version | Release date | Supported engine versions |
 | -------------- | ------------ | ------------------------- |
+| 1.2.3          | 2026-10-27   | 9.0, 8.9, 9.1 RC          |
 | 1.1.8          | 2026-10-12   | 8.9, 9.0, 9.1 RC          |
 | 1.2.2          | 2026-08-20   | 8.9, 9.0, 9.1 RC          |
 | 1.2.1          | 2026-02-05   | 8.7, 8.9, 9.0             |
