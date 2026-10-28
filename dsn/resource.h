@@ -106,6 +106,8 @@
 #define ckNoSSPS                        1221
 #define cbBrowserSSO                    1222
 #define ckUseWcharTypes                 1223
+#define ckFallbackCspsStmt              1224
+#define txtReadTimeout                  1225
 
 // Next default values for new objects
 // 

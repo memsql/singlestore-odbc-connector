@@ -685,6 +685,8 @@ ODBC_TEST(dsn_key_indexes)
     {39, "NO_SSPS"},
     {43, "BROWSER_SSO"},
     {47, "USE_WCHAR_TYPES"},
+    {48, "FALLBACK_CSPS_STMT"},
+    {50, "READ_TIMEOUT"},
   };
   static const struct
   {
