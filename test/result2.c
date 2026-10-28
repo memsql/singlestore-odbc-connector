@@ -1112,6 +1112,62 @@ ODBC_TEST(t_execdirect_force_csps)
 }
 
 
+/* A column named returning_value is not a RETURNING clause. The INSERT must
+   not be reported as a result set, including when FALLBACK_CSPS_STMT is on
+   and another statement in the batch mentions that column. */
+ODBC_TEST(t_returning_column_not_clause)
+{
+  SQLHDBC extra_dbc= NULL;
+  SQLHSTMT hstmt= Stmt;
+  SQLSMALLINT cols= -1;
+  SQLLEN rowCount= -1;
+  SQLCHAR value[32];
+
+  if (NoSsps == 0)
+  {
+    CHECK_ENV_RC(Env, SQLAllocConnect(Env, &extra_dbc));
+    hstmt= DoConnect(extra_dbc, FALSE, my_dsn, my_uid, my_pwd, my_port, my_schema, 0, my_servername,
+                     "NO_SSPS=0;FALLBACK_CSPS_STMT=1");
+    FAIL_IF(hstmt == NULL, "Couldn't connect with NO_SSPS=0;FALLBACK_CSPS_STMT=1");
+  }
+
+  OK_SIMPLE_STMT(hstmt, "DROP TABLE IF EXISTS t_returning_column");
+  OK_SIMPLE_STMT(hstmt, "CREATE TABLE t_returning_column (id INT NOT NULL PRIMARY KEY, returning_value VARCHAR(32) NOT NULL)");
+  OK_SIMPLE_STMT(hstmt, "INSERT INTO t_returning_column (id, returning_value) VALUES (1, 'kept')");
+  CHECK_STMT_RC(hstmt, SQLNumResultCols(hstmt, &cols));
+  is_num(cols, 0);
+  CHECK_STMT_RC(hstmt, SQLRowCount(hstmt, &rowCount));
+  FAIL_IF_NE_INT(rowCount, 1, "INSERT into returning_value must report one affected row");
+  EXPECT_STMT(hstmt, SQLMoreResults(hstmt), SQL_NO_DATA);
+  CHECK_STMT_RC(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  CHECK_STMT_RC(hstmt, SQLExecDirect(hstmt,
+    (SQLCHAR *)"INSERT INTO t_returning_column (id, returning_value) VALUES (2, 'batch'); "
+               "SELECT returning_value FROM t_returning_column WHERE id = 2",
+    SQL_NTS));
+  CHECK_STMT_RC(hstmt, SQLNumResultCols(hstmt, &cols));
+  is_num(cols, 0);
+  CHECK_STMT_RC(hstmt, SQLMoreResults(hstmt));
+  CHECK_STMT_RC(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, value, sizeof(value), NULL));
+  CHECK_STMT_RC(hstmt, SQLFetch(hstmt));
+  IS_STR(value, "batch", sizeof("batch"));
+  EXPECT_STMT(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+  EXPECT_STMT(hstmt, SQLMoreResults(hstmt), SQL_NO_DATA);
+  CHECK_STMT_RC(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  CHECK_STMT_RC(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+
+  OK_SIMPLE_STMT(hstmt, "DROP TABLE IF EXISTS t_returning_column");
+
+  if (extra_dbc)
+  {
+    CHECK_STMT_RC(hstmt, SQLFreeStmt(hstmt, SQL_DROP));
+    CHECK_DBC_RC(extra_dbc, SQLDisconnect(extra_dbc));
+    CHECK_DBC_RC(extra_dbc, SQLFreeConnect(extra_dbc));
+  }
+  return OK;
+}
+
+
 /* Same as t_execdirect_force_csps, but the statement that needs CSPS is not
    the first one of a multi-statement batch. The whole batch must fall back. */
 ODBC_TEST(t_execdirect_force_csps_multistmt)
@@ -1732,6 +1788,7 @@ MA_ODBC_TESTS my_tests[]=
   {t_odbc58, "t_odbc-58-numeric_after_blob", NORMAL, ALL_DRIVERS},
   {t_odbc77, "t_odbc-77_150-analyze_table_desc_table", NORMAL, ALL_DRIVERS},
   {t_execdirect_force_csps, "t_execdirect_force_csps", NORMAL, ALL_DRIVERS},
+  {t_returning_column_not_clause, "t_returning_column_not_clause", NORMAL, ALL_DRIVERS},
   {t_execdirect_force_csps_multistmt, "t_execdirect_force_csps_multistmt", NORMAL, ALL_DRIVERS},
   {t_putdata_cancel_reprepare, "t_putdata_cancel_reprepare", NORMAL, ALL_DRIVERS},
   {t_odbc78, "t_odbc-78-sql_no_data", NORMAL, ALL_DRIVERS},
