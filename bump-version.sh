@@ -1,21 +1,31 @@
 #!/bin/bash
 
 # Script to bump version for SingleStore ODBC Connector
-# Usage: ./bump-version.sh <new_version>
+# Usage: ./bump-version.sh <new_version>          Step 1: open a version bump PR
+#        ./bump-version.sh --tag <new_version>    Step 2: tag master after the PR is merged
 # Example: ./bump-version.sh 1.2.2
 #          ./bump-version.sh 1.2.3-beta
-#          ./bump-version.sh 1.3.0-rc1
+#          ./bump-version.sh --tag 1.2.2
 #
-# After updating CMakeLists.txt, this script can commit, tag, and push.
-# Pushing the version tag triggers the Publish installers workflow.
+# `master` is protected, so the version bump goes through a pull request.
+# Step 1 updates CMakeLists.txt on a new branch, pushes it, and opens a PR.
+# Step 2 (after the PR is merged) tags master and pushes the tag, which
+# triggers the Publish installers workflow.
 # See RELEASING.md for the full release process.
 
 set -euo pipefail
 
+TAG_ONLY=false
+if [ "${1:-}" = "--tag" ]; then
+    TAG_ONLY=true
+    shift
+fi
+
 if [ $# -ne 1 ]; then
-    echo "Usage: $0 <new_version>"
+    echo "Usage: $0 <new_version>          # open a version bump PR"
+    echo "       $0 --tag <new_version>    # tag master after the PR is merged"
     echo "Example: $0 1.2.2"
-    echo "        $0 1.3.0-rc1"
+    echo "         $0 1.3.0-rc1"
     exit 1
 fi
 
@@ -47,6 +57,36 @@ IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE_VERSION"
 # Format version with leading zeros for SS_ODBC_VERSION
 FORMATTED_VERSION=$(printf "%02d.%02d.%04d" $MAJOR $MINOR $PATCH)
 
+if $TAG_ONLY; then
+    # Tag the merged bump commit on master. Tag pushes are not blocked by the
+    # branch ruleset, and the tag push starts the release workflow.
+    git fetch origin master --tags
+    if [ "$(git rev-parse --abbrev-ref HEAD)" != "master" ] || \
+       [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/master)" ]; then
+        echo "Error: check out master and make sure it is up to date with origin/master (git pull)"
+        exit 1
+    fi
+    if ! grep -q "SET(SS_ODBC_VERSION_MAJOR $MAJOR)" CMakeLists.txt || \
+       ! grep -q "SET(SS_ODBC_VERSION_MINOR $MINOR)" CMakeLists.txt || \
+       ! grep -q "SET(SS_ODBC_VERSION_PATCH $PATCH)" CMakeLists.txt || \
+       ! grep -q "SET(SS_ODBC_VERSION_QUALITY \"$QUALITY\")" CMakeLists.txt; then
+        echo "Error: CMakeLists.txt on master does not match $NEW_VERSION. Merge the version bump PR first."
+        exit 1
+    fi
+    read -p "Tag master at $(git rev-parse --short HEAD) as v$NEW_VERSION and push the tag? (y/n) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        git tag "v$NEW_VERSION"
+        git push origin "v$NEW_VERSION"
+        echo "✓ Tag v$NEW_VERSION created and pushed"
+        echo "✓ Publish installers workflow should now be running"
+        echo "  See RELEASING.md for next steps (edit the pre-release and mark it as latest)"
+        exit 0
+    fi
+    echo "Tag not created."
+    exit 1
+fi
+
 echo "Bumping version to $NEW_VERSION (base: $BASE_VERSION, quality: $QUALITY)..."
 
 # Update CMakeLists.txt (using BSD sed syntax for macOS compatibility)
@@ -65,25 +105,26 @@ echo "Changes made:"
 git --no-pager diff CMakeLists.txt
 
 # Prompt for confirmation
-read -p "Do you want to commit, tag, and push these changes? (y/n) " -n 1 -r
+read -p "Do you want to commit these changes on a new branch and open a PR? (y/n) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    # Commit changes
+    BRANCH="chore/bump-version-$NEW_VERSION"
+    git checkout -b "$BRANCH"
     git add CMakeLists.txt
     git commit -m "chore: bump version to $NEW_VERSION"
+    git push -u origin "$BRANCH"
 
-    # Create tag
-    git tag "v$NEW_VERSION"
+    if command -v gh >/dev/null 2>&1; then
+        gh pr create --base master --head "$BRANCH" \
+            --title "chore: bump version to $NEW_VERSION" \
+            --body "Bump version to $NEW_VERSION ahead of the release. After merging, run \`./bump-version.sh --tag $NEW_VERSION\` on master."
+    else
+        echo "gh CLI not found: open a PR for branch $BRANCH manually."
+    fi
 
-    # Push changes and tag
-    git push
-    git push origin "v$NEW_VERSION"
-
-    echo "✓ Version bumped to $NEW_VERSION"
-    echo "✓ Committed and pushed to remote"
-    echo "✓ Tag v$NEW_VERSION created and pushed"
-    echo "✓ Publish installers workflow should now be running"
-    echo "  See RELEASING.md for next steps (edit the pre-release and mark it as latest)"
+    echo "✓ Version bump committed on $BRANCH and pushed"
+    echo "  Next: get the PR approved and merged, then on master run:"
+    echo "    ./bump-version.sh --tag $NEW_VERSION"
 else
     echo "Changes not committed. You can review them with 'git diff'"
     exit 1

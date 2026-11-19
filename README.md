@@ -1,5 +1,5 @@
 # SingleStore ODBC Driver
-![logo](singlestore_logo_horizontal_color_on-white_rgb.png)
+![logo](singlestore_logo_black.png)
 
 This is a GA release of the SingleStore ODBC Driver.
  
