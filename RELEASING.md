@@ -9,6 +9,9 @@ The `release/1.1` branch is maintained separately for 1.1.x Linux releases linke
 - Changes for the release are merged to `master`
 - CI tests on `master` are passing
 - You have permission to push tags to the repository
+- You have the [GitHub CLI](https://cli.github.com/) (`gh`) installed and authenticated (used by the helper script to open the PR)
+
+`master` is protected by a ruleset: every change, including the version bump and the compatibility matrix update, must go through a pull request with one approval, code-owner review, and resolved conversations. Direct pushes to `master` are not allowed. Pushing a version tag is not affected.
 - Azure Artifact Signing is configured for this repository (see [Code signing](#code-signing) below)
 
 ## Version format
@@ -26,13 +29,13 @@ The version in `CMakeLists.txt` must match the tag. Use `bump-version.sh` to kee
 
 ### Option 1: Helper script (recommended)
 
-From the repository root on `master`:
+**Step 1: open the version bump PR.** From the repository root on an up-to-date `master`:
 
 ```bash
 ./bump-version.sh 1.2.2
 ```
 
-The script updates `CMakeLists.txt`, commits the change, creates tag `v1.2.2`, and pushes both to origin. That push starts the release workflow.
+The script updates `CMakeLists.txt`, commits the change on a new `chore/bump-version-1.2.2` branch, pushes the branch, and opens a PR against `master`.
 
 For a version with a suffix:
 
@@ -40,9 +43,21 @@ For a version with a suffix:
 ./bump-version.sh 1.2.3-beta
 ```
 
-### Option 2: Manual tag
+**Step 2: merge the PR.** Get it approved (including code-owner review) and merge it.
 
-If the version in `CMakeLists.txt` is already correct:
+**Step 3: tag the release.** After the merge, run:
+
+```bash
+git checkout master
+git pull
+./bump-version.sh --tag 1.2.2
+```
+
+The script checks that `master` is up to date and that `CMakeLists.txt` matches the version, then creates tag `v1.2.2` and pushes it. That push starts the release workflow.
+
+### Option 2: Manual
+
+If the version in `CMakeLists.txt` is already correct on `master` (for example, the bump was merged earlier), tag it directly:
 
 ```bash
 git checkout master
@@ -50,6 +65,8 @@ git pull
 git tag v1.2.2
 git push origin v1.2.2
 ```
+
+To bump the version by hand, change `SS_ODBC_VERSION_*` in `CMakeLists.txt`, open a PR, merge it, and then tag as above.
 
 ## What the workflow does
 
@@ -90,7 +107,7 @@ An MSI signature does not cover the files the installer puts on disk, so `.githu
 2. Edit the release description as needed
 3. Uncheck **Set as a pre-release** and check **Set as the latest release**
 4. Save the release
-5. Copy the Driver-Server compatibility row from the release notes into the matrix below, then commit that change on `master`
+5. Copy the Driver-Server compatibility row from the release notes into the matrix below, and submit that change as a pull request to `master`
 
 ## Artifacts
 
@@ -107,7 +124,7 @@ Installation instructions: [SingleStore ODBC Driver docs](https://docs.singlesto
 
 ### Driver-Server Version Compatibility Matrix
 
-After each release, copy the matrix row from the GitHub release notes into the table below (newest first) and commit it. You can check [EOL policy](https://docs.singlestore.com/db/v9.1/support/singlestore-software-end-of-life-eol-policy/) to find what versions are supported on the date of release.
+After each release, copy the matrix row from the GitHub release notes into the table below (newest first) and submit it as a pull request. You can check [EOL policy](https://docs.singlestore.com/db/v9.1/support/singlestore-software-end-of-life-eol-policy/) to find what versions are supported on the date of release.
 
 | Driver Version | Release date | Supported engine versions |
 | -------------- | ------------ | ------------------------- |
