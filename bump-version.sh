@@ -66,10 +66,13 @@ if $TAG_ONLY; then
         echo "Error: check out master and make sure it is up to date with origin/master (git pull)"
         exit 1
     fi
-    if ! grep -q "SET(SS_ODBC_VERSION_MAJOR $MAJOR)" CMakeLists.txt || \
-       ! grep -q "SET(SS_ODBC_VERSION_MINOR $MINOR)" CMakeLists.txt || \
-       ! grep -q "SET(SS_ODBC_VERSION_PATCH $PATCH)" CMakeLists.txt || \
-       ! grep -q "SET(SS_ODBC_VERSION_QUALITY \"$QUALITY\")" CMakeLists.txt; then
+    # Check the committed file at HEAD so a dirty working tree (e.g. after
+    # declining a bump) cannot make this check pass against uncommitted edits.
+    CMAKE_AT_HEAD=$(git show HEAD:CMakeLists.txt)
+    if ! grep -q "SET(SS_ODBC_VERSION_MAJOR $MAJOR)" <<< "$CMAKE_AT_HEAD" || \
+       ! grep -q "SET(SS_ODBC_VERSION_MINOR $MINOR)" <<< "$CMAKE_AT_HEAD" || \
+       ! grep -q "SET(SS_ODBC_VERSION_PATCH $PATCH)" <<< "$CMAKE_AT_HEAD" || \
+       ! grep -q "SET(SS_ODBC_VERSION_QUALITY \"$QUALITY\")" <<< "$CMAKE_AT_HEAD"; then
         echo "Error: CMakeLists.txt on master does not match $NEW_VERSION. Merge the version bump PR first."
         exit 1
     fi
