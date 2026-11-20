@@ -226,6 +226,41 @@ ODBC_TEST(t_sqlrowcnt_reused_prepared_stmt) {
     return OK;
 }
 
+/* A client-side multi-statement prepare stores one MYSQL_STMT per statement
+   and adds into each handle's affected-row count. Re-executing while the
+   first result is current must still report this execution's count for the
+   later statement, not the sum of every execution so far. */
+ODBC_TEST(t_sqlrowcnt_reused_multistmt) {
+    SQLLEN rc;
+    SQLINTEGER id;
+
+    OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS test_rowcount_multi");
+    OK_SIMPLE_STMT(Stmt, "CREATE TABLE test_rowcount_multi (id INT PRIMARY KEY, val INT)");
+    OK_SIMPLE_STMT(Stmt, "INSERT INTO test_rowcount_multi VALUES (1, 0)");
+
+    CHECK_STMT_RC(Stmt, SQLPrepare(Stmt,
+        (SQLCHAR *)"SELECT id FROM test_rowcount_multi WHERE id = 1; "
+                   "UPDATE test_rowcount_multi SET val = val + 1 WHERE id = 1",
+        SQL_NTS));
+
+    CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
+    CHECK_STMT_RC(Stmt, SQLBindCol(Stmt, 1, SQL_C_LONG, &id, 0, NULL));
+    CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+    is_num(id, 1);
+    EXPECT_STMT(Stmt, SQLFetch(Stmt), SQL_NO_DATA);
+
+    CHECK_STMT_RC(Stmt, SQLExecute(Stmt));
+    CHECK_STMT_RC(Stmt, SQLFetch(Stmt));
+    is_num(id, 1);
+    EXPECT_STMT(Stmt, SQLFetch(Stmt), SQL_NO_DATA);
+    CHECK_STMT_RC(Stmt, SQLMoreResults(Stmt));
+    CHECK_STMT_RC(Stmt, SQLRowCount(Stmt, &rc));
+    FAIL_IF_NE_INT(rc, 1, "re-executed UPDATE in a batch must report this execution's row count");
+
+    OK_SIMPLE_STMT(Stmt, "DROP TABLE IF EXISTS test_rowcount_multi");
+    return OK;
+}
+
 ODBC_TEST(t_sqlrowcnt_bulk_operation) {
     SQLLEN rc;
     SQLINTEGER ids[INSERT_CNT] = {1, 2, 3};
@@ -319,6 +354,7 @@ MA_ODBC_TESTS my_tests[] =
     {t_sqlrowcnt_insert_no_client_found_rows, "t_sqlrowcnt_insert_no_client_found_rows", NORMAL, ALL_DRIVERS},
     {t_sqlrowcnt_delete, "t_sqlrowcnt_delete", NORMAL, ALL_DRIVERS},
     {t_sqlrowcnt_reused_prepared_stmt, "t_sqlrowcnt_reused_prepared_stmt", NORMAL, ALL_DRIVERS},
+    {t_sqlrowcnt_reused_multistmt, "t_sqlrowcnt_reused_multistmt", NORMAL, ALL_DRIVERS},
     {t_sqlrowcnt_bulk_operation, "t_sqlrowcnt_bulk_operation", NORMAL, ALL_DRIVERS},
     {t_sqlrowcnt_batch, "t_sqlrowcnt_batch", NORMAL, ALL_DRIVERS},
     {NULL, NULL, NORMAL, ALL_DRIVERS}

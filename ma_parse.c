@@ -326,6 +326,60 @@ unsigned int MADB_FindToken(MADB_QUERY *Query, char *Compare)
   return 0;
 }
 
+/* Same characters ParseQuery uses to end a token. '_' stays inside the token,
+   so a prefix compare of RETURNING matches the identifier returning_value. */
+static my_bool MADB_IsTokenBoundary(char Ch)
+{
+  switch (Ch)
+  {
+  case '\0':
+  case '?':
+  case '"':
+  case '\'':
+  case '`':
+  case ' ':
+  case '\t':
+  case '\r':
+  case '\n':
+  case '-':
+  case '#':
+  case '/':
+  case ';':
+    return TRUE;
+  default:
+    return FALSE;
+  }
+}
+
+my_bool MADB_QueryRangeHasExactToken(MADB_QUERY *Query, const char *From, const char *To, const char *Word)
+{
+  unsigned int i, TokenCount;
+  size_t Length;
+
+  if (Query == NULL || Word == NULL || Word[0] == '\0' || Query->RefinedText == NULL)
+    return FALSE;
+
+  if (From == NULL)
+    From= Query->RefinedText;
+  if (To == NULL)
+    To= Query->RefinedText + Query->RefinedLength;
+
+  Length= strlen(Word);
+  TokenCount= Query->Tokens.elements;
+  for (i= 0; i < TokenCount; ++i)
+  {
+    char *TokenString= MADB_Token(Query, i);
+
+    if (TokenString == NULL || TokenString < From || TokenString >= To)
+      continue;
+    if (_strnicmp(TokenString, Word, Length) != 0)
+      continue;
+    if (MADB_IsTokenBoundary(TokenString[Length]))
+      return TRUE;
+  }
+  return FALSE;
+}
+
 
 char * MADB_ParseCursorName(MADB_QUERY *Query, unsigned int *Offset)
 {
